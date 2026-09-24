@@ -764,7 +764,7 @@ test("each project gets the agent and model its own settings choose, and the mac
   await h.call(lane.lead!, "lead", "start_task", { title: "Default peer", goal: "g", acceptance: ["a"], owned: ["a.txt"], outOfScope: ["the rest of the repository"] });
   const onDefaults = h.agents.get(h.ledger().tasks["L1-T1"]!.peer!)!.provider;
   assert.equal(onDefaults, "sw2-peer-devin/swe-2-max");
-  assert.equal(h.agents.get(lane.lead!)!.provider, "sw2-lead-claude/claude-opus-5");
+  assert.equal(h.agents.get(lane.lead!)!.provider, "sw2-lead-claude/claude-opus-5-5[1M]");
 
   writeFileSync(join(h.project.state, "settings.json"), JSON.stringify({ roles: { peer: { harness: "claude", model: "claude-opus-5" } } }));
   await h.call(h.ledger().tasks["L1-T1"]!.peer!, "peer", "done", { outcome: "complete", summary: "done" });
@@ -773,7 +773,7 @@ test("each project gets the agent and model its own settings choose, and the mac
   await h.call(lane.lead!, "lead", "start_task", { title: "Claude peer", goal: "g", acceptance: ["a"], owned: ["b.txt"], outOfScope: ["the rest of the repository"] });
   const switched = h.agents.get(h.ledger().tasks["L1-T2"]!.peer!)!.provider;
   assert.equal(switched, "sw2-peer-claude/claude-opus-5");
-  assert.equal(h.agents.get(lane.lead!)!.provider, "sw2-lead-claude/claude-opus-5");
+  assert.equal(h.agents.get(lane.lead!)!.provider, "sw2-lead-claude/claude-opus-5-5[1M]");
   h.runtime.dispose();
 });
 

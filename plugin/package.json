@@ -15,7 +15,7 @@
     "zod": "^4.6.4"
   },
   "devDependencies": {
-    "@getpaseo/plugin": "0.8.0",
+    "@getpaseo/plugin": "0.9.1",
     "@types/node": "^24.13.4",
     "@types/react": "~19.2.0",
     "react": "^19.1.0",

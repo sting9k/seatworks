@@ -1,6 +1,6 @@
 {
   "id": "seatworks-v2",
   "requirements": {
-    "paseo": ">=0.8.0 <0.9.0"
+    "paseo": ">=0.8.0 <0.10.0"
   }
 }

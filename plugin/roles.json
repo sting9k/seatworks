@@ -13,7 +13,7 @@
       "description": "Works with the Human, decides everything short of the concept, opens lanes and answers Leads",
       "defaults": {
         "harness": "claude",
-        "model": "claude-opus-5",
+        "model": "claude-opus-5-5[1M]",
         "thinking": "high"
       },
       "can": [
@@ -39,7 +39,7 @@
       "description": "Owns one lane: splits it into tasks, starts Peers, accepts and integrates",
       "defaults": {
         "harness": "claude",
-        "model": "claude-opus-5",
+        "model": "claude-opus-5-5[1M]",
         "thinking": "medium"
       },
       "can": [
