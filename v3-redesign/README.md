@@ -28,11 +28,13 @@ order is the agents'.
 
 ## Order
 
-1. The kernel's spec.
+1. The kernel's spec. Done.
 2. The kernel, the agent host, workspaces and the evidence runner: one lane, end to end, and one agent alone for a
-   small change.
+   small change. Built and proved against a stand-in for Paseo (`test/bridge/lane.test.ts`); what only a live daemon
+   can show is in `spec/PASEO.md` and `spec/HARNESS.md`, To check.
 3. The Human's surface and the record.
-4. Anything more only when the record shows a failure that needs it.
+4. The reflex and the watch (`spec/REFLEX.md`, `spec/WATCH.md`), starting with their `active` sets.
+5. Anything more only when the record shows a failure that needs it.
 
 ## Spec
 
