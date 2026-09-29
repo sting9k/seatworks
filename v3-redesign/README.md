@@ -27,4 +27,5 @@ runner, delivery, the Human's surface, the record.
 
 - The kernel's language. The Paseo bridge is TypeScript whatever it is.
 - Where the shared state lives: in a tracker the Human already reads, or in a store of its own.
-- Whether a watch comes back, and what it watches that prompts and code do not already catch.
+
+How the team works, with what was decided about it, is in `spec/WORKFLOW.md`.
