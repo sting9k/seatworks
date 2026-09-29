@@ -34,6 +34,10 @@ export type Wiring = {
 
 const WAIT: Handled = { status: "wait" };
 
+/** The labels every agent the plugin starts carries: its project's id and its actor's. */
+export const PROJECT_LABEL = "seatworks.project";
+export const ACTOR_LABEL = "seatworks.actor";
+
 /** What an agent's tools need to know of its seat: who it is, its key, whether it writes, its copy and the plugin. */
 export function seatEnv(
   w: Pick<Wiring, "project" | "keys" | "team" | "workspace" | "scratch">,
@@ -64,7 +68,7 @@ const done = (...facts: CommandBody[]): Handled => ({ status: "done", facts });
 
 /** Each effect the kernel asks for, carried to the satellite that does it, and what it found brought back as facts. */
 export function handlersFor(w: Wiring): Handlers {
-  const branchOf = (scope: string) => `sw/${w.project}/${scope}`;
+  const branchOf = (scope: string) => `${branchesOf(w.project)}${scope}`;
   const parentBranch = (state: State, scope: Scope) =>
     scope.parent === null ? null : (state.scopes.get(scope.parent)?.branch ?? null);
 
@@ -115,7 +119,7 @@ export function handlersFor(w: Wiring): Handlers {
           env,
           names: [...role.tools, "status", "record", "diff", "look"].filter((t, i, all) => all.indexOf(t) === i),
         },
-        labels: { "seatworks.project": w.project, "seatworks.actor": actor.id, "seatworks.scope": actor.scope },
+        labels: { [PROJECT_LABEL]: w.project, [ACTOR_LABEL]: actor.id, "seatworks.scope": actor.scope },
         writes: role.writes,
       });
       if ("unavailable" in created) return WAIT;
@@ -212,6 +216,11 @@ export function handlersFor(w: Wiring): Handlers {
       return Promise.resolve(done());
     },
   };
+}
+
+/** Where every branch the plugin makes for a project's scopes lives. */
+export function branchesOf(project: string): string {
+  return `sw/${project}/`;
 }
 
 export function scratchFor(root: string, project: string): string {

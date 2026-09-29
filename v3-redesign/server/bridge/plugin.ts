@@ -1,5 +1,14 @@
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  realpathSync,
+  renameSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { join } from "node:path";
 import type { PaseoApi } from "@getpaseo/client";
 import type { AgentTimelineItem } from "@getpaseo/protocol/agent-types";
@@ -7,7 +16,7 @@ import type { Caller, CommandBody } from "../../shared/contracts/commands.ts";
 import type { ReadName } from "../../shared/contracts/tools.ts";
 import { activityLine } from "../../shared/views/activity.ts";
 import { type Chain, type Signals, chainOf, scopeRecordText, signalsOf } from "../../shared/views/record.ts";
-import type { HumanView } from "../../shared/contracts/rpc.ts";
+import type { HumanView, Leftover } from "../../shared/contracts/rpc.ts";
 import { humanView } from "../../shared/views/human.ts";
 import { statusText } from "../../shared/views/status.ts";
 import { type Home, layHome } from "../core/home.ts";
@@ -27,7 +36,8 @@ import { git } from "../satellites/workspace/git.ts";
 import { Workspace } from "../satellites/workspace/workspace.ts";
 import { type Bundle, loadBundle, profileDir } from "../profile/bundle.ts";
 import { Dispatcher } from "./dispatcher.ts";
-import { type Wiring, handlersFor, scratchFor, seatEnv, withShim } from "./effects.ts";
+import { PROJECT_LABEL, type Wiring, branchesOf, handlersFor, scratchFor, seatEnv, withShim } from "./effects.ts";
+import { type Kept, leftoverId, leftoversOf, projectLeftover, refOf } from "./leftovers.ts";
 import { Project, type Submitted } from "./project.ts";
 import { Reflex } from "./reflex.ts";
 import { type ProjectPort, TeamSocket } from "./team-socket.ts";
@@ -227,6 +237,141 @@ export class Plugin {
       const { repo } = JSON.parse(readFileSync(file, "utf8")) as { repo: string };
       return [{ id, repo, open: this.runtimes.has(id) }];
     });
+  }
+
+  /** Paseo's git projects no team is attached to yet, for the Human to attach one. */
+  async unattached(): Promise<{ name: string; root: string }[]> {
+    const api = this.link.current;
+    if (!api) return [];
+    const attached = new Set(this.projects().map((p) => p.repo));
+    const listed = await api.projects.list();
+    return listed.projects.flatMap((p) => {
+      if (p.projectKind !== "git" || !existsSync(p.projectRootPath)) return [];
+      const root = realpathSync(p.projectRootPath);
+      return attached.has(root) ? [] : [{ name: p.projectDisplayName, root }];
+    });
+  }
+
+  /** What every project's team left behind, and each project itself, for the Human to pick from. */
+  async leftovers(): Promise<Leftover[]> {
+    const ready = await this.whenReady();
+    const found: Leftover[] = [];
+    const dir = join(this.root, "projects");
+    for (const id of existsSync(dir) ? readdirSync(dir) : []) {
+      const file = join(dir, id, "project.json");
+      if (!existsSync(file)) {
+        found.push({
+          id: leftoverId("project", id, ""),
+          kind: "project",
+          project: id,
+          label: join(dir, id),
+          why: "a folder with no project in it",
+          removable: true,
+        });
+        continue;
+      }
+      const { repo } = JSON.parse(readFileSync(file, "utf8")) as { repo: string };
+      const agents = await ready.host.labelled({ [PROJECT_LABEL]: id });
+      const kept: readonly Kept[] = "unavailable" in agents ? [] : agents;
+      if (!existsSync(repo)) {
+        found.push(projectLeftover(id, repo, null));
+        continue;
+      }
+      const runtime = this.runtimes.get(id) ?? this.open(id, ready);
+      found.push(
+        ...(await leftoversOf(id, runtime.project.view, runtime.workspace, kept)),
+        projectLeftover(id, repo, runtime.project.view),
+      );
+    }
+    return found;
+  }
+
+  /** Removes what the Human picked, each checked again against what is left over now. */
+  async clean(ids: readonly string[]): Promise<{ id: string; ok: boolean; text: string }[]> {
+    const now = new Map((await this.leftovers()).map((l) => [l.id, l]));
+    const picked = [...new Set(ids)].sort(
+      (a, b) => Number(a.startsWith("project:")) - Number(b.startsWith("project:")),
+    );
+    const results = [];
+    for (const id of picked) {
+      const item = now.get(id);
+      if (!item) results.push({ id, ok: false, text: "It is no longer left over." });
+      else if (!item.removable) results.push({ id, ok: false, text: item.why });
+      else results.push({ id, ...(await this.removeLeftover(item)) });
+    }
+    return results;
+  }
+
+  private async removeLeftover(item: Leftover): Promise<{ ok: boolean; text: string }> {
+    if (item.kind === "project") return this.removeProject(item.project);
+    const ref = refOf(item.id);
+    const workspace = this.runtimes.get(item.project)?.workspace;
+    let done: { removed: true } | { kept: string };
+    if (item.kind === "agent") {
+      const archived = await (await this.whenReady()).host.archive(ref);
+      done = archived === "done" ? { removed: true } : { kept: "Paseo is not reachable yet." };
+    } else if (!workspace) done = { kept: "Its project is no longer open." };
+    else if (item.kind === "branch") done = await workspace.removeBranch(ref);
+    else {
+      const copy = (await workspace.onDisk()).find((c) => c.key === ref);
+      done = copy ? await workspace.remove(ref, copy.branch, null) : { removed: true };
+    }
+    return "removed" in done ? { ok: true, text: `Removed ${item.label}.` } : { ok: false, text: done.kept };
+  }
+
+  /**
+   * Detaches a project and removes what the plugin made for it: its agents archived, its copies and branches, its
+   * record. A copy holding unsaved work stops it before anything is touched.
+   */
+  private async removeProject(id: string): Promise<{ ok: boolean; text: string }> {
+    const ready = await this.whenReady();
+    const dir = projectDir(this.root, id);
+    const file = join(dir, "project.json");
+    if (!existsSync(file)) {
+      rmSync(dir, { recursive: true, force: true });
+      return { ok: true, text: `Removed ${dir}.` };
+    }
+    const { repo } = JSON.parse(readFileSync(file, "utf8")) as { repo: string };
+    const workspace = existsSync(repo)
+      ? (this.runtimes.get(id)?.workspace ?? new Workspace(repo, join(dir, "copies")))
+      : null;
+    const unsaved = workspace ? (await workspace.onDisk()).filter((c) => c.unsaved) : [];
+    if (unsaved.length > 0)
+      return {
+        ok: false,
+        text: `Uncommitted work is still in ${unsaved.map((c) => c.path).join(", ")}: commit or move it first.`,
+      };
+    // Nothing opens the project again while it goes: every reader looks for this file first.
+    const aside = join(dir, "project.removing.json");
+    renameSync(file, aside);
+    const runtime = this.runtimes.get(id);
+    if (runtime) await this.unload(id, runtime);
+    // Listed once the project is unloaded, so an agent its last effects started is among them.
+    const agents = await ready.host.labelled({ [PROJECT_LABEL]: id });
+    if ("unavailable" in agents) {
+      renameSync(aside, file);
+      return { ok: false, text: "Paseo is not reachable yet." };
+    }
+    for (const a of agents) await ready.host.archive(a.host);
+    const kept: string[] = [];
+    if (workspace) {
+      for (const c of await workspace.onDisk()) {
+        const r = await workspace.remove(c.key, c.branch, null);
+        if ("kept" in r) kept.push(r.kept);
+      }
+      await workspace.prune();
+      if (kept.length === 0)
+        for (const b of await workspace.branchesUnder(branchesOf(id), null)) {
+          const r = await workspace.removeBranch(b.branch);
+          if ("kept" in r) kept.push(r.kept);
+        }
+    }
+    if (kept.length > 0) {
+      renameSync(aside, file);
+      return { ok: false, text: `Its agents are archived, but some of it stayed: ${kept.join("; ")}` };
+    }
+    rmSync(dir, { recursive: true, force: true });
+    return { ok: true, text: `Removed the project for ${repo}.` };
   }
 
   /** The Human's view of one project: what they need to know, and the last things that happened. */

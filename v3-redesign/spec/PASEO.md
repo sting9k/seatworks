@@ -41,7 +41,9 @@ from Paseo 0.10.1: the plugin SDK, `@getpaseo/client`, `@getpaseo/protocol`, the
 | The Human's surface                    | Client contributions: a surface and sidebar item, workspace panels, Command Center items, slash commands, header buttons, composer pills, timeline renderers | —                                  |
 | Cards in a chat                        | `timeline.append` plugin rows: shown, not kept (a daemon restart drops them), so never the record         | —                                  |
 | Settings, Jev's key among them         | `registerSettings` with a host-scoped definition (`defineSettings`, `scope: "host"`, a version and a zod schema), kept per installation across updates. Only `host` is accepted: 0.10.1 throws on any other scope, which is the refusal V1 met | Its own settings store             |
-| Install and update                     | A Git source (`paseo plugin add owner/repo:path`), reviewed `paseo plugin update`, `build` argv steps    | —                                  |
+| Install and update                     | A Git source (`paseo plugin add owner/repo:path`), reviewed `paseo plugin update`, `build` argv steps. `install.sh` checks git, Node, npm and Paseo, then adds the Git source. The plugin API has no plugin management, so the surface's update check runs `paseo plugin update <id> --check --json` and only reads it: applying stays Paseo's reviewed update | Its own clone, `git fetch` and reload |
+| Which projects the Human has           | `projects.list`: each project's `projectRootPath` and `projectKind`, offered on the surface to attach   | —                                  |
+| Finding what a team left behind        | `agents.list` with `filter.labels` (the project's label), paged by `pageInfo.nextCursor`                | —                                  |
 
 ## What v3 does not take
 
@@ -96,3 +98,6 @@ from Paseo 0.10.1: the plugin SDK, `@getpaseo/client`, `@getpaseo/protocol`, the
   is off by default. If the Human turns it on, v3 needs provider entries of its own, the one reason to write Paseo's
   config.
 - Branch names and locking through `workspaces.create`, against what the workspace port needs.
+- That the daemon's `PATH` finds Paseo's command line, so the update check runs; when it does not, the surface says
+  so and gives the command to run by hand.
+- That `projects.list` lists every project the Human opened in Paseo, each `projectRootPath` the checkout's root.

@@ -39,6 +39,27 @@ export const HumanViewSchema = z.object({
 });
 export type HumanView = z.infer<typeof HumanViewSchema>;
 
+/** Something a team left behind that nothing uses any more, or a whole project, for the Human to remove or keep. */
+export const LeftoverSchema = z.object({
+  id: z.string(),
+  kind: z.enum(["copy", "branch", "agent", "project"]),
+  project: z.string(),
+  label: z.string(),
+  why: z.string(),
+  removable: z.boolean(),
+});
+export type Leftover = z.infer<typeof LeftoverSchema>;
+
+/** Whether a newer release of the plugin is out, as Paseo's own update check answers. */
+export const UpdateCheckSchema = z.object({
+  status: z.enum(["available", "current", "local", "unknown"]),
+  current: z.string().nullable(),
+  latest: z.string().nullable(),
+  links: z.array(z.string()),
+  text: z.string(),
+});
+export type UpdateCheck = z.infer<typeof UpdateCheckSchema>;
+
 /** The Human's surface calls these (PORTS.md, Human surface); shaped as Paseo's plugin RPC contracts. */
 export const RPC = {
   openProject: {
@@ -58,7 +79,10 @@ export const RPC = {
   projects: {
     name: "seatworks.projects",
     input: z.object({}),
-    output: z.object({ projects: z.array(z.object({ id: z.string(), repo: z.string(), open: z.boolean() })) }),
+    output: z.object({
+      projects: z.array(z.object({ id: z.string(), repo: z.string(), open: z.boolean() })),
+      unattached: z.array(z.object({ name: z.string(), root: z.string() })),
+    }),
   },
   view: {
     name: "seatworks.view",
@@ -79,5 +103,20 @@ export const RPC = {
     name: "seatworks.status",
     input: z.object({ project: z.string().min(1), scope: z.string().default("root") }),
     output: z.object({ text: z.string() }),
+  },
+  leftovers: {
+    name: "seatworks.leftovers",
+    input: z.object({}),
+    output: z.object({ leftovers: z.array(LeftoverSchema) }),
+  },
+  clean: {
+    name: "seatworks.clean",
+    input: z.object({ ids: z.array(z.string().min(1)).min(1).max(500) }),
+    output: z.object({ results: z.array(z.object({ id: z.string(), ok: z.boolean(), text: z.string() })) }),
+  },
+  checkUpdate: {
+    name: "seatworks.check_update",
+    input: z.object({}),
+    output: UpdateCheckSchema,
   },
 } as const;

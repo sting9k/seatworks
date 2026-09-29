@@ -40,6 +40,7 @@ stream(agentId) -> events: turn_started, turn_ended(done | failed(why) | cancell
 history(agentId, since) -> events
 answerPermission(agentId, requestId, allow, reason)
 archive(agentId)
+labelled(labels) -> { agentId, title, labels }[]            // every agent not archived that carries all of them
 ```
 
 - `sandbox` is built from role properties (`writes`, `reading`), never from a role's name. Each agent's own format
@@ -60,6 +61,10 @@ advance(branch, fromSha, toSha, how) -> Result<sha>       // how: squash | merge
 state(path) -> { head, branch, uncommitted }
 remove(key) -> Result<removed | kept(why)>                // keeps a copy holding uncommitted work
 publish(branch, remote, expectedSha) -> Result<sha>       // never forced; refuses if the remote moved
+onDisk() -> { key, path, branch, unsaved }[]              // every copy under the root, used or not
+branchesUnder(prefix, into) -> { branch, merged }[]
+removeBranch(branch) -> Result<removed | kept(why)>       // git refuses one checked out in a copy
+prune()                                                   // forgets copies git lists whose directory is gone
 ```
 
 Invariants, taken from Symphony's workspace safety rules:
@@ -119,10 +124,19 @@ Shows the Human the kernel's views and the agents' own words, and takes the Huma
 views: whatTheHumanNeeds, sinceTheyLooked, chainOfChange, openObligations, status, signals
 commands: answer_question, send_message, hold_scope, resume_scope, amend_plan (lines of theirs), answer_permission,
           set_checks, publish
+upkeep: attach(repository), leftovers, clean(picked), checkUpdate
 ```
 
 - It shows only what the kernel's views and the agents said. It writes no summary of its own.
 - A message the Human types here or straight into an agent's chat is the same message on the record.
+- Attaching opens a project for one of Paseo's projects and starts its Supervisor. The plugin serves only attached
+  projects: every hook passes over an agent it did not start.
+- Leftovers are what no open scope uses any more: a copy, a branch made for a scope, an agent Paseo keeps whose seat
+  ended, and each project as a whole. The Human picks and confirms, and the plugin removes only that, checked again
+  against what is left over at that moment. A copy holding uncommitted work on its branch is listed and never
+  removed, and a project with one is not removed at all. Removing a project archives its agents and deletes its
+  copies, branches and record: attached again, it starts from nothing.
+- The update check reads Paseo's own and installs nothing.
 
 ## Record
 

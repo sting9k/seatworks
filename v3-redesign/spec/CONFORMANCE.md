@@ -113,6 +113,17 @@ on an implementation without the rule before it is trusted.
 | An evidence run asked while the machine is held             | Starts when the hold is released         |
 | Another project on the machine asks for an evidence run during a hold | Deferred the same way          |
 
+## Installing and upkeep
+
+| Case                                                                              | Expect                                                              |
+| --------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| Paseo lists a git project no team is attached to                                  | Offered to attach; once attached, no longer offered                 |
+| A task is dropped with a commit on its branch and a draft in its copy             | Its copy listed and not removable; its branch listed, not merged     |
+| The Human removes a project while a copy holds uncommitted work                   | Refused, naming the copy; nothing touched, its agents still at work |
+| The Human removes a project                                                       | Its agents archived, every branch made for it and its record gone; offered to attach again |
+| Paseo's check says a newer release is out                                         | Shown with its review links and the command that applies it; nothing installed |
+| Paseo's command line is not on the daemon's PATH                                  | Said, with the command to run by hand                               |
+
 ## Reflex
 
 | Case                                                        | Expect                                                     |

@@ -2,6 +2,7 @@ import { type PluginSurfaceProps, useRpc } from "@getpaseo/plugin/client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { type HumanView, RPC } from "../shared/contracts/rpc.ts";
+import { Attach, Leftovers, Updates } from "./upkeep.tsx";
 
 /** How often the open view is read again: the record changes as agents work, and a read is cheap. */
 const REFRESH_MS = 5000;
@@ -14,6 +15,7 @@ export function Surface({ theme }: PluginSurfaceProps) {
   const readView = useRpc(RPC.view);
   const send = useRpc(RPC.human);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [unattached, setUnattached] = useState<{ name: string; root: string }[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [view, setView] = useState<{
     human: HumanView | null;
@@ -56,9 +58,10 @@ export function Surface({ theme }: PluginSurfaceProps) {
   const refresh = useCallback(async () => {
     const listed = await listProjects({});
     setProjects(listed.projects);
-    const id = selected ?? listed.projects[0]?.id ?? null;
+    setUnattached(listed.unattached);
+    const id = selected && listed.projects.some((p) => p.id === selected) ? selected : (listed.projects[0]?.id ?? null);
     if (id !== selected) setSelected(id);
-    if (id) setView(await readView({ project: id }));
+    setView(id ? await readView({ project: id }) : null);
   }, [listProjects, readView, selected]);
 
   useEffect(() => {
@@ -83,9 +86,18 @@ export function Surface({ theme }: PluginSurfaceProps) {
   return (
     <ScrollView contentContainerStyle={s.root}>
       <Text style={s.h1}>Seatworks</Text>
+      <Attach
+        s={s}
+        unattached={unattached}
+        attached={async (text) => {
+          setSaid(text);
+          await refresh();
+        }}
+      />
       {projects.length === 0 ? (
         <Text style={s.muted}>
-          No team yet. In a workspace, run “Open a Seatworks team here” from the command center.
+          No project is attached yet. Attach one above, or run “Open a Seatworks team here” from the command center in a
+          workspace.
         </Text>
       ) : (
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
@@ -149,11 +161,13 @@ export function Surface({ theme }: PluginSurfaceProps) {
           </Section>
         </>
       ) : null}
+      <Leftovers s={s} cleaned={refresh} />
+      <Updates s={s} />
     </ScrollView>
   );
 }
 
-type Styles = Record<
+export type Styles = Record<
   "root" | "h1" | "h2" | "text" | "muted" | "card" | "input" | "button" | "buttonText" | "danger",
   object
 >;

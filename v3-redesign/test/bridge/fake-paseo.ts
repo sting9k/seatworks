@@ -23,6 +23,8 @@ export function fakePaseo(pluginDir: string, provider = "claude") {
   const archived: string[] = [];
   const byKey = new Map<string, { host: string; request: string }>();
   const gate = { loseReplies: 0 };
+  /** The project roots Paseo lists; a test adds the ones the Human opened in Paseo. */
+  const projects: string[] = [];
   const ref = (id: string) => ({
     id,
     refresh: () =>
@@ -46,6 +48,17 @@ export function fakePaseo(pluginDir: string, provider = "claude") {
     timeline: { refetch: () => Promise.resolve({ entries: [] }) },
   });
   const api = {
+    projects: {
+      list: () =>
+        Promise.resolve({
+          projects: projects.map((root) => ({
+            projectId: root,
+            projectDisplayName: root.split("/").pop(),
+            projectRootPath: root,
+            projectKind: "git",
+          })),
+        }),
+    },
     config: {
       get: () =>
         Promise.resolve({
@@ -65,7 +78,15 @@ export function fakePaseo(pluginDir: string, provider = "claude") {
         Promise.resolve({
           entries: created
             .filter((c) => Object.entries(o.filter.labels).every(([k, v]) => c.labels[k] === v))
-            .map((c) => ({ agent: { id: c.host, archivedAt: archived.includes(c.host) ? "now" : null } })),
+            .map((c) => ({
+              agent: {
+                id: c.host,
+                title: c.title,
+                labels: c.labels,
+                archivedAt: archived.includes(c.host) ? "now" : null,
+              },
+            })),
+          pageInfo: { hasMore: false, nextCursor: null, prevCursor: null },
         }),
       create: (o: {
         idempotencyKey: string;
@@ -103,5 +124,5 @@ export function fakePaseo(pluginDir: string, provider = "claude") {
       ref,
     },
   };
-  return { api: api as unknown as PaseoApi, created, sent, archived, gate };
+  return { api: api as unknown as PaseoApi, created, sent, archived, gate, projects };
 }

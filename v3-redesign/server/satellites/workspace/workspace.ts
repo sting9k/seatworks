@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { join } from "node:path";
 import { AS_PLUGIN, git, isAncestor, said, sha } from "./git.ts";
@@ -141,6 +141,45 @@ export class Workspace {
       if (tip && (await isAncestor(this.repo, tip, mergedInto))) await git(this.repo, ["branch", "-D", branch]);
     }
     return { removed: true };
+  }
+
+  /**
+   * Each copy on disk under the copies root, the branch it stands on, and whether it holds unsaved work: uncommitted
+   * changes on a branch, which `remove` keeps. What a detached reader's copy holds was never anyone's.
+   */
+  async onDisk(): Promise<{ key: string; path: string; branch: string | null; unsaved: boolean }[]> {
+    if (!existsSync(this.copies)) return [];
+    const found = [];
+    for (const key of readdirSync(this.copies)) {
+      const path = join(this.copies, key);
+      const head = await git(path, ["symbolic-ref", "-q", "--short", "HEAD"]);
+      const branch = head.code === 0 ? head.stdout.trim() || null : null;
+      const status = branch === null ? null : await git(path, ["status", "--porcelain"]);
+      found.push({ key, path, branch, unsaved: status !== null && (status.code !== 0 || status.stdout.trim() !== "") });
+    }
+    return found;
+  }
+
+  /** The branches under `prefix`, each with whether `into` already holds its tip. */
+  async branchesUnder(prefix: string, into: string | null): Promise<{ branch: string; merged: boolean }[]> {
+    const listed = await git(this.repo, ["for-each-ref", "--format=%(refname)", `refs/heads/${prefix}`]);
+    const found = [];
+    for (const ref of listed.stdout.split("\n").filter(Boolean)) {
+      const branch = ref.slice("refs/heads/".length);
+      found.push({ branch, merged: into !== null && (await isAncestor(this.repo, branch, into)) });
+    }
+    return found;
+  }
+
+  /** Deletes a branch whatever it holds; git refuses one checked out in any copy. */
+  async removeBranch(branch: string): Promise<{ removed: true } | { kept: string }> {
+    const run = await git(this.repo, ["branch", "-D", branch]);
+    return run.code === 0 ? { removed: true } : { kept: said(run) };
+  }
+
+  /** Forgets copies git still lists whose directory is gone. */
+  async prune(): Promise<void> {
+    await git(this.repo, ["worktree", "prune"]);
   }
 
   /** What `tip` changed since it left `base`, capped so a huge change never fills a reader's context. */

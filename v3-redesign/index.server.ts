@@ -2,7 +2,8 @@ import type { PluginServerContext } from "@getpaseo/plugin/server";
 import { HUMAN_COMMANDS, type CommandType, parseBody } from "./shared/contracts/commands.ts";
 import { RPC } from "./shared/contracts/rpc.ts";
 import { reflexSettings } from "./shared/contracts/settings.ts";
-import { Plugin } from "./server/bridge/plugin.ts";
+import { PLUGIN_ID, Plugin } from "./server/bridge/plugin.ts";
+import { checkUpdate } from "./server/bridge/update-check.ts";
 import { daemonLog } from "./server/core/logger.ts";
 import { stateRoot } from "./server/core/paths.ts";
 
@@ -63,10 +64,19 @@ export default function contribute(server: PluginServerContext) {
       ? { ok: true, text: `Recorded ${outcome.events.length} events.` }
       : { ok: false, text: outcome.refused.says };
   });
-  server.handle(RPC.projects, (_input, { paseo }) => {
+  server.handle(RPC.projects, async (_input, { paseo }) => {
     plugin.saw(paseo);
-    return { projects: plugin.projects() };
+    return { projects: plugin.projects(), unattached: await plugin.unattached() };
   });
+  server.handle(RPC.leftovers, async (_input, { paseo }) => {
+    plugin.saw(paseo);
+    return { leftovers: await plugin.leftovers() };
+  });
+  server.handle(RPC.clean, async (input, { paseo }) => {
+    plugin.saw(paseo);
+    return { results: await plugin.clean(input.ids) };
+  });
+  server.handle(RPC.checkUpdate, () => checkUpdate(PLUGIN_ID));
   server.handle(RPC.view, async (input, { paseo }) => {
     plugin.saw(paseo);
     const view = await plugin.view(input.project);

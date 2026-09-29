@@ -1,4 +1,4 @@
-import type { PaseoAgentConfig } from "@getpaseo/client";
+import type { PaseoAgentConfig, PaseoAgentListResult } from "@getpaseo/client";
 import type { AgentTimelineItem } from "@getpaseo/protocol/agent-types";
 import type { PaseoLink } from "./paseo-link.ts";
 
@@ -125,6 +125,26 @@ export class PaseoHost {
     if (!api) return UNAVAILABLE;
     await api.agents.ref(host).archive();
     return "done";
+  }
+
+  /** Every agent not yet archived that carries all of `labels`, page by page. */
+  async labelled(
+    labels: Readonly<Record<string, string>>,
+  ): Promise<{ host: string; title: string | null; labels: Readonly<Record<string, string>> }[] | Unavailable> {
+    const api = this.link.current;
+    if (!api) return UNAVAILABLE;
+    const found = [];
+    let cursor: string | null = null;
+    do {
+      const page: PaseoAgentListResult = await api.agents.list({
+        filter: { labels: { ...labels } },
+        page: { limit: 200, ...(cursor ? { cursor } : {}) },
+      });
+      for (const { agent } of page.entries)
+        if (!agent.archivedAt) found.push({ host: agent.id, title: agent.title, labels: agent.labels });
+      cursor = page.pageInfo.hasMore ? page.pageInfo.nextCursor : null;
+    } while (cursor);
+    return found;
   }
 
   /** An agent's recent turns as lines: what it was told, said, thought and ran, each clipped. */

@@ -33,7 +33,7 @@ order is the agents'.
    small change. Built and proved against a stand-in for Paseo (`test/bridge/lane.test.ts`); what only a live daemon
    can show is in `spec/PASEO.md` and `spec/HARNESS.md`, To check.
 3. The Human's surface and the record. Built: a Paseo surface over the Human's view, the activity, a finding's chain
-   of change and the five signals.
+   of change and the five signals; installing, attaching a project, cleaning up and the update check.
 4. The reflex and the watch (`spec/REFLEX.md`, `spec/WATCH.md`), starting with their `active` sets. Built: Jev's
    client and settings, the starting questions and moments, going in circles and spend counted in code, and a test
    minting an API caught at the edit.
@@ -85,9 +85,28 @@ bin/, harness/ the git shim and the team's MCP server; each agent's shipped sett
 - Jev, through OpenRouter or TypeSafe's own API, with its key set in the plugin's settings. It is a soft dependency:
   without it the team still works, less watched, and the Human is told.
 - git.
+- Node.js `>=22.13` with npm, where the daemon runs: Paseo builds the plugin with `npm ci`.
 
 Nothing else. A requirement is added only when no one could do the work without it; what a Human already has, such as
 an IDE's index, may be configured as a tool for agents and is never needed by v3 itself.
+
+## Install
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/sting9k/seatworks/main/v3-redesign/install.sh | sh
+```
+
+`install.sh` checks git, Node, npm and Paseo, adds the plugin to Paseo from its Git source (`--ref` for another
+release, `--dir` for a checkout of your own), and names the Paseo agent profiles the SLP profile's roles run on.
+
+- **Attach a project**: the plugin serves only projects attached to it. Open Seatworks in Paseo's sidebar and attach
+  one of Paseo's projects, or run "Open a Seatworks team here" from the command center in a workspace. Attaching
+  starts its Supervisor.
+- **Clean up**: Seatworks lists what teams left behind (copies and branches no open scope uses, agents Paseo keeps
+  whose seat ended) and each project whole. Only what you pick and confirm is removed; a copy holding uncommitted work
+  never is. Removing a project archives its agents and deletes its copies, branches and record.
+- **Check for updates**: the surface asks Paseo whether a newer release is out and links its changes. Updating stays
+  Paseo's reviewed `paseo plugin update seatworks`.
 
 ## Decided
 
