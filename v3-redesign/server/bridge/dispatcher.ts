@@ -121,7 +121,10 @@ export class Dispatcher {
         daemonLog.error(`project ${this.project.id}: effect ${effect.key} failed ${MAX_ATTEMPTS} times`, error);
       } else {
         for (const e of batch) this.waiting.add(e.key);
-        this.later(2 ** effect.attempts * 1000);
+        this.later(
+          2 ** effect.attempts * 1000,
+          batch.map((e) => e.key),
+        );
       }
       return;
     }
@@ -142,9 +145,11 @@ export class Dispatcher {
     for (const e of batch) this.store.settle(e.key, handled.status, handled.status === "done" ? null : handled.why, at);
   }
 
-  private later(ms: number): void {
+  /** Tries the given effects again after a pause; they wait until then, not until the next change. */
+  private later(ms: number, keys: readonly string[]): void {
     const timer = setTimeout(() => {
       this.timers.delete(timer);
+      for (const key of keys) this.waiting.delete(key);
       this.kick("freed");
     }, ms);
     timer.unref();

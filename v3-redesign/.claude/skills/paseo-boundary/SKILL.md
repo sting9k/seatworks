@@ -43,6 +43,15 @@ Read from Paseo 0.10.1 unless marked as V1's finding.
 - **Every message sent carries a `clientMessageId`**; the client makes one when the sender gives none. A daemon
   restart, or reading an archived agent, rebuilds history from the agent's own transcript with none, so a user message
   without one has no known sender.
+- **`agent.turn_ended`'s `timeline` is the agent's whole history** in the daemon's memory, not the turn: read from the
+  actor's `seen`. Every provider maps thinking to `reasoning` items.
+- **`send(text, { messageId })` sets the user message's `clientMessageId`**, and replaces a running turn. The same id
+  twice shows one row but runs twice: a send is not idempotent on its own.
+- **A keyed `agents.create` is kept on disk with a digest of the whole request**: the same key with another request
+  throws `agent_request_key_conflict`, one cut off by a restart stays `agent_request_outcome_unknown`. Look the agent
+  up by labels (`agents.list({ filter: { labels } })`) before creating again.
+- **`lastUsage` holds running totals for the session**, reset when the provider's process restarts; Codex gives its
+  last call's tokens and no cost. Count a turn's rise, never the value.
 - **`timeline.subscribe()` delivers live events only**, prose and reasoning included. After a reconnect it sends
   `subscription_restored` and none of what was missed; a failed one sends `error` and is released.
 - **`timeline.append` rows are shown, not kept**: a daemon restart drops them, so they are never the record.

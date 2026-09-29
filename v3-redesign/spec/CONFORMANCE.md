@@ -62,6 +62,8 @@ on an implementation without the rule before it is trusted.
 | Reseat a Peer mid-task                                                                  | Same scope and copy; its obligations with the new actor    |
 | A tool call whose arguments name another agent as caller                                | Recorded as the agent whose key made the call              |
 | A Peer's turn fails on the host's error                                                 | A fact to its Lead; the seat, its obligations and mail stay |
+| Three turns an agent reports at $1, $3, then $0.50 after its session restarted          | It spent $3.50; its lane and the root the same             |
+| The Human types into a Lead's chat, and two turns end, each hook carrying the whole history | Its Supervisor has one copy                          |
 | A hand-back in a project with checks set                                                | Those checks run on its commit, as evidence                |
 | The Lead runs its own acceptance test on a Peer's commit with `run_checks`              | Evidence on that commit, by the Lead                       |
 | The Human reseats the Supervisor                                                        | Accepted: the Human stands as the root's parent            |
@@ -89,6 +91,8 @@ on an implementation without the rule before it is trusted.
 | A crash after commit, before an effect is dispatched               | The effect is dispatched once on restart        |
 | A satellite's fact delivered twice                                 | Recorded once                                   |
 | A tool call retried with the same command id                       | The earlier result; nothing appended            |
+| A satellite throws on an effect                                    | Tried again after a pause, with no change to wake it |
+| An agent's create loses its reply and is tried after the record moved on | The seat keeps the one agent made; a key Paseo cannot finish is its owner's fact |
 | The same log folded by the daemon and by the surface               | The same state                                  |
 
 ## Workspace and evidence

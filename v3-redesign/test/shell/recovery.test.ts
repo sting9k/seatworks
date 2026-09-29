@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { test } from "node:test";
+import { mock, test } from "node:test";
 import type { Caller } from "../../shared/contracts/commands.ts";
 import { parseBody } from "../../shared/contracts/commands.ts";
 import { Dispatcher } from "../../server/bridge/dispatcher.ts";
@@ -165,4 +165,29 @@ test("an effect that waits is tried again only after a change, never spun on whi
   assert.equal(tries, 2, "a change does");
   dispatcher.dispose();
   project.dispose();
+});
+
+test("an effect whose satellite threw is tried again after its pause, with no change to wake it", async () => {
+  mock.timers.enable({ apis: ["setTimeout"] });
+  try {
+    const { store } = fresh();
+    const project = Project.open("p", store, profile);
+    let tries = 0;
+    const { handlers } = recordingHandlers((e) => {
+      if (e.kind === "workspace.create" && ++tries === 1) throw new Error("connection lost");
+      return { status: "done" };
+    });
+    const dispatcher = new Dispatcher(project, store, handlers, () => false);
+    await project.submit(command(human, "open_project", { base: "main", profileHash: "h", model: "m" }));
+    dispatcher.kick();
+    await dispatcher.idle();
+    assert.equal(tries, 1);
+    mock.timers.tick(1000);
+    await dispatcher.idle();
+    assert.equal(tries, 2);
+    dispatcher.dispose();
+    project.dispose();
+  } finally {
+    mock.timers.reset();
+  }
 });

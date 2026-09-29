@@ -54,7 +54,13 @@ const command = fc.oneof(
   fc.record({
     who: fc.constant("bridge"),
     type: fc.constant("record_turn"),
-    args: fc.record({ actor, outcome: fc.constant("done"), tokens: fc.nat(100), usd: fc.constant(0) }),
+    args: fc.record({
+      actor,
+      outcome: fc.constant("done"),
+      tokensSoFar: fc.nat(100),
+      usdSoFar: fc.constant(0),
+      seen: fc.nat(50),
+    }),
   }),
   fc.record({
     who: fc.constant("bridge"),

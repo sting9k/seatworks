@@ -101,6 +101,9 @@ export type EventBody =
       why: string | null;
       tokens: number;
       usd: number;
+      tokensSoFar: number;
+      usdSoFar: number;
+      seen: number;
     }
   | { type: "checks_set"; checks: readonly Check[] }
   | { type: "publish_requested"; remote: string; branch: string }

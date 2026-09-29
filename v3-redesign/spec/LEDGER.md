@@ -124,7 +124,10 @@ a message the Human sent or a question the Human answered; the kernel checks it 
 type Actor = { id: ActorId; role: RoleName; scope: ScopeId; model: string;
                host: string | null;                      // the agent host's id, from `agent_started`
                status: "seated" | "released" | "gone";
-               turns: number; tokens: number; usd: number; startedAt: string };
+               turns: number; tokens: number; usd: number;   // what it spent, summed turn by turn
+               reported: { tokens: number; usd: number };   // its session's running totals at its last turn's end
+               seen: number;                                // items of its agent's history read by then
+               startedAt: string };
 ```
 
 ### Findings, claims, evidence
@@ -263,7 +266,7 @@ the shell and never reaches `decide`.
 | ---------------------- | ----------------------------------------------------------------------- | ----------------------------------- |
 | `record_workspace`     | `scope, ok, branch?, why?`                                              | `workspace_ready` or `workspace_failed` |
 | `record_agent`         | `actor, host`                                                           | `agent_started`                     |
-| `record_turn`          | `actor, outcome: done \| failed \| cancelled, why?, tokens, usd`        | `turn_ended`, `attention_climbed`\* |
+| `record_turn`          | `actor, outcome: done \| failed \| cancelled, why?, tokensSoFar, usdSoFar, seen` | `turn_ended`, `attention_climbed`\* |
 | `record_gone`          | `actor, why`                                                            | `actor_gone`, `obligation_moved`\*, `obligation_closed`\* (its permissions) |
 | `record_delivery`      | `messages, attentions`                                                  | `message_delivered`\*, `attention_delivered`\* |
 | `record_candidate`     | `scope, commit, result: { candidate, parentHead } \| { conflict: paths }` | `candidate_ready` or `candidate_conflict` |
@@ -322,7 +325,7 @@ Every event, with its payload. `evolve` handles each; an unknown type stops the 
 | `machine_held`, `machine_released` | `actor, why`                                                                    |
 | `actor_released`      | `actor, reason`                                                                              |
 | `actor_gone`          | `actor, why`                                                                                 |
-| `turn_ended`          | `actor, outcome, why, tokens, usd`                                                           |
+| `turn_ended`          | `actor, outcome, why, tokens, usd` (this turn's share), `tokensSoFar, usdSoFar, seen`         |
 | `checks_set`          | `checks`                                                                                     |
 | `publish_requested`   | `remote, branch, sha`                                                                        |
 | `published`           | `remote, branch, sha`                                                                        |

@@ -44,6 +44,8 @@ function apply(s: State, e: Event, at: string): State {
         turns: 0,
         tokens: 0,
         usd: 0,
+        reported: { tokens: 0, usd: 0 },
+        seen: 0,
         startedAt: at,
       };
       return counted({ ...s, actors: withEntry(s.actors, e.actor, actor) }, "actor", e.actor);
@@ -224,6 +226,8 @@ function apply(s: State, e: Event, at: string): State {
         turns: a.turns + 1,
         tokens: a.tokens + e.tokens,
         usd: a.usd + e.usd,
+        reported: { tokens: e.tokensSoFar, usd: e.usdSoFar },
+        seen: e.seen,
       }));
       const scopes = new Map(next.scopes);
       for (let at = next.actors.get(e.actor)?.scope ?? null; at !== null; at = scopes.get(at)?.parent ?? null) {

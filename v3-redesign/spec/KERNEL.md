@@ -90,7 +90,9 @@ The owner's hypotheses for its scope (CONCEPT-V2 §5.2): `goal`, `limits`, `unkn
 checked), `appetite` (what the scope is worth spending). Lines, each with its origin. Amended by the scope's owner.
 
 An appetite that names an amount of money or of hours also carries it as a number. What each agent spends is recorded
-turn by turn from the agent host's usage, and `status` sets what a scope and its children have spent beside it. A
+turn by turn from the agent host's usage, and `status` sets what a scope and its children have spent beside it. The
+host reports what an agent's session has spent so far, so a turn's share is the rise since its last report; a report
+lower than the last means the session started again, and all of it is new. A
 scope that passes its appetite is a fact for the owner above it: a change to what the work may cost is the Human's
 (I6), and passing the amount is how code notices one.
 

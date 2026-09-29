@@ -71,9 +71,10 @@ Human's question of where a line's authority came from, which is P8.
   sequence checked. Nothing is sent before the commit, so nothing is sent for an event that was not kept.
 - **Dispatch.** A dispatcher takes each pending effect to its satellite, and records its result as a fact with the
   effect's key. A fact whose key was seen is dropped.
-- **Idempotent effects.** Each effect either carries its key to the far side (a message's `clientMessageId`, an
-  agent's label) or checks before it acts (a branch advanced only from the sha it expects). An effect that can be
-  neither is not written.
+- **Idempotent effects.** Each effect either carries its key to the far side (an agent's create key) or checks before
+  it acts (an agent looked for by its labels, a branch advanced only from the sha it expects). An effect that can be
+  neither is not written. One gap is known: Paseo shows a message sent twice with one `clientMessageId` once but runs
+  it twice, so a delivery retried after a lost reply can reach its reader twice (`PASEO.md`).
 - **Restart.** Fold the log from the last snapshot; dispatch the effects with no result; reconcile the agent host
   (`PASEO.md` rule 5). Nothing else is remembered in memory.
 

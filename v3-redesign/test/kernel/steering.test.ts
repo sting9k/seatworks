@@ -34,17 +34,19 @@ test("left past its reader's next turn it climbs, with the silence beside it; pa
   const { ledger, supervisor, lead, peer, task } = team();
   ledger.must(ledger.fact("record_observation", seen(peer, task, "tell")));
   const first = [...ledger.state.attentions.keys()][0]!;
-  ledger.must(ledger.fact("record_turn", { actor: lead, outcome: "done", tokens: 10, usd: 0 }));
+  ledger.must(ledger.fact("record_turn", { actor: lead, outcome: "done", tokensSoFar: 10, usdSoFar: 0, seen: 0 }));
   assert.equal(ledger.state.attentions.has(first), true, "not delivered yet, so not left");
   delivered(ledger, first);
-  ledger.must(ledger.fact("record_turn", { actor: lead, outcome: "done", tokens: 10, usd: 0 }));
+  ledger.must(ledger.fact("record_turn", { actor: lead, outcome: "done", tokensSoFar: 10, usdSoFar: 0, seen: 0 }));
   const climbed = [...ledger.state.attentions.values()];
   assert.equal(climbed.length, 1);
   assert.equal(climbed[0]?.to, supervisor);
   assert.match(climbed[0].facts.join(" "), /a2 did not act on it/);
 
   delivered(ledger, climbed[0].id);
-  ledger.must(ledger.fact("record_turn", { actor: supervisor, outcome: "done", tokens: 10, usd: 0 }));
+  ledger.must(
+    ledger.fact("record_turn", { actor: supervisor, outcome: "done", tokensSoFar: 10, usdSoFar: 0, seen: 0 }),
+  );
   assert.equal(ledger.state.attentions.size, 0);
   assert.ok(ledger.log.some((e) => e.type === "attention_climbed" && e.to.to === "human"));
 });
@@ -62,7 +64,7 @@ test("the Lead acting on the Peer, saying nothing of the attention, settles it; 
   assert.equal(refusedBy(ledger.as(peer, "acknowledge", { attention: second })), "authority");
   ledger.must(ledger.as(lead, "acknowledge", { attention: second }));
   delivered(ledger, second);
-  ledger.must(ledger.fact("record_turn", { actor: lead, outcome: "done", tokens: 1, usd: 0 }));
+  ledger.must(ledger.fact("record_turn", { actor: lead, outcome: "done", tokensSoFar: 1, usdSoFar: 0, seen: 0 }));
   assert.equal(ledger.state.attentions.size, 0);
 });
 
@@ -99,7 +101,16 @@ test("between thresholds it is a candidate owed by the watcher, closed by attend
 
 test("a failed turn and a gone agent are told to the owner above", () => {
   const { ledger, lead, peer } = team();
-  ledger.must(ledger.fact("record_turn", { actor: peer, outcome: "failed", why: "529 overloaded", tokens: 0, usd: 0 }));
+  ledger.must(
+    ledger.fact("record_turn", {
+      actor: peer,
+      outcome: "failed",
+      why: "529 overloaded",
+      tokensSoFar: 0,
+      usdSoFar: 0,
+      seen: 0,
+    }),
+  );
   ledger.must(ledger.fact("record_gone", { actor: peer, why: "the process exited" }));
   const notes = ledger.effects.filter(
     (e) => e.body.kind === "deliver" && e.body.to === lead && e.body.item.kind === "note",

@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { PaseoApi } from "@getpaseo/client";
+import type { AgentTimelineItem } from "@getpaseo/protocol/agent-types";
 import type { Caller, CommandBody } from "../../shared/contracts/commands.ts";
 import type { ReadName } from "../../shared/contracts/tools.ts";
 import { activityLine } from "../../shared/views/activity.ts";
@@ -18,7 +19,7 @@ import { PaseoLink } from "../satellites/agent-host/paseo-link.ts";
 import { EvidenceRunner } from "../satellites/evidence/runner.ts";
 import { MachineHolds } from "../satellites/machine/holds.ts";
 import { ProjectStore } from "../satellites/store/project-store.ts";
-import type { TurnItem } from "../satellites/agent-host/items.ts";
+import { turnOf } from "../satellites/agent-host/items.ts";
 import { loadReflex } from "../satellites/reflex/config.ts";
 import { Jev } from "../satellites/reflex/jev.ts";
 import { git } from "../satellites/workspace/git.ts";
@@ -47,6 +48,9 @@ type Runtime = {
   lastActive: number;
 };
 type Ready = { dir: string; bundle: Bundle; host: PaseoHost; shimDir: string; socket: TeamSocket; socketPath: string };
+
+/** Words a delivery or a first prompt carried: their client message ids are the plugin's effect keys. */
+const OURS = /^\d+:/;
 
 /**
  * The bridge: the only place that builds the whole. It opens each project's shell, carries Paseo's hooks in as facts
@@ -259,13 +263,14 @@ export class Plugin {
   async turnEnded(
     hostId: string,
     outcome: { kind: string; error?: { message: string } },
-    typed: readonly string[],
-    items: readonly TurnItem[],
+    timeline: readonly AgentTimelineItem[],
   ): Promise<void> {
     const who = this.byHost.get(hostId);
     const runtime = who ? this.runtimes.get(who.project) : undefined;
-    if (who && runtime) this.reflex?.onTurn(who.project, who.actor, items, runtime.project.view);
     if (!who || !runtime) return;
+    const read = runtime.project.view.actors.get(who.actor)?.seen ?? 0;
+    const { items, typed, seen } = turnOf(timeline, read, (id) => OURS.test(id));
+    this.reflex?.onTurn(who.project, who.actor, items, runtime.project.view);
     const ready = await this.whenReady();
     const usage = await ready.host.usage(hostId);
     const result = outcome.kind === "completed" ? "done" : outcome.kind === "failed" ? "failed" : "cancelled";
@@ -279,8 +284,9 @@ export class Plugin {
         actor: who.actor,
         outcome: result,
         why: outcome.error?.message ?? null,
-        tokens: usage.tokens,
-        usd: usage.usd,
+        tokensSoFar: usage.tokens,
+        usdSoFar: usage.usd,
+        seen,
       },
     );
   }

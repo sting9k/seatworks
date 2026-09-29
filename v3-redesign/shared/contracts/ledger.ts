@@ -94,6 +94,9 @@ export type Actor = {
   readonly turns: number;
   readonly tokens: number;
   readonly usd: number;
+  readonly reported: { readonly tokens: number; readonly usd: number };
+  /** How many items of its agent's history were read by the end of its last turn. */
+  readonly seen: number;
   readonly startedAt: string;
 };
 

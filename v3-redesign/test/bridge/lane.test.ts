@@ -162,3 +162,76 @@ test("a project idle past a day leaves memory, and its next command folds it bac
   assert.match(plugin.statusOf(project, "root") ?? "", /Scope root/);
   assert.notEqual(before, null);
 });
+
+test("the Human's words typed into a Lead's chat reach its Supervisor once, though every turn's end repeats the history", async () => {
+  const repo = mkdtempSync(join(tmpdir(), "sw-typed-"));
+  git(repo, "init", "-q", "-b", "main");
+  writeFileSync(join(repo, "a.txt"), "a\n");
+  git(repo, "add", ".");
+  git(repo, "commit", "-q", "-m", "start");
+  const plugin = new Plugin(mkdtempSync(join(tmpdir(), "sw-root-")));
+  plugins.push(plugin);
+  const paseo = fakePaseo(pluginDir);
+  plugin.saw(paseo.api);
+  const { socketPath } = await plugin.whenReady();
+  await plugin.openProject(repo, "main");
+  await plugin.idle();
+  const supervisorAgent = paseo.created[0]!;
+  const supervisor = await agentTools(socketPath, supervisorAgent.env);
+  const lane = await supervisor.call("open_scope", {
+    parent: "root",
+    role: "lead",
+    paths: ["docs/"],
+    brief: { goal: { text: "Tidy the docs" }, kind: "verification" },
+  });
+  assert.ok(lane.ok, lane.text);
+  await plugin.idle();
+  const leadAgent = paseo.created[1]!;
+  const first = [
+    { type: "user_message" as const, text: leadAgent.prompt, clientMessageId: "7:agent.create:prompt" },
+    { type: "assistant_message" as const, text: "Reading the docs." },
+    { type: "user_message" as const, text: "Keep the old anchors", clientMessageId: "app-1" },
+    { type: "assistant_message" as const, text: "Keeping them." },
+  ];
+  await plugin.turnEnded(leadAgent.host, { kind: "completed" }, first);
+  await plugin.idle();
+  await plugin.turnEnded(leadAgent.host, { kind: "completed" }, [
+    ...first,
+    { type: "user_message" as const, text: "1 of 1 · a note", clientMessageId: "12:deliver" },
+    { type: "assistant_message" as const, text: "Noted." },
+  ]);
+  await plugin.idle();
+  const copies = paseo.sent.filter((s) => s.host === supervisorAgent.host && s.text.includes("Keep the old anchors"));
+  assert.equal(copies.length, 1);
+  supervisor.close();
+});
+
+test("a create whose reply was lost is tried again after the record moved on, and the seat keeps the one agent made", async () => {
+  const repo = mkdtempSync(join(tmpdir(), "sw-lost-"));
+  git(repo, "init", "-q", "-b", "main");
+  writeFileSync(join(repo, "a.txt"), "a\n");
+  git(repo, "add", ".");
+  git(repo, "commit", "-q", "-m", "start");
+  const plugin = new Plugin(mkdtempSync(join(tmpdir(), "sw-root-")));
+  plugins.push(plugin);
+  const paseo = fakePaseo(pluginDir);
+  plugin.saw(paseo.api);
+  const { socketPath } = await plugin.whenReady();
+  const { project } = await plugin.openProject(repo, "main");
+  await plugin.idle();
+  const supervisor = await agentTools(socketPath, paseo.created[0]!.env);
+  paseo.gate.loseReplies = 1;
+  const lane = await supervisor.call("open_scope", {
+    parent: "root",
+    role: "lead",
+    paths: ["docs/"],
+    brief: { goal: { text: "Tidy the docs" }, kind: "verification" },
+  });
+  assert.ok(lane.ok, lane.text);
+  await plugin.idle();
+  assert.ok((await plugin.human(project, { type: "hold_scope", scope: "1", reason: "wait for the release" })).ok);
+  await plugin.idle();
+  assert.equal(paseo.created.length, 2);
+  assert.notEqual(plugin.envFor(paseo.created[1]!.host), null, "the Lead's actor holds the agent Paseo made");
+  supervisor.close();
+});

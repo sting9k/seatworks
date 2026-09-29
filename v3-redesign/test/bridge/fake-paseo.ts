@@ -9,14 +9,20 @@ type Created = {
   env: Record<string, string>;
   systemPrompt: string;
   tools: string[];
+  labels: Record<string, string>;
 };
 
-/** The part of Paseo's API the plugin uses, recording what it was asked. Agents are always between turns. */
+/**
+ * The part of Paseo's API the plugin uses, recording what it was asked. Agents are always between turns. As Paseo does,
+ * a keyed create keeps its request and refuses the key with a different one; `loseReplies` drops that many create
+ * replies after the agent is made, as a dropped connection would.
+ */
 export function fakePaseo(pluginDir: string) {
   const created: Created[] = [];
   const sent: Sent[] = [];
   const archived: string[] = [];
-  const byKey = new Map<string, string>();
+  const byKey = new Map<string, { host: string; request: string }>();
+  const gate = { loseReplies: 0 };
   const ref = (id: string) => ({
     id,
     refresh: () =>
@@ -55,18 +61,29 @@ export function fakePaseo(pluginDir: string) {
         }),
     },
     agents: {
+      list: (o: { filter: { labels: Record<string, string> } }) =>
+        Promise.resolve({
+          entries: created
+            .filter((c) => Object.entries(o.filter.labels).every(([k, v]) => c.labels[k] === v))
+            .map((c) => ({ agent: { id: c.host, archivedAt: archived.includes(c.host) ? "now" : null } })),
+        }),
       create: (o: {
         idempotencyKey: string;
         cwd: string;
         title: string;
         prompt: string;
         env: Record<string, string>;
+        labels: Record<string, string>;
         config: { systemPrompt: string; toolPolicy: { preapproved: { tool: string }[] } };
       }) => {
+        const request = JSON.stringify(o);
         const known = byKey.get(o.idempotencyKey);
-        if (known) return Promise.resolve(ref(known));
+        if (known)
+          return known.request === request
+            ? Promise.resolve(ref(known.host))
+            : Promise.reject(new Error("agent_request_key_conflict"));
         const host = `host-${created.length + 1}`;
-        byKey.set(o.idempotencyKey, host);
+        byKey.set(o.idempotencyKey, { host, request });
         created.push({
           host,
           cwd: o.cwd,
@@ -75,11 +92,16 @@ export function fakePaseo(pluginDir: string) {
           env: o.env,
           systemPrompt: o.config.systemPrompt,
           tools: o.config.toolPolicy.preapproved.map((p) => p.tool),
+          labels: o.labels,
         });
+        if (gate.loseReplies > 0) {
+          gate.loseReplies--;
+          return Promise.reject(new Error("connection lost"));
+        }
         return Promise.resolve(ref(host));
       },
       ref,
     },
   };
-  return { api: api as unknown as PaseoApi, created, sent, archived };
+  return { api: api as unknown as PaseoApi, created, sent, archived, gate };
 }

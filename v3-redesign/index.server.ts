@@ -3,12 +3,8 @@ import { HUMAN_COMMANDS, type CommandType, parseBody } from "./shared/contracts/
 import { RPC } from "./shared/contracts/rpc.ts";
 import { reflexSettings } from "./shared/contracts/settings.ts";
 import { Plugin } from "./server/bridge/plugin.ts";
-import { turnItems } from "./server/satellites/agent-host/items.ts";
 import { daemonLog } from "./server/core/logger.ts";
 import { stateRoot } from "./server/core/paths.ts";
-
-/** Words a delivery or a first prompt carried: their client message ids are the plugin's effect keys. */
-const OURS = /^\d+:/;
 
 export default function contribute(server: PluginServerContext) {
   const plugin = new Plugin(stateRoot());
@@ -26,14 +22,9 @@ export default function contribute(server: PluginServerContext) {
 
   server.on("agent.turn_ended", (event, { paseo }) => {
     plugin.saw(paseo);
-    const typed = event.timeline.flatMap((item) =>
-      item.type === "user_message" && item.clientMessageId !== undefined && !OURS.test(item.clientMessageId)
-        ? [item.text]
-        : [],
-    );
     const outcome =
       event.outcome.kind === "failed" ? { kind: "failed", error: event.outcome.error } : { kind: event.outcome.kind };
-    guard("a turn's end", () => plugin.turnEnded(event.agent.id, outcome, typed, turnItems(event.timeline)));
+    guard("a turn's end", () => plugin.turnEnded(event.agent.id, outcome, event.timeline));
   });
   server.on("agent.permission_requested", (event, { paseo }) => {
     plugin.saw(paseo);

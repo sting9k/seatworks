@@ -60,25 +60,33 @@ from Paseo 0.10.1: the plugin SDK, `@getpaseo/client`, `@getpaseo/protocol`, the
   API, and starts what needs its files (the profile, the tool server, the git shim) once that API arrives.
 - The API reaches a plugin only with a hook or a panel call; it is one client, made before the plugin's contribution
   runs, that reconnects by itself. Work that needs it waits for the first hook or call.
-- `agent.turn_ended` carries the turn's outcome and its timeline items: words the Human typed into a chat are the
-  `user_message` items whose `clientMessageId` is none of the plugin's effect keys.
-- `agents.create` takes an `idempotencyKey` and `send` a `messageId`: the plugin passes its effect keys, so a retried
-  create or delivery is the same one. `toolPolicy.preapproved` names each MCP tool; there is no wildcard.
+- `agent.turn_ended` carries the turn's outcome and the agent's whole history as the daemon holds it in memory, not
+  the turn alone (`timelineStore.getItems`, never trimmed). Each actor keeps how many items it has read (`seen`, on
+  `turn_ended`), and the turn is what follows. A daemon restart rebuilds the history from the agent's transcript; one
+  shorter than `seen` is read from its last prompt. Words the Human typed are the turn's `user_message` items whose
+  `clientMessageId` is none of the plugin's effect keys; rebuilt ones carry none and count as nobody's.
+- Every provider maps its thinking to `reasoning` items (Claude, Codex, Pi, Oh My Pi, OpenCode), so the watch reads
+  thinking wherever the model returns it; how much it returns is the profile's thinking option.
+- `send(text, { messageId })` becomes the user message's `clientMessageId` (`sendPromptToAgent`). The same id again
+  adds no second row but runs the prompt again, and a send replaces a running turn: v3 sends only when `activeTurn`
+  is empty, and a delivery retried after a lost reply can reach its reader twice.
+- `agents.create` with an `idempotencyKey` goes through Paseo's creation service, which writes the key and a digest of
+  the whole request to disk before it starts, so it holds across a daemon restart. The same key with a different
+  request is refused (`agent_request_key_conflict`), and a create in flight when the daemon stopped stays
+  `agent_request_outcome_unknown`. The first prompt reads the record as it is, so a retry would differ: the agent host
+  first looks for the agent by its labels (`agents.list`, `filter.labels`), and a key Paseo refuses is a failed start,
+  which the owner above hears and a reseat, with a new key, answers.
+- `lastUsage.totalCostUsd` is what the agent's session has spent so far: Claude's result `total_cost_usd` over its one
+  long query, Pi's and Oh My Pi's session stats, OpenCode's session cost. It starts again when the provider's process
+  does. Tokens are running totals too, but Codex reports only its last model call's, and no cost. v3 records the
+  totals and counts each turn's rise (`KERNEL.md` §4.2), so a Codex agent's money never counts toward an appetite.
+- `toolPolicy.preapproved` names each MCP tool; there is no wildcard.
 
 - A finish notification goes to a parent only for an agent made by Paseo's own `create_agent` tool with
   `notifyOnFinish`. Agents v3 makes through the plugin API get none, so nothing reaches a Lead around delivery.
 - Plugin settings work when host-scoped, as above.
 
 ## To check before building on it
-
-What the code now assumes, and only a live daemon can confirm:
-
-- That `agent.turn_ended`'s timeline holds the turn's reasoning items for each agent, so the watch reads thinking.
-- That `send(text, { messageId })` becomes the user message's `clientMessageId`, so the Human's own words are told
-  apart from deliveries, and that an `agents.create` retried with the same `idempotencyKey` returns the same agent
-  across a daemon restart.
-- That `lastUsage.totalCostUsd` is the turn's cost rather than a running total; if it is a total, spend is counted
-  twice and the adapter must take differences.
 
 - Per-agent control of Paseo's tools: today it is per provider ID (`paseoTools` on a custom provider) and injection
   is off by default. If the Human turns it on, v3 needs provider entries of its own, the one reason to write Paseo's

@@ -39,10 +39,20 @@ export class PaseoHost {
     this.harness = harness;
   }
 
-  /** Starts an agent from one of the Human's Paseo agent profiles; the key makes a retried create the same agent. */
+  /**
+   * Starts an agent from one of the Human's Paseo agent profiles. Paseo keeps a keyed create's request and refuses the
+   * same key with a different one, and the first prompt reads the record as it is now, so a retry first looks for the
+   * agent its labels name.
+   */
   async create(spec: AgentSpec): Promise<{ host: string } | { failed: string } | Unavailable> {
     const api = this.link.current;
     if (!api) return UNAVAILABLE;
+    const made = await api.agents.list({
+      filter: { labels: { ...spec.labels }, includeArchived: true },
+      page: { limit: 1 },
+    });
+    const known = made.entries[0]?.agent;
+    if (known) return known.archivedAt ? { failed: "its agent was archived before it started" } : { host: known.id };
     const daemon = await api.config.get();
     const profile = (daemon.config.agentProfiles ?? []).find((p) => p.id === spec.profile || p.name === spec.profile);
     if (!profile) return { failed: `no Paseo agent profile named ${spec.profile}: add one in Paseo's settings` };
@@ -62,17 +72,25 @@ export class PaseoHost {
       },
       toolPolicy: { preapproved: spec.tools.names.map((tool) => ({ kind: "mcp", server: "team", tool })) },
     } as unknown as PaseoAgentConfig;
-    const handle = await api.agents.create({
-      idempotencyKey: spec.key,
-      cwd: spec.cwd,
-      title: spec.title,
-      prompt: spec.prompt,
-      clientMessageId: `${spec.key}:prompt`,
-      env: { ...spec.env },
-      labels: { ...spec.labels },
-      config,
-    });
-    return { host: handle.id };
+    const handle = await api.agents
+      .create({
+        idempotencyKey: spec.key,
+        cwd: spec.cwd,
+        title: spec.title,
+        prompt: spec.prompt,
+        clientMessageId: `${spec.key}:prompt`,
+        env: { ...spec.env },
+        labels: { ...spec.labels },
+        config,
+      })
+      .catch((error: unknown) => {
+        const says = error instanceof Error ? error.message : String(error);
+        // Paseo holds this key for a create it cannot finish or cannot tell finished; a new seat gets a new key.
+        if (/_request_(key_conflict|outcome_unknown)/.test(says))
+          return { failed: `Paseo could not make the agent: ${says}` };
+        throw error;
+      });
+    return "failed" in handle ? handle : { host: handle.id };
   }
 
   /** Sends words between turns only; a reader inside a turn is busy and the words wait for its end. */
@@ -116,7 +134,7 @@ export class PaseoHost {
     return lines.length > 0 ? lines.join("\n") : "Nothing in its timeline yet.";
   }
 
-  /** What an agent's last turn cost, as Paseo reports it. */
+  /** What an agent's session has spent so far: Paseo reports running totals, not a turn's share. */
   async usage(host: string): Promise<{ tokens: number; usd: number }> {
     const api = this.link.current;
     const usage = api ? (await api.agents.ref(host).refresh())?.agent.lastUsage : undefined;

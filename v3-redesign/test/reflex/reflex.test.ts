@@ -118,11 +118,17 @@ test("the same failing call a third time is a candidate, a fifth an attention to
 
 test("a lane whose spend crosses its appetite is told to the Supervisor once, as it crosses", async () => {
   const { ledger, reflex, supervisor, peer } = wired(0.1);
-  let events = ledger.must(ledger.fact("record_turn", { actor: peer, outcome: "done", tokens: 10, usd: 30 }));
+  let events = ledger.must(
+    ledger.fact("record_turn", { actor: peer, outcome: "done", tokensSoFar: 10, usdSoFar: 30, seen: 0 }),
+  );
   reflex.onEvents("p", events, ledger.state);
-  events = ledger.must(ledger.fact("record_turn", { actor: peer, outcome: "done", tokens: 10, usd: 30 }));
+  events = ledger.must(
+    ledger.fact("record_turn", { actor: peer, outcome: "done", tokensSoFar: 10, usdSoFar: 60, seen: 0 }),
+  );
   reflex.onEvents("p", events, ledger.state);
-  events = ledger.must(ledger.fact("record_turn", { actor: peer, outcome: "done", tokens: 10, usd: 30 }));
+  events = ledger.must(
+    ledger.fact("record_turn", { actor: peer, outcome: "done", tokensSoFar: 10, usdSoFar: 90, seen: 0 }),
+  );
   reflex.onEvents("p", events, ledger.state);
   await settle();
   const told = [...ledger.state.attentions.values()].filter((t) => t.moment === "past-appetite");

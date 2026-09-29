@@ -18,10 +18,25 @@ export function turnFact(ctx: Of<"record_turn">): Refusal | undefined {
   const actor = ctx.state.actors.get(ctx.body.actor);
   if (actor?.status !== "seated") return undefined;
   const b = ctx.body;
-  ctx.emit({ type: "turn_ended", actor: actor.id, outcome: b.outcome, why: b.why, tokens: b.tokens, usd: b.usd });
+  ctx.emit({
+    type: "turn_ended",
+    actor: actor.id,
+    outcome: b.outcome,
+    why: b.why,
+    tokens: rise(actor.reported.tokens, b.tokensSoFar),
+    usd: rise(actor.reported.usd, b.usdSoFar),
+    tokensSoFar: b.tokensSoFar,
+    usdSoFar: b.usdSoFar,
+    seen: b.seen,
+  });
   for (const t of ctx.state.attentions.values())
     if (t.to === actor.id && t.delivered !== null) climb(ctx, t, ownerAbove(ctx.state, actor));
   return undefined;
+}
+
+/** A running total lower than the last one means the agent's session started again from zero. */
+function rise(last: number, soFar: number): number {
+  return soFar >= last ? soFar - last : soFar;
 }
 
 export function goneFact(ctx: Of<"record_gone">): Refusal | undefined {

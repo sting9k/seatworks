@@ -233,10 +233,19 @@ test("a finding left open when its scope is integrated stays in memory with its 
   assert.equal(ledger.state.scopes.has(task), false);
 });
 
+test("a turn's spend is the rise in what its agent reports, and all of it after the session started again", () => {
+  const { ledger, peer, lane } = team();
+  ledger.must(ledger.fact("record_turn", { actor: peer, outcome: "done", tokensSoFar: 100, usdSoFar: 1, seen: 0 }));
+  ledger.must(ledger.fact("record_turn", { actor: peer, outcome: "done", tokensSoFar: 300, usdSoFar: 3, seen: 0 }));
+  ledger.must(ledger.fact("record_turn", { actor: peer, outcome: "done", tokensSoFar: 50, usdSoFar: 0.5, seen: 0 }));
+  assert.deepEqual(ledger.state.scopes.get(lane)?.spent, { usd: 3.5, tokens: 350 });
+  assert.deepEqual(ledger.state.scopes.get("root")?.spent, { usd: 3.5, tokens: 350 });
+});
+
 test("a lane's spend counts its Peers' turns, still after they are integrated and let go", () => {
   const { ledger, lead, peer, lane, task } = team();
-  ledger.must(ledger.fact("record_turn", { actor: peer, outcome: "done", tokens: 1000, usd: 1.5 }));
-  ledger.must(ledger.fact("record_turn", { actor: lead, outcome: "done", tokens: 10, usd: 0.25 }));
+  ledger.must(ledger.fact("record_turn", { actor: peer, outcome: "done", tokensSoFar: 1000, usdSoFar: 1.5, seen: 0 }));
+  ledger.must(ledger.fact("record_turn", { actor: lead, outcome: "done", tokensSoFar: 10, usdSoFar: 0.25, seen: 0 }));
   ledger.must(ledger.as(peer, "hand_back", { commit: SHA(1), text: "done" }));
   ledger.must(
     ledger.fact("record_candidate", { scope: task, commit: SHA(1), result: { candidate: SHA(1), parentHead: SHA(3) } }),
