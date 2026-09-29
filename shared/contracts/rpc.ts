@@ -12,6 +12,10 @@ export const HumanViewSchema = z.object({
     }),
   ),
   permissions: z.array(z.object({ id: z.string(), actor: z.string(), text: z.string() })),
+  /** What the watch saw that reached the root and stopped with the Human, until they acknowledge it or mark it noise. */
+  attentions: z.array(
+    z.object({ id: z.string(), actor: z.string(), scope: z.string(), why: z.string(), facts: z.array(z.string()) }),
+  ),
   disagreements: z.array(
     z.object({
       id: z.string(),

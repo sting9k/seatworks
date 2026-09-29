@@ -281,6 +281,8 @@ export const HUMAN_COMMANDS: ReadonlySet<CommandType> = new Set<CommandType>([
   "resume_scope",
   "amend_plan",
   "answer_permission",
+  "acknowledge",
+  "mark_noise",
   "set_checks",
   "publish",
   "reseat",

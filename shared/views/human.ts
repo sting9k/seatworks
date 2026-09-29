@@ -35,6 +35,9 @@ export function humanView(state: State): HumanView {
         const p = state.permissions.get(o.about.id);
         return p ? [{ id: p.id, actor: p.actor, text: p.text }] : [];
       }),
+    attentions: [...state.attentions.values()]
+      .filter((t) => t.to === HUMAN)
+      .map((t) => ({ id: t.id, actor: t.about.actor, scope: t.about.scope, why: t.why, facts: [...t.facts] })),
     disagreements: [...state.findings.values()]
       .filter((f) => f.status === "raised" || f.status === "waiting" || f.status === "kept")
       .map((f) => ({

@@ -270,10 +270,9 @@ function apply(s: State, e: Event, at: string): State {
     case "noise_marked":
       return { ...s, attentions: without(s.attentions, e.attention), noise: new Set([...s.noise, e.key]) };
     case "attention_climbed": {
-      // Past the root an attention goes to the Human's view, which reads the log: nothing is kept for it here.
-      const rest = without(s.attentions, e.attention);
+      // Past the root an attention stops with the Human, whose view shows it until they settle it.
       return counted(
-        { ...s, attentions: e.to.to === "human" ? rest : withEntry(rest, e.to.id, e.to) },
+        { ...s, attentions: withEntry(without(s.attentions, e.attention), e.to.id, e.to) },
         "attention",
         e.to.id,
       );

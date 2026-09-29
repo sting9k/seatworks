@@ -4,6 +4,7 @@ import { SettingsCard, SettingsRow, SettingsSection } from "@getpaseo/plugin/cli
 import { useState } from "react";
 import { Text, View } from "react-native";
 import type { HumanView } from "../../shared/contracts/rpc.ts";
+import { AttentionCard } from "../decide/attention-card.tsx";
 import { PermissionCard } from "../decide/permission-card.tsx";
 import { QuestionCard } from "../decide/question-card.tsx";
 import { useHumanCommand } from "../decide/send.ts";
@@ -38,7 +39,8 @@ export function laneState(lane: Lane): string {
 }
 
 /** How many things wait on the Human in a project: what the pill counts and the first tab shows. */
-export const waitingOf = (human: HumanView | null) => (human ? human.questions.length + human.permissions.length : 0);
+export const waitingOf = (human: HumanView | null) =>
+  human ? human.questions.length + human.permissions.length + human.attentions.length : 0;
 
 /** One attached project: what waits on the Human, its lanes, what agents decided, and what happened. */
 export function ProjectPage({
@@ -107,6 +109,9 @@ export function ProjectPage({
           ))}
           {human.permissions.map((p) => (
             <PermissionCard key={p.id} project={project} permission={p} theme={theme} onAnswered={refresh} />
+          ))}
+          {human.attentions.map((t) => (
+            <AttentionCard key={t.id} project={project} attention={t} theme={theme} onAnswered={refresh} />
           ))}
           {human.directions.length > 0 ? (
             <SettingsSection title="Your words not yet carried in">

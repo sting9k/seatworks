@@ -197,7 +197,8 @@ on an implementation without the rule before it is trusted.
 | And five times                                              | An attention to the Lead, now                              |
 | A Peer's own turn after an attention about it               | Nothing about the attention reaches the Peer               |
 | The Lead messages the Peer after an attention, saying nothing of it | Acted on: it climbs no further                     |
-| An attention to the Supervisor left past its next turn      | Climbs no further; shown in the Human's view               |
+| An attention to the Supervisor left past its next turn      | Climbs no further; shown in the Human's view until they acknowledge it or mark it noise |
+| An attention about the root's own agent                     | To the Human, shown in their view, settled by them         |
 | A lane's spend passes the amount its appetite names         | An attention to the Supervisor, now, with no model asked   |
 | A Peer's turns spend and record nothing, `silentTurns` in a row | An attention to its Lead, once                        |
 | A finding still unclassified when its Lead's second turn since it ends | An attention to the Supervisor, once           |

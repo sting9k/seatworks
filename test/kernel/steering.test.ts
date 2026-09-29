@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { humanView } from "../../shared/views/human.ts";
 import { refusedBy, team } from "./ledger.ts";
 
 const seen = (actor: string, scope: string, level: "tell" | "consider", moment = "trades-the-goal") => ({
@@ -47,8 +48,15 @@ test("left past its reader's next turn it climbs, with the silence beside it; pa
   ledger.must(
     ledger.fact("record_turn", { actor: supervisor, outcome: "done", tokensSoFar: 10, usdSoFar: 0, seen: 0 }),
   );
-  assert.equal(ledger.state.attentions.size, 0);
   assert.ok(ledger.log.some((e) => e.type === "attention_climbed" && e.to.to === "human"));
+  const shown = humanView(ledger.state).attentions;
+  assert.deepEqual(
+    shown.map((t) => [t.actor, t.scope]),
+    [[peer, task]],
+    "it stops in the Human's view",
+  );
+  ledger.must(ledger.human("acknowledge", { attention: shown[0]!.id }));
+  assert.equal(humanView(ledger.state).attentions.length, 0, "and the Human settles it");
 });
 
 test("the Lead acting on the Peer, saying nothing of the attention, settles it; so does acknowledge", () => {
@@ -117,4 +125,13 @@ test("a failed turn and a gone agent are told to the owner above", () => {
   );
   assert.equal(notes.length >= 2, true);
   assert.equal(ledger.state.scopes.get("1.1")?.owner, null);
+});
+
+test("an attention about the root's own agent goes to the Human, who sees it and may mark it noise", () => {
+  const { ledger, supervisor } = team();
+  ledger.must(ledger.fact("record_observation", seen(supervisor, "root", "tell", "big-decision")));
+  const [shown] = humanView(ledger.state).attentions;
+  assert.equal(shown?.actor, supervisor);
+  ledger.must(ledger.human("mark_noise", { attention: shown.id }));
+  assert.equal(humanView(ledger.state).attentions.length, 0);
 });
