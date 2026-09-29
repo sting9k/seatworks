@@ -2,12 +2,17 @@ import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
+import { createConnection, createServer } from "node:net";
 import { join } from "node:path";
 import { test } from "node:test";
+import { Line } from "../../bin/team-line.ts";
 import { Keys } from "../../server/core/keys.ts";
 import { TeamSocket } from "../../server/bridge/team-socket.ts";
 import type { Command } from "../../shared/contracts/commands.ts";
-import { team } from "../kernel/ledger.ts";
+import { Project } from "../../server/bridge/project.ts";
+import { ProjectStore } from "../../server/satellites/store/project-store.ts";
+import { parseBody } from "../../shared/contracts/commands.ts";
+import { slpProfile, team } from "../kernel/ledger.ts";
 
 /** bin/team.ts as Paseo starts it for an agent, spoken to in MCP's JSON-RPC over stdio. */
 function mcp(socket: string, env: Record<string, string>) {
@@ -120,6 +125,70 @@ test("a tool server with a key that is not its agent's is refused", async () => 
     assert.ok(init.error !== undefined || init.result === undefined, "no tools for a borrowed key");
   } finally {
     server.stop();
+    await socket.close();
+  }
+});
+
+test("a call whose answer is lost with the connection is sent again and recorded once", async () => {
+  const root = mkdtempSync(join(tmpdir(), "sw-line-"));
+  const keys = new Keys(join(root, "secret"));
+  const profile = slpProfile();
+  const store = new ProjectStore(join(root, "ledger.db"));
+  const project = Project.open("p", store, profile);
+  const stamp = (type: string, args: Record<string, unknown>) => {
+    const parsed = parseBody(type, args);
+    if (!parsed.ok) throw new Error(parsed.says);
+    return { id: type, at: "2026-09-30T00:00:00.000Z", caller: { kind: "human" as const }, body: parsed.body };
+  };
+  await project.submit(stamp("open_project", { base: "main", profileHash: "h", model: "slp-supervisor" }));
+  const supervisor = "a1";
+  const port = {
+    get view() {
+      return project.view;
+    },
+    submit: (command: Command) => project.submit(command),
+    roleTools: (actor: string) => profile.roles.get(project.view.actors.get(actor)?.role ?? "")?.tools ?? null,
+    read: () => Promise.resolve(""),
+  };
+  const socket = new TeamSocket(join(root, "team.sock"), keys, (id) => (id === "p" ? port : undefined));
+  await socket.listen();
+  // Between the line and the plugin: the first answer to a call never arrives, and the connection drops with it.
+  let dropped = false;
+  const proxy = createServer((client) => {
+    const upstream = createConnection(join(root, "team.sock"));
+    client.pipe(upstream);
+    upstream.on("data", (chunk: Buffer) => {
+      if (!dropped && chunk.toString().includes('"type":"result"')) {
+        dropped = true;
+        client.destroy();
+        upstream.destroy();
+      } else client.write(chunk);
+    });
+    client.on("close", () => upstream.destroy());
+    upstream.on("close", () => client.destroy());
+  });
+  await new Promise<void>((resolve) => proxy.listen(join(root, "proxy.sock"), resolve));
+  const saved = { ...process.env };
+  Object.assign(process.env, {
+    SEATWORKS_PROJECT: "p",
+    SEATWORKS_ACTOR: supervisor,
+    SEATWORKS_KEY: keys.keyOf("p", supervisor),
+  });
+  const line = new Line(join(root, "proxy.sock"));
+  try {
+    const said = await line.call("set_checks", { checks: [{ name: "unit", run: ["npm", "test"] }] });
+    assert.equal(dropped, true, "the first answer was lost");
+    assert.equal(said.ok, true, said.text);
+    assert.equal(
+      [...store.read(0)].filter((e) => e.type === "checks_set").length,
+      1,
+      "recorded once, though sent twice",
+    );
+  } finally {
+    project.dispose();
+    process.env = saved;
+    line.close();
+    await new Promise((resolve) => proxy.close(resolve));
     await socket.close();
   }
 });

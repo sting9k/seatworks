@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { createConnection } from "node:net";
 
 /** An agent's tool server, as bin/team.ts speaks to the plugin: hello with its key, then calls. */
@@ -23,7 +24,7 @@ export async function agentTools(socket: string, env: Record<string, string>) {
   return {
     welcome,
     call: async (name: string, args: Record<string, unknown>) => {
-      conn.write(`${JSON.stringify({ type: "call", id: ++id, name, args })}\n`);
+      conn.write(`${JSON.stringify({ type: "call", id: ++id, call: randomUUID(), name, args })}\n`);
       const r = await next();
       return r as unknown as { ok: boolean; text: string };
     },

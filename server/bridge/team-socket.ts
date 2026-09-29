@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto";
 import { rmSync } from "node:fs";
 import { type Server, type Socket, createServer } from "node:net";
 import { type Command, parseBody } from "../../shared/contracts/commands.ts";
@@ -105,7 +104,17 @@ export class TeamSocket {
           write({ type: "welcome", tools: toolsFor(new Set([...tools, ...Object.keys(READS)])) satisfies ToolSpec[] });
         } else if (message.type === "call" && who) {
           const id = message.id;
-          void this.call(who, String(message.name), message.args).then(
+          const call = typeof message.call === "string" && message.call.length <= 100 ? message.call : null;
+          if (call === null) {
+            write({
+              type: "result",
+              id,
+              ok: false,
+              text: "A call carries an id of its own, of at most 100 characters.",
+            });
+            continue;
+          }
+          void this.call(who, call, String(message.name), message.args).then(
             (reply) => write({ type: "result", id, ...reply }),
             (error: unknown) => {
               daemonLog.error(`tool ${String(message.name)} for ${who?.actor ?? "?"} failed`, error);
@@ -122,8 +131,10 @@ export class TeamSocket {
     });
   }
 
+  /** One tool call; its command id comes from the call's own id, so the same call sent again is one command. */
   private async call(
     who: { project: ProjectPort; actor: string },
+    call: string,
     name: string,
     args: unknown,
   ): Promise<{ ok: boolean; text: string }> {
@@ -134,7 +145,7 @@ export class TeamSocket {
     const parsed = parseBody(name, args ?? {});
     if (!parsed.ok) return { ok: false, text: `The arguments do not fit ${name}: ${parsed.says}` };
     const outcome = await who.project.submit({
-      id: randomUUID(),
+      id: `tool:${who.actor}:${call}`,
       at: this.now().toISOString(),
       caller: { kind: "agent", actor: who.actor },
       body: parsed.body,

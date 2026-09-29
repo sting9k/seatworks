@@ -1,5 +1,6 @@
 // The line from one agent's tools to the plugin's local socket: hello with the agent's key, then numbered calls. Both
 // the MCP server (bin/team.ts) and Pi's extension (harness/pi/extension.ts) speak through it.
+import { randomUUID } from "node:crypto";
 import { createConnection, type Socket } from "node:net";
 
 export type Tool = { name: string; description: string; inputSchema: Record<string, unknown> };
@@ -9,13 +10,19 @@ type Said =
   | { type: "result"; id: number; ok: boolean; text: string };
 
 const WELCOME_MS = 10_000;
+/** How many times a call is sent over a line that dropped before its answer came, with the same call id each time. */
+const TRIES = 3;
+const DROPPED = { ok: false, text: "The connection to the plugin dropped; call again." };
+const yes = () => true;
+const no = () => false;
 
 export class Line {
   private readonly socketPath: string;
   private socket: Socket | null = null;
   private buffered = "";
   private next = 1;
-  private readonly waiting = new Map<number, (said: Extract<Said, { type: "result" }>) => void>();
+  /** Calls sent and not yet answered; a drop answers each with null. */
+  private readonly waiting = new Map<number, (said: Extract<Said, { type: "result" }> | null) => void>();
   private greeting: Promise<Tool[]> | null = null;
 
   constructor(socketPath: string) {
@@ -55,8 +62,7 @@ export class Line {
         clearTimeout(timer);
         this.socket = null;
         this.greeting = null;
-        for (const answer of this.waiting.values())
-          answer({ type: "result", id: 0, ok: false, text: "The connection to the plugin dropped; call again." });
+        for (const answer of this.waiting.values()) answer(null);
         this.waiting.clear();
       };
       socket.on("close", drop);
@@ -68,13 +74,23 @@ export class Line {
     return this.greeting;
   }
 
+  /**
+   * Sends a call and waits for its answer. A line that drops first is opened again and the call sent again with the
+   * same call id, which the plugin records as one command, so a call it already took is answered, not taken twice.
+   */
   async call(name: string, args: unknown): Promise<{ ok: boolean; text: string }> {
-    await this.open();
-    const id = this.next++;
-    return new Promise((resolve) => {
-      this.waiting.set(id, resolve);
-      this.socket?.write(`${JSON.stringify({ type: "call", id, name, args })}\n`);
-    });
+    const call = randomUUID();
+    for (let tried = 0; tried < TRIES; tried++) {
+      if (tried === 0) await this.open();
+      else if (!(await this.open().then(yes, no))) return DROPPED;
+      const id = this.next++;
+      const said = await new Promise<Extract<Said, { type: "result" }> | null>((resolve) => {
+        this.waiting.set(id, resolve);
+        this.socket?.write(`${JSON.stringify({ type: "call", id, call, name, args })}\n`);
+      });
+      if (said) return { ok: said.ok, text: said.text };
+    }
+    return DROPPED;
   }
 
   close(): void {

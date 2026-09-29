@@ -100,6 +100,7 @@ on an implementation without the rule before it is trusted.
 | A crash after a branch advanced, before the integration was recorded | Integrated on restart; no candidate made again  |
 | A satellite's fact delivered twice                                 | Recorded once                                   |
 | A tool call retried with the same command id                       | The earlier result; nothing appended            |
+| A tool call whose answer is lost with the connection               | Sent again with its call id on a new line, recorded once |
 | A satellite throws on an effect                                    | Tried again after a pause, with no change to wake it |
 | An agent's create loses its reply and is tried after the record moved on | The seat keeps the one agent made; a key Paseo cannot finish is its owner's fact |
 | Two projects on one daemon start their first agents                | Each is made: the create's key names its project |

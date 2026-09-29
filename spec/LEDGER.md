@@ -25,7 +25,7 @@ The kernel makes no random id. It counts. Each counter lives in the state, so th
 | Observation | `v` + counter          | `v130`             |                                                          |
 | Attention   | `t` + counter          | `t9`               |                                                          |
 | Permission  | `p` + counter          | `p4`               |                                                          |
-| Command     | from the caller        | a UUID             | Made by whoever sends it, so a retry carries the same one |
+| Command     | from the caller        | a UUID             | Made by whoever sends it, so a retry carries the same one; a tool call's is its call id, under its agent |
 | Effect key  | `<seq>:<kind>[:<n>]`   | `412:deliver:m88`  | Made from the event that asked for it                    |
 
 Branches are `sw/<project>/<scope>`; the root's branch is the project's base branch.
