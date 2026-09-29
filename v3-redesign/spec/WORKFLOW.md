@@ -25,7 +25,7 @@ Human ─goal─► 0 Intake ─► 1 Open ─► 2 Plan ─► 3 Work ─► 4 
 
 - The Supervisor opens a lane and seats its Lead.
 - Kernel: a scope owned by the Lead, its edges (spawned by, owns, must tell), a workspace. Refuses a lane whose write
-  set meets an open lane's.
+  set meets an open lane's, unless it waits for that lane.
 - Prompt: the directive states the goal, not a solution.
 
 ## 2. Plan: the Lead
@@ -54,7 +54,7 @@ The Lead answers a finding:
 | classified | One of three, with a reason: changes the decision, another sound option, not worth stopping for | How to weigh the evidence |
 | carried    | Points to the event that changed the brief, plan, order or owner               | A redesign answers four questions first: when the fault shows, whether a small fix is enough, what it drops, what it adds |
 | kept       | A reason the Peer can argue with                                                | Keeping the plan needs a reason too   |
-| reproven   | Evidence on the commit that will be accepted                                    |                                       |
+| reproven   | Integration cites evidence on the very commit it takes in                       |                                       |
 
 A change that touches the goal or the cost cannot be applied until the Human answers; the Supervisor puts the
 question. While a finding waits, the Peer names its default and goes on with what the finding does not touch.

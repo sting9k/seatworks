@@ -1,0 +1,231 @@
+# Kernel
+
+The kernel is the team's authority ledger. It checks what CONCEPT-V2 says must hold, records what it says must be
+known, and keeps what is owed. It decides nothing technical, ranks nothing, and knows no role by name. `WORKFLOW.md`
+says how a team moves through it; `COMMUNICATION.md` how words travel; `PORTS.md` what it asks of the satellites.
+
+MUST, MUST NOT, SHOULD and MAY are used as in RFC 2119.
+
+## 1. Boundary
+
+The kernel:
+
+- MUST refuse a command that breaks an invariant (§5), and only then. It MUST NOT refuse for any other reason: no
+  quota, no required review, no required order of work.
+- MUST record every accepted command as events (§7), with who called it, when, and the lines it wrote.
+- MUST NOT decide acceptance, judge evidence, pick a result, or rank what a reader should read first. Those are the
+  roles'.
+- MUST NOT compare a role to a name. It reads the properties the profile gives each role (§2).
+- MUST NOT do I/O. It takes commands and facts and returns events and effects; the bridge carries effects to the
+  satellites and their facts back.
+
+## 2. The profile it reads
+
+A profile is data: roles as sets of properties, and what each may call. Another arrangement of the team is another
+profile, with no change to the kernel. A role renamed with its properties kept behaves the same.
+
+| Property    | Meaning                                                                                   |
+| ----------- | ----------------------------------------------------------------------------------------- |
+| `root`      | Owns the project's root scope. Exactly one role has it.                                   |
+| `delegates` | May own a scope that is split into child scopes, and integrate them.                      |
+| `writes`    | May be the writer of a scope.                                                             |
+| `reading`   | Is seated on one commit, writes nothing, and returns a verdict.                            |
+| `spawns`    | The roles it may seat under a scope it owns.                                              |
+| `speaksTo`  | Relations it may message: `parent`, `children`, `descendants`, `human`.                   |
+| `humanDoor` | May put a question to the Human.                                                          |
+| `tools`     | The commands it is shown, by name.                                                        |
+| `like`      | Takes the properties of another role, then its own on top.                                |
+
+Prompts, skills, models and harness choices are in the profile too, but the kernel does not read them.
+
+The SLP profile, from CONCEPT-V2 §3:
+
+```yaml
+roles:
+  supervisor: { root: true, delegates: true, spawns: [lead, peer], humanDoor: true,
+                speaksTo: [human, children, descendants] }
+  lead:       { delegates: true, spawns: [peer, reviewer, architect, auditor],
+                speaksTo: [parent, children] }
+  peer:       { writes: true, speaksTo: [parent] }
+  reviewer:   { reading: true, speaksTo: [parent] }
+  architect:  { like: reviewer }
+  auditor:    { like: reviewer }
+```
+
+A Supervisor that seats a Peer straight under the root is the path for a small change done by one agent (P17).
+
+## 3. Actors and scopes
+
+- **Actor.** An agent or the Human. An agent has one role and is bound to one scope while it lives. The Human is not
+  seated; they speak to anyone and answer questions.
+- **Scope.** A piece of the work. Fields: `id`, `parent` (none for the root), `owner` (an actor), `writer` (an
+  actor or none), `kind` (`work`, or `reading` bound to a commit), `paths` (what it may write), `after` (scopes it
+  waits for), `brief` (current version), `plan` (for a scope that delegates), `workspace`, `status`, `held`.
+  - Status moves `open → integrated | dropped`. A scope integrated into its parent stays on the record.
+  - A child's `paths` lie within its parent's. A `reading` scope has none.
+  - A scope whose owner `writes` has itself as writer. A scope whose owner `delegates` has no writer.
+- **Edges.** The five relations of CONCEPT-V2 §2.2, as data: `spawned` and `owns` follow from scopes; `dependsOn`
+  from `after`; `mayChange` and `mustTell` are kept as edges that the owner of the scope they sit in may add or
+  remove, with a reason. Every edge change is an event.
+
+## 4. What the kernel keeps
+
+### 4.1 Lines and their origin
+
+Every line of a plan, a brief, a report or a decision is a **line**: `{ id, text, origin, at, via }`.
+
+- `origin` is the actor whose command wrote it, set by the kernel from the caller, never from arguments.
+- A line MAY be marked the Human's only when `via` points to something the Human said on the record: a message they
+  wrote or an answer they gave. Otherwise it is the writer's.
+- `via` MAY also point to the finding or question that brought the line.
+
+### 4.2 Plan
+
+The owner's hypotheses for its scope (CONCEPT-V2 §5.2): `goal`, `limits`, `unknowns` (each with how it will be
+checked), `appetite` (what the scope is worth spending). Lines, each with its origin. Amended by the scope's owner.
+
+### 4.3 Brief
+
+What the parent's owner asks of a scope (CONCEPT-V2 §5.3–5.4): `goal`, `constraints`, `choices`, `context`, and
+`kind`, `verification` or `discovery`. Versioned: an amendment makes a new version, keeps the old, and carries a
+reason. Only the owner of the parent issues or amends it.
+
+### 4.4 Finding
+
+A premise, constraint or choice that the evidence shows does not fit (CONCEPT-V2 §6.1).
+
+- Fields: `id`, `scope` (where it was raised), `raisedBy`, `disputes` (a line, or none for a new fact), `about` (the
+  scope the change would be in, when not the raiser's own), `text`, `evidence` (ids), `default` (what the raiser does
+  meanwhile).
+- It is answered by whoever may change what it disputes: for a brief line, the owner of that scope's parent; for a
+  plan line, the scope's owner; with no line, or for a change in another owner's scope (`about`), the owner of the
+  raiser's parent, who takes it on from there.
+- Status:
+
+| Move       | From              | To         | Requires                                                            |
+| ---------- | ----------------- | ---------- | ------------------------------------------------------------------- |
+| raise      | —                 | raised     | text; an obligation opens on whoever answers                        |
+| classify   | raised            | carried    | verdict `changes`, a reason, and the change events it made          |
+| classify   | raised            | kept       | verdict `alternative` or `minor`, and a reason the raiser can argue |
+| wait       | raised            | waiting    | a question to the Human (§5, I6)                                    |
+| resume     | waiting           | raised     | the Human's answer                                                  |
+| reopen     | kept              | raised     | new evidence                                                        |
+| withdraw   | raised, waiting   | withdrawn  | by the raiser, with a reason                                        |
+
+### 4.5 Evidence and claims
+
+- **Evidence**: `{ id, kind, subject, result, by, at, conditions }`. `kind` is `check` (a command run), `verdict`
+  (a reading scope's answer), `measurement`, or `human` (their word on the record). `subject` is the commit it is
+  about. `conditions` says, for a measurement, whether the machine was held.
+- **Claim**: what an agent says of its own work, such as a hand-back. Recorded as a claim, never as evidence.
+
+### 4.6 Obligation
+
+Something owed: `{ id, owedBy, owedTo, about, opened, closed?, how? }`. Opened by a finding, a message that asks for
+an answer, an intervention, a question to the Human, a hand-back waiting on its integrator.
+
+- It closes only when what is owed is done: answered, classified, carried, integrated or sent back, declined with a
+  reason.
+- When its holder is replaced, it moves to the new holder. Time and cleanup never close it.
+
+### 4.7 Messages and questions
+
+- **Message**: `{ id, from, to, text, asksAnswer, replyTo }`. Routed along the sender's `speaksTo`. What the Human
+  types straight into an agent's chat is recorded as a message from the Human.
+- **Question**: from the role with `humanDoor` to the Human: `{ id, text, about, options?, recommend?, answer? }`.
+  `about` names the finding or line that waits on it.
+
+### 4.8 Holds
+
+- **Scope hold**: while held, nothing new is seated in the scope and nothing is integrated from it. Set and lifted by
+  the owner of its parent, or by the Human.
+- **Machine hold**: an actor measuring holds the machine; while held, the kernel defers the effects that would load it
+  (evidence runs, workspace setup) and starts them when it is released.
+
+## 5. Invariants
+
+The kernel MUST refuse a command that would break one of these, and MUST NOT refuse for any other reason.
+
+| #   | Invariant                                                                                                            | CONCEPT-V2 |
+| --- | -------------------------------------------------------------------------------------------------------------------- | ---------- |
+| I1  | A scope has at most one writer; the writer changes only through a handover event.                                    | §4.2       |
+| I2  | An actor that delegated a scope does not write the paths its open children hold.                                    | §4.2       |
+| I3  | Open sibling scopes whose paths overlap are ordered by `after`, so two never write the same path at once.            | §4.2       |
+| I4  | Integrating a scope cites evidence whose subject is the commit being integrated. A failing result is integrated only with a reason. | §8.3, N1 |
+| I5  | Only a scope's writer changes its paths, only its parent's owner its brief, only its owner its plan.                  | §4.2, §4.3 |
+| I6  | A change to the goal or appetite, or to a line whose origin is the Human, cites the Human's answer.                   | §7.3, §9   |
+| I7  | A message to an actor from outside its own scope and its parent's owner (the Human counts as the root's) opens an obligation on that owner, closed when it is carried in or declined with a reason. | §7.2, §9.4 |
+| I8  | A finding classified `changes` points to the change events it made; one kept carries a reason.                      | §6.3, §6.4 |
+| I9  | Lines carry the origin the kernel set; a line is the Human's only via something the Human said.                     | §9.2       |
+| I10 | Only a role with `humanDoor` asks the Human; a message is sent only along the sender's `speaksTo`.                   | §3.1, §7.3 |
+| I11 | An obligation closes only when what is owed is done; it moves with its holder.                                       | §4.5       |
+
+## 6. Commands
+
+A command is called by an actor and checked against its role's properties and the invariants. Each maps to a tool in
+`tools/`; the profile says which roles are shown which.
+
+| Command            | Who may call                                        | Does                                                                     |
+| ------------------ | --------------------------------------------------- | ------------------------------------------------------------------------ |
+| `open_scope`       | owner of the parent, whose role `spawns` the role    | Opens a child scope with its brief, seats an actor of that role          |
+| `amend_brief`      | owner of the parent                                 | New brief version, with a reason and the finding it carries if any       |
+| `set_plan`, `amend_plan` | owner of the scope                            | Sets or amends the plan's lines (I6 for goal and appetite)               |
+| `add_edge`, `remove_edge` | owner of the scope the edge sits in          | `dependsOn`, `mayChange`, `mustTell`, with a reason                      |
+| `handover`         | owner of the parent                                 | Moves paths or the writer from one child to another in one event         |
+| `raise_finding`    | any seated actor                                    | Opens a finding                                                          |
+| `classify_finding` | whoever answers it (§4.4)                           | `changes` with change events, or `alternative` / `minor` with a reason   |
+| `withdraw_finding` | the raiser                                          |                                                                          |
+| `hand_back`        | the writer                                          | Records a claim at a commit; asks for evidence on it                     |
+| `record_verdict`   | the actor of a reading scope                        | Records its verdict as evidence on its commit                            |
+| `record_evidence`  | the bridge, for a satellite's result                 | Records evidence                                                         |
+| `integrate`        | owner of the parent                                 | Brings the scope into its parent (I4)                                    |
+| `send_back`        | owner of the parent                                 | Does not integrate, and says why                                         |
+| `reseat`           | owner of the parent                                 | A new actor on the same scope, briefed from the record; obligations move |
+| `drop_scope`       | owner of the parent                                 | Closes the scope unintegrated, with a reason                             |
+| `hold_scope`, `resume_scope` | owner of the parent, or the Human         |                                                                          |
+| `report`           | owner of the scope                                  | Lines for its parent's owner: decided, assumed, still open               |
+| `send_message`     | any actor, along `speaksTo`                         | Records the message; delivery carries it (I7)                            |
+| `answer`           | whoever an obligation is owed by                    | Answers a message or question                                            |
+| `ask_human`        | a role with `humanDoor`                             | Opens a question                                                         |
+| `answer_question`  | the Human                                           |                                                                          |
+| `hold_machine`     | any seated actor                                    | Holds or releases the machine                                            |
+| `release`          | owner of the parent                                 | Ends an actor's seat; its scope stays                                    |
+
+Integrations into one scope MUST run one at a time: bring the parent in, run evidence on the result, then integrate.
+
+## 7. Events and state
+
+- State is a fold over an append-only log of events. Each event: `{ seq, at, by, command, payload }`.
+- The log is the record. The chain of change, every line's origin and every open obligation are read from it, never
+  kept beside it.
+- Snapshots MAY be kept to fold faster. They are caches: removing one loses nothing.
+- Effects carry the id of the event that asked for them, so a satellite that sees one twice does it once.
+- On restart the kernel folds the log. Open obligations are open again; effects without a result are asked again.
+
+Events: `scope_opened`, `actor_seated`, `brief_issued`, `brief_amended`, `plan_set`, `plan_amended`, `edge_added`,
+`edge_removed`, `handed_over`, `finding_raised`, `finding_classified`, `finding_waiting`, `finding_resumed`,
+`finding_reopened`, `finding_withdrawn`, `claim_made`, `evidence_recorded`, `integrated`, `sent_back`, `reseated`,
+`scope_dropped`, `scope_held`, `scope_resumed`, `report_made`, `message_sent`, `message_delivered`,
+`question_asked`, `question_answered`, `obligation_opened`, `obligation_closed`, `obligation_moved`,
+`machine_held`, `machine_released`, `actor_released`, `actor_gone`.
+
+## 8. Views
+
+Read models over the log. Nothing in them is kept apart from it.
+
+- **What the Human needs to know** (CONCEPT-V2 §9.2): the brief each actor works to, which lines are the Human's,
+  which decisions an actor made, which findings and disagreements are open. And for each message the Human sent
+  straight to an agent, whether it was carried in (§9.3).
+- **Chain of change**, per finding (§10.1): what the brief said when the work was given; how long until it was
+  classified; what was found; the evidence and the verdict; which owners the change reached; what was integrated
+  after it.
+- **Signals** (§10.3), as ratios, never as rules: findings on the same line or paths again and again; questions to
+  the Human that led to a change; reading scopes whose verdict led to a send-back or an amendment; interventions
+  carried in late; messages followed by no change.
+- **Open obligations**, by holder.
+- **Status** of a scope for its actors: its brief, its children, its edges, what waits on whom.
+
+## 9. What the kernel does not do
+
+It does not rank a reader's messages, merge findings it thinks alike, cap what anyone says, require a review, choose
+a model, write a prompt, or turn a signal into a rule. Each of those would change how SLP works instead of serving it.

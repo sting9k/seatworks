@@ -34,9 +34,28 @@ order is the agents'.
 3. The Human's surface and the record.
 4. Anything more only when the record shows a failure that needs it.
 
+## Spec
+
+- `spec/WORKFLOW.md`: how a team works, stage by stage, and what was decided about it.
+- `spec/COMMUNICATION.md`: how words travel, and what the plugin does not do to them.
+- `spec/KERNEL.md`: the authority ledger: profile, scopes, lines, findings, evidence, obligations, invariants,
+  commands, events, views.
+- `spec/PORTS.md`: what each satellite does and returns.
+- `spec/CONFORMANCE.md`: the cases an implementation proves.
+
+## Layout
+
+```
+spec/          for whoever builds it
+profile/slp/   the SLP preset: profile.yaml, roles/*.md, skills/, reference/ANTIPATTERNS.md
+kernel/        entities, invariants, commands, views; no I/O, no Paseo, no role names
+satellites/    store, agent-host (with harness/<agent>/), workspace, evidence, delivery, machine, human, record,
+               code-index; each imports only its own port
+tools/         the MCP server; each role's tools from profile.yaml
+bridge/        the Paseo plugin's entry, the only place that builds the whole
+```
+
 ## Open, for the owner
 
 - The kernel's language. The Paseo bridge is TypeScript whatever it is.
-- Where the shared state lives: in a tracker the Human already reads, or in a store of its own.
-
-How the team works, with what was decided about it, is in `spec/WORKFLOW.md`.
+- Which store backs the log: a file of its own, or a tracker the Human already reads.
