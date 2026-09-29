@@ -32,6 +32,8 @@ export const HumanViewSchema = z.object({
       goal: z.string().nullable(),
       status: z.string(),
       held: z.boolean(),
+      /** What the lane's owner still owes: findings to weigh, questions, permissions, attentions. */
+      owes: z.number(),
     }),
   ),
   spent: z.object({ usd: z.number(), tokens: z.number(), appetiteUsd: z.number().nullable() }),

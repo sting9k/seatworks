@@ -56,6 +56,7 @@ export function humanView(state: State): HumanView {
       goal: s.brief?.goal.text ?? null,
       status: s.integrating ? "integrating" : s.claim ? "handed back" : s.status,
       held: s.held,
+      owes: [...state.obligations.values()].filter((o) => s.owner !== null && o.owedBy === s.owner).length,
     })),
     spent: {
       usd: root?.spent.usd ?? 0,

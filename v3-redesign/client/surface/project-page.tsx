@@ -23,15 +23,19 @@ type Lane = HumanView["lanes"][number];
 type Theme = PluginSurfaceProps["theme"];
 type Navigation = PluginSurfaceProps["navigation"];
 
-/** A lane's tone: held waits on its owner above, landed is done, dropped is out of the way. */
+/** A lane's tone: held or handed back waits on its owner above, landed is done, dropped is out of the way. */
 export function laneTone(lane: Lane): Tone {
   if (lane.status === "integrated") return "done";
   if (lane.status === "dropped") return "off";
-  return lane.held ? "wait" : "work";
+  return lane.held || lane.status === "handed back" ? "wait" : "work";
 }
 
-export const laneState = (lane: Lane) =>
-  lane.status === "open" ? (lane.held ? "held" : "at work") : lane.status === "integrated" ? "landed" : "dropped";
+/** A lane's state, and how much its owner owes when anything is, so a Lead that holds up its lane shows early. */
+export function laneState(lane: Lane): string {
+  const state =
+    lane.status === "open" ? (lane.held ? "held" : "at work") : lane.status === "integrated" ? "landed" : lane.status;
+  return lane.owes > 0 && lane.status !== "dropped" ? `${state} · owes ${lane.owes}` : state;
+}
 
 /** How many things wait on the Human in a project: what the pill counts and the first tab shows. */
 export const waitingOf = (human: HumanView | null) => (human ? human.questions.length + human.permissions.length : 0);
