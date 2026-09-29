@@ -13,7 +13,8 @@ agent has to rediscover, and one it will not quietly undo.
 - Read `GLOSSARY.md` and the ADRs in `docs/adr/` that touch your area. A file not there holds nothing yet: go on.
 - Name things with the glossary's words, in code, tests and what you write to others, and never with a word it lists
   under _Avoid_. A concept it lacks is a signal: either you are inventing a word the project does not use, or there
-  is a gap worth filling.
+  is a gap worth filling. A word marked as the Human's is theirs; one the team settled is a choice like any other,
+  and a word that no longer fits what the code does is a finding.
 - An ADR, and every line of the map under "chosen" or "decided", is a choice someone made, not a requirement: what
   must hold is only what the Human set. Work that contradicts a choice is a finding, raised with its evidence, never
   a silent override and never a workaround that keeps the choice alive; its owner reopens it on evidence, or keeps it
