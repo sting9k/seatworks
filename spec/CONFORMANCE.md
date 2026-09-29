@@ -48,6 +48,7 @@ on an implementation without the rule before it is trusted.
 | A Peer's permission open when its Lead is reseated or released | Owed by the new Lead, or by whoever released it, who answers it; the Peer still waits |
 | A permission whose asker leaves its seat                     | Closed: nothing is owed to it                  |
 | A permission answered in the agent's own prompt in Paseo     | Settled on the record: nothing owed, its answerer told, no second answer sent to Paseo |
+| A finding raised while its answerer's seat is empty          | Answered by the next owner seated above; past an empty root, by the Human |
 | A plan amended ten times                                     | Accepted, each with its reason                 |
 | A red check with a reason                                    | Integrated; the kernel never overrules the integrator |
 

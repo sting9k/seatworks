@@ -13,8 +13,20 @@ export function carriedFinding(ctx: Context, id: string | null): Refusal | null 
   return null;
 }
 
+/** Who answers what was addressed to a scope: its seated owner, the nearest owner seated above it, or the Human past an empty root (§4.4). */
 export function answererOf(ctx: Context, scope: string): Party | null {
-  return ctx.state.scopes.get(scope)?.owner ?? null;
+  return answeringScope(ctx, scope)?.answerer ?? null;
+}
+
+/** The scope whose owner answers, climbed past empty seats, with the answerer; the root answers through the Human when its seat is empty. */
+export function answeringScope(ctx: Context, scope: string): { scope: string; answerer: Party } | null {
+  for (let at: string | null = scope; at !== null; at = ctx.state.scopes.get(at)?.parent ?? null) {
+    const s = ctx.state.scopes.get(at);
+    if (!s) return null;
+    if (s.owner !== null) return { scope: at, answerer: s.owner };
+    if (s.parent === null) return { scope: at, answerer: HUMAN };
+  }
+  return null;
 }
 
 /** Ends a seat (announced as released unless `reason` is null, as for an agent gone): what the actor owed moves to `heir`, what waited for it too, and attentions it was sent climb. */

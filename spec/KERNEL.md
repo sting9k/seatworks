@@ -113,7 +113,8 @@ A premise, constraint or choice that the evidence shows does not fit (CONCEPT-V2
   meanwhile).
 - It is answered by whoever may change what it disputes: for a brief line, the owner of that scope's parent; for a
   plan line, the scope's owner; with no line, or for a change in another owner's scope (`about`), the owner of the
-  raiser's parent, who takes it on from there.
+  raiser's parent, who takes it on from there. When that seat is empty the finding climbs to the next owner seated
+  above it, and past an empty root to the Human.
 - Status:
 
 | Move       | From              | To         | Requires                                                            |

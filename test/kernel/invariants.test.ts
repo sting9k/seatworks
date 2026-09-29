@@ -230,6 +230,26 @@ test("I8: a finding classified as a change points to the change that carried it;
   assert.equal(ledger.state.findings.get(finding)?.status, "carried");
 });
 
+test("a finding under an empty seat climbs to the next owner seated above it, and past the root to the Human", () => {
+  const { ledger, supervisor, lead, peer } = team();
+  ledger.must(ledger.as(supervisor, "release", { actor: lead, reason: "the Lead is done" }));
+  ledger.must(
+    ledger.as(peer, "raise_finding", { text: "the port numbers disagree with the goal", default: "hold both" }),
+  );
+  const first = [...ledger.state.findings.values()][0]!;
+  assert.equal(first.answeredBy, "root");
+  const firstOwed = [...ledger.state.obligations.values()].find((o) => o.about.id === first.id);
+  assert.equal(firstOwed?.owedBy, supervisor);
+  ledger.must(ledger.as(supervisor, "classify_finding", { finding: first.id, verdict: "minor", reason: "noted" }));
+
+  ledger.must(ledger.human("release", { actor: supervisor, reason: "wrapping up" }));
+  ledger.must(ledger.as(peer, "raise_finding", { text: "still no answer on the ports", default: "go on" }));
+  const second = [...ledger.state.findings.values()].find((f) => f.id !== first.id)!;
+  const secondOwed = [...ledger.state.obligations.values()].find((o) => o.about.id === second.id);
+  assert.equal(secondOwed?.owedBy, "human");
+  ledger.must(ledger.human("classify_finding", { finding: second.id, verdict: "minor", reason: "noted" }));
+});
+
 test("I10: only the role with the Human's door asks them, and Peers do not message each other", () => {
   const { ledger, lead } = team();
   assert.equal(refusedBy(ledger.as(lead, "ask_human", { text: "Which one?" })), "authority");

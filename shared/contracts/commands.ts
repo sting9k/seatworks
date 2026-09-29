@@ -288,6 +288,7 @@ export const HUMAN_COMMANDS: ReadonlySet<CommandType> = new Set<CommandType>([
   "reseat",
   "release",
   "hold_machine",
+  "classify_finding",
 ]);
 
 export type Caller =

@@ -3,7 +3,7 @@ import { HUMAN, type ScopeId } from "../../contracts/ids.ts";
 import type { Finding } from "../../contracts/ledger.ts";
 import { type Context, type Refusal, isRefusal, refuse } from "./context.ts";
 import { briefLines, planLines } from "./lines.ts";
-import { answererOf } from "./seats.ts";
+import { answererOf, answeringScope } from "./seats.ts";
 
 type Of<T extends CommandBody["type"]> = Context<Extract<CommandBody, { type: T }>>;
 
@@ -34,8 +34,11 @@ export function raiseFinding(ctx: Of<"raise_finding">): Refusal | undefined {
   }
   if (answeredBy === null)
     return refuse("state", "nobody above you answers a finding: put it to the Human with a question");
-  const answerer = answererOf(ctx, answeredBy);
-  if (answerer === null) return refuse("state", `scope ${answeredBy} has nobody seated to answer it`);
+  // An empty seat does not refuse the finding: it climbs to the next owner seated above, the Human past the root.
+  const answers = answeringScope(ctx, answeredBy);
+  if (answers === null) return refuse("unknown", `no scope ${answeredBy}`);
+  answeredBy = answers.scope;
+  const answerer = answers.answerer;
 
   const finding: Finding = {
     id: ctx.next("finding"),
