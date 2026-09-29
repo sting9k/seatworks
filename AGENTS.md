@@ -7,6 +7,9 @@ the Watcher does. This file holds what the code will not tell you before you cha
 
 **Nothing has shipped.** No users, no releases, nothing to stay compatible with.
 
+**v3 is being built in `v3-redesign/`.** Work there follows `v3-redesign/AGENTS.md`, not this file; this file governs
+`plugin/`, V1.
+
 ## The governing rule
 
 The owner's words:
