@@ -16,7 +16,8 @@ Human ─goal─► 0 Intake ─► 1 Open ─► 2 Plan ─► 3 Work ─► 4 
 ## 0. Intake: the Supervisor with the Human
 
 - The Supervisor questions the Human until the goal, the constraints and the appetite are settled.
-- When the project's instruction files are new or have changed, the Supervisor compiles their rules (`compile-rules`).
+- When the project's instruction files are new or have changed, the Supervisor compiles their rules (`compile-rules`),
+  once the project-rules pipeline that reads them is built; until then no skill tells it to.
 - The first time, the Supervisor sets the project's checks from what the project already runs (its scripts, its CI),
   and the Human sees them.
 - Kernel: records the plan (goal, limits, what is not yet known and how each is checked, and the words the domain is

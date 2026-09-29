@@ -42,7 +42,7 @@ returns 403", "`../../etc/passwd` is rejected". See it fail, then fix at the sou
   proof. A decision that is not yours (the auth model, accepting a risk, rotating a secret, a CORS or rate-limit
   policy) is a `raise_finding` with the consequence of each option and your default; go on with what it does not
   touch.
-- **Reading a change.** Each case is a finding, its test described rather than written:
+- **Reading a change.** Each case is an entry in your verdict, its test described rather than written:
 
 ```text
 Where        src/files/serve.ts:31

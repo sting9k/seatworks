@@ -26,7 +26,7 @@ item:
 
 sweep:
   everyChars: 30000 # new work across the agents a Watcher watches, about a few turns each; an idle project sends none
-  digestChars: 18000 # what one note holds (20,000 at most); the rest is left to `look`
+  digestChars: 18000 # what one note holds (19,000 at most); the rest is left to `look`
 
 facts:
   repeats: 3 # the same call failing the same way three times is a loop, not a retry: a candidate

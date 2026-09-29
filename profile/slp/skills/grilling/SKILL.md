@@ -12,8 +12,8 @@ understood.
 
 - Only what changes what the project does or how it behaves: who it is for, what happens in the cases that matter,
   the rules its logic follows, what it will not do, the words it is spoken of in, and what it may cost.
-- Stack and architecture across lanes are yours. Decide them and list them under **Assumed**, one line each, so the
-  Human can overturn one. How a lane is built is its Lead's.
+- Stack and architecture across lanes are yours to choose, as defaults a Lead may argue with. List them under
+  **Assumed**, one line each, so the Human can overturn one. How a lane is built is its Lead's.
 - **Assumed** holds only what no user or caller would notice. A line that changes what a caller sends or gets back,
   how long something lasts, or what a repeat does is behaviour, so it is a question.
 - A fact the repository or a tool can give you is never a question.

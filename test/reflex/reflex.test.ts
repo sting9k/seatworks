@@ -77,23 +77,29 @@ const failing = (call: string): TurnItem => ({
   path: null,
 });
 
-test("a failing check is read as environment or code, and shown to the Lead as judgement evidence with its probability", async () => {
-  const { ledger, reflex, lane } = wired(0.87);
+test("a failing check is read as environment or code as a fact for the Lead, never as passing evidence on a red commit", async () => {
+  const { ledger, reflex, lane, observed } = wired(0.1);
   const events = ledger.must(
     ledger.fact("record_evidence", {
       scope: lane,
       subject: SHA(2),
       ok: false,
-      summary: "EADDRINUSE? no: TypeError x is undefined",
+      summary: "TypeError x is undefined",
       steps: [],
       heldMachine: false,
     }),
   );
   reflex.onEvents("p", events, ledger.state);
   await settle();
-  const judged = [...ledger.state.evidence.values()].filter((e) => e.kind === "judgement");
-  assert.equal(judged.length, 1);
-  assert.match(judged[0]!.summary, /red-check: environment \(0\.87\)/);
+  assert.ok(
+    observed.some((o) => o.question === "red-check"),
+    "the answer is on the record",
+  );
+  assert.deepEqual(
+    [...ledger.state.evidence.values()].filter((e) => e.kind === "judgement"),
+    [],
+    "a check that failed on the code never gains a passing judgement beside it",
+  );
 });
 
 test("a moment in a Peer's thinking, past a threshold not yet earned, is a candidate for the Watcher and nothing more", async () => {

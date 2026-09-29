@@ -25,10 +25,10 @@ and a test that invents the contract becomes the spec.
    line such as `parseHeader(bytes) -> Header | ParseError`. With neither, ask your Lead: a test at a guessed seam
    makes your guess the contract.
 2. **Contract.** Every type, field, function, route and table a test uses, and every field a fake in it carries,
-   exists in the code at your base or is named in your brief:
+   exists in the code outside tests or is named in your brief:
 
    ```sh
-   git grep -n -w 'NAME' "$BASE" -- . ':(exclude,glob)**/test*/**' ':(exclude,glob)**/*[._]test.*' ':(exclude,glob)**/*[._]spec.*'
+   git grep -n -w 'NAME' -- . ':(exclude,glob)**/test*/**' ':(exclude,glob)**/*[._]test.*' ':(exclude,glob)**/*[._]spec.*'
    ```
 
    A missing name is a minted API: the test decides the contract, and the code is bent to fit it later. Ask your Lead
@@ -41,7 +41,8 @@ and a test that invents the contract becomes the spec.
 For each behaviour, one sentence in a caller's words:
 
 1. One test through the seam. The expected value comes from the spec or a worked example, never from the code under
-   test; if hard-coding it would pass, add a second example with other values.
+   test; if hard-coding it would pass, add a second example with other values. The one exception is a
+   characterization test before a refactor, whose only claim is that nothing changed.
 2. See it fail on an assertion that the behaviour is missing. An import or fixture error is not the right red.
 3. The least code that implements the rule: no branch no test asked for, no special case for the test's inputs.
 4. Tidy, rerun, commit.

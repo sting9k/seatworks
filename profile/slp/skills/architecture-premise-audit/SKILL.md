@@ -20,7 +20,8 @@ no second review.
    responsibility, not by module. Each slice: its job and who consumes it; who owns its state and that state's
    lifecycle; its inputs, outputs and trust boundaries; the variable it scales with, or that an adversary controls;
    what it does on failure and under load.
-3. **The observed map.** Production entry points, the state that is authoritative, durable effects, expensive
+3. **The observed map**, read by a lane, not by you (below): scanning spends the context that lets you see across
+   lanes. Production entry points, the state that is authoritative, durable effects, expensive
    operations, queues and schedulers, what leaves the system, deployment boundaries, and the proof cited for each.
    Never take the repository's decomposition untested.
 4. **Compare slice by slice.** Which demonstrated need forces each mechanism? Does cost follow useful work? Are the
@@ -59,12 +60,12 @@ Clear a mechanism, as standard or as a justified deviation, when it has the info
 any deviation serves a named constraint at a proportionate cost. Custom is not wrong, and complexity the domain
 requires is not overengineering.
 
-## A project too large to read alone
+## The lane that reads the code
 
-Open a lane to map it. Its goal is the observed map for the slices you name. What must hold: no change to the code,
-every row with its file and line, and each slice read by a reader who sees no other reader's answer. How it meets
-that is its Lead's. Leave your suspicion out of the brief, so each reader stays an independent judgment. Its report
-carries the rows; then drop the lane and release its Lead.
+Steps 3 to 5 read the code, so a lane does them. Its goal is the observed map for the slices you name. What must hold:
+no change to the code, every row with its file and line, and each slice read by a reader who sees no other reader's
+answer. How it meets that is its Lead's. Leave your suspicion out of the brief, so each reader stays an independent
+judgment. Its report carries the rows; you compare them with your expected map, then drop the lane and release its Lead.
 
 ## Ends in
 

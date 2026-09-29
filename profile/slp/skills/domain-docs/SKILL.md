@@ -20,6 +20,9 @@ agent has to rediscover, and one it will not quietly undo.
   a silent override and never a workaround that keeps the choice alive; its owner reopens it on evidence, or keeps it
   with a reason you can argue with.
 
+Only an agent that writes code writes here. A Lead that settles a word or makes such a decision puts it in the brief
+of the task it concerns, and that Peer writes it with the code.
+
 ## Glossary
 
 The plugin keeps the words settled with the Human between its markers; leave that block as it is. A word your work

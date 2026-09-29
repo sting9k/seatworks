@@ -10,8 +10,7 @@ roles:
     humanDoor: true
     speaksTo: [human, children, descendants]
     prompt: roles/supervisor.md
-    skills: [grilling, attention, compile-rules, pre-mortem, retrospective, architecture-premise-audit, appetite,
-             lane-portfolio]
+    skills: [grilling, attention, pre-mortem, retrospective, architecture-premise-audit, appetite, lane-portfolio]
     models: [slp-supervisor]
     tools: [status, record, diff, look, open_scope, amend_brief, set_plan, amend_plan, add_edge, remove_edge,
             handover, classify_finding, integrate, send_back, reseat, drop_scope, hold_scope, resume_scope, release,
@@ -26,7 +25,7 @@ roles:
     skills: [steering, blind-design, planning-lanes, domain-docs, acceptance-walk, repo-refresh]
     models: [slp-lead]
     tools: [status, record, diff, look, open_scope, amend_brief, set_plan, amend_plan, add_edge, remove_edge,
-            handover, raise_finding, withdraw_finding, classify_finding, integrate, send_back, reseat, drop_scope, hand_back,
+            handover, raise_finding, withdraw_finding, reopen_finding, classify_finding, integrate, send_back, reseat, drop_scope, hand_back,
             hold_scope, resume_scope, release, report, send_message, answer, answer_permission, hold_machine,
             mark_noise, acknowledge, run_checks]
 
@@ -36,7 +35,8 @@ roles:
     prompt: roles/peer.md
     skills: [test-first, diagnosing-bugs, domain-docs, security-check, proof-audit, spike, measuring, tidy-first]
     models: [slp-peer, slp-peer-alt]
-    tools: [status, record, diff, raise_finding, withdraw_finding, hand_back, send_message, answer, hold_machine]
+    tools: [status, record, diff, raise_finding, withdraw_finding, reopen_finding, hand_back, run_checks, send_message,
+            answer, hold_machine]
 
   reviewer:
     reading: true
@@ -44,7 +44,8 @@ roles:
     prompt: roles/reviewer.md
     skills: [security-check, proof-audit]
     models: [slp-reviewer, slp-peer]
-    tools: [status, record, diff, record_verdict, raise_finding, send_message, answer, hold_machine]
+    tools: [status, record, diff, record_verdict, raise_finding, withdraw_finding, reopen_finding, send_message, answer,
+            hold_machine]
 
   watcher:
     watches: true

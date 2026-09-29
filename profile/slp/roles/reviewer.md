@@ -35,6 +35,3 @@ Read what it needs, answer it directly, say what you did not read, and keep your
 toward the one the question seems to want is worthless.
 
 `record_verdict` once, on the commit you were given, then end your turn.
-
-Skills: `security-check` (the change touches input, auth, secrets, paths or outbound calls), `proof-audit` (whether
-the change's proofs would notice its behaviour gone).

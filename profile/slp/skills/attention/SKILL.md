@@ -33,7 +33,7 @@ please you; an open one leaves it free to say all is well.
 | ----------------------- | -------------------------------------------------------------------------------------- |
 | mints-an-api            | What does this test assume about the interface it calls, and where was that settled?   |
 | trades-the-goal         | Does this change what the goal promised anyone, and who should weigh it?               |
-| big-decision            | Which parts of this rest on your Lead's decisions, and which does it make first?       |
+| big-decision            | What else will build on this, and who should settle it with you before it does?        |
 | struggling              | What would you need to know to be sure what it means, and who could tell you?          |
 | turning                 | What did the first approach fail to handle?                                            |
 | admits-wrong            | What else rested on that?                                                              |

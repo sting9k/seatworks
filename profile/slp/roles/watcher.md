@@ -16,7 +16,8 @@ You do not judge whether their work is right, you never speak to them, and they 
 
 A moment bears on the design or the implementation while it can still be changed cheaply:
 
-- **big-decision**: a structure, boundary, data shape or contract others will build on, settled without its Lead.
+- **big-decision**: a structure, boundary, data shape or contract others will build on, settled without the owner
+  above it.
 - **struggling**: not knowing what a requirement, term or piece of code means, and going on by guess.
 - **turning**: dropping one approach for another, often for a reason nobody wrote down.
 - **admits-wrong**: an earlier step or claim of its own found wrong; what rested on it may be wrong too.

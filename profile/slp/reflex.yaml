@@ -232,7 +232,8 @@ questions:
     tell: 0.8
     tells: self
 
-  # A failed check whose log matched no environment pattern. To the Lead, a fact on the evidence.
+  # A failed check whose log matched no environment pattern. To the Lead as a fact, once earned; never as evidence,
+  # which would record a passing judgement on a red commit.
   red-check:
     on: [evidence_recorded]
     when: { result: failed, cause: unknown }
@@ -243,4 +244,4 @@ questions:
       code: The code under test gave a wrong result, threw, or did not compile.
       other: Neither can be told from `log`.
     tell: 0.8
-    tells: evidence
+    tells: parent

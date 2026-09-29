@@ -47,7 +47,7 @@ failing on the code before the fix, for the reason it names; one never seen red 
 | Pattern                                                        | Better route                                              |
 | -------------------------------------------------------------- | --------------------------------------------------------- |
 | No assertion, or a value compared with itself                  | Assert what a caller sees                                 |
-| Expected value computed by the code under test, or copied from its output | A worked example, an invariant, an independent source |
+| Expected value computed by the code under test, or copied from its output, for a claim beyond "unchanged" | A worked example, an invariant, an independent source |
 | A mock that does the behaviour being asserted                  | The real collaborator, or a fake at the far side of a port |
 | A call asserted as made, never what it did                     | The effect: the rows written, the bytes sent              |
 | A fixture that writes the state the code should produce        | Let the workflow produce it                               |
@@ -65,7 +65,7 @@ and neither is a count to raise.
 
 - **Working a task.** Every proof in your `hand_back` is one you would keep, and a gap you could not close is named
   beside its behaviour.
-- **Reading a change or a lane.** A proof that passes with the behaviour broken is a finding, one entry each:
+- **Reading a change or a lane.** A proof that passes with the behaviour broken is an entry in your verdict:
 
 ```text
 Location      test/export.test.ts:41 "exports every row"

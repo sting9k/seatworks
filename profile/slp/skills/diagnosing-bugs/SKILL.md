@@ -9,7 +9,7 @@ description: "Goes from a symptom to its cause and proves the fix with a command
    a seam that reaches the bug, a run diffed against expected output, a replayed request, or a bisect between two
    known commits, in a throwaway clone of your copy. Intermittent: rerun it alone until you know its rate. Failing
    only while another process holds the same port or database: say so and change nothing. No red command, no
-   diagnosis: hand back what you tried and what would unblock you.
+   diagnosis: raise it as a finding with what you tried and what would unblock you.
 2. **Shrink it** until removing anything else turns it green.
 3. **Three to five hypotheses before testing any**, each with a prediction ("if X, changing Y makes it vanish"). Run
    the cheapest check that separates the top two.

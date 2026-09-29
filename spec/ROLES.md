@@ -95,7 +95,7 @@ list. Different models in blind designs are the point: one model on one question
 | ---------- | ------------------------------ | ---------------------------------------- |
 | Supervisor | `grilling`                     | Rewritten: settles the plan's lines      |
 | Supervisor | `attention`                    | New (`WATCH.md`)                         |
-| Supervisor | `compile-rules`                | New (`REFLEX.md`): the project's rules as questions |
+| Supervisor | `compile-rules`                | Not shipped until the project-rules pipeline reads `rules.yaml` (`REFLEX.md`) |
 | Supervisor | `pre-mortem`                   | Kept                                     |
 | Supervisor | `retrospective`                | Rewritten: the chain of change and the five signals, fixed by taking away |
 | Lead       | `steering`                     | New (`STEERING.md`)                      |
