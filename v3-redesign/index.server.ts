@@ -1,7 +1,9 @@
 import type { PluginServerContext } from "@getpaseo/plugin/server";
 import { HUMAN_COMMANDS, type CommandType, parseBody } from "./shared/contracts/commands.ts";
 import { RPC } from "./shared/contracts/rpc.ts";
+import { reflexSettings } from "./shared/contracts/settings.ts";
 import { Plugin } from "./server/bridge/plugin.ts";
+import { turnItems } from "./server/satellites/agent-host/items.ts";
 import { daemonLog } from "./server/core/logger.ts";
 import { stateRoot } from "./server/core/paths.ts";
 
@@ -10,6 +12,12 @@ const OURS = /^\d+:/;
 
 export default function contribute(server: PluginServerContext) {
   const plugin = new Plugin(stateRoot());
+  const settings = server.registerSettings(reflexSettings);
+  const useSettings = (state: Awaited<ReturnType<typeof settings.read>>) => {
+    if (state.status === "ready") plugin.setReflex(state.values.route, state.values.key);
+  };
+  void settings.read().then(useSettings);
+  const stopSettings = settings.subscribe(useSettings);
   const guard = (what: string, work: () => Promise<unknown>) => {
     void work().catch((error: unknown) => {
       daemonLog.error(`seatworks: ${what} failed`, error);
@@ -25,7 +33,7 @@ export default function contribute(server: PluginServerContext) {
     );
     const outcome =
       event.outcome.kind === "failed" ? { kind: "failed", error: event.outcome.error } : { kind: event.outcome.kind };
-    guard("a turn's end", () => plugin.turnEnded(event.agent.id, outcome, typed));
+    guard("a turn's end", () => plugin.turnEnded(event.agent.id, outcome, typed, turnItems(event.timeline)));
   });
   server.on("agent.permission_requested", (event, { paseo }) => {
     plugin.saw(paseo);
@@ -71,7 +79,7 @@ export default function contribute(server: PluginServerContext) {
   server.handle(RPC.view, async (input, { paseo }) => {
     plugin.saw(paseo);
     const view = await plugin.view(input.project);
-    return view ?? { human: null, activity: [], root: "No such project." };
+    return { ...(view ?? { human: null, activity: [], root: "No such project." }), alarm: plugin.alarm };
   });
   server.handle(RPC.record, async (input, { paseo }) => {
     plugin.saw(paseo);
@@ -84,6 +92,7 @@ export default function contribute(server: PluginServerContext) {
   });
 
   return () => {
+    void stopSettings();
     guard("stopping", () => plugin.dispose());
   };
 }

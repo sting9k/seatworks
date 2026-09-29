@@ -212,7 +212,12 @@ export const COMMANDS = {
         facts: z.array(z.string()).max(20).default([]),
         urgency: z.enum(["now", "later"]),
       }),
-      z.object({ kind: z.literal("note"), to: z.enum(["root", "parent", "self"]), text }),
+      z.object({
+        kind: z.literal("note"),
+        to: z.enum(["root", "parent", "self"]),
+        text,
+        wakes: z.boolean().default(false),
+      }),
       z.object({ kind: z.literal("evidence"), commit: sha, ok: z.boolean(), text }),
       z.object({ kind: z.literal("fact"), to: z.enum(["root", "parent", "self", "answerer"]), text }),
     ]),

@@ -6,8 +6,9 @@ from Paseo 0.10.1: the plugin SDK, `@getpaseo/client`, `@getpaseo/protocol`, the
 
 ## Surviving a release
 
-1. **One place touches Paseo.** `satellites/agent-host/` and `bridge/` import `@getpaseo/*`; nothing else does. A
-   release changes at most those two.
+1. **One place touches Paseo.** `satellites/agent-host/` and `bridge/` import `@getpaseo/*`; nothing else does, but
+   `shared/contracts/settings.ts`, where `defineSettings` from `@getpaseo/plugin` shapes the settings both the daemon
+   and the app read, as Paseo's own examples share them. A release changes at most those places.
 2. **Only the published surface.** `@getpaseo/plugin/server` (contribution, hooks, RPC, settings) and the
    `PaseoApi` it hands out (agents, workspaces, providers, terminals, config). v3 never reads Paseo's own files
    (`config.json`, `daemon.log`, its state), never leans on a label or row Paseo writes for itself, and reads

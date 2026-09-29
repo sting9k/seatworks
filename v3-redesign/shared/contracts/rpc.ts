@@ -63,7 +63,12 @@ export const RPC = {
   view: {
     name: "seatworks.view",
     input: z.object({ project: z.string().min(1) }),
-    output: z.object({ human: HumanViewSchema.nullable(), activity: z.array(z.string()), root: z.string() }),
+    output: z.object({
+      human: HumanViewSchema.nullable(),
+      activity: z.array(z.string()),
+      root: z.string(),
+      alarm: z.string().nullable(),
+    }),
   },
   record: {
     name: "seatworks.record",

@@ -12,7 +12,7 @@ active: [touches-goal-or-cost, mints-an-api, red-check]
 
 routes:
   openrouter:
-    endpoint: https://openrouter.ai/api/alpha/decisions
+    endpoint: https://openrouter.ai/api/v1/systemone
     model: typesafe/jev-1.13
     budget: 32000
     body: { provider: { data_collection: deny } }

@@ -18,12 +18,16 @@ import { PaseoLink } from "../satellites/agent-host/paseo-link.ts";
 import { EvidenceRunner } from "../satellites/evidence/runner.ts";
 import { MachineHolds } from "../satellites/machine/holds.ts";
 import { ProjectStore } from "../satellites/store/project-store.ts";
+import type { TurnItem } from "../satellites/agent-host/items.ts";
+import { loadReflex } from "../satellites/reflex/config.ts";
+import { Jev } from "../satellites/reflex/jev.ts";
 import { git } from "../satellites/workspace/git.ts";
 import { Workspace } from "../satellites/workspace/workspace.ts";
 import { type Bundle, loadBundle, profileDir } from "../profile/bundle.ts";
 import { Dispatcher } from "./dispatcher.ts";
 import { handlersFor, scratchFor } from "./effects.ts";
 import { Project, type Submitted } from "./project.ts";
+import { Reflex } from "./reflex.ts";
 import { type ProjectPort, TeamSocket } from "./team-socket.ts";
 
 export const PLUGIN_ID = "seatworks";
@@ -57,6 +61,10 @@ export class Plugin {
   private readonly byHost = new Map<string, { project: string; actor: string }>();
   private ready: Promise<Ready> | null = null;
   private bundle: Bundle | null = null;
+  private reflex: Reflex | null = null;
+  private reflexKey: { route: string; key: string } = { route: "openrouter", key: "" };
+  private jev: { for: string; client: Jev } | null = null;
+  private alarmText: string | null = null;
   private readyNow: Ready | null = null;
   private disposed = false;
   private readonly upkeep: NodeJS.Timeout;
@@ -77,6 +85,17 @@ export class Plugin {
     });
   }
 
+  /** Where the reflex asks Jev, from the plugin's settings; the key is kept here only, never logged. */
+  setReflex(route: string, key: string): void {
+    this.reflexKey = { route, key };
+    this.alarmText = null;
+  }
+
+  /** A standing alarm for the Human, such as the reflex having no key; null when all is well. */
+  get alarm(): string | null {
+    return this.alarmText;
+  }
+
   /** Paseo's API from a hook or a panel call; the first one starts everything that needs the plugin's own files. */
   saw(api: PaseoApi): void {
     this.link.set(api);
@@ -95,6 +114,25 @@ export class Plugin {
     if (!dir) throw new Error(`Paseo's config has no plugins.${PLUGIN_ID} with a path`);
     const bundle = loadBundle(profileDir(join(dir, "profile", "slp"), this.root));
     this.bundle = bundle;
+    const config = loadReflex(bundle.dir);
+    if (config)
+      this.reflex = new Reflex(
+        config,
+        () => {
+          const route = config.routes[this.reflexKey.route];
+          if (!route || this.reflexKey.key === "") return null;
+          const id = `${this.reflexKey.route}:${this.reflexKey.key}`;
+          if (this.jev?.for !== id) this.jev = { for: id, client: new Jev(route, this.reflexKey.key, config.mask) };
+          return this.jev.client;
+        },
+        async (project, body) => {
+          const runtime = this.runtimes.get(project);
+          if (runtime) await this.submitAs(runtime, { kind: "bridge" }, body);
+        },
+        (text) => {
+          this.alarmText = text;
+        },
+      );
     const host = new PaseoHost(this.link, (provider) => harnessOf(dir, provider));
     const shimDir = installShim(this.root, join(dir, "bin", "git-shim.ts"));
     const socketPath =
@@ -188,9 +226,11 @@ export class Plugin {
     hostId: string,
     outcome: { kind: string; error?: { message: string } },
     typed: readonly string[],
+    items: readonly TurnItem[],
   ): Promise<void> {
     const who = this.byHost.get(hostId);
     const runtime = who ? this.runtimes.get(who.project) : undefined;
+    if (who && runtime) this.reflex?.onTurn(who.project, who.actor, items, runtime.project.view);
     if (!who || !runtime) return;
     const ready = await this.whenReady();
     const usage = await ready.host.usage(hostId);
@@ -312,7 +352,8 @@ export class Plugin {
     this.runtimes.set(id, runtime);
     this.index(id, runtime);
     runtime.stops.push(
-      project.onCommitted(() => {
+      project.onCommitted((events) => {
+        this.reflex?.onEvents(id, events, project.view);
         runtime.lastActive = Date.now();
         this.index(id, runtime);
         dispatcher.kick();

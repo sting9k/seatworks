@@ -82,22 +82,28 @@ export function observation(ctx: Of<"record_observation">): Refusal | undefined 
   });
   const route = b.route;
   if (b.level === "record") return undefined;
-  if (route.kind === "attention") {
-    if (b.actor === null) return refuse("I12", "an attention is about an actor");
-    if (b.level === "tell") {
-      attentionTo(ctx, {
-        actor: b.actor,
-        scope: b.scope,
-        moment: b.question,
-        why: route.why,
-        facts: route.facts,
-        source: b.source,
-        urgency: route.urgency,
+  if (route.kind === "evidence") {
+    if (b.level === "tell")
+      ctx.emit({
+        type: "evidence_recorded",
+        evidence: {
+          id: ctx.next("evidence"),
+          scope: b.scope,
+          kind: "judgement",
+          subject: route.commit,
+          ok: route.ok,
+          by: "bridge",
+          summary: route.text,
+          steps: [],
+          heldMachine: false,
+        },
       });
-      return undefined;
-    }
+    return undefined;
+  }
+  if (b.level === "consider") {
+    // Between thresholds, or past one not yet earned: a candidate for the actor that watches over the scope.
     const watcher = watcherOver(ctx, b.scope);
-    const actor = ctx.state.actors.get(b.actor);
+    const actor = b.actor === null ? undefined : ctx.state.actors.get(b.actor);
     const above = actor ? ownerAbove(ctx.state, actor) : null;
     if (watcher !== null && above !== null)
       ctx.emit({
@@ -112,21 +118,16 @@ export function observation(ctx: Of<"record_observation">): Refusal | undefined 
       });
     return undefined;
   }
-  if (b.level !== "tell") return undefined;
-  if (route.kind === "evidence") {
-    ctx.emit({
-      type: "evidence_recorded",
-      evidence: {
-        id: ctx.next("evidence"),
-        scope: b.scope,
-        kind: "judgement",
-        subject: route.commit,
-        ok: route.ok,
-        by: "bridge",
-        summary: route.text,
-        steps: [],
-        heldMachine: false,
-      },
+  if (route.kind === "attention") {
+    if (b.actor === null) return refuse("I12", "an attention is about an actor");
+    attentionTo(ctx, {
+      actor: b.actor,
+      scope: b.scope,
+      moment: b.question,
+      why: route.why,
+      facts: route.facts,
+      source: b.source,
+      urgency: route.urgency,
     });
     return undefined;
   }
@@ -146,6 +147,7 @@ export function observation(ctx: Of<"record_observation">): Refusal | undefined 
       queued: true,
       delivered: null,
       answered: false,
+      wakes: route.kind === "note" && route.wakes,
     },
   });
   return undefined;

@@ -39,8 +39,18 @@ export default defineConfig(
         {
           patterns: [
             {
-              group: ["node:*", "@getpaseo/*", "../server/*", "../../server/*", "react", "react-native"],
-              message: "shared/ runs in the daemon and the app: pure code only.",
+              group: [
+                "node:*",
+                "@getpaseo/*/**",
+                "@getpaseo/client",
+                "@getpaseo/protocol",
+                "../server/*",
+                "../../server/*",
+                "react",
+                "react-native",
+              ],
+              message:
+                "shared/ runs in the daemon and the app: pure code only; of Paseo, only @getpaseo/plugin's settings definitions.",
             },
           ],
         },

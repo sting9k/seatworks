@@ -162,6 +162,8 @@ export type Message = {
   readonly queued: boolean;
   readonly delivered: string | null;
   readonly answered: boolean;
+  /** A note that wakes its reader though it asks nothing and opens no obligation (REFLEX.md, `wakes`). */
+  readonly wakes: boolean;
 };
 
 export type Question = {

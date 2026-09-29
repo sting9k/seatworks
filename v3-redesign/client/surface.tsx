@@ -15,7 +15,12 @@ export function Surface({ theme }: PluginSurfaceProps) {
   const send = useRpc(RPC.human);
   const [projects, setProjects] = useState<Project[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
-  const [view, setView] = useState<{ human: HumanView | null; activity: string[]; root: string } | null>(null);
+  const [view, setView] = useState<{
+    human: HumanView | null;
+    activity: string[];
+    root: string;
+    alarm: string | null;
+  } | null>(null);
   const [said, setSaid] = useState("");
 
   const c = theme.colors;
@@ -97,6 +102,7 @@ export function Surface({ theme }: PluginSurfaceProps) {
           ))}
         </View>
       )}
+      {view?.alarm ? <Text style={s.danger}>{view.alarm}</Text> : null}
       {said ? <Text style={s.muted}>{said}</Text> : null}
       {h ? (
         <>

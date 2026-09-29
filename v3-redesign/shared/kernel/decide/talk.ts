@@ -53,7 +53,15 @@ type Draft = Pick<Message, "to" | "text" | "asks" | "directs" | "replyTo" | "que
 
 /** Records a message, its copy to the reader's parent owner when it comes from outside (I7), and what it opens. */
 function post(ctx: Context, draft: Draft, from: Party = ctx.party): void {
-  const message: Message = { id: ctx.next("message"), from, copyOf: null, delivered: null, answered: false, ...draft };
+  const message: Message = {
+    id: ctx.next("message"),
+    from,
+    copyOf: null,
+    delivered: null,
+    answered: false,
+    wakes: false,
+    ...draft,
+  };
   ctx.emit({ type: "message_sent", message });
   if (message.asks && message.to !== HUMAN)
     ctx.emit({
