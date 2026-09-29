@@ -42,7 +42,7 @@ export function PermissionCard({
           <Dot tone="you" theme={theme} size={6} />
           <Text style={styles.small}>{permission.actor} asks your leave</Text>
         </View>
-        <Text style={styles.text} numberOfLines={6}>
+        <Text style={styles.text} selectable>
           {permission.text}
         </Text>
         <View style={styles.actions}>
