@@ -118,6 +118,7 @@ export type EventBody =
       allow: boolean;
       reason: string;
     }
+  | { type: "permission_settled"; permission: PermissionId; actor: ActorId; allow: boolean }
   | { type: "observation_made"; observation: Observation }
   | { type: "attention_opened"; attention: Attention }
   | { type: "attention_delivered"; attention: AttentionId; at: string }

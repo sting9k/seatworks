@@ -72,6 +72,7 @@ export const DESCRIPTIONS: Record<CommandType | ReadName, string> = {
   record_integration: "",
   record_publish: "",
   record_permission: "",
+  record_permission_settled: "",
   record_human_words: "",
   record_observation: "",
 };

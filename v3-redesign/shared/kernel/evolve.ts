@@ -250,6 +250,7 @@ function apply(s: State, e: Event, at: string): State {
         e.permission.id,
       );
     case "permission_answered":
+    case "permission_settled":
       return { ...s, permissions: without(s.permissions, e.permission) };
     case "observation_made":
       return counted(s, "observation", e.observation.id);

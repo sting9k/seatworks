@@ -23,6 +23,9 @@ export function fakePaseo(pluginDir: string, provider = "claude") {
   const archived: string[] = [];
   const byKey = new Map<string, { host: string; request: string }>();
   const gate = { loseReplies: 0 };
+  /** Permissions each agent's own prompt still waits on, and those answered through the API. */
+  const pending = new Map<string, Set<string>>();
+  const responded: string[] = [];
   /** The project roots Paseo lists; a test adds the ones the Human opened in Paseo. */
   const projects: string[] = [];
   const ref = (id: string) => ({
@@ -33,6 +36,7 @@ export function fakePaseo(pluginDir: string, provider = "claude") {
           id,
           activeTurn: null,
           archivedAt: archived.includes(id) ? "now" : null,
+          pendingPermissions: [...(pending.get(id) ?? [])].map((request) => ({ id: request })),
           lastUsage: { inputTokens: 100, outputTokens: 20, totalCostUsd: 0.01 },
         },
       }),
@@ -44,7 +48,11 @@ export function fakePaseo(pluginDir: string, provider = "claude") {
       archived.push(id);
       return Promise.resolve({ archivedAt: "now" });
     },
-    respondToPermission: () => Promise.resolve(),
+    respondToPermission: (o: { requestId: string }) => {
+      responded.push(o.requestId);
+      pending.get(id)?.delete(o.requestId);
+      return Promise.resolve();
+    },
     timeline: { refetch: () => Promise.resolve({ entries: [] }) },
   });
   const api = {
@@ -124,5 +132,5 @@ export function fakePaseo(pluginDir: string, provider = "claude") {
       ref,
     },
   };
-  return { api: api as unknown as PaseoApi, created, sent, archived, gate, projects };
+  return { api: api as unknown as PaseoApi, created, sent, archived, gate, projects, pending, responded };
 }

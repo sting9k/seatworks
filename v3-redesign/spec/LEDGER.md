@@ -174,7 +174,7 @@ What closes each obligation:
 | `question_asked`               | the Human                   | `question_answered`                                          |
 | `claim_made`                   | the parent's owner          | `integrated`, `sent_back`, `scope_dropped`, or a newer claim on the scope |
 | an observation between thresholds | the watcher over it      | `attended` or `passed`                                       |
-| `permission_asked`             | its answerer                | `permission_answered`, or the asking actor gone              |
+| `permission_asked`             | its answerer                | `permission_answered`, `permission_settled`, or the asking actor gone |
 
 When an actor is released, reseated or gone, every obligation it owes moves to the new holder of its seat or, with
 no seat left, to the owner of its scope's parent (`obligation_moved`). An obligation owed by the Human never moves.
@@ -274,6 +274,7 @@ the shell and never reaches `decide`.
 | `record_integration`   | `scope, result: { sha } \| { moved } \| { failed: why }`                | `integrated` or `integration_refused` |
 | `record_publish`       | `result: { sha } \| { refused: why }`                                   | `published` or `publish_refused`    |
 | `record_permission`    | `actor, request, text`                                                  | `permission_asked`, `obligation_opened` |
+| `record_permission_settled` | `actor, request, allow`: answered in the agent's own prompt        | `permission_settled`, `obligation_closed`; nothing when the ledger answered it already |
 | `record_human_words`   | `actor, text`                                                           | `message_sent` (from the Human, directs, not queued), its copy (I7) |
 | `record_observation`   | `question, subject, source, model?, answer, level, route`               | `observation_made`, then per §7     |
 
@@ -332,6 +333,7 @@ Every event, with its payload. `evolve` handles each; an unknown type stops the 
 | `publish_refused`     | `remote, branch, why`                                                                        |
 | `permission_asked`    | `permission: Permission`                                                                     |
 | `permission_answered` | `permission, actor, request, allow, reason`                                                  |
+| `permission_settled`  | `permission, actor, allow`: answered outside the ledger, so no answer is sent                |
 | `observation_made`    | `observation: { id, question, subject, source, model, answer, level }`                       |
 | `attention_opened`    | `attention: Attention`                                                                       |
 | `attention_delivered` | `attention, at`                                                                              |
@@ -377,7 +379,8 @@ it was delivered, an attention not settled climbs: `attention_climbed` opens a c
 | `integration_refused` (moved)            | `workspace.candidate` again on the same commit           | `<seq>:candidate`           |
 | `integrated`, `scope_dropped`            | `workspace.remove { scope }`, `agent.archive`            | `<seq>:remove`, `<seq>:archive` |
 | `actor_released`                         | `agent.archive { host }`                                 | `<seq>:archive`             |
-| `permission_answered`                    | `agent.permission { host, request, allow, reason }`      | `<seq>:permission`          |
+| `permission_answered`                    | `agent.permission { host, request, allow, reason }`, sent only while the agent still waits on it | `<seq>:permission` |
+| `permission_settled`                     | a note to its answerer that nothing is owed             | `<seq>:deliver`             |
 | `machine_held`, `machine_released`       | `machine.hold { project, actor, hold }`                  | `<seq>:machine`             |
 | `publish_requested`                      | `workspace.publish { branch, remote, expectedSha }`      | `<seq>:publish`             |
 

@@ -188,6 +188,41 @@ test("a permission is answered by the owner above the asking agent, or the Human
   assert.equal(ledger.state.permissions.size, 0);
 });
 
+test("a permission answered in the agent's own prompt settles on the record, with no second answer sent", () => {
+  const { ledger, lead, peer } = team();
+  ledger.must(ledger.as(lead, "open_scope", { parent: "1", role: "peer", paths: ["src/ui/"], brief: brief("UI") }));
+  ledger.must(ledger.fact("record_permission", { actor: peer, request: "r1", text: "rm -rf build/" }));
+  const permission = [...ledger.state.permissions.keys()][0]!;
+  const before = ledger.effects.length;
+  ledger.must(ledger.fact("record_permission_settled", { actor: peer, request: "r1", allow: true }));
+  const settled = ledger.effects.slice(before);
+  assert.equal(ledger.state.permissions.size, 0);
+  assert.ok(
+    [...ledger.state.obligations.values()].every((o) => o.about.kind !== "permission"),
+    "its answerer owes nothing",
+  );
+  assert.ok(!settled.some((e) => e.body.kind === "agent.permission"), "Paseo is not answered twice");
+  assert.ok(
+    settled.some(
+      (e) =>
+        e.body.kind === "deliver" &&
+        e.body.to === lead &&
+        e.body.item.kind === "note" &&
+        /own prompt/.test(e.body.item.text),
+    ),
+    "its answerer is told",
+  );
+  assert.equal(
+    refusedBy(ledger.as(lead, "answer_permission", { permission, allow: false, reason: "late" })),
+    "unknown",
+  );
+  assert.deepEqual(
+    ledger.must(ledger.fact("record_permission_settled", { actor: peer, request: "r1", allow: true })),
+    [],
+    "settled again, it has nothing left to close",
+  );
+});
+
 test("a reseated Peer finds its undelivered mail waiting, and the Human may reseat the Supervisor", () => {
   const { ledger, lead, task } = team();
   ledger.must(ledger.as(lead, "send_message", { to: "a3", text: "one" }));

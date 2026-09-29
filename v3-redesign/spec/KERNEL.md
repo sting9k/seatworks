@@ -217,7 +217,7 @@ A command is called by an actor and checked against its role's properties and th
 | `hand_back`        | the writer, or the owner of a scope that delegates   | Records a claim at a commit; asks for evidence on it                     |
 | `record_verdict`   | the actor of a reading scope                        | Records its verdict as evidence on its commit                            |
 | `record_evidence`  | the bridge, for a satellite's result                 | Records evidence                                                         |
-| `record_turn`, `record_workspace`, `record_agent`, `record_gone`, `record_delivery`, `record_candidate`, `record_integration`, `record_publish`, `record_permission`, `record_human_words`, `record_observation` | the bridge, for a fact | Records what a satellite or the agent host reported (`LEDGER.md` §5) |
+| `record_turn`, `record_workspace`, `record_agent`, `record_gone`, `record_delivery`, `record_candidate`, `record_integration`, `record_publish`, `record_permission`, `record_permission_settled`, `record_human_words`, `record_observation` | the bridge, for a fact | Records what a satellite or the agent host reported (`LEDGER.md` §5) |
 | `set_checks`       | owner of the root, or the Human                      | Sets the project's checks                                                |
 | `run_checks`       | owner of the parent, or the writer                   | Runs the project's checks, or named commands, on a commit of the scope   |
 | `integrate`        | owner of the parent                                 | Brings the scope into its parent (I4)                                    |

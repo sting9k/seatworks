@@ -36,7 +36,7 @@ from Paseo 0.10.1: the plugin SDK, `@getpaseo/client`, `@getpaseo/protocol`, the
 | A copy per writer                      | `workspaces.create` with a worktree source, and Paseo's worktree setup; v3 keeps merge, advance and the git guard, which Paseo does not do | Most of its own copies             |
 | Deliver a message                      | `agent.send`, when the handle's `activeTurn` is empty                                                    | Its own turn tracking              |
 | Turn state, cost, context              | `agent.turn_started`, `agent.turn_ended`; the handle's `activeTurn` and `lastUsage` (tokens, cost, context window) | Parsing history for spend          |
-| Permissions                            | `agent.permission_requested`, `respondToPermission`                                                      | —                                  |
+| Permissions                            | `agent.permission_requested`, `respondToPermission` while the agent's `pendingPermissions` still hold the request, and `agent.permission_resolved` for one answered in the agent's own prompt | —                                  |
 | Per-session environment                | `before('agent.session_open')`, env only                                                                 | —                                  |
 | The Human's surface                    | Client contributions: a surface and sidebar item, workspace panels, Command Center items, slash commands, header buttons, composer pills, timeline renderers | —                                  |
 | Cards in a chat                        | `timeline.append` plugin rows: shown, not kept (a daemon restart drops them), so never the record         | —                                  |

@@ -197,6 +197,7 @@ export const COMMANDS = {
   record_integration: z.object({ scope: id, result: z.union([z.object({ sha }), z.object({ refused: z.string() })]) }),
   record_publish: z.object({ result: z.union([z.object({ sha }), z.object({ refused: z.string() })]) }),
   record_permission: z.object({ actor: id, request: z.string().min(1), text }),
+  record_permission_settled: z.object({ actor: id, request: z.string().min(1), allow: z.boolean() }),
   record_human_words: z.object({ actor: id, text }),
   record_observation: z.object({
     question: z.string().min(1).max(100),
@@ -241,6 +242,7 @@ export const FACTS: ReadonlySet<CommandType> = new Set<CommandType>([
   "record_integration",
   "record_publish",
   "record_permission",
+  "record_permission_settled",
   "record_human_words",
   "record_observation",
 ]);

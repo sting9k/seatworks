@@ -482,6 +482,18 @@ export class Plugin {
       await this.submitAs(runtime, { kind: "bridge" }, { type: "record_permission", actor: who.actor, request, text });
   }
 
+  /** A permission Paseo's own prompt answered: settled on the record, so nobody is left owing an answer to it. */
+  async permissionResolved(hostId: string, request: string, allow: boolean): Promise<void> {
+    const who = this.byHost.get(hostId);
+    const runtime = who ? this.runtimes.get(who.project) : undefined;
+    if (who && runtime)
+      await this.submitAs(
+        runtime,
+        { kind: "bridge" },
+        { type: "record_permission_settled", actor: who.actor, request, allow },
+      );
+  }
+
   async archived(hostId: string): Promise<void> {
     const who = this.byHost.get(hostId);
     const runtime = who ? this.runtimes.get(who.project) : undefined;

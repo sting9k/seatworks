@@ -64,6 +64,7 @@ const HANDLERS: Handlers = {
   record_integration: work.integrationFact,
   record_publish: work.publishFact,
   record_permission: host.permissionFact,
+  record_permission_settled: host.permissionSettledFact,
   record_human_words: talk.humanWords,
   record_observation: watch.observation,
 };

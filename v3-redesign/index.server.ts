@@ -35,6 +35,11 @@ export default function contribute(server: PluginServerContext) {
       .join(" · ");
     guard("a permission", () => plugin.permissionAsked(event.agent.id, r.id, text));
   });
+  server.on("agent.permission_resolved", (event, { paseo }) => {
+    plugin.saw(paseo);
+    const allow = event.resolution.behavior === "allow";
+    guard("a resolved permission", () => plugin.permissionResolved(event.agent.id, event.requestId, allow));
+  });
   server.on("agent.archived", (event, { paseo }) => {
     plugin.saw(paseo);
     guard("an archived agent", () => plugin.archived(event.agent.id));

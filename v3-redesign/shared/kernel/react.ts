@@ -218,6 +218,17 @@ export function react(e: Event, s: State): readonly Effect[] {
         reason: e.reason,
       });
       break;
+    case "permission_settled": {
+      const a = s.actors.get(e.actor);
+      if (a)
+        tell(
+          ownerAbove(s, a),
+          "note",
+          `${a.id}'s permission ${e.permission} was ${e.allow ? "allowed" : "refused"} in its own prompt: nothing is owed.`,
+          false,
+        );
+      break;
+    }
     case "machine_held":
     case "machine_released":
       add("machine", { kind: "machine.hold", actor: e.actor, hold: e.type === "machine_held" });

@@ -115,8 +115,12 @@ export class PaseoHost {
   ): Promise<"done" | Unavailable> {
     const api = this.link.current;
     if (!api) return UNAVAILABLE;
+    const agent = api.agents.ref(host);
+    const fetched = await agent.refresh();
+    // Answered already, in the agent's own prompt or by an earlier try: a second answer would find nothing to answer.
+    if (!fetched?.agent.pendingPermissions.some((p) => p.id === requestId)) return "done";
     const response = allow ? { behavior: "allow" as const } : { behavior: "deny" as const, message: reason };
-    await api.agents.ref(host).respondToPermission({ requestId, response });
+    await agent.respondToPermission({ requestId, response });
     return "done";
   }
 

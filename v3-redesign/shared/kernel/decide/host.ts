@@ -95,6 +95,22 @@ export function answerPermission(ctx: Of<"answer_permission">): Refusal | undefi
   return undefined;
 }
 
+/**
+ * A permission answered in the agent host's own prompt, not through the ledger: it closes on the record as settled
+ * there, with no second answer sent. One the ledger already answered has nothing left to close.
+ */
+export function permissionSettledFact(ctx: Of<"record_permission_settled">): Refusal | undefined {
+  const permission = [...ctx.state.permissions.values()].find(
+    (p) => p.actor === ctx.body.actor && p.request === ctx.body.request,
+  );
+  if (!permission) return undefined;
+  ctx.emit({ type: "permission_settled", permission: permission.id, actor: permission.actor, allow: ctx.body.allow });
+  for (const o of ctx.state.obligations.values())
+    if (o.about.kind === "permission" && o.about.id === permission.id)
+      ctx.emit({ type: "obligation_closed", obligation: o.id, how: "answered in the agent's own prompt" });
+  return undefined;
+}
+
 export function holdMachine(ctx: Of<"hold_machine">): Refusal | undefined {
   const held = ctx.state.machineHeldBy;
   if (ctx.body.hold) {
