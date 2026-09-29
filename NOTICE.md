@@ -46,6 +46,7 @@ agentskills.io, SkillsBench and SkillReducer.
 | Source | Where | License |
 |---|---|---|
 | alibaba/open-code-review | https://github.com/alibaba/open-code-review | Apache-2.0, © 2026 Alibaba; run as a tool, no text copied |
+| openclaw/openclaw, `.agents/skills/test-audit` | https://github.com/openclaw/openclaw | MIT, © 2026 OpenClaw Foundation; adapted in `v3-redesign/.claude/skills/test-audit` |
 | obra/superpowers | https://github.com/obra/superpowers | MIT, © 2025 Jesse Vincent |
 | mattpocock/skills | https://github.com/mattpocock/skills | MIT, © 2026 Matt Pocock |
 | addyosmani/agent-skills | https://github.com/addyosmani/agent-skills | MIT, © 2025 Addy Osmani |

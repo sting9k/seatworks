@@ -95,6 +95,7 @@ In `.claude/skills/`, for whoever builds v3. They are not the agents' runtime sk
 | `profile-content`   | Prompts, runtime skills, reflex questions and watch moments                      |
 | `clean-code`        | While writing, and the simplify pass once it works                               |
 | `testing`           | Conformance cases, properties, replay, shell edges, failing first                |
+| `test-audit`        | The gate every new or changed test passes, and audits of weak tests              |
 | `pre-commit-review` | Your own diff, adversarially, before every commit                                |
 
 ## How the code is written
