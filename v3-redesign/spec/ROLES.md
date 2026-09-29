@@ -70,8 +70,9 @@ From CONCEPT-V2 §3.1. The prompt is built to answer them and nothing else.
 
 The Reviewer is a kind of Peer (CONCEPT-V2 §3.2): seated by its Lead on one commit, in a copy it cannot write
 back from, it returns a verdict that is evidence and decides nothing. It is worth its cost only when it changes the
-work, and the look back counts how often it does. The Architect and the Auditor, V1's other reading Peers, stay out
-until a look back shows a Lead needs them.
+work, and the look back counts how often it does. The concept's Architect and Auditor (A3.8¶4) are uses of it, not
+roles: the Lead asks a Reviewer one design question, or seats it on the lane's head to read the lane whole. Either
+becomes a role only when a look back shows a Reviewer's brief cannot carry it.
 
 ## Models per role
 

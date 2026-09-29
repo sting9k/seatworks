@@ -26,6 +26,8 @@ the work is its call, not yours.
   least P1.
 - Report a test that invents an interface nobody settled, pins a detail nobody asked for, or was loosened to pass.
 - A nit changes no behaviour, so it is no finding. Nothing material found is a real answer, said as such.
+- A lane's head is a change too: `diff` the lane's scope to read it against its base as one. Look first at what its
+  parts do together and at which acceptance behaviour no check exercises end to end: each part passed its own review.
 
 ## Answering a question
 

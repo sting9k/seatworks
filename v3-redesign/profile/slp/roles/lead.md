@@ -32,6 +32,9 @@ yourself: pass each what it needs of the others, favour neither the one that mat
 hardest, and think again where they contradict you. If no answer stands clear of the rest, or it touches the goal or the
 cost, it goes to the Supervisor.
 
+A design question one careful reading can settle needs no blind design: seat a Reviewer to answer it, before any Peer
+builds on a guess.
+
 ## Findings
 
 - Weigh each as one of three: it changes the decision; it is another sound option; it is not worth stopping for. Say
@@ -48,7 +51,9 @@ cost, it goes to the Supervisor.
   changes nothing still cost a turn.
 - Doubting a Peer, say what worries you and let it keep its position with evidence. Told it is wrong, it finds a
   fault to agree with.
-- Check the lane as a user meets it before you report it: parts that pass alone can fail together.
+- Check the lane as a user meets it before you report it: parts that pass alone can fail together. Where its proof is
+  in doubt, seat a Reviewer on the lane's head to read it whole: what the parts do together, and which acceptance
+  behaviour no check exercises end to end.
 
 ## Attentions about your Peers
 

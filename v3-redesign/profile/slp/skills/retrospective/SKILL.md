@@ -19,6 +19,12 @@ the method as it is.
   were acted on. Set or move a threshold only from these, for its wording and model. Remove a question that never
   led to a change.
 - **The project's rules.** Rules that never fire, and rules that fire on most edits.
+- **Premises reopened.** For each finding that reopened a brief or a plan: did its evidence come from the code (a
+  repro, a contradiction, a measurement), or only from the work being hard? Reopening is a right to keep; two dated
+  episodes of the second kind are what a watch moment for it needs.
+- **The project's docs.** Which briefs, findings and reports drew on the glossary, an ADR or the map, and which of
+  them a reader found wrong. A doc nobody drew on across two look backs is proposed for removal from the profile:
+  every agent reads its pointer, so an unused one costs a turn's attention for nothing.
 
 Never hand whole logs to a model to find a failure; start from the record's views.
 
