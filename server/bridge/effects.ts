@@ -104,7 +104,8 @@ export function handlersFor(w: Wiring): Handlers {
       if (!scope || !role) return { status: "dropped", why: `${e.actor}'s scope or role is gone` };
       const { cwd, env } = seatEnv(w, actor.id, scope, role.writes);
       const created = await w.host.create({
-        key,
+        // Paseo keeps a keyed create for the whole daemon, and every project's log counts from 1.
+        key: `${w.project}:${key}`,
         title: `${actor.scope} · ${actor.role}`,
         profile: actor.model,
         cwd,

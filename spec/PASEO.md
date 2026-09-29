@@ -83,7 +83,8 @@ from Paseo 0.10.1: the plugin SDK, `@getpaseo/client`, `@getpaseo/protocol`, the
   adds no second row but runs the prompt again, and a send replaces a running turn: Seatworks sends only when `activeTurn`
   is empty, and a delivery retried after a lost reply can reach its reader twice.
 - `agents.create` with an `idempotencyKey` goes through Paseo's creation service, which writes the key and a digest of
-  the whole request to disk before it starts, so it holds across a daemon restart. The same key with a different
+  the whole request to disk before it starts, so it holds across a daemon restart, for the whole daemon: Seatworks
+  keys a create by its project and its effect's key. The same key with a different
   request is refused (`agent_request_key_conflict`), and a create in flight when the daemon stopped stays
   `agent_request_outcome_unknown`. The first prompt reads the record as it is, so a retry would differ: the agent host
   first looks for the agent by its labels (`agents.list`, `filter.labels`), before a create and after one that throws.

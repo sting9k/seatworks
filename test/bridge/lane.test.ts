@@ -281,3 +281,21 @@ test("a start that failed is tried again, and a project whose log cannot be read
   await restarted.whenReady();
   assert.match((await restarted.view(project))?.root ?? "", /Scope root/);
 });
+
+test("two projects on one daemon each get their own first agent", async () => {
+  const repos = ["one", "two"].map((name) => {
+    const repo = mkdtempSync(join(tmpdir(), `sw-${name}-`));
+    git(repo, "init", "-q", "-b", "main");
+    writeFileSync(join(repo, "a.txt"), "a\n");
+    git(repo, "add", ".");
+    git(repo, "commit", "-q", "-m", "start");
+    return repo;
+  });
+  const plugin = new Plugin(mkdtempSync(join(tmpdir(), "sw-root-")));
+  plugins.push(plugin);
+  const paseo = fakePaseo(pluginDir);
+  plugin.saw(paseo.api);
+  for (const repo of repos) await plugin.openProject(repo, "main");
+  await plugin.idle();
+  assert.equal(paseo.created.length, 2, "a Supervisor for each");
+});
