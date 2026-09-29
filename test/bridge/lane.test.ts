@@ -37,6 +37,11 @@ test("one lane end to end: a Supervisor, a Lead and a Peer land a change on main
   assert.ok(opened.outcome.ok);
   await plugin.idle();
   const supervisorAgent = paseo.created[0]!;
+  assert.equal(
+    supervisorAgent.teamEnv?.ELECTRON_RUN_AS_NODE,
+    "1",
+    "the tool server is spawned through the worker's executable, an Electron binary under the desktop app",
+  );
   assert.match(supervisorAgent.systemPrompt, /# Supervisor/);
   assert.match(supervisorAgent.prompt, /Scope root/);
   assert.match(

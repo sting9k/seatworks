@@ -34,6 +34,18 @@ function gitAs(cwd: string, writes: boolean, ...args: string[]) {
   return { code: run.status, err: run.stderr };
 }
 
+test("the launcher runs the plugin's executable as Node even when it is an Electron binary", () => {
+  const dir = mkdtempSync(join(tmpdir(), "sw-shim-env-"));
+  const probe = join(dir, "probe.ts");
+  writeFileSync(probe, `console.log(process.env.ELECTRON_RUN_AS_NODE ?? "unset");\n`);
+  const bin = installShim(dir, probe);
+  if (process.platform === "win32") return;
+  const env = { ...process.env };
+  delete env.ELECTRON_RUN_AS_NODE;
+  const out = execFileSync(join(bin, "git"), ["status"], { encoding: "utf8", env }).trim();
+  assert.equal(out, "1");
+});
+
 test("the shim refuses what only the plugin does, however it is spelled, and passes the rest to git", () => {
   const cwd = copy();
   assert.equal(gitAs(cwd, true, "status").code, 0);

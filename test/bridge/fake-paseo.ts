@@ -9,6 +9,8 @@ type Created = {
   env: Record<string, string>;
   systemPrompt: string;
   tools: string[];
+  /** The environment the team's tool server would be spawned with. */
+  teamEnv: Record<string, string> | undefined;
   labels: Record<string, string>;
 };
 
@@ -121,7 +123,11 @@ export function fakePaseo(pluginDir: string, provider = "claude") {
         prompt: string;
         env: Record<string, string>;
         labels: Record<string, string>;
-        config: { systemPrompt: string; toolPolicy: { preapproved: { tool: string }[] } };
+        config: {
+          systemPrompt: string;
+          toolPolicy: { preapproved: { tool: string }[] };
+          mcpServers?: { team?: { env?: Record<string, string> } };
+        };
       }) => {
         if (gate.refuse !== null) return Promise.reject(new Error(gate.refuse));
         const request = JSON.stringify(o);
@@ -140,6 +146,7 @@ export function fakePaseo(pluginDir: string, provider = "claude") {
           env: o.env,
           systemPrompt: o.config.systemPrompt,
           tools: o.config.toolPolicy.preapproved.map((p) => p.tool),
+          teamEnv: o.config.mcpServers?.team?.env,
           labels: o.labels,
         });
         if (gate.loseReplies > 0) {

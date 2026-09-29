@@ -122,7 +122,8 @@ export function handlersFor(w: Wiring): Handlers {
         tools: {
           command: w.team.command,
           args: [...w.team.args, w.team.socket],
-          env,
+          // The command is this worker's executable, which under the desktop app is the Electron binary.
+          env: { ...env, ELECTRON_RUN_AS_NODE: "1" },
           names: [...role.tools, "status", "record", "diff", "look"].filter((t, i, all) => all.indexOf(t) === i),
         },
         labels: { [PROJECT_LABEL]: w.project, [ACTOR_LABEL]: actor.id, "seatworks.scope": actor.scope },

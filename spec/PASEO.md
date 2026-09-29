@@ -69,6 +69,10 @@ from Paseo 0.10.1: the plugin SDK, `@getpaseo/client`, `@getpaseo/protocol`, the
   directory install runs no build step at all.
 - The API reaches a plugin only with a hook or a panel call; it is one client, made before the plugin's contribution
   runs, that reconnects by itself. Work that needs it waits for the first hook or call.
+- A plugin's worker is `child_process.fork`ed by the daemon (`plugins/runtime.ts`), so `process.execPath` inside it is
+  whatever the daemon runs as: Node from the CLI, the desktop app's Electron binary when the app started the daemon
+  (`desktop/daemon/node-entrypoint-launcher.ts` sets `ELECTRON_RUN_AS_NODE`). Anything a plugin spawns through
+  `process.execPath` needs `ELECTRON_RUN_AS_NODE=1` in its own environment, or it launches the app.
 - In the app, `agents.subscribe` hears only what a listing made with `subscribe: {}` streams: the daemon sends no
   `agent_update` otherwise. The listing's `subscription` gives its snapshot again after each reconnect and is released
   with the plugin.
