@@ -52,6 +52,8 @@ export function goneFact(ctx: Of<"record_gone">): Refusal | undefined {
 export function permissionFact(ctx: Of<"record_permission">): Refusal | undefined {
   const actor = ctx.state.actors.get(ctx.body.actor);
   if (actor?.status !== "seated") return undefined;
+  for (const p of ctx.state.permissions.values())
+    if (p.actor === actor.id && p.request === ctx.body.request) return undefined;
   const answerer = ownerAbove(ctx.state, actor) ?? HUMAN;
   const id = ctx.next("permission");
   ctx.emit({

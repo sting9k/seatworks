@@ -6,6 +6,7 @@ import { PLUGIN_ID, Plugin } from "./server/bridge/plugin.ts";
 import { checkUpdate } from "./server/bridge/update-check.ts";
 import { daemonLog } from "./server/core/logger.ts";
 import { stateRoot } from "./server/core/paths.ts";
+import { permissionText } from "./server/satellites/agent-host/host.ts";
 import { git } from "./server/satellites/workspace/git.ts";
 
 export default function contribute(server: PluginServerContext) {
@@ -31,10 +32,7 @@ export default function contribute(server: PluginServerContext) {
   server.on("agent.permission_requested", (event, { paseo }) => {
     plugin.saw(paseo);
     const r = event.request;
-    const text = [r.title ?? r.name, r.description, r.input ? JSON.stringify(r.input).slice(0, 2000) : undefined]
-      .filter(Boolean)
-      .join(" · ");
-    guard("a permission", () => plugin.permissionAsked(event.agent.id, r.id, text));
+    guard("a permission", () => plugin.permissionAsked(event.agent.id, r.id, permissionText(r)));
   });
   server.on("agent.permission_resolved", (event, { paseo }) => {
     plugin.saw(paseo);

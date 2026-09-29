@@ -50,6 +50,8 @@ const CHECK_TIMEOUT_MS = 30 * 60 * 1000;
 const UPKEEP_MS = 60 * 60 * 1000;
 /** A project with no agent seated and nothing pending for this long leaves memory; its next command folds it back. */
 const IDLE_MS = 24 * 60 * 60 * 1000;
+/** How long a hook Paseo waits on gives the plugin to start: under its 30 s hook timeout, so the action still goes on. */
+const READY_WAIT_MS = 20_000;
 
 type Runtime = {
   project: Project;
@@ -97,9 +99,11 @@ export class Plugin {
     }, UPKEEP_MS);
     this.upkeep.unref();
     this.link.onReady(() => {
-      void this.whenReady().catch((error: unknown) => {
-        daemonLog.error("seatworks could not start", error);
-      });
+      void this.whenReady()
+        .then((ready) => this.reconcile(ready))
+        .catch((error: unknown) => {
+          daemonLog.error("seatworks could not start", error);
+        });
     });
   }
 
@@ -478,13 +482,13 @@ export class Plugin {
     outcome: { kind: string; error?: { message: string } },
     timeline: readonly AgentTimelineItem[],
   ): Promise<void> {
+    const ready = await this.whenReady();
     const who = this.byHost.get(hostId);
     const runtime = who ? this.runtimes.get(who.project) : undefined;
     if (!who || !runtime) return;
     const read = runtime.project.view.actors.get(who.actor)?.seen ?? 0;
     const { items, typed, seen } = turnOf(timeline, read, (id) => OURS.test(id));
     this.reflex?.onTurn(who.project, who.actor, items, runtime.project.view);
-    const ready = await this.whenReady();
     const usage = await ready.host.usage(hostId);
     const result = outcome.kind === "completed" ? "done" : outcome.kind === "failed" ? "failed" : "cancelled";
     for (const text of typed)
@@ -505,6 +509,7 @@ export class Plugin {
   }
 
   async permissionAsked(hostId: string, request: string, text: string): Promise<void> {
+    await this.whenReady();
     const who = this.byHost.get(hostId);
     const runtime = who ? this.runtimes.get(who.project) : undefined;
     if (who && runtime)
@@ -513,6 +518,7 @@ export class Plugin {
 
   /** A permission Paseo's own prompt answered: settled on the record, so nobody is left owing an answer to it. */
   async permissionResolved(hostId: string, request: string, allow: boolean): Promise<void> {
+    await this.whenReady();
     const who = this.byHost.get(hostId);
     const runtime = who ? this.runtimes.get(who.project) : undefined;
     if (who && runtime)
@@ -524,6 +530,7 @@ export class Plugin {
   }
 
   async archived(hostId: string): Promise<void> {
+    await this.whenReady();
     const who = this.byHost.get(hostId);
     const runtime = who ? this.runtimes.get(who.project) : undefined;
     if (!who || !runtime) return;
@@ -533,6 +540,21 @@ export class Plugin {
         { kind: "bridge" },
         { type: "record_gone", actor: who.actor, why: "its agent was archived in Paseo" },
       );
+  }
+
+  /**
+   * Catches up on what agents' hooks said while the plugin was not running (PASEO.md rule 5): a permission still waiting
+   * in its prompt, an agent archived. The plugin runs as the daemon's child, so a daemon restart is a start. A turn's
+   * end missed is read at the next one, from the actor's `seen`; the deliveries it held are tried again now.
+   */
+  private async reconcile(ready: Ready): Promise<void> {
+    for (const host of [...this.byHost.keys()]) {
+      const now = await ready.host.now(host);
+      if ("unavailable" in now) return;
+      if (now.gone) await this.archived(host);
+      else for (const p of now.permissions) await this.permissionAsked(host, p.id, p.text);
+    }
+    for (const runtime of this.runtimes.values()) runtime.dispatcher.kick();
   }
 
   /** A provider's harness, laid out once per plugin process: a few providers at most. */
@@ -546,9 +568,14 @@ export class Plugin {
    * started with, so it is the whole of it again: the seat, the git shim first on its PATH, and its harness's.
    */
   async envFor(hostId: string, provider: string): Promise<Record<string, string> | null> {
+    // After a daemon restart this hook comes first, before the projects are open that know the agent.
+    const ready = await within(this.whenReady(), READY_WAIT_MS).catch((error: unknown) => {
+      daemonLog.error("seatworks could not start", error);
+      return null;
+    });
+    if (!ready) return null;
     const who = this.byHost.get(hostId);
     if (!who) return null;
-    const ready = await this.whenReady();
     const runtime = this.runtimes.get(who.project) ?? this.open(who.project, ready);
     const actor = runtime.project.view.actors.get(who.actor);
     const scope = actor ? runtime.project.view.scopes.get(actor.scope) : undefined;
@@ -589,6 +616,7 @@ export class Plugin {
   }
 
   async dispose(): Promise<void> {
+    if (this.disposed) return;
     this.disposed = true;
     clearInterval(this.upkeep);
     for (const [id, runtime] of this.runtimes) await this.unload(id, runtime);
@@ -698,6 +726,21 @@ export class Plugin {
 
   private async submitAs(runtime: Runtime, caller: Caller, body: CommandBody): Promise<Submitted> {
     return runtime.project.submit({ id: crypto.randomUUID(), at: new Date().toISOString(), caller, body });
+  }
+}
+
+/** What `work` gives, or null when it takes longer than `ms`. */
+async function within<T>(work: Promise<T>, ms: number): Promise<T | null> {
+  let timer: NodeJS.Timeout | undefined;
+  const late = new Promise<null>((resolve) => {
+    timer = setTimeout(() => {
+      resolve(null);
+    }, ms);
+  });
+  try {
+    return await Promise.race([work, late]);
+  } finally {
+    clearTimeout(timer);
   }
 }
 

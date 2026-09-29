@@ -100,6 +100,7 @@ on an implementation without the rule before it is trusted.
 | An agent's create loses its reply and is tried after the record moved on | The seat keeps the one agent made; a key Paseo cannot finish is its owner's fact |
 | A create Paseo refuses, such as a profile with no model            | The seat is gone with Paseo's reason, which its owner hears |
 | An agent reopened after a daemon restart                           | Its whole seat's environment again, the git shim first on its PATH |
+| A permission asked while the plugin was down, then its hook too    | On the record once the plugin starts, and once only |
 | The same log folded by the daemon and by the surface               | The same state                                  |
 
 ## Harness

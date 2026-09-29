@@ -23,14 +23,15 @@ async function openedOn(provider: string) {
   writeFileSync(join(repo, "a.txt"), "a\n");
   git("add", ".");
   git("commit", "-q", "-m", "start");
-  const plugin = new Plugin(mkdtempSync(join(tmpdir(), "sw-root-")));
+  const root = mkdtempSync(join(tmpdir(), "sw-root-"));
+  const plugin = new Plugin(root);
   plugins.push(plugin);
   const paseo = fakePaseo(pluginDir, provider);
   plugin.saw(paseo.api);
   const ready = await plugin.whenReady();
   await plugin.openProject(repo, "main");
   await plugin.idle();
-  return { plugin, paseo, ready };
+  return { plugin, paseo, ready, root };
 }
 
 test("a Pi agent gets the team's tools from Seatworks' extension, loaded from a home that keeps the Human's login", async () => {
@@ -67,10 +68,31 @@ test("a Pi agent gets the team's tools from Seatworks' extension, loaded from a 
 });
 
 test("an agent reopened after a daemon restart gets its whole seat back: the git shim first on its PATH", async () => {
-  const { plugin, paseo, ready } = await openedOn("claude");
-  const env = await plugin.envFor(paseo.created[0]!.host, "claude");
+  const { plugin, paseo, ready, root } = await openedOn("claude");
+  await plugin.dispose();
+  const restarted = new Plugin(root);
+  plugins.push(restarted);
+  restarted.saw(paseo.api);
+  // The session's hook arrives first, before anything has opened the project that knows the agent.
+  const env = await restarted.envFor(paseo.created[0]!.host, "claude");
   assert.ok(env);
   assert.ok(env.PATH?.startsWith(ready.shimDir), env.PATH);
   assert.equal(env.SEATWORKS_KEY, paseo.created[0]!.env.SEATWORKS_KEY);
   assert.equal(env.SEATWORKS_WRITES, paseo.created[0]!.env.SEATWORKS_WRITES);
+});
+
+test("a permission asked while the plugin was down is on the record once it starts, and once only", async () => {
+  const { plugin, paseo, root } = await openedOn("claude");
+  const project = plugin.projects()[0]!.id;
+  await plugin.dispose();
+  const host = paseo.created[0]!.host;
+  paseo.pending.set(host, new Set(["r1"]));
+  const restarted = new Plugin(root);
+  plugins.push(restarted);
+  restarted.saw(paseo.api);
+  await restarted.whenReady();
+  await restarted.idle();
+  assert.equal((await restarted.view(project))?.human.permissions.length, 1);
+  await restarted.permissionAsked(host, "r1", "the same request, by its hook");
+  assert.equal((await restarted.view(project))?.human.permissions.length, 1);
 });

@@ -132,6 +132,18 @@ export class PaseoHost {
     return "done";
   }
 
+  /** What an agent is doing now, for catching up on what its hooks said while the plugin was not there to hear. */
+  async now(host: string): Promise<{ gone: boolean; permissions: { id: string; text: string }[] } | Unavailable> {
+    const api = this.link.current;
+    if (!api) return UNAVAILABLE;
+    const fetched = await api.agents.ref(host).refresh();
+    if (!fetched || fetched.agent.archivedAt) return { gone: true, permissions: [] };
+    return {
+      gone: false,
+      permissions: fetched.agent.pendingPermissions.map((p) => ({ id: p.id, text: permissionText(p) })),
+    };
+  }
+
   async archive(host: string): Promise<"done" | Unavailable> {
     const api = this.link.current;
     if (!api) return UNAVAILABLE;
@@ -174,6 +186,18 @@ export class PaseoHost {
     const usage = api ? (await api.agents.ref(host).refresh())?.agent.lastUsage : undefined;
     return { tokens: (usage?.inputTokens ?? 0) + (usage?.outputTokens ?? 0), usd: usage?.totalCostUsd ?? 0 };
   }
+}
+
+/** A permission request as its answerer reads it: what it is, what it says, and the call it would allow. */
+export function permissionText(r: {
+  readonly name: string;
+  readonly title?: string | null;
+  readonly description?: string | null;
+  readonly input?: unknown;
+}): string {
+  return [r.title ?? r.name, r.description, r.input ? JSON.stringify(r.input).slice(0, 2000) : undefined]
+    .filter(Boolean)
+    .join(" · ");
 }
 
 type Json = Record<string, unknown>;
