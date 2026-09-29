@@ -24,6 +24,10 @@ import { type ProjectPort, TeamSocket } from "./team-socket.ts";
 export const PLUGIN_ID = "seatworks";
 /** How long a check may run before it is killed with what it started. */
 const CHECK_TIMEOUT_MS = 30 * 60 * 1000;
+/** How often the plugin lets go of what long use leaves behind: idle projects in memory, settled outbox rows. */
+const UPKEEP_MS = 60 * 60 * 1000;
+/** A project with no agent seated and nothing pending for this long leaves memory; its next command folds it back. */
+const IDLE_MS = 24 * 60 * 60 * 1000;
 
 type Runtime = {
   project: Project;
@@ -31,6 +35,7 @@ type Runtime = {
   dispatcher: Dispatcher;
   workspace: Workspace;
   stops: (() => void)[];
+  lastActive: number;
 };
 type Ready = { dir: string; bundle: Bundle; host: PaseoHost; shimDir: string; socket: TeamSocket; socketPath: string };
 
@@ -47,13 +52,19 @@ export class Plugin {
   private readonly byHost = new Map<string, { project: string; actor: string }>();
   private ready: Promise<Ready> | null = null;
   private bundle: Bundle | null = null;
+  private readyNow: Ready | null = null;
   private disposed = false;
+  private readonly upkeep: NodeJS.Timeout;
 
   constructor(stateRoot: string) {
     this.root = stateRoot;
     mkdirSync(stateRoot, { recursive: true });
     this.keys = new Keys(join(stateRoot, "secret"));
     this.holds = new MachineHolds(join(stateRoot, "machine.db"));
+    this.upkeep = setInterval(() => {
+      void this.tidy(Date.now());
+    }, UPKEEP_MS);
+    this.upkeep.unref();
     this.link.onReady(() => {
       void this.whenReady().catch((error: unknown) => {
         daemonLog.error("seatworks could not start", error);
@@ -88,6 +99,7 @@ export class Plugin {
     const socket = new TeamSocket(socketPath, this.keys, (id) => this.port(id));
     await socket.listen();
     const ready: Ready = { dir, bundle, host, shimDir, socket, socketPath };
+    this.readyNow = ready;
     const projects = join(this.root, "projects");
     if (existsSync(projects))
       for (const id of readdirSync(projects)) if (existsSync(join(projects, id, "project.json"))) this.open(id, ready);
@@ -194,15 +206,29 @@ export class Plugin {
     }
   }
 
+  /** Lets go of settled outbox rows, and of projects idle past a day, whose next command opens them again. */
+  async tidy(now: number): Promise<void> {
+    for (const [id, runtime] of this.runtimes) {
+      runtime.store.sweep(now);
+      const seated = [...runtime.project.view.actors.values()].some((a) => a.status === "seated");
+      const pending = runtime.store.pending().length > 0 || runtime.dispatcher.busy;
+      if (!seated && !pending && now - runtime.lastActive > IDLE_MS) await this.unload(id, runtime);
+    }
+  }
+
+  private async unload(id: string, runtime: Runtime): Promise<void> {
+    for (const stop of runtime.stops) stop();
+    runtime.dispatcher.dispose();
+    await runtime.dispatcher.idle();
+    runtime.project.dispose();
+    this.runtimes.delete(id);
+    for (const [host, who] of this.byHost) if (who.project === id) this.byHost.delete(host);
+  }
+
   async dispose(): Promise<void> {
     this.disposed = true;
-    for (const runtime of this.runtimes.values()) {
-      for (const stop of runtime.stops) stop();
-      runtime.dispatcher.dispose();
-      await runtime.dispatcher.idle();
-      runtime.project.dispose();
-    }
-    this.runtimes.clear();
+    clearInterval(this.upkeep);
+    for (const [id, runtime] of this.runtimes) await this.unload(id, runtime);
     this.byHost.clear();
     if (this.ready) await (await this.ready).socket.close();
     this.holds.close();
@@ -237,11 +263,12 @@ export class Plugin {
       checkTimeoutMs: CHECK_TIMEOUT_MS,
     });
     const dispatcher = new Dispatcher(project, store, handlers, () => this.holds.held());
-    const runtime: Runtime = { project, store, dispatcher, workspace, stops: [] };
+    const runtime: Runtime = { project, store, dispatcher, workspace, stops: [], lastActive: Date.now() };
     this.runtimes.set(id, runtime);
     this.index(id, runtime);
     runtime.stops.push(
       project.onCommitted(() => {
+        runtime.lastActive = Date.now();
         this.index(id, runtime);
         dispatcher.kick();
       }),
@@ -266,9 +293,9 @@ export class Plugin {
   }
 
   private port(id: string): ProjectPort | undefined {
-    const runtime = this.runtimes.get(id);
-    const ready = this.ready;
-    if (!runtime || !ready || this.disposed) return undefined;
+    const ready = this.readyNow;
+    if (!ready || this.disposed || !existsSync(join(projectDir(this.root, id), "project.json"))) return undefined;
+    const runtime = this.runtimes.get(id) ?? this.open(id, ready);
     return {
       get view() {
         return runtime.project.view;

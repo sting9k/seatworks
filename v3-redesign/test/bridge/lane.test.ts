@@ -141,3 +141,24 @@ test("one lane end to end: a Supervisor, a Lead and a Peer land a change on main
   );
   for (const t of [supervisor, lead, peer]) t.close();
 });
+
+test("a project idle past a day leaves memory, and its next command folds it back from the log", async () => {
+  const repo = mkdtempSync(join(tmpdir(), "sw-idle-"));
+  git(repo, "init", "-q", "-b", "main");
+  writeFileSync(join(repo, "a.txt"), "a\n");
+  git(repo, "add", ".");
+  git(repo, "commit", "-q", "-m", "start");
+  const plugin = new Plugin(mkdtempSync(join(tmpdir(), "sw-root-")));
+  plugins.push(plugin);
+  plugin.saw(fakePaseo(pluginDir).api);
+  const { project } = await plugin.openProject(repo, "main");
+  await plugin.idle();
+  assert.ok((await plugin.human(project, { type: "release", actor: "a1", reason: "done for now" })).ok);
+  await plugin.idle();
+  const before = plugin.statusOf(project, "root");
+  await plugin.tidy(Date.now() + 2 * 24 * 3600 * 1000);
+  assert.equal(plugin.statusOf(project, "root"), null, "unloaded");
+  assert.ok((await plugin.human(project, { type: "reseat", scope: "root", reason: "back", model: null })).ok);
+  assert.match(plugin.statusOf(project, "root") ?? "", /Scope root/);
+  assert.notEqual(before, null);
+});
