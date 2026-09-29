@@ -247,7 +247,7 @@ export function react(e: Event, s: State): readonly Effect[] {
       add("machine", { kind: "machine.hold", actor: e.actor, hold: e.type === "machine_held" });
       break;
     case "publish_requested":
-      add("publish", { kind: "workspace.publish", remote: e.remote, branch: e.branch });
+      add("publish", { kind: "workspace.publish", remote: e.remote, branch: e.branch, expectedSha: e.sha });
       break;
     case "plan_set":
     case "plan_amended":

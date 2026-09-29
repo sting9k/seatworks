@@ -91,8 +91,8 @@ export function handlersFor(w: Wiring): Handlers {
         made = await w.workspace.create(scope.id, { kind: "reader", at: from ?? "HEAD", branch: branchOf(scope.id) });
       const branch = scope.id === ROOT ? scope.branch : scope.commit !== null ? null : branchOf(scope.id);
       return made.ok
-        ? done({ type: "record_workspace", scope: scope.id, ok: true, branch, why: null })
-        : done({ type: "record_workspace", scope: scope.id, ok: false, branch: null, why: made.why });
+        ? done({ type: "record_workspace", scope: scope.id, ok: true, branch, head: made.head, why: null })
+        : done({ type: "record_workspace", scope: scope.id, ok: false, branch: null, head: null, why: made.why });
     },
 
     "agent.create": async (e, { state, key }) => {
@@ -215,7 +215,7 @@ export function handlersFor(w: Wiring): Handlers {
     },
 
     "workspace.publish": async (e) =>
-      done({ type: "record_publish", result: await w.workspace.publish(e.remote, e.branch) }),
+      done({ type: "record_publish", result: await w.workspace.publish(e.branch, e.remote, e.expectedSha) }),
 
     "docs.write": async (_e, { state }) => {
       const docs = w.bundle.project;

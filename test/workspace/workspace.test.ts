@@ -105,6 +105,29 @@ test("advance moves a branch only from the head it was read at, and a checked-ou
   assert.deepEqual(await ws.advance("lane", tip, tip), { refused: "moved" });
 });
 
+test("publish pushes only the head it was asked at, and a moved tip is refused with what it found", async () => {
+  const { root, ws } = repo();
+  const remote = mkdtempSync(join(tmpdir(), "sw-remote-"));
+  run(remote, "init", "-q", "--bare", "-b", "main");
+  run(root, "remote", "add", "origin", remote);
+  const head = run(root, "rev-parse", "main");
+
+  const moved = await ws.publish("main", "origin", "0".repeat(40));
+  assert.ok("refused" in moved);
+  assert.equal(moved.at, head);
+  assert.equal(run(remote, "for-each-ref"), "", "nothing was pushed");
+
+  assert.deepEqual(await ws.publish("main", "origin", head), { sha: head });
+  assert.equal(run(remote, "rev-parse", "refs/heads/main"), head);
+
+  const next = commitIn(root, "b.txt", "landed meanwhile\n");
+  const again = await ws.publish("main", "origin", head);
+  assert.ok("refused" in again);
+  assert.equal(again.at, next);
+  assert.equal(run(remote, "rev-parse", "refs/heads/main"), head, "the new tip was not pushed");
+  assert.deepEqual(await ws.publish("main", "origin", next), { sha: next });
+});
+
 test("a copy holding uncommitted work is kept; a clean one goes, with its branch once merged", async () => {
   const { root, ws } = repo();
   const copy = await ws.create("1", { kind: "writer", branch: "sw/p/1", from: "main" });

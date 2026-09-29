@@ -127,6 +127,7 @@ on an implementation without the rule before it is trusted.
 | An agent runs git in another agent's copy                   | Refused                                  |
 | `git fetch . HEAD:<branch>`, `git branch -Df`, `git --attr-source HEAD checkout` | Refused     |
 | A merge with conflicts                                      | Undone; the conflicting paths reported   |
+| A publish dispatched after the base moved                    | Refused; the tip it found is recorded, so asking again works |
 | A hook or a smudge filter planted in the repository's own config, then a copy made | Neither runs          |
 | The copy moves while a check runs                           | The run fails                            |
 | An evidence run asked while the machine is held             | Starts when the hold is released         |

@@ -10,7 +10,7 @@ export type EffectBody =
   | { kind: "workspace.candidate"; scope: ScopeId; commit: string }
   | { kind: "workspace.advance"; scope: ScopeId; from: string; to: string }
   | { kind: "workspace.remove"; scope: ScopeId; branch: string | null; mergedInto: string | null }
-  | { kind: "workspace.publish"; remote: string; branch: string }
+  | { kind: "workspace.publish"; remote: string; branch: string; expectedSha: string }
   | { kind: "evidence.run"; scope: ScopeId; subject: string; steps: readonly Check[] }
   | { kind: "agent.create"; actor: ActorId }
   | { kind: "agent.archive"; actor: ActorId; host: string | null }

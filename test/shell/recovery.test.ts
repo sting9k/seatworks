@@ -62,7 +62,10 @@ test("an effect committed but not dispatched before a crash is dispatched once o
   const again = Project.open("p", reopened, profile);
   const { handlers, asked } = recordingHandlers((e) =>
     e.kind === "workspace.create"
-      ? { status: "done", facts: [{ type: "record_workspace", scope: e.scope, ok: true, branch: "main", why: null }] }
+      ? {
+          status: "done",
+          facts: [{ type: "record_workspace", scope: e.scope, ok: true, branch: "main", head: null, why: null }],
+        }
       : { status: "done" },
   );
   const dispatcher = new Dispatcher(again, reopened, handlers, () => false);

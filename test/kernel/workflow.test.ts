@@ -67,6 +67,7 @@ test("one lane end to end: hand back, candidate, checks, integrate, land; then o
   ledger.must(ledger.as(supervisor, "integrate", { scope: lane, evidence: [landing] }));
   ledger.must(ledger.fact("record_integration", { scope: lane, result: { sha: SHA(5) } }));
 
+  assert.equal(ledger.state.scopes.get("root")?.head, SHA(5), "the landing moved the recorded base head");
   assert.deepEqual([...ledger.state.scopes.keys()], ["root"]);
   assert.deepEqual([...ledger.state.actors.keys()], [supervisor]);
   assert.equal(ledger.state.obligations.size, 0);
@@ -124,6 +125,35 @@ test("an amended brief changes only the sections it names: a Human's constraint 
   assert.equal(after.goal.text, "Read and check frames");
   assert.deepEqual(after.constraints, before.constraints);
   assert.deepEqual(after.context, before.context);
+});
+
+test("publish names the head the record last saw on the base; a moved tip is recorded so asking again works", () => {
+  const early = new Ledger();
+  early.must(early.human("open_project", { base: "main", profileHash: "p1", model: "slp-supervisor" }));
+  assert.equal(
+    refusedBy(early.human("publish", { remote: "origin" })),
+    "state",
+    "before the workspace reports the head, there is nothing to expect",
+  );
+
+  const { ledger } = team();
+  const asked = ledger.must(ledger.human("publish", { remote: "origin" }));
+  const requested = asked.find((e) => e.type === "publish_requested");
+  assert.ok(requested?.type === "publish_requested");
+  assert.equal(requested.sha, SHA(0));
+  const effect = ledger.effects.find((e) => e.body.kind === "workspace.publish");
+  assert.ok(effect?.body.kind === "workspace.publish");
+  assert.equal(effect.body.expectedSha, SHA(0));
+
+  ledger.must(
+    ledger.fact("record_publish", { result: { refused: "main moved since the publish was asked", at: SHA(9) } }),
+  );
+  const again = ledger.must(ledger.human("publish", { remote: "origin" }));
+  assert.equal(
+    again.find((e) => e.type === "publish_requested")?.sha,
+    SHA(9),
+    "the refusal told the record the tip it found",
+  );
 });
 
 test("a small change: the Supervisor seats a Peer under the root and integrates it, with no Lead", () => {

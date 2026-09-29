@@ -75,6 +75,8 @@ export type Scope = {
   readonly brief: Brief | null;
   readonly plan: Plan | null;
   readonly branch: string | null;
+  /** The head of `branch` as the record last saw it: what a publish asks the workspace to still find. */
+  readonly head: string | null;
   readonly workspace: "pending" | "ready" | "failed" | "none";
   readonly status: ScopeStatus;
   readonly held: boolean;

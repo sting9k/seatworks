@@ -143,7 +143,8 @@ export function publish(ctx: Of<"publish">): Refusal | undefined {
   if (!root?.branch) return refuse("state", "the project is not open");
   if (ctx.party !== HUMAN && root.owner !== ctx.party)
     return refuse("authority", "only the root's owner or the Human publishes");
-  ctx.emit({ type: "publish_requested", remote: ctx.body.remote, branch: root.branch });
+  if (root.head === null) return refuse("state", "the record does not know the base's head yet");
+  ctx.emit({ type: "publish_requested", remote: ctx.body.remote, branch: root.branch, sha: root.head });
   return undefined;
 }
 
@@ -204,7 +205,7 @@ export function publishFact(ctx: Of<"record_publish">): Refusal | undefined {
   const remote = ctx.state.project?.remote ?? "";
   const branch = root?.branch ?? "";
   const r = ctx.body.result;
-  if ("refused" in r) ctx.emit({ type: "publish_refused", remote, branch, why: r.refused });
+  if ("refused" in r) ctx.emit({ type: "publish_refused", remote, branch, why: r.refused, found: r.at });
   else ctx.emit({ type: "published", remote, branch, sha: r.sha });
   return undefined;
 }
@@ -212,7 +213,13 @@ export function publishFact(ctx: Of<"record_publish">): Refusal | undefined {
 export function workspaceFact(ctx: Of<"record_workspace">): Refusal | undefined {
   const scope = ctx.state.scopes.get(ctx.body.scope);
   if (scope?.workspace !== "pending") return undefined;
-  if (ctx.body.ok) ctx.emit({ type: "workspace_ready", scope: scope.id, branch: ctx.body.branch ?? scope.branch });
+  if (ctx.body.ok)
+    ctx.emit({
+      type: "workspace_ready",
+      scope: scope.id,
+      branch: ctx.body.branch ?? scope.branch,
+      head: ctx.body.head,
+    });
   else ctx.emit({ type: "workspace_failed", scope: scope.id, why: ctx.body.why ?? "unknown" });
   return undefined;
 }

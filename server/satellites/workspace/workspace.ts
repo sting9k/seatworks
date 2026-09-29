@@ -45,9 +45,15 @@ export class Workspace {
   }
 
   /** A writer's worktree on a branch of its own, or a reader's detached copy. Asked again, it answers what it made. */
-  async create(scope: string, copy: CopyKind): Promise<{ ok: true; path: string } | { ok: false; why: string }> {
+  async create(
+    scope: string,
+    copy: CopyKind,
+  ): Promise<{ ok: true; path: string; head: string } | { ok: false; why: string }> {
     const path = this.pathOf(scope);
-    if (existsSync(path)) return { ok: true, path };
+    if (existsSync(path)) {
+      const at = await sha(path, "HEAD");
+      return at === null ? { ok: false, why: `${path} has no HEAD` } : { ok: true, path, head: at };
+    }
     if (copy.kind === "writer") {
       const from = await sha(this.repo, copy.from);
       if (!from) return { ok: false, why: `${copy.from} does not exist` };
@@ -67,7 +73,8 @@ export class Workspace {
       if (run.code !== 0) return { ok: false, why: said(run) };
     }
     await git(this.repo, ["worktree", "lock", "--reason", `seatworks scope ${scope}`, path]);
-    return { ok: true, path };
+    const head = await sha(path, "HEAD");
+    return head === null ? { ok: false, why: `${path} has no HEAD` } : { ok: true, path, head };
   }
 
   /** The commit to integrate: `commit` with `onto` taken in, made without touching any working copy. */
@@ -312,16 +319,24 @@ export class Workspace {
     return out;
   }
 
-  /** Pushes a branch to a remote, never forced: a remote that moved refuses it. */
-  async publish(remote: string, branch: string): Promise<Moved> {
+  /**
+   * Pushes a branch to a remote, never forced: a remote that moved refuses it, and a tip that moved since the
+   * request was made is refused too, saying what it found.
+   */
+  async publish(
+    branch: string,
+    remote: string,
+    expectedSha: string,
+  ): Promise<{ sha: string } | { refused: string; at: string | null }> {
     const tip = await sha(this.repo, branch);
-    if (!tip) return { refused: `${branch} does not exist` };
+    if (!tip) return { refused: `${branch} does not exist`, at: null };
+    if (tip !== expectedSha) return { refused: `${branch} moved since the publish was asked`, at: tip };
     const run = await git(
       this.repo,
       ["push", "--no-verify", remote, `refs/heads/${branch}:refs/heads/${branch}`],
       300_000,
     );
-    return run.code === 0 ? { sha: tip } : { refused: said(run) };
+    return run.code === 0 ? { sha: tip } : { refused: said(run), at: tip };
   }
 }
 

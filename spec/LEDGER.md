@@ -266,7 +266,7 @@ the shell and never reaches `decide`.
 
 | Command                | Arguments                                                               | →                                   |
 | ---------------------- | ----------------------------------------------------------------------- | ----------------------------------- |
-| `record_workspace`     | `scope, ok, branch?, why?`                                              | `workspace_ready` or `workspace_failed` |
+| `record_workspace`     | `scope, ok, branch?, head?, why?`                                              | `workspace_ready` or `workspace_failed` |
 | `record_agent`         | `actor, host`                                                           | `agent_started`                     |
 | `record_turn`          | `actor, outcome: done \| failed \| cancelled, why?, tokensSoFar, usdSoFar, seen` | `turn_ended`, `attention_climbed`\* |
 | `record_gone`          | `actor, why`                                                            | `actor_gone`, `obligation_moved`\*, `obligation_closed`\* (its permissions) |
@@ -274,7 +274,7 @@ the shell and never reaches `decide`.
 | `record_candidate`     | `scope, commit, result: { candidate, parentHead } \| { conflict: paths }` | `candidate_ready` or `candidate_conflict` |
 | `record_evidence`      | `scope, subject, ok, steps, heldMachine`                                | `evidence_recorded`                 |
 | `record_integration`   | `scope, result: { sha } \| { moved } \| { failed: why }`                | `integrated` or `integration_refused` |
-| `record_publish`       | `result: { sha } \| { refused: why }`                                   | `published` or `publish_refused`    |
+| `record_publish`       | `result: { sha } \| { refused: why, at? }`                                   | `published` or `publish_refused`    |
 | `record_permission`    | `actor, request, text`                                                  | `permission_asked`, `obligation_opened` |
 | `record_permission_settled` | `actor, request, allow`: answered in the agent's own prompt        | `permission_settled`, `obligation_closed`; nothing when the ledger answered it already |
 | `record_human_words`   | `actor, text`                                                           | `message_sent` (from the Human, directs, not queued), its copy (I7) |
@@ -289,7 +289,7 @@ Every event, with its payload. `evolve` handles each; an unknown type stops the 
 | `project_opened`      | `base, remote, profileHash, root: ScopeId`                                                   |
 | `scope_opened`        | `scope: Scope` (as opened)                                                                   |
 | `actor_seated`        | `actor, role, scope, model`                                                                  |
-| `workspace_ready`     | `scope, branch`                                                                              |
+| `workspace_ready`     | `scope, branch, head`                                                                              |
 | `workspace_failed`    | `scope, why`                                                                                 |
 | `agent_started`       | `actor, host`                                                                                |
 | `brief_issued`        | `scope, brief`                                                                               |
@@ -332,7 +332,7 @@ Every event, with its payload. `evolve` handles each; an unknown type stops the 
 | `checks_set`          | `checks`                                                                                     |
 | `publish_requested`   | `remote, branch, sha`                                                                        |
 | `published`           | `remote, branch, sha`                                                                        |
-| `publish_refused`     | `remote, branch, why`                                                                        |
+| `publish_refused`     | `remote, branch, why, found`                                                                        |
 | `permission_asked`    | `permission: Permission`                                                                     |
 | `permission_answered` | `permission, actor, request, allow, reason`                                                  |
 | `permission_settled`  | `permission, actor, allow`: answered outside the ledger, so no answer is sent                |

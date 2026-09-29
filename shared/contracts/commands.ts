@@ -186,6 +186,7 @@ export const COMMANDS = {
     scope: id,
     ok: z.boolean(),
     branch: z.string().nullable().default(null),
+    head: z.string().nullable().default(null),
     why: z.string().nullable().default(null),
   }),
   record_agent: z.object({ actor: id, host: z.string().min(1) }),
@@ -220,7 +221,9 @@ export const COMMANDS = {
     heldMachine: z.boolean(),
   }),
   record_integration: z.object({ scope: id, result: z.union([z.object({ sha }), z.object({ refused: z.string() })]) }),
-  record_publish: z.object({ result: z.union([z.object({ sha }), z.object({ refused: z.string() })]) }),
+  record_publish: z.object({
+    result: z.union([z.object({ sha }), z.object({ refused: z.string(), at: sha.nullable().default(null) })]),
+  }),
   record_permission: z.object({ actor: id, request: z.string().min(1), text }),
   record_permission_settled: z.object({ actor: id, request: z.string().min(1), allow: z.boolean() }),
   record_human_words: z.object({ actor: id, text }),

@@ -352,6 +352,7 @@ function blankScope(id: string, parent: string | null, role: string, kind: Scope
     brief: null,
     plan: null,
     branch: null,
+    head: null,
     workspace: "none",
     status: "open",
     held: false,

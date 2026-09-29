@@ -1,5 +1,5 @@
 import type { Event, EventBody } from "../contracts/events.ts";
-import { ID_PREFIX, type IdKind } from "../contracts/ids.ts";
+import { ID_PREFIX, ROOT, type IdKind } from "../contracts/ids.ts";
 import type { Actor, Finding, Scope } from "../contracts/ledger.ts";
 import { prune } from "./prune.ts";
 import { type State, withEntry, without } from "./state.ts";
@@ -51,7 +51,7 @@ function apply(s: State, e: Event, at: string): State {
       return counted({ ...s, actors: withEntry(s.actors, e.actor, actor) }, "actor", e.actor);
     }
     case "workspace_ready":
-      return scope(s, e.scope, (x) => ({ ...x, workspace: "ready", branch: e.branch }));
+      return scope(s, e.scope, (x) => ({ ...x, workspace: "ready", branch: e.branch, head: e.head }));
     case "workspace_failed":
       return scope(s, e.scope, (x) => ({ ...x, workspace: "failed" }));
     case "agent_started":
@@ -155,8 +155,11 @@ function apply(s: State, e: Event, at: string): State {
       return counted({ ...s, evidence: withEntry(s.evidence, e.evidence.id, e.evidence) }, "evidence", e.evidence.id);
     case "integration_started":
       return scope(s, e.scope, (x) => ({ ...x, integrating: true }));
-    case "integrated":
-      return scope(s, e.scope, (x) => ({ ...x, integrating: false, status: "integrated" }));
+    case "integrated": {
+      const done = scope(s, e.scope, (x) => ({ ...x, integrating: false, status: "integrated" }));
+      const parent = done.scopes.get(e.scope)?.parent ?? null;
+      return parent === null ? done : scope(done, parent, (x) => ({ ...x, head: e.sha }));
+    }
     case "integration_refused":
       return scope(s, e.scope, (x) => ({ ...x, integrating: false, candidate: null }));
     case "sent_back":
@@ -241,8 +244,9 @@ function apply(s: State, e: Event, at: string): State {
     case "publish_requested":
       return s.project ? { ...s, project: { ...s.project, remote: e.remote } } : s;
     case "published":
+      return scope(s, ROOT, (x) => ({ ...x, head: e.sha }));
     case "publish_refused":
-      return s;
+      return e.found === null ? s : scope(s, ROOT, (x) => ({ ...x, head: e.found }));
     case "permission_asked":
       return counted(
         { ...s, permissions: withEntry(s.permissions, e.permission.id, e.permission) },

@@ -34,7 +34,7 @@ export type EventBody =
   | { type: "project_opened"; base: string; remote: string | null; profileHash: string }
   | { type: "scope_opened"; scope: Scope }
   | { type: "actor_seated"; actor: ActorId; role: string; scope: ScopeId; model: string }
-  | { type: "workspace_ready"; scope: ScopeId; branch: string | null }
+  | { type: "workspace_ready"; scope: ScopeId; branch: string | null; head: string | null }
   | { type: "workspace_failed"; scope: ScopeId; why: string }
   | { type: "agent_started"; actor: ActorId; host: string }
   | { type: "brief_issued"; scope: ScopeId; brief: Brief }
@@ -106,9 +106,9 @@ export type EventBody =
       seen: number;
     }
   | { type: "checks_set"; checks: readonly Check[] }
-  | { type: "publish_requested"; remote: string; branch: string }
+  | { type: "publish_requested"; remote: string; branch: string; sha: string }
   | { type: "published"; remote: string; branch: string; sha: string }
-  | { type: "publish_refused"; remote: string; branch: string; why: string }
+  | { type: "publish_refused"; remote: string; branch: string; why: string; found: string | null }
   | { type: "permission_asked"; permission: Permission }
   | {
       type: "permission_answered";
