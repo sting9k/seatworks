@@ -81,8 +81,9 @@ export default function contribute(server: PluginServerContext) {
   server.handle(RPC.view, async (input, { paseo }) => {
     plugin.saw(paseo);
     const view = await plugin.view(input.project);
-    return { ...(view ?? { human: null, activity: [], root: "No such project." }), alarm: plugin.alarm };
+    return { ...(view ?? { human: null, activity: [], root: "No such project.", agents: {} }), alarm: plugin.alarm };
   });
+  server.handle(RPC.projectAt, (input) => ({ project: plugin.projectAt(input.dir) }));
   server.handle(RPC.record, async (input, { paseo }) => {
     plugin.saw(paseo);
     const record = await plugin.record(input.project, input.finding);

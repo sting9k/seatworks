@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import type { CommandBody } from "../../shared/contracts/commands.ts";
-import { ROOT } from "../../shared/contracts/ids.ts";
+import { PROJECT_LABEL, ROOT } from "../../shared/contracts/ids.ts";
 import type { Scope } from "../../shared/contracts/ledger.ts";
 import type { State } from "../../shared/kernel/state.ts";
 import type { Keys } from "../core/keys.ts";
@@ -34,8 +34,7 @@ export type Wiring = {
 
 const WAIT: Handled = { status: "wait" };
 
-/** The labels every agent the plugin starts carries: its project's id and its actor's. */
-export const PROJECT_LABEL = "seatworks.project";
+/** The label every agent the plugin starts carries with its actor's id, beside its project's. */
 export const ACTOR_LABEL = "seatworks.actor";
 
 /** What an agent's tools need to know of its seat: who it is, its key, whether it writes, its copy and the plugin. */

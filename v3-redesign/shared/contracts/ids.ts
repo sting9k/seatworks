@@ -55,3 +55,6 @@ export const NO_COUNTS: Counters = {
 export function childScopeId(parent: ScopeId, n: number): ScopeId {
   return parent === ROOT ? `${n}` : `${parent}.${n}`;
 }
+
+/** The label every agent the plugin starts carries with its project's id, read by the server and the app alike. */
+export const PROJECT_LABEL = "seatworks.project";

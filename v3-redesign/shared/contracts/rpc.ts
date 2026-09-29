@@ -92,7 +92,14 @@ export const RPC = {
       activity: z.array(z.string()),
       root: z.string(),
       alarm: z.string().nullable(),
+      /** Each seated actor's agent in Paseo, so the surface can open its chat. */
+      agents: z.record(z.string(), z.string()),
     }),
+  },
+  projectAt: {
+    name: "seatworks.project_at",
+    input: z.object({ dir: z.string().min(1) }),
+    output: z.object({ project: z.string().nullable() }),
   },
   record: {
     name: "seatworks.record",
@@ -120,3 +127,5 @@ export const RPC = {
     output: UpdateCheckSchema,
   },
 } as const;
+
+export type ViewOutput = z.infer<typeof RPC.view.output>;

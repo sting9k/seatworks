@@ -144,6 +144,9 @@ upkeep: attach(repository), leftovers, clean(picked), checkUpdate
   removed, and a project with one is not removed at all. Removing a project archives its agents and deletes its
   copies, branches and record: attached again, it starts from nothing.
 - The update check reads Paseo's own and installs nothing.
+- It sits in Paseo's own places: a page in the sidebar (the projects, each project's tabs, the plugin), a Team tab beside
+  Files and Changes for the project a workspace belongs to, and a pill on the chat of each agent the plugin started,
+  counting what waits on the Human in its project and answering it in place.
 
 ## Record
 

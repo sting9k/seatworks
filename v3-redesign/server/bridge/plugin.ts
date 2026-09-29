@@ -13,7 +13,7 @@ import { join } from "node:path";
 import type { PaseoApi } from "@getpaseo/client";
 import type { AgentTimelineItem } from "@getpaseo/protocol/agent-types";
 import type { Caller, CommandBody } from "../../shared/contracts/commands.ts";
-import { ROOT } from "../../shared/contracts/ids.ts";
+import { PROJECT_LABEL, ROOT } from "../../shared/contracts/ids.ts";
 import type { ReadName } from "../../shared/contracts/tools.ts";
 import { activityLine } from "../../shared/views/activity.ts";
 import { type Chain, type Signals, chainOf, scopeRecordText, signalsOf } from "../../shared/views/record.ts";
@@ -37,7 +37,7 @@ import { git } from "../satellites/workspace/git.ts";
 import { Workspace } from "../satellites/workspace/workspace.ts";
 import { type Bundle, loadBundle, profileDir } from "../profile/bundle.ts";
 import { Dispatcher } from "./dispatcher.ts";
-import { PROJECT_LABEL, type Wiring, branchesOf, handlersFor, scratchFor, seatEnv, withShim } from "./effects.ts";
+import { type Wiring, branchesOf, handlersFor, scratchFor, seatEnv, withShim } from "./effects.ts";
 import { type Kept, leftoverId, leftoversOf, projectLeftover, refOf } from "./leftovers.ts";
 import { Project, type Submitted } from "./project.ts";
 import { Reflex } from "./reflex.ts";
@@ -403,7 +403,9 @@ export class Plugin {
   }
 
   /** The Human's view of one project: what they need to know, and the last things that happened. */
-  async view(project: string): Promise<{ human: HumanView; activity: string[]; root: string } | null> {
+  async view(
+    project: string,
+  ): Promise<{ human: HumanView; activity: string[]; root: string; agents: Record<string, string> } | null> {
     const ready = await this.whenReady();
     if (!existsSync(join(projectDir(this.root, project), "project.json"))) return null;
     const runtime = this.runtimes.get(project) ?? this.open(project, ready);
@@ -415,7 +417,20 @@ export class Plugin {
       human: humanView(runtime.project.view),
       activity,
       root: statusText(runtime.project.view, "root", null) ?? "",
+      agents: Object.fromEntries(
+        [...runtime.project.view.actors.values()].flatMap((a) =>
+          a.status === "seated" && a.host !== null ? [[a.id, a.host]] : [],
+        ),
+      ),
     };
+  }
+
+  /** The attached project a directory belongs to: its repository, or one of the copies made for it. */
+  projectAt(dir: string): string | null {
+    if (!existsSync(dir)) return null;
+    const real = realpathSync(dir);
+    const inside = (root: string) => real === root || real.startsWith(`${root}/`) || real.startsWith(`${root}\\`);
+    return this.projects().find((p) => inside(p.repo) || inside(projectDir(this.root, p.id)))?.id ?? null;
   }
 
   /** The look back's reading of the log: one finding's chain of change, or the five signals. */
