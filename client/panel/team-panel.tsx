@@ -7,6 +7,7 @@ import { RPC } from "../../shared/contracts/rpc.ts";
 import { DisclosureList } from "../kit/disclosure.tsx";
 import { Dot, toneColor } from "../kit/mark.tsx";
 import { FONT, SPACE, pressState } from "../kit/theme.ts";
+import { problemText } from "../state/problem-text.ts";
 import { useProjectView } from "../state/project-view.ts";
 import { useSeatAgents } from "../state/seat-agents.ts";
 import { laneState, laneTone, waitingOf } from "../surface/project-page.tsx";
@@ -16,18 +17,20 @@ export function TeamPanel({ workspaceId, theme, layout, navigation }: PluginWork
   const root = useWorkspace(workspaceId, (w) => w.projectRootPath);
   const find = useRpc(RPC.projectAt);
   const [project, setProject] = useState<string | null | undefined>(undefined);
+  const [problem, setProblem] = useState<string | null>(null);
   useEffect(() => {
     if (root)
       void find({ dir: root }).then(
         (r) => {
           setProject(r.project);
+          setProblem(null);
         },
-        () => {
-          setProject(null);
+        (failed: unknown) => {
+          setProblem(problemText(failed));
         },
       );
   }, [root, find]);
-  const { view } = useProjectView(project ?? null);
+  const { view, error } = useProjectView(project ?? null);
   const [open, setOpen] = useState<string | null>(null);
   const muted = { fontSize: FONT.small, color: theme.colors.foregroundMuted, paddingHorizontal: SPACE.xs };
   const human = view?.human ?? null;
@@ -45,7 +48,10 @@ export function TeamPanel({ workspaceId, theme, layout, navigation }: PluginWork
 
   return (
     <ScrollView contentContainerStyle={{ padding: layout.compact ? SPACE.lg : SPACE.md, gap: SPACE.md }}>
-      {project === undefined ? <Text style={muted}>Reading the team.</Text> : null}
+      {problem || (error && !view) ? (
+        <Text style={[muted, { color: theme.colors.statusWarning }]}>Seatworks did not answer: {problem ?? error}</Text>
+      ) : null}
+      {project === undefined && !problem ? <Text style={muted}>Reading the team.</Text> : null}
       {project === null ? (
         <Text style={muted}>This project has no Seatworks team. Attach it from the Seatworks page.</Text>
       ) : null}

@@ -22,10 +22,11 @@ function WaitingIcon({ theme, size }: PluginButtonIconProps) {
 /** The popover's body: what waits on the Human in this agent's project, answerable from whichever chat is open. */
 function waitingContent(project: string) {
   return function WaitingContent({ theme }: PluginButtonContentProps) {
-    const { view, reload } = useProjectView(project);
+    const { view, error, reload } = useProjectView(project);
     const human = view?.human ?? null;
     const muted = { fontSize: FONT.small, color: theme.colors.foregroundMuted };
-    if (!human) return <Text style={muted}>Reading what waits on you.</Text>;
+    if (!view && error) return <Text style={muted}>Seatworks did not answer: {error}</Text>;
+    if (!human) return <Text style={muted}>{view ? view.root : "Reading what waits on you."}</Text>;
     const refresh = () => void reload();
     return (
       <ScrollView contentContainerStyle={{ gap: SPACE.sm }}>

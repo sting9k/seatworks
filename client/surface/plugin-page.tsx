@@ -7,6 +7,7 @@ import { type Leftover, RPC, type UpdateCheck } from "../../shared/contracts/rpc
 import { Button } from "../kit/button.tsx";
 import { PageHeader } from "../kit/header.tsx";
 import { FONT, SPACE } from "../kit/theme.ts";
+import { problemText } from "../state/problem-text.ts";
 
 const KIND: Record<Leftover["kind"], string> = {
   copy: "Working copy",
@@ -37,6 +38,7 @@ export function PluginPage({
   const [chosen, setChosen] = useState<ReadonlySet<string>>(new Set());
   const [confirming, setConfirming] = useState(false);
   const [results, setResults] = useState<string[]>([]);
+  const [problem, setProblem] = useState<string | null>(null);
   const muted = { fontSize: FONT.small, color: theme.colors.foregroundMuted };
 
   const scan = async () => {
@@ -45,6 +47,9 @@ export function PluginPage({
       setFound((await list({})).leftovers);
       setChosen(new Set());
       setConfirming(false);
+      setProblem(null);
+    } catch (failed) {
+      setProblem(problemText(failed));
     } finally {
       setBusy(null);
     }
@@ -54,9 +59,12 @@ export function PluginPage({
     try {
       const r = await clean({ ids: [...chosen] });
       setResults(r.results.map((x) => `${x.ok ? "Removed" : "Kept"}: ${x.text}`));
+    } catch (failed) {
+      setResults([`Seatworks did not answer: ${problemText(failed)}. The scan shows what is left.`]);
     } finally {
       setBusy(null);
     }
+    // Scanned again either way: a call that failed on its way back may still have removed some.
     await scan();
     onCleaned();
   };
@@ -85,6 +93,9 @@ export function PluginPage({
               setBusy("check");
               void check({})
                 .then(setUpdate)
+                .catch((failed: unknown) => {
+                  setUpdate({ status: "unknown", current: null, latest: null, links: [], text: problemText(failed) });
+                })
                 .finally(() => {
                   setBusy(null);
                 });
@@ -113,6 +124,7 @@ export function PluginPage({
         }
       >
         <SettingsCard>
+          {problem ? <SettingsRow label="Seatworks did not answer" error={problem} /> : null}
           <SettingsRow
             label={
               !found

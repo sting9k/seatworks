@@ -5,7 +5,8 @@ import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { View } from "react-native";
 import { RPC } from "../../shared/contracts/rpc.ts";
 import { SPACE } from "../kit/theme.ts";
-import { type Attached, Home, type Offered } from "./home.tsx";
+import { problemText } from "../state/problem-text.ts";
+import { Home, type Listed } from "./home.tsx";
 import { PluginPage } from "./plugin-page.tsx";
 import { ProjectPage } from "./project-page.tsx";
 
@@ -17,14 +18,17 @@ export function Surface({ theme, layout, navigation }: PluginSurfaceProps) {
   const attach = useRpc(RPC.openProject);
   const toast = useToast();
   const [page, setPage] = useState<Page>({ name: "home" });
-  const [projects, setProjects] = useState<readonly Attached[]>([]);
-  const [unattached, setUnattached] = useState<readonly Offered[]>([]);
+  const [listed, setListed] = useState<Listed | null>(null);
+  const [problem, setProblem] = useState<string | null>(null);
   const [attaching, setAttaching] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
-    const listed = await listProjects({});
-    setProjects(listed.projects);
-    setUnattached(listed.unattached);
+    try {
+      setListed(await listProjects({}));
+      setProblem(null);
+    } catch (failed) {
+      setProblem(problemText(failed));
+    }
   }, [listProjects]);
   useEffect(() => {
     void refresh();
@@ -49,7 +53,7 @@ export function Surface({ theme, layout, navigation }: PluginSurfaceProps) {
         onCleaned={() => void refresh()}
       />,
     );
-  const here = page.name === "project" ? projects.find((p) => p.id === page.id) : undefined;
+  const here = page.name === "project" ? listed?.projects.find((p) => p.id === page.id) : undefined;
   if (here)
     return frame(
       <ProjectPage
@@ -64,8 +68,8 @@ export function Surface({ theme, layout, navigation }: PluginSurfaceProps) {
     );
   return frame(
     <Home
-      projects={projects}
-      unattached={unattached}
+      listed={listed}
+      problem={problem}
       attaching={attaching}
       theme={theme}
       onProject={(id) => {
@@ -74,12 +78,16 @@ export function Surface({ theme, layout, navigation }: PluginSurfaceProps) {
       onPlugin={() => {
         setPage({ name: "plugin" });
       }}
+      onRetry={() => void refresh()}
       onAttach={(root) => {
         setAttaching(root);
         void attach({ cwd: root })
           .then((r) => {
             toast.show(r.text, { variant: r.ok ? "success" : "warning" });
             if (r.ok) setPage({ name: "project", id: r.project });
+          })
+          .catch((failed: unknown) => {
+            toast.show(problemText(failed), { variant: "error" });
           })
           .finally(() => {
             setAttaching(null);

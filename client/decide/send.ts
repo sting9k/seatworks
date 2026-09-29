@@ -1,6 +1,7 @@
 import { useRpc } from "@getpaseo/plugin/client";
 import { useState } from "react";
 import { RPC } from "../../shared/contracts/rpc.ts";
+import { problemText } from "../state/problem-text.ts";
 
 /** A command from the Human, with what the record said back, and whether one is on its way. */
 export function useHumanCommand(project: string) {
@@ -14,7 +15,7 @@ export function useHumanCommand(project: string) {
       setSaid(reply);
       return reply.ok;
     } catch (problem) {
-      setSaid({ ok: false, text: problem instanceof Error ? problem.message : String(problem) });
+      setSaid({ ok: false, text: problemText(problem) });
       return false;
     } finally {
       setBusy(false);
