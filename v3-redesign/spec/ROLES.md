@@ -32,8 +32,8 @@ From CONCEPT-V2 §3.1. The prompt is built to answer them and nothing else.
 ## Supervisor
 
 - **Owns** the Human's intent turned into lanes, what happens where lanes meet, and landing.
-- **Steps in** when the watch or a Lead's report says so, with the smallest step: nothing, an open question, a council
-  asked of the Lead, a hold, the Human (`WATCH.md`).
+- **Steps in** when the watch or a Lead's report says so, with the smallest step: nothing, an open question, a
+  blind design asked of the Lead, a hold, the Human (`WATCH.md`).
 - **Takes to the Human** any change to the goal or the cost they have not approved; decides the rest.
 - **Keeps its context clean.** It reads `status`, reports and attentions, and `look`s only where one points. A
   Supervisor that scans spends the wide view it is there for.

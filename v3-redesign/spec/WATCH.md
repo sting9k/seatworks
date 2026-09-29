@@ -150,7 +150,7 @@ at: history 8812–8840 · look for more
 
 ## How: the Supervisor's open question
 
-What the Supervisor does is its judgement: nothing, one open question, a council asked of the Lead, a hold, or the
+What the Supervisor does is its judgement: nothing, one open question, a blind design asked of the Lead, a hold, or the
 Human. The craft is its skill (`profile/slp/skills/attention/`): ask about the area and never the fault, presuppose
 nothing so that "no" is easy, one question, no anti-pattern named, and nothing that shows a watch exists.
 

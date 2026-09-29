@@ -115,9 +115,9 @@ A premise, constraint or choice that the evidence shows does not fit (CONCEPT-V2
 
 ### 4.5 Evidence and claims
 
-- **Evidence**: `{ id, kind, subject, result, by, at, conditions }`. `kind` is `check` (a command run), `measurement`, `judgement` (the reflex's answer on a commit, `REFLEX.md`), or `human`
-  (their word on the record). `subject` is the commit it is
-  about. `conditions` says, for a measurement, whether the machine was held.
+- **Evidence**: `{ id, kind, subject, result, by, at, conditions }`. `kind` is `check` (a command run), `measurement`,
+  `judgement` (the reflex's answer on a commit, `REFLEX.md`), or `human` (their word on the record). `subject` is the
+  commit it is about. `conditions` says, for a measurement, whether the machine was held.
 - **Claim**: what an agent says of its own work, such as a hand-back. Recorded as a claim, never as evidence.
 
 ### 4.6 Obligation
@@ -148,7 +148,7 @@ an answer, an intervention, a question to the Human, a hand-back waiting on its 
 
 What the reflex answered about an event (`REFLEX.md`): `{ id, question, subject, model, answer, at }`, recorded with
 the bridge as caller. Past its question's threshold it is also delivered as a note along the relation the question
-names, as evidence of kind `judgement`, or as a delivery fact to the agent it is about. Between its question's two
+names, as evidence of kind `judgement`, or as a fact for the actor it concerns (`REFLEX.md`). Between its question's two
 thresholds it is a **candidate** for the actor that `watches` over its scope, and opens an obligation on that actor,
 closed by `attend` or `pass`. An `attend` is an observation of the watcher's, delivered to the root (`WATCH.md`).
 
@@ -169,7 +169,7 @@ The kernel MUST refuse a command that would break one of these, and MUST NOT ref
 | I9  | Lines carry the origin the kernel set; a line is the Human's only via something the Human said.                     | §9.2       |
 | I10 | Only a role with `humanDoor` asks the Human; a message is sent only along the sender's `speaksTo`.                   | §3.1, §7.3 |
 | I11 | An obligation closes only when what is owed is done; it moves with its holder.                                       | §4.5       |
-| I12 | An observation changes only the record: it moves no line, finding, scope or hold, opens no obligation but a candidate's on its watcher, answers nothing, and is delivered only as a note that asks nothing, as `judgement` evidence, or as a delivery fact. | N1, N6     |
+| I12 | An observation changes only the record: it moves no line, finding, scope or hold, opens no obligation but a candidate's on its watcher, answers nothing, and is delivered only as a note that asks nothing, as `judgement` evidence, or as a fact for the actor it concerns. | N1, N6     |
 
 ## 6. Commands
 
@@ -217,9 +217,9 @@ Integrations into one scope MUST run one at a time: bring the parent in, run evi
 Events: `scope_opened`, `actor_seated`, `brief_issued`, `brief_amended`, `plan_set`, `plan_amended`, `edge_added`,
 `edge_removed`, `handed_over`, `finding_raised`, `finding_classified`, `finding_waiting`, `finding_resumed`,
 `finding_reopened`, `finding_withdrawn`, `claim_made`, `evidence_recorded`, `integrated`, `sent_back`, `reseated`,
-`scope_dropped`, `scope_held`, `scope_resumed`, `report_made`, `message_sent`, `message_delivered`,
-`question_asked`, `question_answered`, `obligation_opened`, `obligation_closed`, `obligation_moved`,
-`machine_held`, `machine_released`, `actor_released`, `actor_gone`, `observation_made`, `noise_marked`, `attended`, `passed`.
+`scope_dropped`, `scope_held`, `scope_resumed`, `report_made`, `message_sent`, `message_delivered`, `question_asked`,
+`question_answered`, `obligation_opened`, `obligation_closed`, `obligation_moved`, `machine_held`, `machine_released`,
+`actor_released`, `actor_gone`, `observation_made`, `noise_marked`, `attended`, `passed`.
 
 ## 8. Views
 

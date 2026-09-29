@@ -16,6 +16,7 @@ Human ─goal─► 0 Intake ─► 1 Open ─► 2 Plan ─► 3 Work ─► 4 
 ## 0. Intake: the Supervisor with the Human
 
 - The Supervisor questions the Human until the goal, the constraints and the appetite are settled.
+- When the project's instruction files are new or have changed, the Supervisor compiles their rules (`compile-rules`).
 - Kernel: records the plan (goal, limits, what is not yet known and how each is checked). Each line carries its
   origin, here the Human.
 - Prompt: when not to open a team. A small change goes to one agent that owns and writes it, its evidence still bound
@@ -34,9 +35,9 @@ Human ─goal─► 0 Intake ─► 1 Open ─► 2 Plan ─► 3 Work ─► 4 
 - A hard decision with several sound answers goes to two or three blind designs: discovery scopes with the same brief,
   none of which sees the others' work, which the Lead then brings together. No shared room: in one, the strongest
   arguer wins, not the best design.
-- Kernel: each sub-scope gets a brief (goal, constraints that must hold, choices made so far) and a kind,
-  verification or discovery, and may be blind to its siblings until the Lead integrates or drops them. Each line records who wrote it. Checks one writer per scope, and that the Lead writes in
-  no scope it gave away.
+- Kernel: each sub-scope gets a brief (goal, constraints that must hold, choices made so far) and a kind, verification
+  or discovery, and may be blind to its siblings until the Lead integrates or drops them. Each line records who wrote
+  it. Checks one writer per scope, and that the Lead writes in no scope it gave away.
 - Prompt: a plan is a set of hypotheses. Brief the symptom, not a cause chosen in advance. A narrow brief only for
   verification.
 
@@ -44,6 +45,9 @@ Human ─goal─► 0 Intake ─► 1 Open ─► 2 Plan ─► 3 Work ─► 4 
 
 A Peer leaves its work in one of two ways.
 
+- **While it works.** An edit that appears to break one of the project's written rules comes back to the Peer at
+  once as a fact quoting the rule, and it repairs it while the change is small. The watch tells the Supervisor when
+  the Peer's work needs attention; the Peer never hears of the watch.
 - **Hand-back.** The Peer commits and the evidence runner runs on that commit. "Done" is a claim; the evidence is what
   the Lead weighs.
 - **Finding.** The code contradicts a premise, constraint or choice of the brief, and the Peer raises it with
@@ -65,7 +69,8 @@ Nothing blocks it.
 
 ## 4. Accept: the Lead
 
-- The Lead weighs the evidence runner's checks on the commit and reads the diff.
+- The Lead weighs the evidence runner's checks on the commit and reads the diff, with the reflex's `judgement`
+  evidence beside them and, for a red check, whether it failed on the environment or the code.
 - Kernel: acceptance points to evidence of the commit that is merged. Over a red gate the Lead may still accept, with
   a reason.
 - Prompt: a green suite proves only what its author thought to test.

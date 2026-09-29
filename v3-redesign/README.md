@@ -46,14 +46,16 @@ order is the agents'.
 - `spec/ROLES.md`: the Supervisor, the Lead and the Peer: what each owns, what goes in a prompt, and what V1's
   prompts carried that the kernel now holds.
 - `spec/HARNESS.md`: how Claude Code, Codex, Pi and Oh My Pi are run, with one policy and one set of guards.
-- `spec/REFLEX.md`: the reflex, a cheap typed judgement (Jev first) that notices on every event and decides nothing.
+- `spec/REFLEX.md`: the reflex: every place v3 asks Jev, how a call runs, how questions are asked well and earn their
+  thresholds, the project's own rules, red-check triage, and what the tools built on Jev taught.
 - `spec/WATCH.md`: the watch, which tells the Supervisor when a Lead or Peer needs attention, and how it asks.
 
 ## Layout
 
 ```
 spec/          for whoever builds it
-profile/slp/   the SLP preset: profile.yaml, reflex.yaml, watch.yaml, roles/*.md, skills/, reference/ANTIPATTERNS.md
+profile/slp/   the SLP preset: profile.yaml, reflex.yaml, watch.yaml, roles/*.md, skills/, reference/ANTIPATTERNS.md;
+               a project's own rules.yaml lives in that project's state, compiled from its instruction files
 kernel/        entities, invariants, commands, views; no I/O, no Paseo, no role names
 satellites/    store, agent-host (with harness/<agent>/), workspace, evidence, delivery, machine, human, record,
                code-index, reflex; each imports only its own port

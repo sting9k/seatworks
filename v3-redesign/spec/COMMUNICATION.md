@@ -12,10 +12,13 @@ are the concept's and the agents'. The plugin delivers, records, and keeps what 
 - **Routes along the edges the profile declares.** Who speaks to whom is data in the profile, so another arrangement
   needs no code.
 - **Tells the Lead.** A message from the Supervisor or the Human straight to a Peer gives its Lead a copy. One that
-  directs stays open until the change reaches the lane's state; an open question does not. This is the one constraint the concept asks of the plugin.
-- **Adds facts, never advice.** A message may carry what the record knows (the brief line it cites, the commit it
-  names, who is waiting on it). It never carries what to do, an order of importance, or a judgement that two
-  messages are the same.
+  directs stays open until the change reaches the lane's state; an open question does not. This is the one constraint
+  the concept asks of the plugin.
+- **Adds facts, never advice.** A message may carry what the record knows (the brief line it cites, the commit it names,
+  who is waiting on it). The plugin's own facts travel the same way: an edit that appears to break a rule the project
+  wrote, quoted; words that never reached the record; a red check that failed on the environment (`REFLEX.md`). A fact
+  asks nothing, so it never wakes its reader on its own. It never carries what to do, an order of importance, or a
+  judgement that two messages are the same.
 - **Makes reading easy.** Every agent can read any scope's brief, hand-backs and branch, except a blind design's
   siblings until their Lead brings them together. A Peer that needs to know
   something reads it; one that needs something changed asks its Lead.

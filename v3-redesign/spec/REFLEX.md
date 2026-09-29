@@ -42,8 +42,12 @@ Its output takes one of three forms, and nothing else:
 1. **A note to a role**, along an edge the reflex's questions name (`tells`). The note is a message that asks
    nothing and opens no obligation. It carries the question, the probability, the model and the text it read.
 2. **Evidence** of kind `judgement` on a commit, beside the evidence runner's checks, for whoever integrates to weigh.
-3. **A delivery fact** to an agent whose words did not reach the record, such as a question written in its chat that
-   was never asked through a tool. The fact concerns delivery, not the agent's work.
+3. **A fact** for the actor it concerns, with the text it rests on: to a writer, the project rule its edit appears to
+   break, quoted with its line; to an agent, that its words did not reach the record, such as a question written in
+   its chat but never asked through a tool; to whoever answers a permission, that the action cannot be undone; to a
+   Lead, what the Human's words in its Peer's chat read as, and whether a red check failed on the environment. A fact
+   reads like a failing lint or a delivery receipt. It never judges the agent, and the watch's moments are never
+   facts to the agent they concern (`WATCH.md`).
 
 It never moves a line, classifies a finding, integrates, lands, answers a question or a permission, opens or closes
 an obligation, holds a scope, or ranks, merges or drops a message (KERNEL I12). A note says what was seen, never what
@@ -71,38 +75,15 @@ Everything v3 asks Jev, in one place. Each row's questions live in the profile; 
 
 Nothing else asks it, and nothing it answers decides (I12).
 
-## Where it looks: the record, on its events
+## Where it looks
 
 It reads what the record already holds: briefs, plans, findings, answers, hand-backs and reports, a hand-back's diff,
-and a permission an agent asks for. What it reads of agents' words and thinking, it reads for the watch
-(`WATCH.md`). Whatever code can check stays code. A constraint whose origin is not the Human, a hand-back with no
-evidence on its commit, a claim of green checks against a red run, a deleted test, an added skip marker, and the same
-failing step run again are facts the kernel's views already show. The reflex takes only what needs a reading of
-meaning.
-
-The SLP profile's starting questions:
-
-| On                                         | Asks                                                                                      | Goes to               |
-| ------------------------------------------ | ----------------------------------------------------------------------------------------- | --------------------- |
-| `brief_issued`, `brief_amended`            | A discovery brief that fixes the method; a cause given as fact; a closed set of options; a goal nobody could observe; a brief that reads as the other kind | the root, a note      |
-| `finding_raised`, `plan_amended`, `brief_amended` | Touches the goal or cost the Human approved (§7.3), beyond what I6 catches from origins | the root, a note that wakes it |
-| `finding_classified` as kept               | The reason does not meet the evidence the raiser gave                                     | the root, a note      |
-| `report_made`                              | Settles how the system is built, a structure or contract others will build on, with no line of the plan recording it | the root, a note      |
-| `hand_back`                                | The diff loosens an assertion; bends product code so a check passes; leaves a stub or fake where the brief asked for the thing; has a test, or a fake in it, fix a shape nothing settled; breaks one of the project's own written rules | evidence on the commit |
-| `hand_back`                                | The claim names a part of the brief it did not do                                          | evidence on the commit |
-| `permission_requested`                     | The action cannot be undone from the agent's own copy                                     | a fact for whoever answers it |
-| a message the Human types into an agent's chat | Whether it sets a requirement, says the code is wrong, asks, or approves                  | a fact on the Lead's copy |
-| `turn_ended` with no command in the turn   | Whether the agent handed back, asked, or said it waits, in words only                     | the agent, a delivery fact |
-
-They come from V1's patterns and checks that read the record (pre-solves, closed-choice, vague-goal, big-decision,
-gaming, proof-bends-product, stand-in, summary-admits-gap, instruction-kind), and from two tools that guard coding
-agents with Jev. One asks a question for each project rule, over the rule and the diff and never the conversation, so
-the 200th edit is judged like the first. The other asks whether a tool call can be undone before it runs. The
-questions that read words and thinking (struggling, turning, admits-wrong and the rest) are the watch's moments, in
-`WATCH.md`.
-
-The project's rules are the project's: the lines of its `AGENTS.md` that a linter cannot check, each turned once into
-a question when the file changes, and asked only of the hunks it could apply to.
+an edit's hunk, a failed check's output, and a permission an agent asks for. What it reads of agents' words and
+thinking, it reads for the watch (`WATCH.md`). Whatever code can check stays code: a constraint whose origin is not
+the Human, a hand-back with no evidence on its commit, a claim of green checks against a red run, a deleted test, an
+added skip marker and the same failing step run again are facts the kernel's views already show. The reflex takes
+only what needs a reading of meaning, and the table under Every use is the whole of it. The questions are in
+`profile/slp/reflex.yaml`, and the project's own rules in its `rules.yaml`.
 
 ## Asking well
 
@@ -177,23 +158,25 @@ questions:
       Every line states an outcome to reach or a limit to respect, and the approach is left open. Naming a file or
       module only as where the work happens is not a method.
     phase: item
-    over: 0.9
+    tell: 0.9
     because: <what the look back measured, such as how many answers past it were acted on>
     for: { wording: <hash of the question and its descriptions>, model: jev-1.13.0 }
     tells: root
 ```
 
 - `state` maps each field the question names to where the record keeps it. It never holds more.
-- `over` is the probability past which it speaks, and `because` its reason. It holds only for the wording and the
-  model named in `for`: the hash of the question and its descriptions, and the version that answered. A question
-  whose wording or model no longer matches, or that has never been through a look back, still has every answer
-  recorded, but goes no further than a candidate for the Watcher. A threshold is earned on the question it was
-  measured on. There is one value per question; V1's
-  forty tuning values in `attention.json` go.
-- `consider`, where a question has one, is the probability past which an answer under `over` goes to the actor that
+- `tell` is the probability past which it speaks, and `because` its reason. It holds only for the wording and the model
+  named in `for`: the hash of the question and its descriptions, and the version that answered. A question whose wording
+  or model no longer matches, or that has never been through a look back, still has every answer recorded, but goes no
+  further: a note becomes a candidate for the Watcher, and a fact stays on the record. `judgement` evidence is always
+  shown with its probability, since the Lead weighs it either way. A project rule earns its start when `compile-rules`
+  finds its answers on the project's history decisive. There is one value per question; V1's forty tuning values in
+  `attention.json` go.
+- `consider`, where a question has one, is the probability past which an answer under `tell` goes to the actor that
   watches the scope, as a candidate (`WATCH.md`).
-- `tells` is a relation (`root`, `owner`, `parent`, `self`) or `evidence`. `wakes: true` lets a note wake the role it
-  is for. Otherwise it waits for the next message that asks something, as every note does.
+- `tells` is a relation (`root`, `owner`, `parent`, `self`), `answerer` (whoever answers a permission), or `evidence`.
+  `wakes: true` lets a note wake the role it is for. Otherwise it waits for the next message that asks something, as
+  every note does.
 
 ## Running it
 

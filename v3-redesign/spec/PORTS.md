@@ -69,12 +69,14 @@ Invariants, taken from Symphony's workspace safety rules:
 Runs checks on one commit and says what came of them.
 
 ```text
-run(path, sha, steps, timeout) -> { sha, ok, steps: [{ name, exit, log, seconds }] }
+run(path, sha, steps, timeout) -> { sha, ok, steps: [{ name, exit, log, seconds, cause? }] }
 ```
 
 - It checks that the copy is at `sha` before it starts and after it ends; a copy that moved fails the run.
 - A step that runs past the timeout is killed with everything it started.
 - It never runs while the machine is held: the kernel does not ask it to.
+- A failed step's `cause` is `environment` or `code` when the log matches a known shape, from data, and is left for
+  the reflex otherwise (`REFLEX.md`). It never turns a failure into a pass.
 
 ## Delivery
 
@@ -151,9 +153,10 @@ Configured by data. It names no agent, role, IDE or server in code.
 
 ## Tools
 
-Not a satellite: the MCP server each agent is given. Each tool is one kernel command, shown to the roles whose
-`tools` name it, or a read: `status` (a scope's view), `record` (briefs, findings, reports, attentions), `look` (an
-agent's history between two points, through the agent host), `diff` (a scope's change at a commit). A reply is the command's result and the facts it produced, never advice on what to do next.
+Not a satellite: the MCP server each agent is given. Each tool is one kernel command, shown to the roles whose `tools`
+name it, or a read: `status` (a scope's view), `record` (briefs, findings, reports, attentions), `look` (an agent's
+history between two points, through the agent host), `diff` (a scope's change at a commit). A reply is the command's
+result and the facts it produced, never advice on what to do next.
 
 ## Bridge
 

@@ -12,7 +12,7 @@ please you; an open one leaves it free to say all is well.
 ## Whether
 
 - Harm that cannot be undone comes first: hold the scope, then weigh.
-- Otherwise the smallest step: nothing, one open question, a council asked of the Lead, a hold, the Human.
+- Otherwise the smallest step: nothing, one open question, a blind design asked of the Lead, a hold, the Human.
 - Nothing is right when the brief already settles it, when the Lead is already on it, or when the agent's next step
   will meet it anyway, such as a test it is about to run.
 - Ask the Lead when it concerns its lane's design. Reach the Peer only when the Lead cannot carry it in time; the Lead
