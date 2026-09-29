@@ -36,14 +36,20 @@ test("a writer gets a worktree on a branch of its own; asked again, the same cop
   assert.deepEqual(await ws.create("1.1", { kind: "writer", branch: "sw/p/1.1", from: "main" }), made);
 });
 
-test("the plugin's git runs no hook an agent planted in the repository", async () => {
+test("the plugin's git runs no hook and no filter an agent planted in the repository", async () => {
   const { root, ws } = repo();
-  const marker = join(root, "..", `hook-ran-${Date.now()}`);
-  writeFileSync(join(root, ".git", "hooks", "post-checkout"), `#!/bin/sh\ntouch ${marker}\n`);
+  const hook = join(root, "..", `hook-ran-${Date.now()}`);
+  writeFileSync(join(root, ".git", "hooks", "post-checkout"), `#!/bin/sh\ntouch ${hook}\n`);
   chmodSync(join(root, ".git", "hooks", "post-checkout"), 0o755);
+  const smudge = join(root, "..", `smudge-ran-${Date.now()}`);
+  run(root, "config", "filter.x.smudge", `touch ${smudge}; cat`);
+  writeFileSync(join(root, ".gitattributes"), "*.txt filter=x\n");
+  run(root, "add", ".");
+  run(root, "commit", "-q", "-m", "attributes");
   const made = await ws.create("1", { kind: "writer", branch: "sw/p/1", from: "main" });
   assert.ok(made.ok);
-  assert.equal(existsSync(marker), false);
+  assert.equal(existsSync(hook), false, "no hook ran");
+  assert.equal(existsSync(smudge), false, "no smudge filter ran on the copy's checkout");
 });
 
 test("a candidate takes the moved parent in without a checkout; a conflict names its files", async () => {

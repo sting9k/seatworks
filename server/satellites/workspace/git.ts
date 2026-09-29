@@ -19,7 +19,6 @@ const REFS_ONLY = new Set([
   "for-each-ref",
   "branch",
   "config",
-  "worktree",
 ]);
 
 /** What the plugin commits is made as seatworks and unsigned: the Human's name and signer are for their commits. */
