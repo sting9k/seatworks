@@ -66,8 +66,8 @@ export type EventBody =
   | { type: "claim_made"; claim: Claim }
   | { type: "candidate_ready"; scope: ScopeId; commit: string; candidate: string; parentHead: string }
   | { type: "candidate_conflict"; scope: ScopeId; commit: string; paths: readonly string[] }
-  | { type: "evidence_requested"; scope: ScopeId; subject: string; steps: readonly Check[] }
-  | { type: "evidence_recorded"; evidence: Evidence }
+  | { type: "evidence_requested"; scope: ScopeId; subject: string; steps: readonly Check[]; by: Party }
+  | { type: "evidence_recorded"; evidence: Evidence; wake: readonly Party[] }
   | {
       type: "integration_started";
       scope: ScopeId;

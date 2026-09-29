@@ -71,6 +71,7 @@ type State = {
   readonly attentions: ReadonlyMap<AttentionId, Attention>;    // open only
   readonly permissions: ReadonlyMap<PermissionId, Permission>; // open only
   readonly noise: ReadonlySet<string>;                   // `${moment}|${actor}|${scope}`
+  readonly checksAsked: ReadonlyMap<string, Party>;      // `${scope}:${subject}` → who ran `run_checks`, until it lands
   readonly machineHeldBy: ActorId | null;                // this project's hold; other projects' are the shell's
 };
 ```
@@ -307,8 +308,8 @@ Every event, with its payload. `evolve` handles each; an unknown type stops the 
 | `claim_made`          | `claim: Claim`                                                                               |
 | `candidate_ready`     | `scope, commit, candidate, parentHead`                                                       |
 | `candidate_conflict`  | `scope, commit, paths`                                                                       |
-| `evidence_requested`  | `scope, subject, steps`                                                                      |
-| `evidence_recorded`   | `evidence: Evidence`                                                                         |
+| `evidence_requested`  | `scope, subject, steps, by`                                                                  |
+| `evidence_recorded`   | `evidence: Evidence, wake`                                                                   |
 | `integration_started` | `scope, candidate, parentHead, evidence, reason`                                             |
 | `integrated`          | `scope, sha`                                                                                 |
 | `integration_refused` | `scope, why: "moved" \| string`                                                              |

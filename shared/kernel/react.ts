@@ -125,12 +125,12 @@ export function react(e: Event, s: State): readonly Effect[] {
       break;
     case "evidence_recorded": {
       const x = e.evidence;
-      if (x.kind === "check")
-        tell(
-          parentOwner(x.scope),
-          "note",
-          `Checks on ${x.subject} for scope ${x.scope}: ${x.ok ? "passed" : "failed"}. ${x.summary}`,
-        );
+      if (x.kind === "check") {
+        const text = `Checks on ${x.subject} for scope ${x.scope}: ${x.ok ? "passed" : "failed"}. ${x.summary}`;
+        for (const to of e.wake) tell(to, "note", text, true);
+        const owner = parentOwner(x.scope);
+        if (owner === null || !e.wake.includes(owner)) tell(owner, "note", text);
+      }
       break;
     }
     case "report_made": {

@@ -1,5 +1,5 @@
 import type { CommandBody } from "../../contracts/commands.ts";
-import { BRIDGE, HUMAN, ROOT } from "../../contracts/ids.ts";
+import { BRIDGE, HUMAN, type Party, ROOT } from "../../contracts/ids.ts";
 import type { Evidence, Scope } from "../../contracts/ledger.ts";
 import { descendants, ownerOfParent } from "../authority.ts";
 import { releaseSeat } from "./seats.ts";
@@ -77,7 +77,7 @@ export function runChecks(ctx: Of<"run_checks">): Refusal | undefined {
     return refuse("authority", `only scope ${scope.id}'s writer or its parent's owner runs checks on it`);
   const steps = ctx.body.steps ?? ctx.state.project?.checks ?? [];
   if (steps.length === 0) return refuse("state", "the project has no checks set, and none were named");
-  ctx.emit({ type: "evidence_requested", scope: scope.id, subject: ctx.body.commit, steps });
+  ctx.emit({ type: "evidence_requested", scope: scope.id, subject: ctx.body.commit, steps, by: ctx.party });
   return undefined;
 }
 
@@ -170,16 +170,26 @@ export function candidateFact(ctx: Of<"record_candidate">): Refusal | undefined 
 export function evidenceFact(ctx: Of<"record_evidence">): Refusal | undefined {
   if (!ctx.state.scopes.has(ctx.body.scope)) return undefined;
   const b = ctx.body;
-  addEvidence(ctx, {
-    scope: b.scope,
-    kind: "check",
-    subject: b.subject,
-    ok: b.ok,
-    by: BRIDGE,
-    summary: b.summary,
-    steps: b.steps,
-    heldMachine: b.heldMachine,
-  });
+  // A check result is an answer whoever asked for the run or owes the claim's decision is waiting on, so it wakes them.
+  const wake = new Set<Party>();
+  const asker = ctx.state.checksAsked.get(`${b.scope}:${b.subject}`);
+  if (asker !== undefined) wake.add(asker);
+  for (const o of ctx.state.obligations.values())
+    if (o.about.kind === "claim" && ctx.state.claims.get(o.about.id)?.scope === b.scope) wake.add(o.owedBy);
+  addEvidence(
+    ctx,
+    {
+      scope: b.scope,
+      kind: "check",
+      subject: b.subject,
+      ok: b.ok,
+      by: BRIDGE,
+      summary: b.summary,
+      steps: b.steps,
+      heldMachine: b.heldMachine,
+    },
+    [...wake],
+  );
   return undefined;
 }
 
@@ -224,6 +234,6 @@ export function workspaceFact(ctx: Of<"record_workspace">): Refusal | undefined 
   return undefined;
 }
 
-function addEvidence(ctx: Context, e: Omit<Evidence, "id">): void {
-  ctx.emit({ type: "evidence_recorded", evidence: { id: ctx.next("evidence"), ...e } });
+function addEvidence(ctx: Context, e: Omit<Evidence, "id">, wake: readonly Party[] = []): void {
+  ctx.emit({ type: "evidence_recorded", evidence: { id: ctx.next("evidence"), ...e }, wake });
 }

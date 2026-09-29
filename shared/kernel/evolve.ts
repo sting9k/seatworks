@@ -150,9 +150,17 @@ function apply(s: State, e: Event, at: string): State {
     case "candidate_conflict":
       return scope(s, e.scope, (x) => ({ ...x, candidate: null }));
     case "evidence_requested":
-      return s;
+      return { ...s, checksAsked: withEntry(s.checksAsked, `${e.scope}:${e.subject}`, e.by) };
     case "evidence_recorded":
-      return counted({ ...s, evidence: withEntry(s.evidence, e.evidence.id, e.evidence) }, "evidence", e.evidence.id);
+      return counted(
+        {
+          ...s,
+          evidence: withEntry(s.evidence, e.evidence.id, e.evidence),
+          checksAsked: without(s.checksAsked, `${e.evidence.scope}:${e.evidence.subject}`),
+        },
+        "evidence",
+        e.evidence.id,
+      );
     case "integration_started":
       return scope(s, e.scope, (x) => ({ ...x, integrating: true }));
     case "integrated": {
@@ -174,8 +182,12 @@ function apply(s: State, e: Event, at: string): State {
         if (e.from !== null && t.to === e.from) attentions.set(t.id, { ...t, to: e.to, delivered: null });
       return scope({ ...left, attentions }, e.scope, (x) => ({ ...x, owner: e.to, writer: x.writes ? e.to : null }));
     }
-    case "scope_dropped":
-      return scope(s, e.scope, (x) => ({ ...x, status: "dropped", integrating: false }));
+    case "scope_dropped": {
+      const next = scope(s, e.scope, (x) => ({ ...x, status: "dropped", integrating: false }));
+      const asked = new Map(next.checksAsked);
+      for (const key of asked.keys()) if (key.startsWith(`${e.scope}:`)) asked.delete(key);
+      return { ...next, checksAsked: asked };
+    }
     case "scope_held":
       return scope(s, e.scope, (x) => ({ ...x, held: true }));
     case "scope_resumed":

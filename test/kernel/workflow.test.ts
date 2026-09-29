@@ -321,6 +321,58 @@ test("a held scope seats nobody new until it is resumed", () => {
   ledger.must(ledger.as(lead, "reseat", { scope: task, reason: "stuck" }));
 });
 
+test("a check result wakes whoever waited on it: its asker, or the integrator weighing a claim", () => {
+  const { ledger, lead, peer, task } = team();
+  const asks = (to: string) => {
+    const d = ledger.effects
+      .filter(
+        (e) =>
+          e.body.kind === "deliver" &&
+          e.body.to === to &&
+          e.body.item.kind === "note" &&
+          e.body.item.text.startsWith("Checks on"),
+      )
+      .at(-1);
+    return d?.body.kind === "deliver" && d.body.item.kind === "note" ? d.body.item.asks : undefined;
+  };
+
+  ledger.must(
+    ledger.as(peer, "run_checks", { scope: task, commit: SHA(7), steps: [{ name: "unit", run: ["npm", "test"] }] }),
+  );
+  ledger.must(
+    ledger.fact("record_evidence", {
+      scope: task,
+      subject: SHA(7),
+      ok: true,
+      summary: "green",
+      steps: [],
+      heldMachine: false,
+    }),
+  );
+  assert.equal(asks(peer), true, "the Peer asked for the run and waits on its answer");
+  assert.equal(asks(lead), false, "the owner above is told without waking");
+
+  ledger.must(ledger.as(peer, "hand_back", { commit: SHA(8), text: "wired" }));
+  ledger.must(
+    ledger.fact("record_candidate", {
+      scope: task,
+      commit: SHA(8),
+      result: { candidate: SHA(9), parentHead: SHA(0) },
+    }),
+  );
+  ledger.must(
+    ledger.fact("record_evidence", {
+      scope: task,
+      subject: SHA(9),
+      ok: true,
+      summary: "green",
+      steps: [],
+      heldMachine: false,
+    }),
+  );
+  assert.equal(asks(lead), true, "the claim's checks are an answer the integrator was waiting on");
+});
+
 test("a finding left open when its scope is integrated stays in memory with its obligation, until it is answered", () => {
   const { ledger, lead, peer, task } = team();
   ledger.must(ledger.as(peer, "raise_finding", { text: "the retry hides a race", default: "keep the retry" }));

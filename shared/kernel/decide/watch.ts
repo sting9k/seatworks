@@ -97,6 +97,7 @@ export function observation(ctx: Of<"record_observation">): Refusal | undefined 
           steps: [],
           heldMachine: false,
         },
+        wake: [],
       });
     return undefined;
   }
