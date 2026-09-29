@@ -14,8 +14,10 @@ agent has to rediscover, and one it will not quietly undo.
 - Name things with the glossary's words, in code, tests and what you write to others, and never with a word it lists
   under _Avoid_. A concept it lacks is a signal: either you are inventing a word the project does not use, or there
   is a gap worth filling.
-- Work that contradicts an ADR is a finding, raised with its evidence, never a silent override: the ADR records a
-  trade-off someone made, and its owner decides whether it is reopened.
+- An ADR, and every line of the map under "chosen" or "decided", is a choice someone made, not a requirement: what
+  must hold is only what the Human set. Work that contradicts a choice is a finding, raised with its evidence, never
+  a silent override and never a workaround that keeps the choice alive; its owner reopens it on evidence, or keeps it
+  with a reason you can argue with.
 
 ## Glossary
 

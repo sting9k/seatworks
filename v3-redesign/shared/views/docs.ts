@@ -28,6 +28,8 @@ export function glossaryText(plan: Plan | null): string | null {
     .trimEnd();
 }
 
+type Weighed = { id: string; text: string; by: string; verdict: string | null; reason: string | null };
+
 type Landed = {
   scope: string;
   goal: string;
@@ -36,11 +38,21 @@ type Landed = {
   decided: string[];
   assumed: string[];
   open: string[];
+  weighed: Weighed[];
+};
+
+/** How the owner above weighed a finding, in words a reader outside the team follows. */
+const VERDICT: Record<string, string> = {
+  changes: "changed the plan",
+  alternative: "another sound option; the plan was kept",
+  minor: "not worth stopping for",
 };
 
 /**
- * The project's map: where it is going, what must hold, what is not yet known, each lane landed on the way with what
- * it decided, assumed and left open, and what is still in dispute. None until the root has a plan.
+ * The project's map: where it is going, what the Human made must hold apart from what the team chose so far, what is
+ * not yet known, each lane landed with its owner's report beside every finding raised in it and how it was weighed,
+ * and what is still in dispute. A choice is listed as one, open to question on evidence, so no later lane takes it for
+ * a requirement. None until the root has a plan.
  */
 export function mapText(events: Iterable<Event>, state: State): string | null {
   const plan = state.scopes.get(ROOT)?.plan;
@@ -48,7 +60,13 @@ export function mapText(events: Iterable<Event>, state: State): string | null {
   const goals = new Map<string, string>();
   const parents = new Map<string, string | null>();
   const reports = new Map<string, { decided: string[]; assumed: string[]; open: string[] }>();
+  const findings = new Map<string, Weighed & { scope: string }>();
   const landed: Landed[] = [];
+  const laneOf = (scope: string): string | null => {
+    for (let at: string | null = scope; at !== null; at = parents.get(at) ?? null)
+      if (parents.get(at) === ROOT) return at;
+    return null;
+  };
   for (const e of events) {
     if (e.type === "scope_opened") parents.set(e.scope.id, e.scope.parent);
     if (e.type === "brief_issued" || e.type === "brief_amended") goals.set(e.scope, e.brief.goal.text);
@@ -58,6 +76,23 @@ export function mapText(events: Iterable<Event>, state: State): string | null {
         assumed: e.assumed.map((l) => l.text),
         open: e.open.map((l) => l.text),
       });
+    if (e.type === "finding_raised")
+      findings.set(e.finding.id, {
+        id: e.finding.id,
+        scope: e.finding.scope,
+        text: e.finding.text,
+        by: e.finding.raisedBy,
+        verdict: null,
+        reason: null,
+      });
+    if (e.type === "finding_classified") {
+      const f = findings.get(e.finding);
+      if (f) findings.set(e.finding, { ...f, verdict: VERDICT[e.verdict] ?? e.verdict, reason: e.reason });
+    }
+    if (e.type === "finding_withdrawn") {
+      const f = findings.get(e.finding);
+      if (f) findings.set(e.finding, { ...f, verdict: "withdrawn by whoever raised it", reason: e.reason });
+    }
     if (e.type === "integrated" && parents.get(e.scope) === ROOT)
       landed.push({
         scope: e.scope,
@@ -65,19 +100,26 @@ export function mapText(events: Iterable<Event>, state: State): string | null {
         sha: e.sha.slice(0, 12),
         at: e.at.slice(0, 10),
         ...(reports.get(e.scope) ?? { decided: [], assumed: [], open: [] }),
+        weighed: [...findings.values()].filter((f) => laneOf(f.scope) === e.scope),
       });
   }
   const disputed = [...state.findings.values()].filter((f) => f.status === "raised" || f.status === "waiting");
   const list = (items: readonly string[]) => items.map((i) => `- ${i}`);
+  const humans = plan.limits.filter((l) => l.origin === HUMAN);
+  const chosen = plan.limits.filter((l) => l.origin !== HUMAN);
   return [
     "## Destination",
     "",
     `${plan.goal.text} (${by(plan.goal)})`,
     "",
-    "## Must hold",
+    "## Must hold, as the Human set it",
     "",
-    ...(plan.limits.length > 0 ? list(plan.limits.map((l) => `${l.text} (${by(l)})`)) : ["Nothing yet."]),
+    ...list(humans.map((l) => l.text)),
     `- Appetite: ${plan.appetite.line.text} (${by(plan.appetite.line)})`,
+    "",
+    "## Chosen so far, open to question on evidence",
+    "",
+    ...(chosen.length > 0 ? list(chosen.map((l) => `${l.text} (${by(l)})`)) : ["Nothing yet."]),
     "",
     "## Not yet known",
     "",
@@ -85,16 +127,30 @@ export function mapText(events: Iterable<Event>, state: State): string | null {
       ? list(plan.unknowns.map((u) => `${u.line.text}; checked by ${u.check}`))
       : ["Nothing open."]),
     "",
-    "## Decisions so far",
+    "## Lanes landed",
     "",
     ...(landed.length > 0
       ? landed.flatMap((l) => [
           `### ${l.scope}: ${l.goal}`,
           "",
           `Landed ${l.sha} on ${l.at}.`,
-          ...(l.decided.length > 0 ? ["", "Decided:", ...list(l.decided)] : []),
+          ...(l.decided.length > 0
+            ? ["", "Decided by its owner, open to question on evidence:", ...list(l.decided)]
+            : []),
           ...(l.assumed.length > 0 ? ["", "Assumed, not yet checked:", ...list(l.assumed)] : []),
           ...(l.open.length > 0 ? ["", "Left open:", ...list(l.open)] : []),
+          ...(l.weighed.length > 0
+            ? [
+                "",
+                "Findings raised in it:",
+                ...list(
+                  l.weighed.map(
+                    (f) =>
+                      `${f.id} by ${f.by}: ${f.text} → ${f.verdict ?? "not weighed"}${f.reason ? `: ${f.reason}` : ""}`,
+                  ),
+                ),
+              ]
+            : []),
           "",
         ])
       : ["No lane has landed yet.", ""]),

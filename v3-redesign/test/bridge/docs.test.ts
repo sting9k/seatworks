@@ -52,6 +52,11 @@ test("the glossary and the map are written from the record into the repository, 
   const map = git("show", "main:docs/seatworks/MAP.md");
   assert.match(map, /## Destination\n\nA chess club site members book matches on/);
   assert.match(map, /How many play at once; checked by the club's own count/);
+  assert.match(
+    map,
+    /## Chosen so far, open to question on evidence\n\n- No accounts beyond the club's members \(a1\)/,
+    "a limit the team chose is listed as its choice, not as one the Human set",
+  );
 
   writeFileSync(join(repo, "GLOSSARY.md"), `${glossary}\n\n**Ladder**:\nThe club's ranking, written by hand.\n`);
   git("commit", "-q", "-am", "a word of our own");

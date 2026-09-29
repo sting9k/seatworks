@@ -20,7 +20,7 @@ export function firstPrompt(state: State, actor: Actor, reseated: boolean, docs:
     : "You are seated on this scope.";
   const read =
     docs.length > 0
-      ? `\n\nWhat the project has settled so far is in ${docs.map((d) => `\`${d}\``).join(", ")} in your copy: read what bears on your work before you plan. One that is not there holds nothing yet.`
+      ? `\n\nThe project's docs in your copy: ${docs.map((d) => `\`${d}\``).join(", ")}. One that is not there holds nothing yet.`
       : "";
   return `${lead} You are ${actor.id}.${read}\n\n${status}`;
 }

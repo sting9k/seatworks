@@ -41,7 +41,7 @@ test("one lane end to end: a Supervisor, a Lead and a Peer land a change on main
   assert.match(supervisorAgent.prompt, /Scope root/);
   assert.match(
     supervisorAgent.prompt,
-    /`GLOSSARY\.md`, `docs\/adr`, `docs\/seatworks\/MAP\.md` in your copy/,
+    /The project's docs in your copy: `GLOSSARY\.md`, `docs\/adr`, `docs\/seatworks\/MAP\.md`\./,
     "its brief points at the docs",
   );
 
@@ -83,6 +83,14 @@ test("one lane end to end: a Supervisor, a Lead and a Peer land a change on main
   git(peerAgent.cwd, "add", ".");
   git(peerAgent.cwd, "commit", "-q", "-m", "encoder");
   const peer = await agentTools(socketPath, peerAgent.env);
+  const raised = await peer.call("raise_finding", {
+    text: "int16 overflows past 8 directions",
+    default: "keep int16 and cap at 8",
+  });
+  assert.ok(raised.ok, raised.text);
+  const finding = (await plugin.view(opened.project))?.human.disagreements[0]?.id;
+  assert.ok(finding, "the finding is open on the record");
+  assert.ok((await lead.call("classify_finding", { finding, verdict: "minor", reason: "no client sends more" })).ok);
   assert.ok((await peer.call("hand_back", { commit: git(peerAgent.cwd, "rev-parse", "HEAD"), text: "encoded" })).ok);
   await plugin.idle();
   await plugin.idle();
@@ -120,8 +128,8 @@ test("one lane end to end: a Supervisor, a Lead and a Peer land a change on main
   const map = git(repo, "show", "main:docs/seatworks/MAP.md");
   assert.match(
     map,
-    /### 1: Encode directions\n\nLanded [0-9a-f]{12} on [\d-]{10}\.\n\nDecided:\n- Directions are int16\n\nAssumed, not yet checked:\n- No client sends more than 8 directions/,
-    "the map lists the lane landed, with what its Lead decided and assumed",
+    /### 1: Encode directions\n\nLanded [0-9a-f]{12} on [\d-]{10}\.\n\nDecided by its owner, open to question on evidence:\n- Directions are int16\n\nAssumed, not yet checked:\n- No client sends more than 8 directions\n\nFindings raised in it:\n- f\d+ by a\d+: int16 overflows past 8 directions → not worth stopping for: no client sends more/,
+    "the map lists the lane landed: its owner's report, and every finding raised in it as it was weighed",
   );
   assert.equal(git(repo, "status", "--porcelain"), "", "and the checkout stays clean");
   for (const t of [supervisor, lead, peer]) t.close();
