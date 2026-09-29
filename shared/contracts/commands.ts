@@ -14,13 +14,15 @@ const ref = z.object({ kind: z.enum(["message", "question", "finding", "evidence
 const lineInput = z.object({ text, via: ref.optional() });
 const term = z.string().trim().min(1).max(200);
 const check = z.object({ name: z.string().trim().min(1).max(200), run: z.array(z.string().min(1)).min(1).max(100) });
+const briefLines = z.array(lineInput).max(100);
+const briefKind = z.enum(["verification", "discovery"]);
 
 export const BriefInput = z.object({
   goal: lineInput,
-  constraints: z.array(lineInput).max(100).default([]),
-  choices: z.array(lineInput).max(100).default([]),
-  context: z.array(lineInput).max(100).default([]),
-  kind: z.enum(["verification", "discovery"]),
+  constraints: briefLines.default([]),
+  choices: briefLines.default([]),
+  context: briefLines.default([]),
+  kind: briefKind,
 });
 
 export const PlanInput = z.object({
@@ -60,7 +62,14 @@ export const COMMANDS = {
   }),
   amend_brief: z.object({
     scope: id,
-    set: BriefInput.partial(),
+    // Not `BriefInput.partial()`: zod 4 still applies its defaults, so a section left out would be emptied.
+    set: z.object({
+      goal: lineInput.optional(),
+      constraints: briefLines.optional(),
+      choices: briefLines.optional(),
+      context: briefLines.optional(),
+      kind: briefKind.optional(),
+    }),
     reason,
     carries: id.nullable().default(null),
     cites: ref.nullable().default(null),

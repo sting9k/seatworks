@@ -61,6 +61,7 @@ on an implementation without the rule before it is trusted.
 | A finding mid-work, classified `changes`, brief amended, work integrated                 | The chain of change shows all six checkpoints              |
 | A finding touching the goal                                                             | Waits on a question; the raiser's default goes on; carried after the answer |
 | A small change: the Supervisor seats a Peer under the root and integrates it             | Works with no Lead                                         |
+| The Lead amends only a brief's goal, beside a constraint that is the Human's              | A new version; every section it did not name as it was, and no word from the Human asked |
 | Reseat a Peer mid-task                                                                  | Same scope and copy; its obligations with the new actor    |
 | A tool call whose arguments name another agent as caller                                | Recorded as the agent whose key made the call              |
 | A Peer's turn fails on the host's error                                                 | A fact to its Lead; the seat, its obligations and mail stay |

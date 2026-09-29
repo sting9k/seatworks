@@ -99,6 +99,33 @@ test("a base that moved under an integration is taken in again, on the same comm
   assert.equal(refusedBy(ledger.as(lead, "integrate", { scope: task, evidence: [evidence] })), "I4");
 });
 
+test("an amended brief changes only the sections it names: a Human's constraint left alone needs no word from them", () => {
+  const { ledger, lead } = team();
+  ledger.must(ledger.human("send_message", { to: lead, text: "keep the wire at int16" }));
+  const said = [...ledger.state.messages.values()].find((m) => m.from === "human")!.id;
+  ledger.must(
+    ledger.as(lead, "open_scope", {
+      parent: "1",
+      role: "peer",
+      paths: ["src/io/"],
+      brief: brief("Read frames", {
+        constraints: [{ text: "int16 on the wire", via: { kind: "message", id: said } }],
+        context: [{ text: "frames arrive at 120 Hz" }],
+      }),
+    }),
+  );
+  const before = ledger.state.scopes.get("1.2")!.brief!;
+  assert.equal(before.constraints[0]?.origin, "human");
+  ledger.must(
+    ledger.as(lead, "amend_brief", { scope: "1.2", set: { goal: { text: "Read and check frames" } }, reason: "r" }),
+  );
+  const after = ledger.state.scopes.get("1.2")!.brief!;
+  assert.equal(after.version, 2);
+  assert.equal(after.goal.text, "Read and check frames");
+  assert.deepEqual(after.constraints, before.constraints);
+  assert.deepEqual(after.context, before.context);
+});
+
 test("a small change: the Supervisor seats a Peer under the root and integrates it, with no Lead", () => {
   const ledger = new Ledger();
   ledger.must(ledger.human("open_project", { base: "main", profileHash: "p", model: "m" }));
