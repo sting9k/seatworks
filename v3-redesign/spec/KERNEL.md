@@ -228,10 +228,10 @@ Integrations into one scope MUST run one at a time: bring the parent in, run evi
 Events: `scope_opened`, `actor_seated`, `brief_issued`, `brief_amended`, `plan_set`, `plan_amended`, `edge_added`,
 `edge_removed`, `handed_over`, `finding_raised`, `finding_classified`, `finding_waiting`, `finding_resumed`,
 `finding_reopened`, `finding_withdrawn`, `claim_made`, `evidence_recorded`, `integrated`, `sent_back`, `reseated`,
-`scope_dropped`, `scope_held`, `scope_resumed`, `report_made`, `message_sent`, `message_delivered`, `message_moved`, `question_asked`,
-`question_answered`, `obligation_opened`, `obligation_closed`, `obligation_moved`, `machine_held`, `machine_released`,
-`actor_released`, `actor_gone`, `observation_made`, `noise_marked`, `attended`, `passed`, `acknowledged`, `attention_climbed`, `permission_asked`,
-`permission_answered`.
+`scope_dropped`, `scope_held`, `scope_resumed`, `report_made`, `message_sent`, `message_delivered`, `message_moved`,
+`question_asked`, `question_answered`, `obligation_opened`, `obligation_closed`, `obligation_moved`, `machine_held`,
+`machine_released`, `actor_released`, `actor_gone`, `observation_made`, `noise_marked`, `attended`, `passed`,
+`acknowledged`, `attention_climbed`, `permission_asked`, `permission_answered`.
 
 ## 8. Views
 

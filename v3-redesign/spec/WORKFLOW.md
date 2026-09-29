@@ -36,7 +36,8 @@ Human ─goal─► 0 Intake ─► 1 Open ─► 2 Plan ─► 3 Work ─► 4 
   which carries neither the Lead's own idea nor the other designs, then brought together by the Lead. No shared room:
   in one, the strongest arguer wins, not the best design.
 - Kernel: each sub-scope gets a brief (goal, constraints that must hold, choices made so far) and a kind, verification
-  or discovery. Each line records who wrote it. Checks one writer per scope, and that the Lead writes in no scope it gave away.
+  or discovery. Each line records who wrote it. Checks one writer per scope, and that the Lead writes in no scope it
+  gave away.
 - Prompt: a plan is a set of hypotheses. Brief the symptom, not a cause chosen in advance. A narrow brief only for
   verification.
 
