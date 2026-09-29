@@ -42,6 +42,7 @@ order is the agents'.
   commands, events, views.
 - `spec/PORTS.md`: what each satellite does and returns.
 - `spec/CONFORMANCE.md`: the cases an implementation proves.
+- `spec/PASEO.md`: what v3 takes from Paseo, what it leaves, and how it survives Paseo's releases.
 
 ## Layout
 

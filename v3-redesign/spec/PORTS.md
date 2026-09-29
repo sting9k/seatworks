@@ -24,7 +24,8 @@ Which store backs it, a file of its own or a tracker the Human already reads, is
 
 ## Agent host
 
-Starts agents, speaks to them, and hears them. The Paseo adapter is the first; nothing else knows Paseo.
+Starts agents, speaks to them, and hears them. The Paseo adapter is the first; nothing else knows Paseo. What it
+takes from Paseo, and how it survives Paseo's releases, is in `PASEO.md`.
 
 ```text
 create(spec) -> Result<agentId>
