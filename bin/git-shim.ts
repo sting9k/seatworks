@@ -59,7 +59,7 @@ function parse(args: readonly string[]): { sub: string; rest: string[]; cwd: str
   while (at < args.length) {
     const a = args[at]!;
     if (a === "-C") cwd = resolve(cwd, args[++at] ?? ".");
-    else if (a === "-c" || a === "--namespace" || a === "--exec-path") at++;
+    else if (["-c", "--namespace", "--exec-path", "--attr-source", "--config-env"].includes(a)) at++;
     else if (a.startsWith("--git-dir") || a.startsWith("--work-tree")) elsewhere = a;
     else if (a.startsWith("-")) {
       // Another of git's own options, such as --no-pager or -p.
@@ -95,13 +95,21 @@ const why = ALWAYS_REFUSED[sub];
 if (why) refuse(`\`git ${sub}\`: ${why}`);
 if (WRITERS_ONLY.has(sub) && process.env.SEATWORKS_WRITES !== "1")
   refuse(`\`git ${sub}\`: you do not write in this scope; your copy is for reading and running`);
-if (
-  sub === "branch" &&
-  (alias ? alias.split(/\s+/).slice(1) : rest)
-    .concat(rest)
-    .some((a) => BRANCH_MOVES.has(a) || a.startsWith("--set-upstream"))
-)
+const given = (alias ? alias.split(/\s+/).slice(1) : []).concat(rest);
+/** A branch option that moves, copies or deletes, alone or among short flags run together such as `-Df`. */
+const moves = (a: string) =>
+  BRANCH_MOVES.has(a) ||
+  a.startsWith("--set-upstream") ||
+  (/^-[A-Za-z]{2,}$/.test(a) && Array.from(a.slice(1), (c) => `-${c}`).some((c) => BRANCH_MOVES.has(c)));
+if (sub === "branch" && given.some(moves))
   refuse("`git branch` may list or create branches, never move, copy or delete one");
+/** A fetch refspec that writes a local branch, `src:dst` with `dst` under refs/heads, however it is named. */
+const intoBranch = (a: string) => {
+  const dst = a.includes(":") && !a.startsWith("-") ? a.slice(a.indexOf(":") + 1) : "";
+  return dst !== "" && !/^refs\/(remotes|tags)\//.test(dst);
+};
+if (sub === "fetch" && given.some(intoBranch))
+  refuse("`git fetch`: fetching into a branch moves it, and branches move only through the plugin");
 
 const ran = spawnSync(git, args, { stdio: "inherit" });
 process.exit(ran.status ?? 1);

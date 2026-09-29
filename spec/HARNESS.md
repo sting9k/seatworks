@@ -28,8 +28,8 @@ out under the plugin's state root and named to the agent through one variable.
 2. **Only commits count.** The kernel integrates a writer's commits and nothing else (I4, I5), so no stray edit
    reaches a lane.
 3. **One git guard.** The shim first on every agent's `PATH` refuses push, pull, checkout, switch, update-ref,
-   symbolic-ref, stash, worktree changes, forced, copying or deleting branch moves, an alias that runs a shell, and
-   git outside the agent's own copy. For a role without `writes` it also refuses what makes a commit or moves the
+   symbolic-ref, stash, worktree changes, forced, copying or deleting branch moves (short flags run together too), a
+   fetch into a local branch, an alias that runs a shell, and git outside the agent's own copy. For a role without `writes` it also refuses what makes a commit or moves the
    branch: commit, merge, reset, rebase, cherry-pick, revert and am. It reads the role's properties from the
    agent's environment, so the five per-agent git deny lists of V1 go.
 

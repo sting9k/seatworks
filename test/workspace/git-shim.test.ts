@@ -43,6 +43,14 @@ test("the shim refuses what only the plugin does, however it is spelled, and pas
   assert.match(gitAs(cwd, true, "ship").err, /refused: `git push`/);
   assert.match(gitAs(cwd, true, "branch", "-D", "main").err, /never move, copy or delete/);
   assert.equal(gitAs(cwd, true, "branch", "topic").code, 0);
+  assert.match(gitAs(cwd, true, "branch", "-Df", "topic").err, /never move, copy or delete/, "flags run together");
+  assert.match(gitAs(cwd, true, "fetch", ".", "HEAD:topic").err, /refused: `git fetch`/, "a fetch into a branch");
+  assert.match(gitAs(cwd, true, "fetch", ".", "+main:refs/heads/topic").err, /refused: `git fetch`/);
+  assert.match(
+    gitAs(cwd, true, "--attr-source", "HEAD", "checkout", "topic").err,
+    /refused: `git checkout`/,
+    "an option's value is not the subcommand",
+  );
 });
 
 test("a copy that does not write runs git to read, never to commit, merge or reset", () => {
