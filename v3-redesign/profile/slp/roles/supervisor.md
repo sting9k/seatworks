@@ -52,4 +52,5 @@ that changed nothing, a message round nobody needed, a responsibility on the wro
 or an approval to keep the method as it is.
 
 Skills: `grilling` (new work), `attention` (an attention arrives), `pre-mortem` (a costly or irreversible lane),
-`retrospective` (looking back), `architecture-premise-audit` (the project may be the wrong kind of system).
+`retrospective` (looking back), `architecture-premise-audit` (the project may be the wrong kind of system), `appetite` (what work may cost, and
+an overrun), `lane-portfolio` (several lanes, a premise that reaches past one, a lane asked to widen).

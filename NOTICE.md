@@ -41,6 +41,13 @@ agentskills.io, SkillsBench and SkillReducer.
 | v3 `profile/slp/skills/security-check` | V1 `peer/security-check`, rewritten for v3's hand-back and findings; addyosmani `security-and-hardening`; trailofbits `sharp-edges` (ideas only) |
 | v3 `profile/slp/skills/proof-audit` | V1 `peer/test-proof-debt-audit` and its catalog (SLP material); OpenClaw `test-audit` (MIT, © 2026 OpenClaw Foundation), through `v3-redesign/.claude/skills/test-audit`: its authoring gate and junk patterns, reworded |
 | v3 `profile/slp/skills/architecture-premise-audit` | V1 `supervisor/architecture-premise-audit` and its structural lenses (SLP material), condensed into one file for v3's tools |
+| v3 `profile/slp/skills/spike`, `grilling` (its fog section) | mattpocock `prototype` and `wayfinder`; superpowers `brainstorming` |
+| v3 `profile/slp/skills/measuring` | addyosmani `performance-optimization` |
+| v3 `profile/slp/skills/tidy-first` | Kent Beck, *Tidy First?*; Martin Fowler, *Refactoring* (ideas only); mattpocock `code-review`; addyosmani `code-simplification` |
+| v3 `profile/slp/skills/acceptance-walk` | openclaw `behavior-validator`; superpowers `verification-before-completion`; anthropics `webapp-testing` (ideas only) |
+| v3 `profile/slp/skills/repo-refresh` | V1 `lead/repo-refresh` (SLP material), rewritten for v3's scopes and record |
+| v3 `profile/slp/skills/appetite`, `lane-portfolio` | Basecamp, *Shape Up* (appetite, circuit breaker, betting table); Donald Reinertsen, *The Principles of Product Development Flow* (cost of delay); mattpocock `wayfinder` (ideas only) |
+| v3 `planning-lanes` (where scopes meet), `diagnosing-bugs` (a failure that comes and goes) | addyosmani `api-and-interface-design`; superpowers `condition-based-waiting` and `find-polluter` |
 | v3 `profile/slp/skills/domain-docs`, the glossary and map v3 writes (`shared/views/docs.ts`) | mattpocock `domain-modeling` (its `GLOSSARY.md` and ADR formats and the three tests for an ADR), `setup-matt-pocock-skills` (`domain.md`: read before exploring, flag an ADR conflict), `wayfinder` (the map's destination, decisions so far and fog) |
 | `guides/PLANS.md`, `ADR.md`, `REVIEW.md` | Nygard's ADR, MADR, Zdun et al.'s Y-statement, AWS and Azure ADR guidance; HumanLayer plans, GitHub Spec Kit, Rust stabilization reports, Kubernetes KEPs, OpenAI ExecPlans; Anthropic prompting guidance and BMAD templates; OpenAI harness-engineering lints and Factory's lint-driven agents |
 | `examples/WORKSPACE_PROTOCOL.md`, `records/NOTEBOOK.md` | the SLP author's workspace protocol and notebook; ITIL problem management and Google's SRE workbook; ACE, Mem0 and Xiong et al.; Gloaguen et al. and OpenAI harness engineering |
@@ -51,6 +58,11 @@ agentskills.io, SkillsBench and SkillReducer.
 |---|---|---|
 | alibaba/open-code-review | https://github.com/alibaba/open-code-review | Apache-2.0, © 2026 Alibaba; run as a tool, no text copied |
 | openclaw/openclaw, `.agents/skills/test-audit` | https://github.com/openclaw/openclaw | MIT, © 2026 OpenClaw Foundation; adapted in `v3-redesign/.claude/skills/test-audit` |
+| openclaw/agent-skills, `behavior-validator` | https://github.com/openclaw/agent-skills | MIT, © 2026 openclaw; ideas only |
+| anthropics/skills, `webapp-testing` | https://github.com/anthropics/skills | Apache-2.0; ideas only |
+| Basecamp, *Shape Up* | https://basecamp.com/shapeup | © Basecamp; ideas only |
+| Donald Reinertsen, *The Principles of Product Development Flow* | ISBN 978-1935401001 | ideas only |
+| Kent Beck, *Tidy First?*; Martin Fowler, *Refactoring* | O'Reilly 2023; Addison-Wesley 2018 | ideas only |
 | obra/superpowers | https://github.com/obra/superpowers | MIT, © 2025 Jesse Vincent |
 | mattpocock/skills | https://github.com/mattpocock/skills | MIT, © 2026 Matt Pocock |
 | addyosmani/agent-skills | https://github.com/addyosmani/agent-skills | MIT, © 2025 Addy Osmani |

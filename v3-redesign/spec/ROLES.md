@@ -107,3 +107,14 @@ list. Different models in blind designs are the point: one model on one question
 | Lead, Peer | `domain-docs`                  | New: the glossary, ADRs and the map      |
 | Peer, Reviewer | `security-check`           | Rewritten: ends in a hand-back or a finding |
 | Peer, Reviewer | `proof-audit`              | `test-proof-debt-audit` merged with the test-audit gate and its patterns |
+| Supervisor | `appetite`                     | New: an appetite from what the outcome is worth, and what an overrun leaves |
+| Supervisor | `lane-portfolio`               | New: order, how many at once, a premise that reaches past a lane, stopping |
+| Lead       | `acceptance-walk`              | New: the lane checked as a user meets it, as evidence on its head |
+| Lead       | `repo-refresh`                 | Rewritten: cuts made by scopes, the record holds what V1 kept in notes |
+| Peer       | `spike`                        | New: one fact from throwaway code, on a discovery brief |
+| Peer       | `measuring`                    | New: a number with its spread and conditions |
+| Peer       | `tidy-first`                   | New: structure committed apart from behaviour |
+
+Folded in rather than added: where scopes meet, into `planning-lanes`; wayfinding through fog, into `grilling`; a
+failure that comes and goes, into `diagnosing-bugs`; reading designs in reverse and settling a fact by running it,
+into `blind-design`.

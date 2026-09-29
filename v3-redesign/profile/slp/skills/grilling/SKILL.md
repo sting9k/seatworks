@@ -45,6 +45,14 @@ Assumed: <what you decided yourself, one line each>
 - Test a rule with a scenario at its edge.
 - Say when their words disagree with the plan or the code, and ask which is right.
 
+## Too foggy to split
+
+When the rounds cannot yet give lanes because the answers rest on facts nobody has: name the destination in their
+words, then the decisions that block the plan. Settle each the cheapest way: a fact by a discovery Peer before any lane
+builds on it, behaviour by a round here, a design with several sound answers by a lane that designs it blind. Each
+answer becomes a line of the plan; what is still unknown stays among its unknowns with how it will be checked. Open a
+lane only once the decisions it rests on are settled.
+
 ## Writing it down
 
 Each settled answer becomes a line of the plan with `set_plan` or `amend_plan`, citing the answer it came from, so

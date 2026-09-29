@@ -15,8 +15,8 @@ and a test that invents the contract becomes the spec.
 | A bug                         | A failing repro of the reported symptom (`diagnosing-bugs`)                          |
 | New behaviour at a seam       | A failing test through the seam                                                     |
 | A protocol, format or schema  | A failing round-trip on real records or bytes                                       |
-| A refactor                    | The existing tests; where weak, characterization tests at the seam                  |
-| Performance                   | A baseline over enough runs to show its spread, correctness proven apart            |
+| A refactor                    | The existing tests; where weak, characterization tests at the seam (`tidy-first`)   |
+| Performance                   | A baseline over enough runs to show its spread, correctness proven apart (`measuring`) |
 | Layout, copy, docs, config    | The smallest check that the artifact is valid, never a unit test for wording        |
 
 ## Settle the seam and the contract

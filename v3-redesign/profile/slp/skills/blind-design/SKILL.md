@@ -23,7 +23,8 @@ hardest.
 ## Bring them together
 
 - Read all before you weigh any. Write down your own answer first, so you can tell when a design merely agrees with
-  you.
+  you. Read them again in the reverse order: the first one read frames the rest.
+- A disagreement on a fact is settled by running something, not by argument: ask the scope that can run it.
 - Where they differ, pass each the part of the others it needs, with a question, and let it answer. You carry what
   goes between them; they never share a room.
 - Favour neither the design that matches your idea nor the one argued hardest. Where they contradict you, think again

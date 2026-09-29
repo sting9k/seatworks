@@ -1,6 +1,6 @@
 ---
 name: planning-lanes
-description: "Plans a high-risk lane before any Peer starts: the final contract first, splits only for a reason you can name, and a way back out. Use when the lane materially changes auth, secrets, data (migration, deletion, retention), money, an external effect that cannot run twice, a contract others call, or concurrency and lifecycle; not for a normal lane, whose directive is its plan."
+description: "Plans a high-risk lane before any Peer starts: the final contract first, splits only for a reason you can name, and a way back out. Use when the lane materially changes auth, secrets, data (migration, deletion, retention), money, an external effect that cannot run twice, a contract others call, or concurrency and lifecycle. Its section on where scopes meet serves any lane whose scopes share a notion; otherwise not for a normal lane, whose directive is its plan."
 ---
 
 # Planning a high-risk lane
@@ -26,6 +26,16 @@ checks it first. A finding that contradicts the directive goes to the Supervisor
   so the tests are not fitted to the code.
 - A compatibility layer only for a named shipped consumer (a published API, stored production data, a separately
   deployed client), recorded with when it goes.
+
+## Where scopes meet
+
+Parts that each pass can still disagree on what they share. Before scopes that meet start, list the notions they
+share and name one owner for each: time and order (a clock, a tick, a sequence number), identity (ids and keys, and
+who mints them), units and encodings, the lifecycle of shared state (who creates, changes and deletes it), and the
+error contract. Write one scenario at their edge that crosses every part (a message lost, reordered or repeated, a
+restart half way, two at once) as the lane's acceptance. When a hand-back comes, check what it assumed about each
+notion against its owner. State kept only for speed may be dropped and rebuilt; state that records a promise not yet
+kept may not.
 
 ## Settle design first
 

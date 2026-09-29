@@ -18,6 +18,12 @@ description: "Goes from a symptom to its cause and proves the fix with a command
 5. **Fix with a regression test** at a seam with the real callers: see it fail, fix at the source, see it pass, revert
    the fix to see it fail again, restore it.
 
+**A failure that comes and goes.** Measure its rate alone and in the full suite: a gap between the two points at order
+or a shared resource. Look first at time (clocks, timeouts, dates), then at leftovers from another test (bisect the
+order to find the one that pollutes), a shared port, file, database or machine, randomness (seed it and print the
+seed), and concurrency. Wait for the condition, never for a duration: a sleep that passes on your machine fails on a
+loaded one.
+
 After the third failed fix on one symptom, stop patching and look for the mechanism behind the chain; where it lies
 outside your paths, raise it as a finding with what each fix revealed. A cause you call environmental or timing is
 stated with what you checked; a retry or timeout added without that hides the bug.
