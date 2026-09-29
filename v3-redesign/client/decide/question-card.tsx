@@ -1,6 +1,7 @@
+import { TextInput } from "@getpaseo/plugin/client/react-native";
 import type { PluginTheme } from "@getpaseo/plugin";
 import { useState } from "react";
-import { Pressable, Text, TextInput, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import type { HumanView } from "../../shared/contracts/rpc.ts";
 import { Button } from "../kit/button.tsx";
 import { Card } from "../kit/card.tsx";

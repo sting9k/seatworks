@@ -403,9 +403,7 @@ export class Plugin {
   }
 
   /** The Human's view of one project: what they need to know, and the last things that happened. */
-  async view(
-    project: string,
-  ): Promise<{ human: HumanView; activity: string[]; root: string; agents: Record<string, string> } | null> {
+  async view(project: string): Promise<{ human: HumanView; activity: string[]; root: string } | null> {
     const ready = await this.whenReady();
     if (!existsSync(join(projectDir(this.root, project), "project.json"))) return null;
     const runtime = this.runtimes.get(project) ?? this.open(project, ready);
@@ -417,11 +415,6 @@ export class Plugin {
       human: humanView(runtime.project.view),
       activity,
       root: statusText(runtime.project.view, "root", null) ?? "",
-      agents: Object.fromEntries(
-        [...runtime.project.view.actors.values()].flatMap((a) =>
-          a.status === "seated" && a.host !== null ? [[a.id, a.host]] : [],
-        ),
-      ),
     };
   }
 

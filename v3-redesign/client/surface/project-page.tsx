@@ -1,7 +1,8 @@
+import { TextInput } from "@getpaseo/plugin/client/react-native";
 import type { PluginSurfaceProps } from "@getpaseo/plugin/client";
 import { SettingsCard, SettingsRow, SettingsSection } from "@getpaseo/plugin/client/ui";
 import { useState } from "react";
-import { Text, TextInput, View } from "react-native";
+import { Text, View } from "react-native";
 import type { HumanView } from "../../shared/contracts/rpc.ts";
 import { PermissionCard } from "../decide/permission-card.tsx";
 import { QuestionCard } from "../decide/question-card.tsx";
@@ -14,6 +15,7 @@ import { Dot, type Tone, toneColor } from "../kit/mark.tsx";
 import { type Tab, TabBar } from "../kit/tab-bar.tsx";
 import { FONT, RADIUS, SPACE } from "../kit/theme.ts";
 import { useProjectView } from "../state/project-view.ts";
+import { useSeatAgents } from "../state/seat-agents.ts";
 import { nameOf } from "./home.tsx";
 
 type TabId = "needs" | "lanes" | "decided" | "activity";
@@ -52,7 +54,7 @@ export function ProjectPage({
   const [open, setOpen] = useState<string | null>(null);
   const { view, error, reload } = useProjectView(project);
   const human = view?.human ?? null;
-  const agents = view?.agents ?? {};
+  const agents = useSeatAgents(project);
   const openAgent = (actor: string | null) => {
     const agentId = actor ? agents[actor] : undefined;
     return agentId && navigation

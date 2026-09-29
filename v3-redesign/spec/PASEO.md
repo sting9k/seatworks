@@ -43,6 +43,7 @@ from Paseo 0.10.1: the plugin SDK, `@getpaseo/client`, `@getpaseo/protocol`, the
 | Settings, Jev's key among them         | `registerSettings` with a host-scoped definition (`defineSettings`, `scope: "host"`, a version and a zod schema), kept per installation across updates. Only `host` is accepted: 0.10.1 throws on any other scope, which is the refusal V1 met | Its own settings store             |
 | Install and update                     | A Git source (`paseo plugin add owner/repo:path`), reviewed `paseo plugin update`, `build` argv steps. `install.sh` checks git, Node, npm and Paseo, then adds the Git source. The plugin API has no plugin management, so the surface's update check runs `paseo plugin update <id> --check --json` and only reads it: applying stays Paseo's reviewed update | Its own clone, `git fetch` and reload |
 | Which projects the Human has           | `projects.list`: each project's `projectRootPath` and `projectKind`, offered on the surface to attach   | —                                  |
+| Opening a seat's chat from the surface | The app lists agents by the plugin's labels (`usePaseo().agents.list`, `filter.labels`) and opens one with `navigation.openAgent`; the plugin keeps no map of its own | —                                  |
 | Finding what a team left behind        | `agents.list` with `filter.labels` (the project's label), paged by `pageInfo.nextCursor`                | —                                  |
 
 ## What v3 does not take

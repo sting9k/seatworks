@@ -92,8 +92,6 @@ export const RPC = {
       activity: z.array(z.string()),
       root: z.string(),
       alarm: z.string().nullable(),
-      /** Each seated actor's agent in Paseo, so the surface can open its chat. */
-      agents: z.record(z.string(), z.string()),
     }),
   },
   projectAt: {

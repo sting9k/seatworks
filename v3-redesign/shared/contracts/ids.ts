@@ -56,5 +56,6 @@ export function childScopeId(parent: ScopeId, n: number): ScopeId {
   return parent === ROOT ? `${n}` : `${parent}.${n}`;
 }
 
-/** The label every agent the plugin starts carries with its project's id, read by the server and the app alike. */
+/** Labels every agent the plugin starts carries, so Paseo itself finds a project's agents and a seat's agent. */
 export const PROJECT_LABEL = "seatworks.project";
+export const ACTOR_LABEL = "seatworks.actor";

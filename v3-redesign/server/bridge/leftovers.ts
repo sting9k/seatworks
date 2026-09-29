@@ -1,8 +1,8 @@
-import { ROOT } from "../../shared/contracts/ids.ts";
+import { ACTOR_LABEL, ROOT } from "../../shared/contracts/ids.ts";
 import type { Leftover } from "../../shared/contracts/rpc.ts";
 import type { State } from "../../shared/kernel/state.ts";
 import type { Workspace } from "../satellites/workspace/workspace.ts";
-import { ACTOR_LABEL, branchesOf } from "./effects.ts";
+import { branchesOf } from "./effects.ts";
 
 /** An agent Paseo still keeps for a project, as the agent host lists it. */
 export type Kept = {

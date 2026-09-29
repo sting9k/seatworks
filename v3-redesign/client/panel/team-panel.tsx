@@ -8,6 +8,7 @@ import { DisclosureList } from "../kit/disclosure.tsx";
 import { Dot, toneColor } from "../kit/mark.tsx";
 import { FONT, SPACE, pressState } from "../kit/theme.ts";
 import { useProjectView } from "../state/project-view.ts";
+import { useSeatAgents } from "../state/seat-agents.ts";
 import { laneState, laneTone, waitingOf } from "../surface/project-page.tsx";
 
 /** Seatworks' tab beside Files and Changes: the team at a glance, a line a lane, each opening to its seat's chat. */
@@ -30,7 +31,7 @@ export function TeamPanel({ workspaceId, theme, layout, navigation }: PluginWork
   const [open, setOpen] = useState<string | null>(null);
   const muted = { fontSize: FONT.small, color: theme.colors.foregroundMuted, paddingHorizontal: SPACE.xs };
   const human = view?.human ?? null;
-  const agents = view?.agents ?? {};
+  const agents = useSeatAgents(project ?? null);
   const openAgent = (actor: string | null) => {
     const agentId = actor ? agents[actor] : undefined;
     return agentId && navigation
