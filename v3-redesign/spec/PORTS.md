@@ -65,6 +65,9 @@ onDisk() -> { key, path, branch, unsaved }[]              // every copy under th
 branchesUnder(prefix, into) -> { branch, merged }[]
 removeBranch(branch) -> Result<removed | kept(why)>       // git refuses one checked out in a copy
 prune()                                                   // forgets copies git lists whose directory is gone
+putBlock(branch, file, marker, body | null) -> Result<sha | unchanged | refused(why)>
+                                                          // one commit of that file alone; refuses a file with
+                                                          // uncommitted changes where the branch is checked out
 ```
 
 Invariants, taken from Symphony's workspace safety rules:
@@ -131,6 +134,10 @@ upkeep: attach(repository), leftovers, clean(picked), checkUpdate
 - A message the Human types here or straight into an agent's chat is the same message on the record.
 - Attaching opens a project for one of Paseo's projects and starts its Supervisor. The plugin serves only attached
   projects: every hook passes over an agent it did not start.
+- Attaching also commits the profile's `project.md` into the project's `AGENTS.md` on its base, between the plugin's
+  markers, as a commit of that file alone, so every agent in the repository, the team's or the Human's own, knows the
+  team is there and which branches are its. Removing the project takes it out the same way. A file the Human is
+  editing is never written over: the note waits for them to commit and attach again.
 - Leftovers are what no open scope uses any more: a copy, a branch made for a scope, an agent Paseo keeps whose seat
   ended, and each project as a whole. The Human picks and confirms, and the plugin removes only that, checked again
   against what is left over at that moment. A copy holding uncommitted work on its branch is listed and never

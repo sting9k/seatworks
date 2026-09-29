@@ -21,11 +21,15 @@ after(async () => {
 });
 
 test("the Human attaches a Paseo project, clears what a dropped task left, and removes the project whole", async () => {
+  const rules = "# Rules\n\nBe kind.\n";
   const repo = realpathSync(mkdtempSync(join(tmpdir(), "sw-upkeep-")));
   git(repo, "init", "-q", "-b", "main");
   writeFileSync(join(repo, "a.txt"), "a\n");
+  writeFileSync(join(repo, "AGENTS.md"), rules);
   git(repo, "add", ".");
   git(repo, "commit", "-q", "-m", "start");
+  writeFileSync(join(repo, "b.txt"), "the Human's own, staged\n");
+  git(repo, "add", "b.txt");
   const root = mkdtempSync(join(tmpdir(), "sw-root-"));
   const plugin = new Plugin(root);
   plugins.push(plugin);
@@ -39,10 +43,29 @@ test("the Human attaches a Paseo project, clears what a dropped task left, and r
     [repo],
     "a Paseo project with no team is offered",
   );
-  const { project, outcome } = await plugin.openProject(repo, "main");
+  writeFileSync(join(repo, "AGENTS.md"), `${rules}Being edited.\n`);
+  const { project, outcome, note: waiting } = await plugin.openProject(repo, "main");
   assert.ok(outcome.ok);
   await plugin.idle();
   assert.deepEqual(await plugin.unattached(), [], "once attached it is no longer offered");
+  assert.match(waiting ?? "", /AGENTS\.md has uncommitted changes/, "a file the Human is editing is left as it is");
+  assert.equal(git(repo, "show", "main:AGENTS.md"), rules.trim());
+  git(repo, "checkout", "--", "AGENTS.md");
+  const again = await plugin.openProject(repo, "main");
+  assert.match(again.note ?? "", /committed/, "attaching again writes the note that waited");
+  const note = git(repo, "show", "main:AGENTS.md");
+  assert.ok(note.startsWith(rules.trim()), "the project's own rules stay first");
+  assert.match(
+    note,
+    new RegExp(`<!-- seatworks:begin[^]*\`sw/${project}/\`[^]*lands on \`main\`[^]*<!-- seatworks:end -->`),
+  );
+  assert.equal(git(repo, "log", "-1", "--format=%an", "main"), "seatworks");
+  assert.equal(git(repo, "show", "--name-only", "--format=", "main"), "AGENTS.md", "the note's commit holds it alone");
+  assert.equal(
+    git(repo, "status", "--porcelain"),
+    "A  b.txt",
+    "what the Human staged stays staged, and the note is not dirty",
+  );
 
   const supervisor = await agentTools(socketPath, paseo.created[0]!.env);
   const lane = { parent: "root", role: "lead", paths: ["src/"], brief: { goal: { text: "Lane" }, kind: "discovery" } };
@@ -92,6 +115,11 @@ test("the Human attaches a Paseo project, clears what a dropped task left, and r
   assert.equal(existsSync(peerCopy), false);
   assert.throws(() => git(repo, "rev-parse", "--verify", branch), "the branch is gone");
 
+  writeFileSync(join(repo, "AGENTS.md"), `${git(repo, "show", "main:AGENTS.md")}\nThe Human's edit in progress.\n`);
+  const held = await plugin.clean([whole.id]);
+  assert.equal(held[0]?.ok, false, "the Human's uncommitted edit to the file is never written over");
+  assert.match(held[0].text, /AGENTS\.md has uncommitted changes/);
+  git(repo, "checkout", "--", "AGENTS.md");
   const removed = await plugin.clean([whole.id]);
   assert.ok(removed[0]?.ok, removed[0]?.text);
   for (const a of paseo.created.slice(0, 2)) assert.ok(paseo.archived.includes(a.host), `${a.title} is archived`);
@@ -103,5 +131,6 @@ test("the Human attaches a Paseo project, clears what a dropped task left, and r
     [repo],
     "it can be attached again",
   );
+  assert.equal(git(repo, "show", "main:AGENTS.md"), rules.trim(), "the note is taken out, the rules kept");
   for (const t of [supervisor, lead]) t.close();
 });

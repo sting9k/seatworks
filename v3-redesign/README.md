@@ -71,8 +71,9 @@ The plugin's layout, and the language of each part, are in `spec/STACK.md`. In s
 AGENTS.md      the rules for whoever builds it; .claude/skills/ holds their recipes
 concept/       CONCEPT-V2 and the orchestration analysis, exported from the owner's docs: the standard
 spec/          for whoever builds it
-profile/slp/   the SLP preset: profile.yaml, reflex.yaml, watch.yaml, roles/*.md, skills/, reference/ANTIPATTERNS.md;
-               a project's own rules.yaml lives in that project's state, compiled from its instruction files
+profile/slp/   the SLP preset: profile.yaml, reflex.yaml, watch.yaml, project.md, roles/*.md, skills/,
+               reference/ANTIPATTERNS.md; a project's own rules.yaml lives in that project's state, compiled
+               from its instruction files
 shared/        the kernel (pure TypeScript, run by the daemon and the app alike) and the zod contracts
 server/        the bridge and the satellites, in TypeScript on Node; the store is SQL on node:sqlite
 client/        the Human's surface, in React Native
@@ -101,10 +102,12 @@ release, `--dir` for a checkout of your own), and names the Paseo agent profiles
 
 - **Attach a project**: the plugin serves only projects attached to it. Open Seatworks in Paseo's sidebar and attach
   one of Paseo's projects, or run "Open a Seatworks team here" from the command center in a workspace. Attaching
-  starts its Supervisor.
+  starts its Supervisor, and commits a short Seatworks note into the project's `AGENTS.md` (that file alone, between
+  the plugin's markers), so every agent working there, the team's or your own, knows the team and its branches.
 - **Clean up**: Seatworks lists what teams left behind (copies and branches no open scope uses, agents Paseo keeps
   whose seat ended) and each project whole. Only what you pick and confirm is removed; a copy holding uncommitted work
-  never is. Removing a project archives its agents and deletes its copies, branches and record.
+  never is. Removing a project archives its agents, takes its note out of `AGENTS.md`, and deletes its copies,
+  branches and record.
 - **Check for updates**: the surface asks Paseo whether a newer release is out and links its changes. Updating stays
   Paseo's reviewed `paseo plugin update seatworks`.
 

@@ -32,7 +32,7 @@ export const AS_PLUGIN = [
   "commit.gpgSign=false",
 ];
 
-function spawn(args: readonly string[], timeout: number): Promise<Run> {
+function spawn(args: readonly string[], timeout: number, env: Readonly<Record<string, string>> = {}): Promise<Run> {
   return new Promise((resolve) => {
     execFile(
       "git",
@@ -40,7 +40,7 @@ function spawn(args: readonly string[], timeout: number): Promise<Run> {
       {
         timeout,
         maxBuffer: 16 * 1024 * 1024,
-        env: { ...process.env, GIT_TERMINAL_PROMPT: "0", LC_ALL: "C" },
+        env: { ...process.env, ...env, GIT_TERMINAL_PROMPT: "0", LC_ALL: "C" },
         killSignal: "SIGKILL",
       },
       (error, stdout, stderr) => {
@@ -59,7 +59,12 @@ function spawn(args: readonly string[], timeout: number): Promise<Run> {
  * git as the plugin runs it, outside any agent's sandbox: no hooks, no fsmonitor, and every command the repository's
  * own config names emptied, since an agent could have planted one. The Human's global config stands.
  */
-export async function git(cwd: string, args: readonly string[], timeout = 60_000): Promise<Run> {
+export async function git(
+  cwd: string,
+  args: readonly string[],
+  timeout = 60_000,
+  env: Readonly<Record<string, string>> = {},
+): Promise<Run> {
   const safe = ["-c", `core.hooksPath=${devNull}`, "-c", "core.fsmonitor=false", "-c", "core.quotePath=false"];
   if (!REFS_ONLY.has(args[0] ?? "")) {
     const listed = await spawn(
@@ -71,7 +76,7 @@ export async function git(cwd: string, args: readonly string[], timeout = 60_000
       if (key && (scope === "local" || scope === "worktree")) safe.push("-c", `${key}=`);
     }
   }
-  return spawn(["-C", cwd, ...safe, ...args], timeout);
+  return spawn(["-C", cwd, ...safe, ...args], timeout, env);
 }
 
 export async function sha(cwd: string, ref: string): Promise<string | null> {

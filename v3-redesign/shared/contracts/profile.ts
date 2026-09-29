@@ -27,6 +27,11 @@ export const ProfileFileSchema = z
     roles: z.record(z.string().regex(/^[a-z][a-z0-9-]*$/), RoleSchema),
     reflex: z.string().optional(),
     watch: z.string().optional(),
+    /** What every agent in an attached project reads: `note` kept between the plugin's markers in `file`. */
+    project: z
+      .object({ file: z.string().min(1), note: z.string().min(1) })
+      .strict()
+      .optional(),
   })
   .strict();
 

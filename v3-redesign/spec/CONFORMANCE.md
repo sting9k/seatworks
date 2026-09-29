@@ -119,8 +119,10 @@ on an implementation without the rule before it is trusted.
 | --------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
 | Paseo lists a git project no team is attached to                                  | Offered to attach; once attached, no longer offered                 |
 | A task is dropped with a commit on its branch and a draft in its copy             | Its copy listed and not removable; its branch listed, not merged     |
+| A project is attached                                                             | `AGENTS.md` on its base carries the note after the project's own rules, in a commit of that file alone; what the Human staged stays staged |
 | The Human removes a project while a copy holds uncommitted work                   | Refused, naming the copy; nothing touched, its agents still at work |
-| The Human removes a project                                                       | Its agents archived, every branch made for it and its record gone; offered to attach again |
+| The Human removes a project while editing its `AGENTS.md`                         | Refused, naming the file; the edit kept                             |
+| The Human removes a project                                                       | Its agents archived, every branch made for it, its note and its record gone; offered to attach again |
 | Paseo's check says a newer release is out                                         | Shown with its review links and the command that applies it; nothing installed |
 | Paseo's command line is not on the daemon's PATH                                  | Said, with the command to run by hand                               |
 

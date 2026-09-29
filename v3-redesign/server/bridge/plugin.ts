@@ -13,6 +13,7 @@ import { join } from "node:path";
 import type { PaseoApi } from "@getpaseo/client";
 import type { AgentTimelineItem } from "@getpaseo/protocol/agent-types";
 import type { Caller, CommandBody } from "../../shared/contracts/commands.ts";
+import { ROOT } from "../../shared/contracts/ids.ts";
 import type { ReadName } from "../../shared/contracts/tools.ts";
 import { activityLine } from "../../shared/views/activity.ts";
 import { type Chain, type Signals, chainOf, scopeRecordText, signalsOf } from "../../shared/views/record.ts";
@@ -201,7 +202,10 @@ export class Plugin {
   }
 
   /** Opens a project for a repository, or the one already open for it, and starts its Supervisor. */
-  async openProject(repo: string, base: string | undefined): Promise<{ project: string; outcome: Submitted }> {
+  async openProject(
+    repo: string,
+    base: string | undefined,
+  ): Promise<{ project: string; outcome: Submitted; note: string | null }> {
     const ready = await this.whenReady();
     const real = realpathSync(repo);
     const branch = base ?? (await currentBranch(real));
@@ -217,7 +221,28 @@ export class Plugin {
       { kind: "human" },
       { type: "open_project", base: branch, remote: null, profileHash: ready.bundle.hash, model },
     );
-    return { project: id, outcome };
+    // Attaching again writes a note that waited, on the base the project opened with.
+    const opened = runtime.project.view.scopes.get(ROOT)?.branch;
+    const note = opened ? (await this.writeNote(runtime.workspace, id, opened)).text : null;
+    return { project: id, outcome, note };
+  }
+
+  /** Commits the profile's note to the project's instruction file on its base, or takes it out; says what came of it. */
+  private async writeNote(
+    workspace: Workspace,
+    project: string,
+    base: string,
+    remove = false,
+  ): Promise<{ ok: boolean; text: string | null }> {
+    const note = (await this.whenReady()).bundle.project;
+    if (!note) return { ok: true, text: null };
+    const body = remove ? null : note.note.replaceAll("{branches}", branchesOf(project)).replaceAll("{base}", base);
+    const message = remove
+      ? `Take the ${PLUGIN_ID} note out of ${note.file}`
+      : `Tell every agent here how the ${PLUGIN_ID} team works`;
+    const put = await workspace.putBlock(base, note.file, PLUGIN_ID, body, message);
+    if ("refused" in put) return { ok: false, text: `${note.file} was left as it is: ${put.refused}` };
+    return { ok: true, text: "sha" in put ? `${note.file} on ${base}: committed ${put.sha.slice(0, 12)}.` : null };
   }
 
   /** A command from the Human's surface. */
@@ -332,19 +357,22 @@ export class Plugin {
       return { ok: true, text: `Removed ${dir}.` };
     }
     const { repo } = JSON.parse(readFileSync(file, "utf8")) as { repo: string };
-    const workspace = existsSync(repo)
-      ? (this.runtimes.get(id)?.workspace ?? new Workspace(repo, join(dir, "copies")))
-      : null;
+    const runtime = existsSync(repo) ? (this.runtimes.get(id) ?? this.open(id, ready)) : null;
+    const workspace = runtime?.workspace ?? null;
     const unsaved = workspace ? (await workspace.onDisk()).filter((c) => c.unsaved) : [];
     if (unsaved.length > 0)
       return {
         ok: false,
         text: `Uncommitted work is still in ${unsaved.map((c) => c.path).join(", ")}: commit or move it first.`,
       };
+    const base = runtime?.project.view.scopes.get(ROOT)?.branch;
+    if (runtime && base) {
+      const taken = await this.writeNote(runtime.workspace, id, base, true);
+      if (!taken.ok) return { ok: false, text: taken.text ?? "" };
+    }
     // Nothing opens the project again while it goes: every reader looks for this file first.
     const aside = join(dir, "project.removing.json");
     renameSync(file, aside);
-    const runtime = this.runtimes.get(id);
     if (runtime) await this.unload(id, runtime);
     // Listed once the project is unloaded, so an agent its last effects started is among them.
     const agents = await ready.host.labelled({ [PROJECT_LABEL]: id });

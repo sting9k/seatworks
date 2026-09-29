@@ -50,8 +50,9 @@ export default function contribute(server: PluginServerContext) {
 
   server.handle(RPC.openProject, async (input, { paseo }) => {
     plugin.saw(paseo);
-    const { project, outcome } = await plugin.openProject(input.cwd, input.base);
-    return { project, ok: outcome.ok, text: outcome.ok ? `Project ${project} is open.` : outcome.refused.says };
+    const { project, outcome, note } = await plugin.openProject(input.cwd, input.base);
+    const said = [outcome.ok ? `Project ${project} is open.` : outcome.refused.says, note].filter(Boolean).join(" ");
+    return { project, ok: outcome.ok, text: said };
   });
   server.handle(RPC.human, async (input, { paseo }) => {
     plugin.saw(paseo);

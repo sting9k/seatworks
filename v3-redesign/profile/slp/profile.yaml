@@ -53,3 +53,7 @@ roles:
 
 reflex: reflex.yaml
 watch: watch.yaml
+# Kept in an attached project's instruction file, committed on its base, so every agent there knows the team is there.
+project:
+  file: AGENTS.md
+  note: project.md

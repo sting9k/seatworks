@@ -13,6 +13,7 @@ Lead deep in one lane and its acceptance, the Peer deep in one task. None contai
 | The role's prompt       | Judgement only: what the role owns, what it must answer, how it decides                 |
 | Skills                  | A craft used now and then, loaded when the moment comes                                 |
 | `profile.yaml`          | Properties, tools, models, skills: the arrangement, as data                              |
+| `project.md`            | What every agent in an attached project must know of the team, kept in its `AGENTS.md`  |
 
 V1's prompts ran to 166 lines for the Lead and 135 for the Supervisor, most of it the desk's mechanics told as rules:
 merge queues, review timing, severity ladders. Each rule the kernel or a tool reply now holds leaves the prompt. What

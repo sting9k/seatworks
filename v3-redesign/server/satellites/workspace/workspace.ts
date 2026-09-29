@@ -1,4 +1,5 @@
-import { existsSync, readdirSync } from "node:fs";
+import { existsSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { createHash } from "node:crypto";
 import { join } from "node:path";
 import { AS_PLUGIN, git, isAncestor, said, sha } from "./git.ts";
@@ -177,6 +178,75 @@ export class Workspace {
     return run.code === 0 ? { removed: true } : { kept: said(run) };
   }
 
+  /**
+   * Puts `body` between `marker`'s lines in `file` on `branch`, or takes the block out when `body` is null, as one
+   * commit of that file alone made through an index of its own. Where the branch is checked out, only `file` follows
+   * it there, and only when it holds no uncommitted change: whatever else the Human has staged or changed stays so.
+   */
+  async putBlock(
+    branch: string,
+    file: string,
+    marker: string,
+    body: string | null,
+    message: string,
+  ): Promise<{ sha: string } | { unchanged: true } | { refused: string }> {
+    const from = await sha(this.repo, `refs/heads/${branch}`);
+    if (!from) return { refused: `${branch} does not exist` };
+    const shown = await git(this.repo, ["show", `${from}:${file}`]);
+    const before = shown.code === 0 ? shown.stdout : "";
+    const after = withBlock(before, marker, body);
+    if (after === before) return { unchanged: true };
+    const at = await this.checkedOutAt(branch);
+    if (at) {
+      const status = await git(at, ["status", "--porcelain", "--", file]);
+      if (status.code !== 0 || status.stdout.trim() !== "")
+        return { refused: `${file} has uncommitted changes in ${at}: commit them, then attach again` };
+    }
+    const tmp = mkdtempSync(join(tmpdir(), "sw-block-"));
+    try {
+      const env = { GIT_INDEX_FILE: join(tmp, "index") };
+      const read = await git(this.repo, ["read-tree", from], 60_000, env);
+      if (read.code !== 0) return { refused: said(read) };
+      if (after === "") {
+        const removed = await git(this.repo, ["update-index", "--force-remove", "--", file], 60_000, env);
+        if (removed.code !== 0) return { refused: said(removed) };
+      } else {
+        writeFileSync(join(tmp, "content"), after);
+        const blob = await git(this.repo, ["hash-object", "-w", "--no-filters", join(tmp, "content")]);
+        if (blob.code !== 0) return { refused: said(blob) };
+        const added = await git(
+          this.repo,
+          ["update-index", "--add", "--cacheinfo", `100644,${blob.stdout.trim()},${file}`],
+          60_000,
+          env,
+        );
+        if (added.code !== 0) return { refused: said(added) };
+      }
+      const tree = await git(this.repo, ["write-tree"], 60_000, env);
+      if (tree.code !== 0) return { refused: said(tree) };
+      const made = await git(this.repo, [...AS_PLUGIN, "commit-tree", tree.stdout.trim(), "-p", from, "-m", message]);
+      if (made.code !== 0) return { refused: said(made) };
+      const commit = made.stdout.trim();
+      const moved = await git(this.repo, ["update-ref", `refs/heads/${branch}`, commit, from]);
+      if (moved.code !== 0) return { refused: `${branch} moved while ${file} was written` };
+      if (at) await git(at, ["restore", `--source=${commit}`, "--staged", "--worktree", "--", file]);
+      return { sha: commit };
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  }
+
+  /** The working copy that has `branch` checked out, the Human's own or a copy, if any does. */
+  private async checkedOutAt(branch: string): Promise<string | null> {
+    const listed = await git(this.repo, ["worktree", "list", "--porcelain"]);
+    let path: string | null = null;
+    for (const line of listed.stdout.split("\n")) {
+      if (line.startsWith("worktree ")) path = line.slice("worktree ".length);
+      else if (line.trim() === `branch refs/heads/${branch}`) return path;
+    }
+    return null;
+  }
+
   /** Forgets copies git still lists whose directory is gone. */
   async prune(): Promise<void> {
     await git(this.repo, ["worktree", "prune"]);
@@ -250,6 +320,22 @@ export class Workspace {
     );
     return run.code === 0 ? { sha: tip } : { refused: said(run) };
   }
+}
+
+/**
+ * `text` with the block between `marker`'s lines holding `body`, added at the end when it has none, or taken out when
+ * `body` is null. What is outside the block stays; a file left with nothing else is empty.
+ */
+function withBlock(text: string, marker: string, body: string | null): string {
+  const begin = `<!-- ${marker}:begin`;
+  const end = `<!-- ${marker}:end -->`;
+  const i = text.indexOf(begin);
+  const j = i < 0 ? -1 : text.indexOf(end, i);
+  const head = (j < 0 ? text : text.slice(0, i)).trimEnd();
+  const tail = j < 0 ? "" : text.slice(j + end.length).trim();
+  const block = body === null ? "" : `${begin} (kept by a plugin; edit outside it) -->\n${body.trim()}\n${end}`;
+  const parts = [head, block, tail].filter((p) => p !== "");
+  return parts.length === 0 ? "" : `${parts.join("\n\n")}\n`;
 }
 
 /** The files a merge stops on, as `merge-tree --name-only` lists them after the tree; git's words when it names none. */
