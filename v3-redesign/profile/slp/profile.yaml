@@ -18,7 +18,7 @@ roles:
 
   lead:
     delegates: true
-    spawns: [peer, reviewer, architect, auditor]
+    spawns: [peer]
     speaksTo: [parent, children]
     prompt: roles/lead.md
     skills: [blind-design, planning-lanes]
@@ -34,16 +34,6 @@ roles:
     skills: [test-first, diagnosing-bugs]
     models: [slp-peer, slp-peer-alt]
     tools: [status, raise_finding, withdraw_finding, hand_back, send_message, answer, hold_machine]
-
-  reviewer:
-    reading: true
-    speaksTo: [parent]
-    prompt: roles/reviewer.md
-    models: [slp-reviewer, slp-peer-alt]
-    tools: [status, record_verdict, raise_finding, send_message, answer, hold_machine]
-
-  architect: { like: reviewer, prompt: roles/architect.md }
-  auditor: { like: reviewer, prompt: roles/auditor.md }
 
   watcher:
     watches: true

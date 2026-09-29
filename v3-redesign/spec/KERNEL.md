@@ -29,7 +29,6 @@ profile, with no change to the kernel. A role renamed with its properties kept b
 | `root`      | Owns the project's root scope. Exactly one role has it.                                   |
 | `delegates` | May own a scope that is split into child scopes, and integrate them.                      |
 | `writes`    | May be the writer of a scope.                                                             |
-| `reading`   | Is seated on one commit, writes nothing, and returns a verdict.                            |
 | `watches`   | Writes nothing, is given the words of the agents in the scopes it is seated over, and reports what it sees. |
 | `spawns`    | The roles it may seat under a scope it owns.                                              |
 | `speaksTo`  | Relations it may message: `parent`, `children`, `descendants`, `human`.                   |
@@ -45,12 +44,9 @@ The SLP profile, from CONCEPT-V2 §3:
 roles:
   supervisor: { root: true, delegates: true, spawns: [lead, peer, watcher], humanDoor: true,
                 speaksTo: [human, children, descendants] }
-  lead:       { delegates: true, spawns: [peer, reviewer, architect, auditor],
+  lead:       { delegates: true, spawns: [peer],
                 speaksTo: [parent, children] }
   peer:       { writes: true, speaksTo: [parent] }
-  reviewer:   { reading: true, speaksTo: [parent] }
-  architect:  { like: reviewer }
-  auditor:    { like: reviewer }
   watcher:    { watches: true, speaksTo: [parent] }   # seated under the root, so it speaks to the Supervisor
 ```
 
@@ -61,10 +57,10 @@ A Supervisor that seats a Peer straight under the root is the path for a small c
 - **Actor.** An agent or the Human. An agent has one role and is bound to one scope while it lives. The Human is not
   seated; they speak to anyone and answer questions.
 - **Scope.** A piece of the work. Fields: `id`, `parent` (none for the root), `owner` (an actor), `writer` (an
-  actor or none), `kind` (`work`, or `reading` bound to a commit), `paths` (what it may write), `after` (scopes it
+  actor or none), `paths` (what it may write), `after` (scopes it
   waits for), `brief` (current version), `plan` (for a scope that delegates), `workspace`, `status`, `held`.
   - Status moves `open → integrated | dropped`. A scope integrated into its parent stays on the record.
-  - A child's `paths` lie within its parent's. A `reading` scope has none.
+  - A child's `paths` lie within its parent's.
   - A scope whose actor `watches` names the scopes it is `over`; the root's watcher is over every scope.
   - A `blind` scope's actor cannot read its siblings' briefs, hand-backs or branches, nor they its, until the owner
     integrates or drops it.
@@ -119,8 +115,7 @@ A premise, constraint or choice that the evidence shows does not fit (CONCEPT-V2
 
 ### 4.5 Evidence and claims
 
-- **Evidence**: `{ id, kind, subject, result, by, at, conditions }`. `kind` is `check` (a command run), `verdict`
-  (a reading scope's answer), `measurement`, `judgement` (the reflex's answer on a commit, `REFLEX.md`), or `human`
+- **Evidence**: `{ id, kind, subject, result, by, at, conditions }`. `kind` is `check` (a command run), `measurement`, `judgement` (the reflex's answer on a commit, `REFLEX.md`), or `human`
   (their word on the record). `subject` is the commit it is
   about. `conditions` says, for a measurement, whether the machine was held.
 - **Claim**: what an agent says of its own work, such as a hand-back. Recorded as a claim, never as evidence.
@@ -192,7 +187,6 @@ A command is called by an actor and checked against its role's properties and th
 | `classify_finding` | whoever answers it (§4.4)                           | `changes` with change events, or `alternative` / `minor` with a reason   |
 | `withdraw_finding` | the raiser                                          |                                                                          |
 | `hand_back`        | the writer                                          | Records a claim at a commit; asks for evidence on it                     |
-| `record_verdict`   | the actor of a reading scope                        | Records its verdict as evidence on its commit                            |
 | `record_evidence`  | the bridge, for a satellite's result                 | Records evidence                                                         |
 | `integrate`        | owner of the parent                                 | Brings the scope into its parent (I4)                                    |
 | `send_back`        | owner of the parent                                 | Does not integrate, and says why                                         |
@@ -235,10 +229,10 @@ Read models over the log. Nothing in them is kept apart from it.
   which decisions an actor made, which findings and disagreements are open. And for each message the Human sent
   straight to an agent, whether it was carried in (§9.3).
 - **Chain of change**, per finding (§10.1): what the brief said when the work was given; how long until it was
-  classified; what was found; the evidence and the verdict; which owners the change reached; what was integrated
+  classified; what was found; the evidence; which owners the change reached; what was integrated
   after it.
 - **Signals** (§10.3), as ratios, never as rules: findings on the same line or paths again and again; questions to
-  the Human that led to a change; reading scopes whose verdict led to a send-back or an amendment; interventions
+  the Human that led to a change; checks whose result led to a send-back or an amendment; interventions
   carried in late; messages, the reflex's notes among them, followed by no change.
 - **Open obligations**, by holder.
 - **Status** of a scope for its actors: its brief, its children, its edges, what waits on whom.

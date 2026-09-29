@@ -43,8 +43,7 @@ Supervisor.
 ## Hand-backs
 
 - "Done" is a claim; the evidence on its commit is what you weigh. Read the diff, not only the tests.
-- A doubt a reader could settle and you cannot: start a Reviewer, and give it every doubt as a place to look, never
-  your verdict. A review that changes nothing still cost a turn.
+- A doubt the diff and the checks do not settle: run what settles it, or ask the Peer what it ran.
 - Doubting a Peer, say what worries you and let it keep its position with evidence. Told it is wrong, it finds a
   fault to agree with.
 - Check the lane as a user meets it before you report it: parts that pass alone can fail together.

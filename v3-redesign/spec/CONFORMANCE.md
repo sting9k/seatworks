@@ -34,7 +34,6 @@ on an implementation without the rule before it is trusted.
 | Case                                                         | Expect                                         |
 | ------------------------------------------------------------ | ---------------------------------------------- |
 | A hundred findings to one Lead                               | All accepted; none merged, ranked or capped    |
-| A scope integrated with no reading scope ever opened          | Accepted                                       |
 | A plan amended ten times                                     | Accepted, each with its reason                 |
 | A red check with a reason                                    | Integrated; the kernel never overrules the integrator |
 

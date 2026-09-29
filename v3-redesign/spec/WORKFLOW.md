@@ -65,10 +65,10 @@ Nothing blocks it.
 
 ## 4. Accept: the Lead
 
-- The Lead starts a Reviewer, Architect or Auditor, each a kind of Peer, on one commit.
-- Kernel: a verdict is recorded as evidence and decides nothing. Acceptance points to evidence of the commit that is
-  merged. Over a red gate the Lead may still accept, with a reason.
-- Prompt: when a review is worth its cost. A green suite proves only what its author thought to test.
+- The Lead weighs the evidence runner's checks on the commit and reads the diff.
+- Kernel: acceptance points to evidence of the commit that is merged. Over a red gate the Lead may still accept, with
+  a reason.
+- Prompt: a green suite proves only what its author thought to test.
 
 ## 5. Integrate and report: the Lead
 
