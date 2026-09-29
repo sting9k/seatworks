@@ -397,6 +397,11 @@ for it.
 - `record(scope)`: briefs with every version, findings with their chains, reports, attentions with what came of them.
 - `obligations(actor)`, `whatTheHumanNeeds`, `sinceTheyLooked(at)`, `chainOfChange(finding)`, `signals(since)`.
 
+The five signals, each `count of total` (`shared/views/record.ts`), in the plainest terms the log supports:
+repeated findings (on a line or scope that already had one), questions to the Human after whose answer a plan or
+brief changed citing it, verdicts and failing checks followed by a send-back or an amended brief on their scope,
+attentions left until they climbed, and messages that asked for an answer and got none.
+
 ## 10. What grows, and what is removed
 
 A project runs for months. Everything below is bounded by open work, not by history, except the log itself.

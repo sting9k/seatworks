@@ -1,0 +1,174 @@
+import type { Event } from "../contracts/events.ts";
+
+/** The chain of change of one finding (CONCEPT-V2 §10.1), read from the log as it streams past. */
+export type Chain = {
+  finding: string;
+  scope: string;
+  raisedBy: string;
+  text: string;
+  disputed: string | null;
+  briefWhenGiven: string | null;
+  raisedAt: string;
+  classifiedAt: string | null;
+  verdict: string | null;
+  reason: string | null;
+  evidence: string[];
+  changes: { at: string; by: string; what: string }[];
+  integratedAfter: { scope: string; at: string }[];
+};
+
+export function chainOf(events: Iterable<Event>, finding: string): Chain | null {
+  let chain: Chain | null = null;
+  const briefs = new Map<string, string>();
+  for (const e of events) {
+    if (e.type === "brief_issued" || e.type === "brief_amended")
+      briefs.set(e.scope, `v${e.brief.version}: ${e.brief.goal.text}`);
+    if (e.type === "finding_raised" && e.finding.id === finding)
+      chain = {
+        finding,
+        scope: e.finding.scope,
+        raisedBy: e.finding.raisedBy,
+        text: e.finding.text,
+        disputed: e.finding.disputes,
+        briefWhenGiven: briefs.get(e.finding.scope) ?? null,
+        raisedAt: e.at,
+        classifiedAt: null,
+        verdict: null,
+        reason: null,
+        evidence: [...e.finding.evidence],
+        changes: [],
+        integratedAfter: [],
+      };
+    if (!chain) continue;
+    if (e.type === "finding_classified" && e.finding === finding) {
+      chain.classifiedAt = e.at;
+      chain.verdict = e.verdict;
+      chain.reason = e.reason;
+    }
+    if (e.type === "finding_reopened" && e.finding === finding) chain.evidence.push(...e.evidence);
+    const carries = "carries" in e ? e.carries : null;
+    if (carries === finding) chain.changes.push({ at: e.at, by: e.by, what: e.type.replace(/_/g, " ") });
+    if (e.type === "integrated" && chain.classifiedAt !== null)
+      chain.integratedAfter.push({ scope: e.scope, at: e.at });
+  }
+  return chain;
+}
+
+/**
+ * The five signals of CONCEPT-V2 §10.3, as ratios for a reader to weigh; never turned into a rule. Each is
+ * `count of total`, and the definitions are the plainest the log supports.
+ */
+export type Signals = {
+  /** Findings on a line or scope that already had one. */
+  repeatedFindings: [number, number];
+  /** Questions to the Human after whose answer a plan or brief changed citing it. */
+  questionsThatChanged: [number, number];
+  /** Verdicts and failing checks followed by a send-back or an amended brief on their scope. */
+  reviewsThatChanged: [number, number];
+  /** Attentions left by their reader until they climbed. */
+  interventionsLate: [number, number];
+  /** Messages that asked for an answer and got none. */
+  unanswered: [number, number];
+};
+
+export function signalsOf(events: Iterable<Event>): Signals {
+  const lines = new Map<string, number>();
+  let repeated = 0;
+  let findings = 0;
+  const answered = new Set<string>();
+  const cited = new Set<string>();
+  let questions = 0;
+  const reviews = new Map<string, number>();
+  let reviewCount = 0;
+  let changedReviews = 0;
+  let attentions = 0;
+  let climbed = 0;
+  const asked = new Set<string>();
+  const replied = new Set<string>();
+  for (const e of events) {
+    switch (e.type) {
+      case "finding_raised": {
+        findings += 1;
+        const key = e.finding.disputes ?? `scope:${e.finding.about ?? e.finding.scope}`;
+        const seen = lines.get(key) ?? 0;
+        if (seen > 0) repeated += 1;
+        lines.set(key, seen + 1);
+        break;
+      }
+      case "question_asked":
+        questions += 1;
+        break;
+      case "question_answered":
+        answered.add(e.question);
+        break;
+      case "plan_amended":
+      case "brief_amended": {
+        const all =
+          e.type === "plan_amended"
+            ? [e.plan.goal, ...e.plan.limits, e.plan.appetite.line]
+            : [e.brief.goal, ...e.brief.constraints, ...e.brief.choices];
+        for (const l of all) if (l.via?.kind === "question" && answered.has(l.via.id)) cited.add(l.via.id);
+        if (e.type === "brief_amended" && (reviews.get(e.scope) ?? 0) > 0) {
+          changedReviews += reviews.get(e.scope) ?? 0;
+          reviews.delete(e.scope);
+        }
+        break;
+      }
+      case "evidence_recorded":
+        if (e.evidence.kind === "verdict" || (e.evidence.kind === "check" && !e.evidence.ok)) {
+          reviewCount += 1;
+          reviews.set(e.evidence.scope, (reviews.get(e.evidence.scope) ?? 0) + 1);
+        }
+        break;
+      case "sent_back":
+        changedReviews += reviews.get(e.scope) ?? 0;
+        reviews.delete(e.scope);
+        break;
+      case "attention_opened":
+        attentions += 1;
+        break;
+      case "attention_climbed":
+        climbed += 1;
+        break;
+      case "message_sent":
+        if (e.message.asks) asked.add(e.message.id);
+        if (e.message.replyTo !== null) replied.add(e.message.replyTo);
+        break;
+      default:
+        break;
+    }
+  }
+  return {
+    repeatedFindings: [repeated, findings],
+    questionsThatChanged: [cited.size, questions],
+    reviewsThatChanged: [changedReviews, reviewCount],
+    interventionsLate: [climbed, attentions],
+    unanswered: [[...asked].filter((m) => !replied.has(m)).length, asked.size],
+  };
+}
+
+/** A scope's history for the `record` read: every brief version, its findings with what came of them, its reports. */
+export function scopeRecordText(events: Iterable<Event>, scope: string): string {
+  const out: string[] = [];
+  const findings = new Map<string, string[]>();
+  for (const e of events) {
+    if ((e.type === "brief_issued" || e.type === "brief_amended") && e.scope === scope)
+      out.push(
+        `${e.at} brief v${e.brief.version}${e.type === "brief_amended" ? ` (${e.reason})` : ""}: ${e.brief.goal.text}`,
+      );
+    if (e.type === "finding_raised" && (e.finding.scope === scope || e.finding.about === scope))
+      findings.set(e.finding.id, [`${e.finding.id} from ${e.finding.raisedBy}: ${e.finding.text}`]);
+    if (e.type === "finding_classified") findings.get(e.finding)?.push(`  classified ${e.verdict}: ${e.reason}`);
+    if (e.type === "finding_withdrawn") findings.get(e.finding)?.push(`  withdrawn: ${e.reason}`);
+    if ("carries" in e && e.carries !== null)
+      findings.get(e.carries)?.push(`  carried by ${e.type.replace(/_/g, " ")} (${e.by})`);
+    if (e.type === "report_made" && e.scope === scope)
+      out.push(
+        `${e.at} report: decided ${e.decided.map((l) => l.text).join("; ") || "nothing"}; assumed ${e.assumed.map((l) => l.text).join("; ") || "nothing"}; open ${e.open.map((l) => l.text).join("; ") || "nothing"}`,
+      );
+    if (e.type === "attention_opened" && e.attention.about.scope === scope)
+      out.push(`${e.at} attention ${e.attention.id} (${e.attention.moment}) to ${e.attention.to}`);
+  }
+  for (const lines of findings.values()) out.push(lines.join("\n"));
+  return out.length > 0 ? out.join("\n") : `Nothing on the record for scope ${scope}.`;
+}

@@ -5,6 +5,7 @@ import type { PaseoApi } from "@getpaseo/client";
 import type { Caller, CommandBody } from "../../shared/contracts/commands.ts";
 import type { ReadName } from "../../shared/contracts/tools.ts";
 import { activityLine } from "../../shared/views/activity.ts";
+import { type Chain, type Signals, chainOf, scopeRecordText, signalsOf } from "../../shared/views/record.ts";
 import type { HumanView } from "../../shared/contracts/rpc.ts";
 import { humanView } from "../../shared/views/human.ts";
 import { statusText } from "../../shared/views/status.ts";
@@ -162,6 +163,17 @@ export class Plugin {
       human: humanView(runtime.project.view),
       activity,
       root: statusText(runtime.project.view, "root", null) ?? "",
+    };
+  }
+
+  /** The look back's reading of the log: one finding's chain of change, or the five signals. */
+  async record(project: string, finding: string | null): Promise<{ chain: Chain | null; signals: Signals } | null> {
+    const ready = await this.whenReady();
+    if (!existsSync(join(projectDir(this.root, project), "project.json"))) return null;
+    const runtime = this.runtimes.get(project) ?? this.open(project, ready);
+    return {
+      chain: finding === null ? null : chainOf(runtime.store.read(0), finding),
+      signals: signalsOf(runtime.store.read(0)),
     };
   }
 
@@ -347,10 +359,7 @@ export class Plugin {
     const view = runtime.project.view;
     const own = view.actors.get(actor)?.scope ?? "root";
     if (name === "status") return statusText(view, a.scope ?? own, actor) ?? `No scope ${a.scope ?? own} is open.`;
-    if (name === "record")
-      return (
-        statusText(view, a.scope ?? own, null) ?? `No scope ${a.scope ?? own} is open; closed scopes are in the log.`
-      );
+    if (name === "record") return scopeRecordText(runtime.store.read(0), a.scope ?? own);
     if (name === "diff") {
       const scope = view.scopes.get(a.scope ?? own);
       const parent = scope?.parent ? view.scopes.get(scope.parent) : undefined;

@@ -73,6 +73,11 @@ export default function contribute(server: PluginServerContext) {
     const view = await plugin.view(input.project);
     return view ?? { human: null, activity: [], root: "No such project." };
   });
+  server.handle(RPC.record, async (input, { paseo }) => {
+    plugin.saw(paseo);
+    const record = await plugin.record(input.project, input.finding);
+    return { text: record ? JSON.stringify(record, null, 2) : "No such project." };
+  });
   server.handle(RPC.status, (input, { paseo }) => {
     plugin.saw(paseo);
     return { text: plugin.statusOf(input.project, input.scope) ?? "No such project or scope is open." };
