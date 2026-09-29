@@ -5,7 +5,7 @@ import { accessSync, constants, realpathSync } from "node:fs";
 import { delimiter, dirname, isAbsolute, join, relative, resolve } from "node:path";
 
 const ALWAYS_REFUSED: Record<string, string> = {
-  push: "pushing is the plugin's: the Supervisor or the Human publishes",
+  push: "pushing is the plugin's: the root's owner or the Human publishes",
   pull: "your branch is taken in by the plugin; hand back instead",
   checkout: "you stay on your own branch; `git restore` or `git switch` are not needed for your work",
   switch: "you stay on your own branch",

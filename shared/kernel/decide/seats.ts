@@ -31,7 +31,7 @@ export function releaseSeat(
   for (const o of ctx.state.obligations.values()) {
     if (o.owedBy !== actor || closed.has(o.id)) continue;
     if (o.about.kind === "candidate")
-      ctx.emit({ type: "obligation_closed", obligation: o.id, how: "its watcher left" });
+      ctx.emit({ type: "obligation_closed", obligation: o.id, how: "the agent it was offered to left" });
     else ctx.emit({ type: "obligation_moved", obligation: o.id, to: heir });
   }
   for (const m of ctx.state.messages.values())

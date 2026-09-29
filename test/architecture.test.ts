@@ -15,15 +15,20 @@ function files(dir: string): string[] {
 
 const code = [...files("shared"), ...files("server"), ...files("bin"), "index.server.ts"];
 
-test("no role of the profile is named in the plugin's code: roles are data, and a renamed profile behaves the same", () => {
+test("no role of the profile is named in the plugin's code, even in what it says: roles are data, and a renamed profile behaves the same", () => {
   const roles = Object.keys(
     (parse(readFileSync(join(root, "profile/slp/profile.yaml"), "utf8")) as { roles: Record<string, unknown> }).roles,
   );
   const named = code.flatMap((file) => {
-    const text = readFileSync(join(root, file), "utf8");
-    return roles
-      .filter((role) => new RegExp(`["'\`]${role}["'\`]`).test(text))
-      .map((role) => `${relative(root, join(root, file))}: ${role}`);
+    const text = readFileSync(join(root, file), "utf8")
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/(^|[^:])\/\/.*$/gm, "$1");
+    return [...text.matchAll(/(["'`])((?:\\.|(?!\1)[^\\\n])*)\1/g)].flatMap(([, , words]) => {
+      const said = words!.replace(/\$\{[^}]*\}/g, "");
+      return roles
+        .filter((role) => new RegExp(`\\b${role}s?\\b`, "i").test(said))
+        .map((role) => `${file}: ${role}: ${said}`);
+    });
   });
   assert.deepEqual(named, []);
 });

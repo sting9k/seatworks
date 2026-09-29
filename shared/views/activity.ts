@@ -53,7 +53,7 @@ export function activityLine(e: Event): string | null {
       return e.outcome === "failed" ? line(`${e.actor}'s turn failed: ${e.why ?? "no reason given"}`) : null;
     case "attention_climbed":
       return e.to.to === "human"
-        ? line(`an attention about ${e.to.about.actor} (${e.to.moment}) was left by the Supervisor: ${e.to.why}`)
+        ? line(`an attention about ${e.to.about.actor} (${e.to.moment}) reached you, not acted on above: ${e.to.why}`)
         : null;
     case "published":
     case "publish_refused":
