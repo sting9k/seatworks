@@ -341,6 +341,7 @@ export class Plugin {
     await runtime.dispatcher.idle();
     runtime.project.dispose();
     this.runtimes.delete(id);
+    this.reflex?.forget(id);
     for (const [host, who] of this.byHost) if (who.project === id) this.byHost.delete(host);
   }
 

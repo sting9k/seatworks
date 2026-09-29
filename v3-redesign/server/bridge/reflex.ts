@@ -89,6 +89,11 @@ export class Reflex {
     }
   }
 
+  /** Lets go of what the reflex keeps for a project that left memory. */
+  forget(project: string): void {
+    for (const key of this.loops.keys()) if (key.startsWith(`${project}:`)) this.loops.delete(key);
+  }
+
   private enqueue(project: string, work: () => Promise<void>): void {
     const n = this.queued.get(project) ?? 0;
     if (n >= MAX_QUEUED) return;
