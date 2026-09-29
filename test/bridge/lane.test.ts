@@ -235,3 +235,21 @@ test("a create whose reply was lost is tried again after the record moved on, an
   );
   supervisor.close();
 });
+
+test("a create Paseo refuses is a failed start the record shows, not a seat left waiting for an agent", async () => {
+  const repo = mkdtempSync(join(tmpdir(), "sw-refused-"));
+  git(repo, "init", "-q", "-b", "main");
+  writeFileSync(join(repo, "a.txt"), "a\n");
+  git(repo, "add", ".");
+  git(repo, "commit", "-q", "-m", "start");
+  const plugin = new Plugin(mkdtempSync(join(tmpdir(), "sw-root-")));
+  plugins.push(plugin);
+  const paseo = fakePaseo(pluginDir);
+  paseo.gate.refuse = 'Expected config.provider in "provider/model" format';
+  plugin.saw(paseo.api);
+  const { project } = await plugin.openProject(repo, "main");
+  await plugin.idle();
+  assert.equal(paseo.created.length, 0);
+  const activity = (await plugin.view(project))!.activity.join("\n");
+  assert.match(activity, /is gone: Paseo could not make the agent: Expected config\.provider/);
+});

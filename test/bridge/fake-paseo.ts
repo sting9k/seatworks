@@ -15,14 +15,16 @@ type Created = {
 /**
  * The part of Paseo's API the plugin uses, recording what it was asked. Agents are always between turns. As Paseo does,
  * a keyed create keeps its request and refuses the key with a different one; `loseReplies` drops that many create
- * replies after the agent is made, as a dropped connection would.
+ * replies after the agent is made, and the list after each, as a dropped connection would; `refuse` rejects every
+ * create with that error.
  */
 export function fakePaseo(pluginDir: string, provider = "claude") {
   const created: Created[] = [];
   const sent: Sent[] = [];
   const archived: string[] = [];
   const byKey = new Map<string, { host: string; request: string }>();
-  const gate = { loseReplies: 0 };
+  const gate: { loseReplies: number; refuse: string | null } = { loseReplies: 0, refuse: null };
+  let down = false;
   /** Permissions each agent's own prompt still waits on, and those answered through the API. */
   const pending = new Map<string, Set<string>>();
   const responded: string[] = [];
@@ -82,8 +84,12 @@ export function fakePaseo(pluginDir: string, provider = "claude") {
         }),
     },
     agents: {
-      list: (o: { filter: { labels: Record<string, string> } }) =>
-        Promise.resolve({
+      list: (o: { filter: { labels: Record<string, string> } }) => {
+        if (down) {
+          down = false;
+          return Promise.reject(new Error("connection lost"));
+        }
+        return Promise.resolve({
           entries: created
             .filter((c) => Object.entries(o.filter.labels).every(([k, v]) => c.labels[k] === v))
             .map((c) => ({
@@ -95,7 +101,8 @@ export function fakePaseo(pluginDir: string, provider = "claude") {
               },
             })),
           pageInfo: { hasMore: false, nextCursor: null, prevCursor: null },
-        }),
+        });
+      },
       create: (o: {
         idempotencyKey: string;
         cwd: string;
@@ -105,6 +112,7 @@ export function fakePaseo(pluginDir: string, provider = "claude") {
         labels: Record<string, string>;
         config: { systemPrompt: string; toolPolicy: { preapproved: { tool: string }[] } };
       }) => {
+        if (gate.refuse !== null) return Promise.reject(new Error(gate.refuse));
         const request = JSON.stringify(o);
         const known = byKey.get(o.idempotencyKey);
         if (known)
@@ -125,6 +133,7 @@ export function fakePaseo(pluginDir: string, provider = "claude") {
         });
         if (gate.loseReplies > 0) {
           gate.loseReplies--;
+          down = true;
           return Promise.reject(new Error("connection lost"));
         }
         return Promise.resolve(ref(host));

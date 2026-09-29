@@ -86,8 +86,10 @@ from Paseo 0.10.1: the plugin SDK, `@getpaseo/client`, `@getpaseo/protocol`, the
   the whole request to disk before it starts, so it holds across a daemon restart. The same key with a different
   request is refused (`agent_request_key_conflict`), and a create in flight when the daemon stopped stays
   `agent_request_outcome_unknown`. The first prompt reads the record as it is, so a retry would differ: the agent host
-  first looks for the agent by its labels (`agents.list`, `filter.labels`), and a key Paseo refuses is a failed start,
-  which the owner above hears and a reseat, with a new key, answers.
+  first looks for the agent by its labels (`agents.list`, `filter.labels`), before a create and after one that throws.
+  A create that throws and made no agent is a failed start, whatever Paseo refused (the key, or a profile with no
+  model, which the client cannot split into `provider/model`), which the owner above hears and a reseat, with a new
+  key, answers; only a lookup that throws, the connection down, is tried again.
 - `lastUsage.totalCostUsd` is what the agent's session has spent so far: Claude's result `total_cost_usd` over its one
   long query, Pi's and Oh My Pi's session stats, OpenCode's session cost. It starts again when the provider's process
   does. Tokens are running totals too, but Codex reports only its last model call's, and no cost. Seatworks records the

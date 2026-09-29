@@ -1,4 +1,4 @@
-import type { PaseoAgentConfig, PaseoAgentListResult } from "@getpaseo/client";
+import type { PaseoAgentConfig, PaseoAgentListResult, PaseoApi } from "@getpaseo/client";
 import type { AgentTimelineItem } from "@getpaseo/protocol/agent-types";
 import type { PaseoLink } from "./paseo-link.ts";
 
@@ -44,17 +44,14 @@ export class PaseoHost {
   /**
    * Starts an agent from one of the Human's Paseo agent profiles. Paseo keeps a keyed create's request and refuses the
    * same key with a different one, and the first prompt reads the record as it is now, so a retry first looks for the
-   * agent its labels name.
+   * agent its labels name. A create that throws is looked for the same way: found, its reply was lost; not found,
+   * Paseo refused it, and a new seat answers that. Only a lookup that throws is tried again.
    */
   async create(spec: AgentSpec): Promise<{ host: string } | { failed: string } | Unavailable> {
     const api = this.link.current;
     if (!api) return UNAVAILABLE;
-    const made = await api.agents.list({
-      filter: { labels: { ...spec.labels }, includeArchived: true },
-      page: { limit: 1 },
-    });
-    const known = made.entries[0]?.agent;
-    if (known) return known.archivedAt ? { failed: "its agent was archived before it started" } : { host: known.id };
+    const made = await this.made(api, spec.labels);
+    if (made) return made;
     const daemon = await api.config.get();
     const profile = (daemon.config.agentProfiles ?? []).find((p) => p.id === spec.profile || p.name === spec.profile);
     if (!profile) return { failed: `no Paseo agent profile named ${spec.profile}: add one in Paseo's settings` };
@@ -74,8 +71,8 @@ export class PaseoHost {
       },
       toolPolicy: { preapproved: spec.tools.names.map((tool) => ({ kind: "mcp", server: "team", tool })) },
     } as unknown as PaseoAgentConfig;
-    const handle = await api.agents
-      .create({
+    try {
+      const handle = await api.agents.create({
         idempotencyKey: spec.key,
         cwd: spec.cwd,
         title: spec.title,
@@ -84,15 +81,26 @@ export class PaseoHost {
         env: { ...spec.env, ...harness?.env },
         labels: { ...spec.labels },
         config,
-      })
-      .catch((error: unknown) => {
-        const says = error instanceof Error ? error.message : String(error);
-        // Paseo holds this key for a create it cannot finish or cannot tell finished; a new seat gets a new key.
-        if (/_request_(key_conflict|outcome_unknown)/.test(says))
-          return { failed: `Paseo could not make the agent: ${says}` };
-        throw error;
       });
-    return "failed" in handle ? handle : { host: handle.id };
+      return { host: handle.id };
+    } catch (error) {
+      const says = error instanceof Error ? error.message : String(error);
+      return (await this.made(api, spec.labels)) ?? { failed: `Paseo could not make the agent: ${says}` };
+    }
+  }
+
+  /** The agent a create with these labels made, if one did. */
+  private async made(
+    api: PaseoApi,
+    labels: Readonly<Record<string, string>>,
+  ): Promise<{ host: string } | { failed: string } | null> {
+    const found = await api.agents.list({
+      filter: { labels: { ...labels }, includeArchived: true },
+      page: { limit: 1 },
+    });
+    const known = found.entries[0]?.agent;
+    if (!known) return null;
+    return known.archivedAt ? { failed: "its agent was archived before it started" } : { host: known.id };
   }
 
   /** Sends words between turns only; a reader inside a turn is busy and the words wait for its end. */
