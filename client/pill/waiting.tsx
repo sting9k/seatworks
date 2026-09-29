@@ -1,5 +1,6 @@
 import type { PluginButtonContentProps, PluginButtonIconProps, PluginClientContext } from "@getpaseo/plugin/client";
 import { ScrollView } from "@getpaseo/plugin/client/react-native";
+import { useEffect } from "react";
 import { Text, View } from "react-native";
 import { PROJECT_LABEL } from "../../shared/contracts/ids.ts";
 import { RPC } from "../../shared/contracts/rpc.ts";
@@ -21,10 +22,14 @@ function WaitingIcon({ theme, size }: PluginButtonIconProps) {
 }
 
 /** The popover's body: what waits on the Human in this agent's project, answerable from whichever chat is open. */
-function waitingContent(project: string) {
+function waitingContent(project: string, counted: (count: number) => void) {
   return function WaitingContent({ theme }: PluginButtonContentProps) {
     const { view, error, reload } = useProjectView(project);
     const human = view?.human ?? null;
+    // Each read the popover makes, the one after an answer among them, sets the pill's count at once.
+    useEffect(() => {
+      if (human) counted(waitingOf(human));
+    }, [human]);
     const muted = { fontSize: FONT.small, color: theme.colors.foregroundMuted };
     if (!view && error) return <Text style={muted}>Seatworks did not answer: {error}</Text>;
     if (!human) return <Text style={muted}>{view ? view.root : "Reading what waits on you."}</Text>;
@@ -62,7 +67,12 @@ export function addWaitingPills(client: PluginClientContext): () => void {
   const seat = (agentId: string, workspaceId: string, project: string) => {
     if (pills.get(agentId)?.project === project) return;
     pills.get(agentId)?.remove();
-    const content = contents.get(project) ?? waitingContent(project);
+    const content =
+      contents.get(project) ??
+      waitingContent(project, (count) => {
+        counts.set(project, count);
+        show(project);
+      });
     contents.set(project, content);
     const count = counts.get(project) ?? 0;
     const registration = client.addComposerPill({
