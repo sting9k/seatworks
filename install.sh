@@ -15,6 +15,7 @@ USAGE
 PLUGIN_ID=seatworks
 SOURCE="sting9k/seatworks"
 REF=""
+GIVEN=""
 PASEO_MIN="0.10.0"
 NODE_MIN="22.13.0"
 
@@ -29,12 +30,14 @@ while [ $# -gt 0 ]; do
     --ref)
       [ $# -ge 2 ] || die "--ref needs a branch, tag or commit"
       REF="$2"
+      GIVEN="$GIVEN --ref"
       shift 2
       ;;
     --dir)
       [ $# -ge 2 ] || die "--dir needs a path"
       [ -f "$2/paseo-plugin.json" ] || die "$2 holds no paseo-plugin.json"
       SOURCE="$(cd "$2" && pwd)"
+      GIVEN="$GIVEN --dir"
       shift 2
       ;;
     -h | --help)
@@ -65,7 +68,12 @@ paseo_version="$(paseo --version | sed 's/[^0-9.].*$//')"
 at_least "$paseo_version" "$PASEO_MIN" || die "Paseo $paseo_version is too old: Seatworks needs $PASEO_MIN or newer"
 
 if paseo plugin ls "$PLUGIN_ID" >/dev/null 2>&1; then
-  say "Seatworks is already installed. Whether a newer release is out:"
+  say "Seatworks is already installed."
+  if [ -n "$GIVEN" ]; then
+    say "The options ${GIVEN# } are for a first install only, so they were not used here."
+    say "To install it from another source, remove Seatworks from Paseo's plugins first, then run this again."
+  fi
+  say "Whether a newer release is out:"
   paseo plugin update "$PLUGIN_ID" --check || true
   say "To update, run: paseo plugin update $PLUGIN_ID"
   exit 0

@@ -142,6 +142,7 @@ on an implementation without the rule before it is trusted.
 | The Human removes a project                                                       | Its agents archived, every branch made for it and its note gone, its record kept aside; offered to attach again |
 | Paseo's check says a newer release is out                                         | Shown with its review links and the command that applies it; nothing installed |
 | Paseo's command line is not on the daemon's PATH                                  | Said, with the command to run by hand                               |
+| `install.sh --ref` or `--dir` once Seatworks is installed                         | Says the option was not used, and how to install from elsewhere      |
 
 ## Reflex
 
