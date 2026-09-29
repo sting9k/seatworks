@@ -156,7 +156,16 @@ export class Plugin {
         (text) => {
           this.alarmText = text;
         },
-        (project, actor, names) => this.settledNames(project, actor, names),
+        {
+          settled: (project, actor, names) => this.settledNames(project, actor, names),
+          testDiffs: async (project, scope, commit) => {
+            const runtime = this.runtimes.get(project);
+            const s = runtime?.project.view.scopes.get(scope);
+            const parent = s?.parent ? runtime?.project.view.scopes.get(s.parent) : undefined;
+            if (!runtime || !parent?.branch || !config.testPath) return [];
+            return runtime.workspace.fileDiffs(parent.branch, commit, config.testPath);
+          },
+        },
       );
     const host = new PaseoHost(this.link, (provider) => harnessOf(dir, provider));
     const shimDir = installShim(this.root, join(dir, "bin", "git-shim.ts"));

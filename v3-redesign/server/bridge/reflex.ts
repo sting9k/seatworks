@@ -24,7 +24,7 @@ export class Reflex {
   private readonly jev: () => Jev | null;
   private readonly submit: (project: string, body: Observation) => Promise<void>;
   private readonly alarm: (text: string | null) => void;
-  private readonly settled: Settled;
+  private readonly code: Code;
   private readonly queue = new KeyedQueue<string>();
   private readonly queued = new Map<string, number>();
   /** Per agent, how often each failing call came back: going in circles counted in code (STEERING.md). */
@@ -35,9 +35,9 @@ export class Reflex {
     jev: () => Jev | null,
     submit: (project: string, body: Observation) => Promise<void>,
     alarm: (text: string | null) => void,
-    settled: Settled,
+    code: Code,
   ) {
-    this.settled = settled;
+    this.code = code;
     this.config = config;
     this.jev = jev;
     this.submit = submit;
@@ -49,8 +49,11 @@ export class Reflex {
     for (const e of events) {
       if (e.type === "turn_ended") this.pastAppetite(project, e, state);
       if (e.type === "actor_released" || e.type === "actor_gone") this.loops.delete(`${project}:${e.actor}`);
+      if (e.type === "claim_made" && this.config.questions.has("mints-an-api"))
+        this.mintsAtHandBack(project, e.claim.scope, e.claim.by, e.claim.commit);
       for (const [name, spec] of this.config.questions) {
-        if (!spec.on?.includes(e.type)) continue;
+        // A question that borrows another's wording (`use`) is asked by that one's own path.
+        if (!spec.on?.includes(e.type) || (spec.noul === undefined && spec.choice === undefined)) continue;
         const asked = this.subjectOf(e, state);
         if (!asked || !matches(spec, e)) continue;
         const values = stateFor(spec, { event: e, state, item: null, actor: asked.actor });
@@ -141,7 +144,7 @@ export class Reflex {
     const names = namesIn(item.text, spec);
     if (names.length === 0) return;
     this.enqueue(project, async () => {
-      const known = await this.settled(project, actor, names);
+      const known = await this.code.settled(project, actor, names);
       const unsettled = names.filter((n) => !known.has(n));
       if (unsettled.length === 0) return;
       const ask = (spec as { ask?: Record<string, QuestionSpec> }).ask ?? {};
@@ -160,6 +163,33 @@ export class Reflex {
         null,
         `${item.path}: ${unsettled.join(", ")}`,
       );
+    });
+  }
+
+  /** The same two questions over a hand-back's test diff, as judgement evidence on its commit for the Lead (REFLEX.md). */
+  private mintsAtHandBack(project: string, scope: string, actor: string, commit: string): void {
+    const spec = this.config.moments.get("mints-an-api");
+    const test = this.config.testPath;
+    if (!spec || !test) return;
+    this.enqueue(project, async () => {
+      for (const file of await this.code.testDiffs(project, scope, commit)) {
+        const names = namesIn(file.text, spec);
+        const known = await this.code.settled(project, actor, names);
+        const unsettled = names.filter((n) => !known.has(n));
+        if (unsettled.length === 0) continue;
+        const ask = (spec as { ask?: Record<string, QuestionSpec> }).ask ?? {};
+        const questions = Object.fromEntries(
+          Object.entries(ask).map(([k, q]) => [`mints-an-api.${k}`, { ...q, tells: "evidence" }]),
+        );
+        await this.askAndRecord(
+          project,
+          questions,
+          { hunk: added(file.text).slice(0, this.config.itemChars * 2), unsettled: unsettled.join(", ") },
+          scope,
+          actor,
+          commit,
+        );
+      }
     });
   }
 
@@ -241,8 +271,13 @@ export class Reflex {
   }
 }
 
-/** What the plugin already settled of these names, for one agent: in its brief and plans, the base, or its own code. */
-export type Settled = (project: string, actor: string, names: readonly string[]) => Promise<ReadonlySet<string>>;
+/** What the reflex reads of code, through the workspace: never a satellite call of its own. */
+export type Code = {
+  /** What is already settled of these names for one agent: in its brief and plans, the base, or its own code. */
+  settled(project: string, actor: string, names: readonly string[]): Promise<ReadonlySet<string>>;
+  /** The test files a handed-back commit changed, each with its diff. */
+  testDiffs(project: string, scope: string, commit: string): Promise<{ path: string; text: string }[]>;
+};
 
 /** The lines a diff adds, or the whole text when it is not a diff. */
 function added(text: string): string {

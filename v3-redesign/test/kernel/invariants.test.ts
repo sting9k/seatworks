@@ -16,7 +16,7 @@ test("I1: a scope's writer changes only by a reseat, which leaves no moment with
   assert.notEqual(ledger.state.actors.get("a3")?.status, "seated");
 });
 
-test("I2: a Lead writes nothing, and its scope has no writer while its Peers hold paths", () => {
+test("I2: a Lead's scope has no writer, so the Lead hands back its lane's head and never writes its Peers' paths", () => {
   const { ledger, lead } = team();
   assert.equal(ledger.state.scopes.get("1")?.writer, null);
   assert.equal(refusedBy(ledger.as(lead, "hand_back", { commit: SHA(1), text: "done" })), null);

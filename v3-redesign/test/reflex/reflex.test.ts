@@ -53,7 +53,13 @@ function wired(p: number | null) {
       return Promise.resolve();
     },
     (text) => alarms.push(text),
-    (_project, _actor, names) => Promise.resolve(new Set(names.filter((n) => settledNames.has(n)))),
+    {
+      settled: (_project, _actor, names) => Promise.resolve(new Set(names.filter((n) => settledNames.has(n)))),
+      testDiffs: () =>
+        Promise.resolve([
+          { path: "test/points.test.ts", text: "+++ b/test/points.test.ts\n+  expect(user.points).toBe(5);" },
+        ]),
+    },
   );
   return { ...t, reflex, alarms, asked: fake?.asked ?? [] };
 }
@@ -188,4 +194,14 @@ test("a test that calls only settled names asks nothing; one that invents a fiel
     !product.asked.some((names) => names.some((n) => n.startsWith("mints-an-api"))),
     "only edits to tests are read",
   );
+});
+
+test("a hand-back whose tests use a name nobody settled carries judgement evidence on its commit for the Lead", async () => {
+  const { ledger, reflex, peer } = wired(0.92);
+  const events = ledger.must(ledger.as(peer, "hand_back", { commit: SHA(7), text: "points" }));
+  reflex.onEvents("p", events, ledger.state);
+  await settle();
+  const judged = [...ledger.state.evidence.values()].filter((e) => e.kind === "judgement" && e.subject === SHA(7));
+  assert.deepEqual(judged.map((e) => e.summary.split(":")[0]).sort(), ["mints-an-api.fakes", "mints-an-api.uses"]);
+  assert.ok(judged.every((e) => !e.ok));
 });
