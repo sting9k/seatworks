@@ -103,3 +103,7 @@ list. Different models in blind designs are the point: one model on one question
 | Lead       | `planning-lanes`               | Kept for high-risk work                  |
 | Peer       | `test-first`                   | Kept, with minting an API at the top     |
 | Peer       | `diagnosing-bugs`              | Kept                                     |
+| Supervisor | `architecture-premise-audit`   | Rewritten for v3's tools, its lenses folded in |
+| Lead, Peer | `domain-docs`                  | New: the glossary, ADRs and the map      |
+| Peer, Reviewer | `security-check`           | Rewritten: ends in a hand-back or a finding |
+| Peer, Reviewer | `proof-audit`              | `test-proof-debt-audit` merged with the test-audit gate and its patterns |
