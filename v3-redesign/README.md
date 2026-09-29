@@ -43,6 +43,7 @@ order is the agents'.
 - `spec/PORTS.md`: what each satellite does and returns.
 - `spec/CONFORMANCE.md`: the cases an implementation proves.
 - `spec/PASEO.md`: what v3 takes from Paseo, what it leaves, and how it survives Paseo's releases.
+- `spec/HARNESS.md`: how Claude Code, Codex, Pi and Oh My Pi are run, with one policy and one set of guards.
 
 ## Layout
 
