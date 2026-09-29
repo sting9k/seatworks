@@ -38,6 +38,9 @@ export function react(e: Event, s: State): readonly Effect[] {
     case "reseated":
       if (e.from !== null)
         add("archive", { kind: "agent.archive", actor: e.from, host: s.actors.get(e.from)?.host ?? null });
+      // The attentions the one who left was sent are now the new actor's, undelivered.
+      for (const t of s.attentions.values())
+        if (t.to === e.to) add(`deliver:${t.id}`, { kind: "deliver", to: e.to, item: { kind: "attention", id: t.id } });
       break;
     case "actor_released":
       add("archive", { kind: "agent.archive", actor: e.actor, host: s.actors.get(e.actor)?.host ?? null });
@@ -51,6 +54,10 @@ export function react(e: Event, s: State): readonly Effect[] {
         add(`deliver:${m.id}`, { kind: "deliver", to: m.to, item: { kind: "message", id: m.id } });
       break;
     }
+    case "message_moved":
+      if (e.to !== HUMAN)
+        add(`deliver:${e.message}`, { kind: "deliver", to: e.to, item: { kind: "message", id: e.message } });
+      break;
     case "attention_opened":
       if (e.attention.to !== HUMAN)
         add(`deliver:${e.attention.id}`, {

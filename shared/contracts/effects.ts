@@ -3,7 +3,7 @@ import type { Check } from "./ledger.ts";
 
 /**
  * What an event asks the world to do (LEDGER.md §8). An effect names ids, not copies: the dispatcher reads the current
- * state when it sends one, so a message moved to a new reader goes to the new reader.
+ * state when it sends one, so what was delivered meanwhile is not sent twice.
  */
 export type EffectBody =
   | { kind: "workspace.create"; scope: ScopeId }

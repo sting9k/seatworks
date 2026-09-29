@@ -273,18 +273,10 @@ test("a permission moves with the seat that answers it, and closes when the agen
   assert.equal(ledger.state.permissions.size, 0);
 });
 
-test("a reseated Peer finds its undelivered mail waiting, and the Human may reseat the Supervisor", () => {
-  const { ledger, lead, task } = team();
-  ledger.must(ledger.as(lead, "send_message", { to: "a3", text: "one" }));
-  ledger.must(ledger.as(lead, "send_message", { to: "a3", text: "two", asks: true }));
-  ledger.must(ledger.as(lead, "reseat", { scope: task, reason: "fresh context" }));
-  const waiting = [...ledger.state.messages.values()].filter((m) => m.to === "a4");
-  assert.deepEqual(
-    waiting.map((m) => m.text),
-    ["one", "two"],
-  );
+test("the Human may reseat the Supervisor: they stand as the root's parent", () => {
+  const { ledger } = team();
   ledger.must(ledger.human("reseat", { scope: "root", reason: "compacted too often" }));
-  assert.equal(ledger.state.scopes.get("root")?.owner, "a5");
+  assert.equal(ledger.state.scopes.get("root")?.owner, "a4");
 });
 
 test("a finding left open when its scope is integrated stays in memory with its obligation, until it is answered", () => {

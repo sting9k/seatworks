@@ -371,8 +371,9 @@ it was delivered, an attention not settled climbs: `attention_climbed` opens a c
 | ---------------------------------------- | -------------------------------------------------------- | --------------------------- |
 | `scope_opened` (work, reading)           | `workspace.create { scope, base, branch, commit? }`      | `<seq>:workspace`           |
 | `workspace_ready`, or `actor_seated` of a watch scope | `agent.create { actor, role, scope, model }` | `<seq>:agent`               |
-| `reseated`                               | `agent.archive { host }` of the one who left, then as `actor_seated` | `<seq>:archive`  |
+| `reseated`                               | `agent.archive { host }` of the one who left, then as `actor_seated`; `deliver` of each attention it moved to the new actor | `<seq>:archive`, `<seq>:deliver:<attention>` |
 | `message_sent` (queued)                  | `deliver { to, item }`                                   | `<seq>:deliver:<message>`   |
+| `message_moved`                          | `deliver { to, item }` to its new reader                 | `<seq>:deliver:<message>`   |
 | `attention_opened`                       | `deliver { to, item }`                                   | `<seq>:deliver:<attention>` |
 | `claim_made`                             | `workspace.candidate { scope, commit, onto }`            | `<seq>:candidate`           |
 | `candidate_ready`                        | `evidence.run { scope, subject: candidate, steps: checks }` | `<seq>:evidence`         |
@@ -391,7 +392,8 @@ The shell holds effects that load the machine (`workspace.create`, `workspace.ca
 project on the machine holds it.
 
 An effect names ids, not copies (`shared/contracts/effects.ts`): the dispatcher reads the current state when it sends
-one, so a message moved to a reseated reader goes to the new reader, and one whose reader left is settled unsent.
+one, so what was delivered meanwhile is not sent again, and a delivery whose reader left is settled unsent. What moves
+to a new reader is asked for again, to that reader: `message_moved`, and the attentions a `reseated` moves.
 Facts and notes the kernel tells an actor (a hand-back, a finding, a failed turn, a report) are `deliver` effects with
 their text. The reflex is not an effect: the watch reads committed events, and missing one costs a look, not a
 promise.
