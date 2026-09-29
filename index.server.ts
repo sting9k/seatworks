@@ -6,6 +6,7 @@ import { PLUGIN_ID, Plugin } from "./server/bridge/plugin.ts";
 import { checkUpdate } from "./server/bridge/update-check.ts";
 import { daemonLog } from "./server/core/logger.ts";
 import { stateRoot } from "./server/core/paths.ts";
+import { git } from "./server/satellites/workspace/git.ts";
 
 export default function contribute(server: PluginServerContext) {
   const plugin = new Plugin(stateRoot());
@@ -55,6 +56,9 @@ export default function contribute(server: PluginServerContext) {
 
   server.handle(RPC.openProject, async (input, { paseo }) => {
     plugin.saw(paseo);
+    const inside = await git(input.cwd, ["rev-parse", "--is-inside-work-tree"]);
+    if (inside.stdout.trim() !== "true")
+      return { project: "", ok: false, text: `${input.cwd} is not a git repository, and a team works on one.` };
     const { project, outcome, note } = await plugin.openProject(input.cwd, input.base);
     const said = [outcome.ok ? `Project ${project} is open.` : outcome.refused.says, note].filter(Boolean).join(" ");
     return { project, ok: outcome.ok, text: said };

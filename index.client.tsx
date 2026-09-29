@@ -25,10 +25,11 @@ export default function contribute(client: PluginClientContext) {
       title: "Open a Seatworks team here",
       icon: "Users",
       context: "workspace",
-      onSelect(ctx) {
-        void ctx.rpc(RPC.openProject, { cwd: ctx.workspace.projectRootPath }).then(() => {
-          ctx.openSurface("main");
-        });
+      async onSelect(ctx) {
+        const opened = await ctx.rpc(RPC.openProject, { cwd: ctx.workspace.projectRootPath });
+        if (opened.project) ctx.openSurface("main");
+        // Paseo shows what a command center item throws, and gives it no other way to speak.
+        if (!opened.ok) throw new Error(opened.text);
       },
     }),
   ];
