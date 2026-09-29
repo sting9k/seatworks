@@ -12,6 +12,7 @@ on an implementation without the rule before it is trusted.
 | I1   | `handover` of the writer to another child                               | One event; no state in which both are writers             |
 | I2   | A Lead's child holds `src/net/`; the Lead's own seat tries to write there | Refused                                                 |
 | I3   | Two open siblings both hold `src/net/`, neither `after` the other       | Refused; accepted once one waits for the other            |
+| I3   | A scope opened `after` an open sibling                                  | No copy and no agent until that sibling is integrated or dropped |
 | I3   | A waits for B, then B is set to wait for A                              | Refused                                                   |
 | I4   | `integrate` citing evidence on an older commit                          | Refused                                                   |
 | I4   | `integrate` over a failing check, with a reason                         | Accepted, the reason on the record                        |

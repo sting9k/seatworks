@@ -366,3 +366,40 @@ test("a Reviewer's verdict on the candidate is still citable once its reading sc
   ledger.must(ledger.as(lead, "integrate", { scope: task, evidence: [verdict] }));
   assert.equal(ledger.state.scopes.get(task)?.integrating, true);
 });
+
+test("a scope opened after its sibling gets no copy and no agent until that sibling is integrated", () => {
+  const { ledger, lead, peer, task } = team();
+  ledger.must(
+    ledger.as(lead, "open_scope", {
+      parent: "1",
+      role: "peer",
+      paths: ["src/net/"],
+      after: [task],
+      brief: brief("Decode"),
+    }),
+  );
+  const creates = (scope: string) =>
+    ledger.effects.filter((e) => e.body.kind === "workspace.create" && e.body.scope === scope).length;
+  assert.equal(creates("1.2"), 0, "no copy while 1.1 is open");
+  ledger.must(ledger.as(peer, "hand_back", { commit: SHA(1), text: "encoded" }));
+  ledger.must(
+    ledger.fact("record_candidate", { scope: task, commit: SHA(1), result: { candidate: SHA(2), parentHead: SHA(3) } }),
+  );
+  ledger.must(
+    ledger.fact("record_evidence", {
+      scope: task,
+      subject: SHA(2),
+      ok: true,
+      summary: "",
+      steps: [],
+      heldMachine: false,
+    }),
+  );
+  const green = [...ledger.state.evidence.values()].find((e) => e.subject === SHA(2))!.id;
+  ledger.must(ledger.as(lead, "integrate", { scope: task, evidence: [green] }));
+  assert.equal(creates("1.2"), 0, "none while it is being integrated");
+  ledger.must(ledger.fact("record_integration", { scope: task, result: { sha: SHA(2) } }));
+  assert.equal(creates("1.2"), 1, "its copy once 1.1 is in");
+  ledger.must(ledger.fact("record_workspace", { scope: "1.2", ok: true, branch: "sw/1.2" }));
+  assert.ok(ledger.effects.some((e) => e.body.kind === "agent.create" && e.body.actor === "a4"));
+});

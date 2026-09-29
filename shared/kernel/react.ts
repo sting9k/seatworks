@@ -19,7 +19,8 @@ export function react(e: Event, s: State): readonly Effect[] {
 
   switch (e.type) {
     case "scope_opened":
-      if (e.scope.kind !== "watch") add("workspace", { kind: "workspace.create", scope: e.scope.id });
+      if (e.scope.kind !== "watch" && !waits(s, e.scope.after))
+        add("workspace", { kind: "workspace.create", scope: e.scope.id });
       break;
     case "actor_seated": {
       const scope = s.scopes.get(e.scope);
@@ -186,6 +187,10 @@ export function react(e: Event, s: State): readonly Effect[] {
         mergedInto: e.type === "integrated" ? (parent?.branch ?? null) : null,
       });
       if (e.type === "integrated" && scope?.parent === ROOT) add("docs", { kind: "docs.write" });
+      // A sibling that waited for this one starts now, from its parent with this scope's work in it (I3).
+      for (const x of s.scopes.values())
+        if (x.status === "open" && x.workspace === "pending" && x.after.includes(e.scope) && !waits(s, x.after))
+          add(`workspace:${x.id}`, { kind: "workspace.create", scope: x.id });
       break;
     }
     case "turn_ended": {
@@ -252,6 +257,11 @@ export function react(e: Event, s: State): readonly Effect[] {
       break;
   }
   return out;
+}
+
+/** Whether any scope in `after` is still open: a scope that waits for one gets no copy and no agent yet. */
+function waits(s: State, after: readonly string[]): boolean {
+  return after.some((id) => s.scopes.get(id)?.status === "open");
 }
 
 /** An amended brief reaches the agent working to it, with what changed. */

@@ -369,7 +369,7 @@ it was delivered, an attention not settled climbs: `attention_climbed` opens a c
 
 | Event                                    | Effect                                                   | Key                         |
 | ---------------------------------------- | -------------------------------------------------------- | --------------------------- |
-| `scope_opened` (work, reading)           | `workspace.create { scope, base, branch, commit? }`      | `<seq>:workspace`           |
+| `scope_opened` (work, reading), unless a scope in its `after` is open | `workspace.create { scope, base, branch, commit? }` | `<seq>:workspace` |
 | `workspace_ready`, or `actor_seated` of a watch scope | `agent.create { actor, role, scope, model }` | `<seq>:agent`               |
 | `reseated`                               | `agent.archive { host }` of the one who left, then as `actor_seated`; `deliver` of each attention it moved to the new actor | `<seq>:archive`, `<seq>:deliver:<attention>` |
 | `message_sent` (queued)                  | `deliver { to, item }`                                   | `<seq>:deliver:<message>`   |
@@ -380,7 +380,7 @@ it was delivered, an attention not settled climbs: `attention_climbed` opens a c
 | `evidence_requested`                     | `evidence.run { scope, subject, steps }`                 | `<seq>:evidence`            |
 | `integration_started`                    | `workspace.advance { branch, from: parentHead, to: candidate }` | `<seq>:advance`      |
 | `integration_refused` (moved)            | `workspace.candidate` again on the same commit           | `<seq>:candidate`           |
-| `integrated`, `scope_dropped`            | `workspace.remove { scope }`, `agent.archive`            | `<seq>:remove`, `<seq>:archive` |
+| `integrated`, `scope_dropped`            | `workspace.remove { scope }`, `agent.archive`; `workspace.create` of each open sibling that waited for it and waits for nothing else open | `<seq>:remove`, `<seq>:archive`, `<seq>:workspace:<scope>` |
 | `actor_released`                         | `agent.archive { host }`                                 | `<seq>:archive`             |
 | `permission_answered`                    | `agent.permission { host, request, allow, reason }`, sent only while the agent still waits on it | `<seq>:permission` |
 | `permission_settled`                     | a note to its answerer that nothing is owed             | `<seq>:deliver`             |
