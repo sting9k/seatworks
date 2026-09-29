@@ -15,14 +15,14 @@ A role's properties (`KERNEL.md` §2) are all the harness reads:
 | Property  | Means for the agent                                                                            |
 | --------- | ---------------------------------------------------------------------------------------------- |
 | `writes`  | Works in its scope's own worktree and commits there.                                           |
-| otherwise | Works in a throwaway copy at the commit it reads; what it changes there reaches nothing.       |
+| otherwise | Works in a throwaway copy at the commit it reads, with its agent's own tools, so a Lead or a Reviewer can run what a decision or a review needs; what it changes there reaches nothing. |
 | always    | No native subagents. The team's tools. Its role prompt. No push, no branch move, no git outside its copy. |
 
 ## Guards that hold on every agent
 
 1. **Copies.** A writer's cwd is its own worktree. Every other role's cwd is a throwaway copy at the commit it reads,
-   removed with its scope. On an agent that cannot be kept from editing (Pi, Oh My Pi), an edit by a reader lands
-   where nothing reads it.
+   removed with its scope. An edit there lands where nothing reads it, so no agent's tools are cut for a role that
+   does not write: the copy is the guard, on every agent alike.
 2. **Only commits count.** The kernel integrates a writer's commits and nothing else (I4, I5), so no stray edit
    reaches a lane.
 3. **One git guard.** The shim first on every agent's `PATH` refuses push, pull, checkout, switch, update-ref, stash,
@@ -49,7 +49,6 @@ Everything through Paseo; no config directory of v3's own, so the Human's login 
 | Team tools          | `mcpServers` and `toolPolicy`                                                                 |
 | No prompts          | `modeId: bypassPermissions`; deny rules still win                                             |
 | Writer              | `providerOptions.sandbox`: `enabled`, `failIfUnavailable`, `allowUnsandboxedCommands: false`   |
-| Reader              | also `disallowedTools`: `Edit`, `Write`, `NotebookEdit`                                       |
 | Context             | Claude reads `AGENTS.md` itself since 2.1.277: V1's CLAUDE.md import goes                     |
 
 ### Codex
@@ -59,7 +58,7 @@ Everything through Paseo; no config directory of v3's own, so the Human's login 
 | Role prompt         | `systemPrompt`, sent as `developerInstructions`                                               |
 | Team tools          | `mcpServers` and `toolPolicy`: Codex refuses an MCP call it would have to ask about           |
 | Writer              | `modeId: auto` with `providerOptions.approval_policy: never`; `sandbox_workspace_write.writable_roots` gains the repository's git directory, which Codex keeps read-only inside a worktree otherwise |
-| Reader              | `modeId: read-only`                                                                           |
+| Not writing         | The same, in its throwaway copy, without the git directory among its writable roots            |
 | No subagents        | `features.multi_agent_v2: false` through Paseo; `agents.enabled = false` and `features.multi_agent = false` in one `config.toml`, shared by every v3 Codex agent through `CODEX_HOME`, since Paseo's options do not take them |
 
 The shared `CODEX_HOME` holds that `config.toml` and a link to the Human's `auth.json`, nothing per role.
@@ -73,7 +72,6 @@ Pi has no permissions, no sandbox, no modes and no MCP of its own.
 | Role prompt         | `systemPrompt`, appended by Paseo's extension                                                 |
 | Team tools          | A small Pi extension of v3's that registers the team's tools itself, instead of `pi-mcp-adapter`, which installs from the network on first start |
 | No subagents        | Pi has none; load no extension but v3's                                                        |
-| Reader              | `--tools read,grep,find,ls`                                                                   |
 | Writer              | Its worktree and the git shim; nothing native confines it                                     |
 
 ### Oh My Pi
@@ -85,7 +83,6 @@ agent directory of v3's, set through `PI_CODING_AGENT_DIR`:
 - `config.yml`: `task.maxRecursionDepth: 0`; `tools.approval` denying `task` and `eval` (its cells can start agents
   and reach a shell); `disabledProviders` for the Claude, Codex and other configs it would otherwise import from the
   worktree.
-- A reader also denies `edit`, `write`, `ast_edit` and `bash`.
 
 Oh My Pi never confines files or network; its approvals are policy, not containment.
 

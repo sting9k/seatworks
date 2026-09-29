@@ -223,7 +223,8 @@ Events: `scope_opened`, `actor_seated`, `brief_issued`, `brief_amended`, `plan_s
 `finding_reopened`, `finding_withdrawn`, `claim_made`, `evidence_recorded`, `integrated`, `sent_back`, `reseated`,
 `scope_dropped`, `scope_held`, `scope_resumed`, `report_made`, `message_sent`, `message_delivered`, `question_asked`,
 `question_answered`, `obligation_opened`, `obligation_closed`, `obligation_moved`, `machine_held`, `machine_released`,
-`actor_released`, `actor_gone`, `observation_made`, `noise_marked`, `attended`, `passed`.
+`actor_released`, `actor_gone`, `observation_made`, `noise_marked`, `attended`, `passed`, `permission_asked`,
+`permission_answered`.
 
 ## 8. Views
 

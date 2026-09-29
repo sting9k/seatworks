@@ -1,6 +1,8 @@
 # The SLP profile's reflex (spec/REFLEX.md): the questions asked of the record's events, the routes, and what code
 # settles before Jev is asked. The watch's questions are in watch.yaml, the project's rules in its own rules.yaml.
 #
+# `on` names a kernel event (KERNEL §7) or a fact the agent host reports (`turn_ended`, `permission_requested`).
+#
 # Every question: one condition, the smallest state, an example of each outcome, English. `tell` holds only for the
 # wording and model in `for`; with no `for` it has not been earned yet, and the answer goes no further than a
 # candidate for the Watcher (a note) or the record (a fact). `judgement` evidence always shows its probability.
@@ -126,7 +128,7 @@ questions:
 
   # A hand-back's diff and claim. To the Lead, judgement evidence on the commit.
   loosens-assertion:
-    on: [hand_back]
+    on: [claim_made]
     phase: handback
     hunks: test
     state: { hunk: hunk }
@@ -136,7 +138,7 @@ questions:
     tells: evidence
 
   bends-product:
-    on: [hand_back]
+    on: [claim_made]
     phase: handback
     hunks: product
     state: { hunk: hunk }
@@ -146,7 +148,7 @@ questions:
     tells: evidence
 
   leaves-stand-in:
-    on: [hand_back]
+    on: [claim_made]
     phase: handback
     hunks: product
     state: { hunk: hunk, goal: brief.goal }
@@ -156,13 +158,13 @@ questions:
     tells: evidence
 
   mints-an-api:
-    on: [hand_back]
+    on: [claim_made]
     phase: handback
     use: watch.mints-an-api
     tells: evidence
 
   claim-gap:
-    on: [hand_back]
+    on: [claim_made]
     phase: handback
     state: { claim: handback.text, goal: brief.goal }
     noul: Does `claim` say a part of `goal` was not done, was stubbed, or was left for later?
@@ -182,7 +184,8 @@ questions:
 
   # The Human's words in an agent's chat. To the Lead's copy, a fact.
   human-words:
-    on: [human_message_to_agent]
+    on: [message_sent]
+    when: { from: human, to: agent }
     state: { words: message.text }
     choice: What do `words` mainly do?
     labels:
