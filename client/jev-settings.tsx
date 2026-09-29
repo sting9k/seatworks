@@ -19,11 +19,29 @@ const ROUTES = [
 export function JevSettings({ theme }: PluginSurfaceProps) {
   const settings = useSettings(reflexSettings);
   const [key, setKey] = useState("");
+  if (settings.status === "loading") return <Text style={{ color: theme.colors.foregroundMuted }}>Loading…</Text>;
   if (settings.status !== "ready")
     return (
-      <Text style={{ color: theme.colors.foregroundMuted }}>
-        {settings.status === "loading" ? "Loading…" : settings.error}
-      </Text>
+      <SettingsSection title="Jev">
+        <SettingsCard>
+          {settings.status === "invalid" ? (
+            <SettingsAction
+              label="The stored settings are not ones Seatworks reads"
+              error={settings.error}
+              actionLabel="Reset"
+              disabled={settings.saving}
+              onPress={() => void settings.reset()}
+            />
+          ) : (
+            <SettingsAction
+              label="The settings could not be read"
+              error={settings.error}
+              actionLabel="Try again"
+              onPress={() => void settings.reload()}
+            />
+          )}
+        </SettingsCard>
+      </SettingsSection>
     );
   const current = settings.values;
   return (
