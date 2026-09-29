@@ -108,6 +108,13 @@ export class Reflex {
       });
   }
 
+  /** What looks like a secret, masked in what the record keeps as it is before anything leaves (REFLEX.md). */
+  private masked(text: string): string {
+    let out = text;
+    for (const p of this.config.mask) out = out.replace(p, "[masked]");
+    return out;
+  }
+
   private async askAndRecord(
     project: string,
     questions: Record<string, QuestionSpec>,
@@ -134,7 +141,10 @@ export class Reflex {
       const a = asking.answers[name];
       if (!a) continue;
       const asked = read(name, spec, a, asking.model);
-      await this.submit(project, observationOf(asked, scope, actor, commit, quoted));
+      await this.submit(
+        project,
+        observationOf(asked, scope, actor, commit, quoted === null ? null : this.masked(quoted)),
+      );
     }
   }
 
@@ -222,8 +232,8 @@ export class Reflex {
         level: n === this.config.repeatsTold ? "tell" : "consider",
         route: {
           kind: "attention",
-          why: `the same call failed the same way ${n} times: ${item.text.slice(0, 200)}`,
-          facts: [item.failed ?? ""],
+          why: this.masked(`the same call failed the same way ${n} times: ${item.text.slice(0, 200)}`),
+          facts: [this.masked(item.failed ?? "")],
           urgency: "now",
         },
       });

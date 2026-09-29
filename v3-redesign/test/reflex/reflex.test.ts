@@ -205,3 +205,14 @@ test("a hand-back whose tests use a name nobody settled carries judgement eviden
   assert.deepEqual(judged.map((e) => e.summary.split(":")[0]).sort(), ["mints-an-api.fakes", "mints-an-api.uses"]);
   assert.ok(judged.every((e) => !e.ok));
 });
+
+test("what looks like a secret in an agent's words is masked in what the record keeps", async () => {
+  const { ledger, reflex, supervisor, peer } = wired(0.1);
+  ledger.must(ledger.as(supervisor, "open_scope", { parent: "root", role: "watcher", over: "all" }));
+  for (let i = 0; i < 5; i++)
+    reflex.onTurn("p", peer, [failing("curl -H 'Authorization: sk-abcdefghijklmnopqrstuvwxyz0123'")], ledger.state);
+  await settle();
+  const attention = [...ledger.state.attentions.values()].find((t) => t.moment === "going-in-circles");
+  assert.ok(attention);
+  assert.ok(!attention.why.includes("sk-abcdefghij"), attention.why);
+});
