@@ -191,7 +191,7 @@ export type Obligation = {
 };
 
 export type Urgency = "now" | "later";
-export type AttentionSource = "reflex" | "code" | "watcher";
+export type AttentionSource = "reflex" | "code" | "attend";
 
 export type Attention = {
   readonly id: AttentionId;

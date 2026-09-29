@@ -173,7 +173,7 @@ export function attend(ctx: Of<"attend">): Refusal | undefined {
     moment: ctx.body.moment,
     why: ctx.body.why,
     facts: [],
-    source: "watcher",
+    source: "attend",
     urgency: ctx.body.urgency,
   });
   ctx.emit({ type: "attended", candidate, attention });
