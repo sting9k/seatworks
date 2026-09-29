@@ -63,7 +63,7 @@ export type Signals = {
   repeatedFindings: [number, number];
   /** Questions to the Human after whose answer a plan or brief changed citing it. */
   questionsThatChanged: [number, number];
-  /** Verdicts and failing checks followed by a send-back or an amended brief on their scope. */
+  /** Verdicts and failing checks followed by a send-back or an amended brief on the scope whose commit they read. */
   reviewsThatChanged: [number, number];
   /** Attentions left by their reader until they climbed. */
   interventionsLate: [number, number];
@@ -78,7 +78,15 @@ export function signalsOf(events: Iterable<Event>): Signals {
   const answered = new Set<string>();
   const cited = new Set<string>();
   let questions = 0;
+  /** Reviews waiting to be followed by a change, by the commit they read; the commits each scope handed back. */
   const reviews = new Map<string, number>();
+  const commits = new Map<string, Set<string>>();
+  const changed = (scope: string) => {
+    for (const c of commits.get(scope) ?? []) {
+      changedReviews += reviews.get(c) ?? 0;
+      reviews.delete(c);
+    }
+  };
   let reviewCount = 0;
   let changedReviews = 0;
   let attentions = 0;
@@ -108,21 +116,23 @@ export function signalsOf(events: Iterable<Event>): Signals {
             ? [e.plan.goal, ...e.plan.limits, e.plan.appetite.line]
             : [e.brief.goal, ...e.brief.constraints, ...e.brief.choices];
         for (const l of all) if (l.via?.kind === "question" && answered.has(l.via.id)) cited.add(l.via.id);
-        if (e.type === "brief_amended" && (reviews.get(e.scope) ?? 0) > 0) {
-          changedReviews += reviews.get(e.scope) ?? 0;
-          reviews.delete(e.scope);
-        }
+        if (e.type === "brief_amended") changed(e.scope);
         break;
       }
+      case "claim_made":
+        commits.set(e.claim.scope, (commits.get(e.claim.scope) ?? new Set()).add(e.claim.commit));
+        break;
+      case "candidate_ready":
+        commits.set(e.scope, (commits.get(e.scope) ?? new Set()).add(e.candidate));
+        break;
       case "evidence_recorded":
         if (e.evidence.kind === "verdict" || (e.evidence.kind === "check" && !e.evidence.ok)) {
           reviewCount += 1;
-          reviews.set(e.evidence.scope, (reviews.get(e.evidence.scope) ?? 0) + 1);
+          reviews.set(e.evidence.subject, (reviews.get(e.evidence.subject) ?? 0) + 1);
         }
         break;
       case "sent_back":
-        changedReviews += reviews.get(e.scope) ?? 0;
-        reviews.delete(e.scope);
+        changed(e.scope);
         break;
       case "attention_opened":
         attentions += 1;

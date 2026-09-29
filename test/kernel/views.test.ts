@@ -3,7 +3,7 @@ import { test } from "node:test";
 import { activityLine } from "../../shared/views/activity.ts";
 import { humanView } from "../../shared/views/human.ts";
 import { chainOf, signalsOf } from "../../shared/views/record.ts";
-import { plan, team } from "./ledger.ts";
+import { SHA, brief, plan, team } from "./ledger.ts";
 
 test("the Human sees what waits on them, what agents decided for them, and their words not yet carried in", () => {
   const { ledger, supervisor, peer } = team();
@@ -65,4 +65,25 @@ test("a finding's chain of change and the signals are read from the log", () => 
   const signals = signalsOf(ledger.log);
   assert.deepEqual(signals.repeatedFindings, [1, 2]);
   assert.deepEqual(signals.unanswered, [1, 1]);
+});
+
+test("a Reviewer's red verdict followed by a send-back counts as a review that changed the work", () => {
+  const { ledger, lead, peer, task, lane } = team();
+  ledger.must(ledger.as(peer, "hand_back", { commit: SHA(1), text: "encoded" }));
+  ledger.must(
+    ledger.fact("record_candidate", { scope: task, commit: SHA(1), result: { candidate: SHA(2), parentHead: SHA(3) } }),
+  );
+  ledger.must(
+    ledger.as(lead, "open_scope", {
+      parent: lane,
+      role: "reviewer",
+      paths: [],
+      commit: SHA(2),
+      brief: brief("Review"),
+    }),
+  );
+  ledger.must(ledger.fact("record_workspace", { scope: "1.2", ok: true, branch: null }));
+  ledger.must(ledger.as("a4", "record_verdict", { ok: false, text: "the rounding is off" }));
+  ledger.must(ledger.as(lead, "send_back", { scope: task, reason: "fix the rounding" }));
+  assert.deepEqual(signalsOf(ledger.log).reviewsThatChanged, [1, 1]);
 });
