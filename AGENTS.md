@@ -266,7 +266,7 @@ its own, however short.
   prefix, often two clauses, such as "Let the work decide how many agents run, not a quota". Never
   `fix:`/`feat:` or a file name.
 
-## Paseo 0.9 facts that are easy to get wrong
+## Paseo 0.10 facts that are easy to get wrong
 
 - A plugin gives an agent tools through `mcpServers` in `before('agent.create')` and cannot change
   which servers it has later; a server can still change the tools it lists (`list_changed`), as both

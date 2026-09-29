@@ -139,7 +139,7 @@ many run at once as it has, the rest waiting their turn, unless the machine sett
 
 You need:
 
-- Paseo `>=0.9.1 <0.10.0`
+- Paseo `>=0.10.0`
 - Node.js 24 or newer; there is no build step
 - `git`
 - `python3`, and optionally `jq` and the `ocr` CLI, for the Lead's `ultra-review` skill
