@@ -16,17 +16,19 @@ type Created = {
  * The part of Paseo's API the plugin uses, recording what it was asked. Agents are always between turns. As Paseo does,
  * a keyed create keeps its request and refuses the key with a different one; `loseReplies` drops that many create
  * replies after the agent is made, and the list after each, as a dropped connection would; `refuse` rejects every
- * create with that error; `configFails` rejects that many reads of Paseo's config.
+ * create with that error; `configFails` and `archiveFails` reject that many
+ * reads of Paseo's config and archives.
  */
 export function fakePaseo(pluginDir: string, provider = "claude") {
   const created: Created[] = [];
   const sent: Sent[] = [];
   const archived: string[] = [];
   const byKey = new Map<string, { host: string; request: string }>();
-  const gate: { loseReplies: number; refuse: string | null; configFails: number } = {
+  const gate: { loseReplies: number; refuse: string | null; configFails: number; archiveFails: number } = {
     loseReplies: 0,
     refuse: null,
     configFails: 0,
+    archiveFails: 0,
   };
   let down = false;
   /** Permissions each agent's own prompt still waits on, and those answered through the API. */
@@ -51,6 +53,7 @@ export function fakePaseo(pluginDir: string, provider = "claude") {
       return Promise.resolve();
     },
     archive: () => {
+      if (gate.archiveFails-- > 0) return Promise.reject(new Error("socket reconnecting"));
       archived.push(id);
       return Promise.resolve({ archivedAt: "now" });
     },

@@ -391,8 +391,10 @@ export class Plugin {
       return { ok: true, text: `Removed ${dir}.` };
     }
     const { repo } = JSON.parse(readFileSync(file, "utf8")) as { repo: string };
-    const runtime = existsSync(repo) ? (this.runtimes.get(id) ?? this.open(id, ready)) : null;
-    const workspace = runtime?.workspace ?? null;
+    const present = existsSync(repo);
+    const runtime = this.runtimes.get(id) ?? (present ? this.open(id, ready) : null);
+    // With its repository gone there are no copies, branches or note to take out: only memory and agents.
+    const workspace = present ? (runtime?.workspace ?? null) : null;
     const unsaved = workspace ? (await workspace.onDisk()).filter((c) => c.unsaved) : [];
     if (unsaved.length > 0)
       return {
@@ -400,38 +402,48 @@ export class Plugin {
         text: `Uncommitted work is still in ${unsaved.map((c) => c.path).join(", ")}: commit or move it first.`,
       };
     const base = runtime?.project.view.scopes.get(ROOT)?.branch;
-    if (runtime && base) {
-      const taken = await this.writeNote(runtime.workspace, id, base, true);
+    if (workspace && base) {
+      const taken = await this.writeNote(workspace, id, base, true);
       if (!taken.ok) return { ok: false, text: taken.text ?? "" };
     }
     // Nothing opens the project again while it goes: every reader looks for this file first.
     const aside = join(dir, "project.removing.json");
     renameSync(file, aside);
-    if (runtime) await this.unload(id, runtime);
-    // Listed once the project is unloaded, so an agent its last effects started is among them.
-    const agents = await ready.host.labelled({ [PROJECT_LABEL]: id });
-    if ("unavailable" in agents) {
-      renameSync(aside, file);
-      return { ok: false, text: "Paseo is not reachable yet." };
-    }
-    for (const a of agents) await ready.host.archive(a.host);
-    const kept: string[] = [];
-    if (workspace) {
-      for (const c of await workspace.onDisk()) {
-        const r = await workspace.remove(c.key, c.branch, null);
-        if ("kept" in r) kept.push(r.kept);
+    const archived = new Set<string>();
+    try {
+      if (runtime) await this.unload(id, runtime);
+      // Listed once the project is unloaded, so an agent its last effects started is among them.
+      const agents = await ready.host.labelled({ [PROJECT_LABEL]: id });
+      if ("unavailable" in agents) return await this.putBack(id, aside, archived, "Paseo is not reachable yet.");
+      for (const a of agents) {
+        await ready.host.archive(a.host);
+        archived.add(a.host);
       }
-      await workspace.prune();
-      if (kept.length === 0)
-        for (const b of await workspace.branchesUnder(branchesOf(id), null)) {
-          const r = await workspace.removeBranch(b.branch);
+      const kept: string[] = [];
+      if (workspace) {
+        for (const c of await workspace.onDisk()) {
+          const r = await workspace.remove(c.key, c.branch, null);
           if ("kept" in r) kept.push(r.kept);
         }
+        await workspace.prune();
+        if (kept.length === 0)
+          for (const b of await workspace.branchesUnder(branchesOf(id), null)) {
+            const r = await workspace.removeBranch(b.branch);
+            if ("kept" in r) kept.push(r.kept);
+          }
+      }
+      if (kept.length > 0)
+        return await this.putBack(
+          id,
+          aside,
+          archived,
+          `Its agents are archived, but some of it stayed: ${kept.join("; ")}`,
+        );
+    } catch (error) {
+      const says = error instanceof Error ? error.message : String(error);
+      return this.putBack(id, aside, archived, `The removal stopped part way and the project stays attached: ${says}`);
     }
-    if (kept.length > 0) {
-      renameSync(aside, file);
-      return { ok: false, text: `Its agents are archived, but some of it stayed: ${kept.join("; ")}` };
-    }
+    this.holds.releaseProject(id);
     const removedAt = new Date().toISOString();
     const into = join(archiveDir(this.root), `${id}-${removedAt.replace(/[:.]/g, "-")}`);
     mkdirSync(archiveDir(this.root), { recursive: true });
@@ -443,6 +455,36 @@ export class Plugin {
     );
     rmSync(moved);
     return { ok: true, text: `Removed the project for ${repo}; its record is kept in ${into} until you delete it.` };
+  }
+
+  /**
+   * Attaches a project again after its removal stopped part way: its note back on its base, and its record saying of
+   * each agent archived meanwhile that it is gone, so no seat waits on an agent that no longer runs.
+   */
+  private async putBack(
+    id: string,
+    aside: string,
+    archived: ReadonlySet<string>,
+    text: string,
+  ): Promise<{ ok: boolean; text: string }> {
+    renameSync(aside, join(projectDir(this.root, id), "project.json"));
+    const ready = await this.whenReady();
+    const { repo } = JSON.parse(readFileSync(join(projectDir(this.root, id), "project.json"), "utf8")) as {
+      repo: string;
+    };
+    if (existsSync(repo)) {
+      const runtime = this.open(id, ready);
+      const base = runtime.project.view.scopes.get(ROOT)?.branch;
+      if (base) await this.writeNote(runtime.workspace, id, base);
+      for (const a of runtime.project.view.actors.values())
+        if (a.status === "seated" && a.host !== null && archived.has(a.host))
+          await this.submitAs(
+            runtime,
+            { kind: "bridge" },
+            { type: "record_gone", actor: a.id, why: "its agent was archived by a removal that stopped part way" },
+          );
+    }
+    return { ok: false, text };
   }
 
   /** The Human's view of one project: what they need to know, and the last things that happened. */

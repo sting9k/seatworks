@@ -145,3 +145,72 @@ test("the Human attaches a Paseo project, clears what a dropped task left, and r
   assert.deepEqual(await plugin.leftovers(), []);
   for (const t of [supervisor, lead]) t.close();
 });
+
+function repoWith(name: string) {
+  const repo = realpathSync(mkdtempSync(join(tmpdir(), `sw-${name}-`)));
+  git(repo, "init", "-q", "-b", "main");
+  writeFileSync(join(repo, "a.txt"), "a\n");
+  git(repo, "add", ".");
+  git(repo, "commit", "-q", "-m", "start");
+  return repo;
+}
+
+test("a removal that stops part way leaves the project attached with its note, and trying again removes it", async () => {
+  const repo = repoWith("halfway");
+  const root = mkdtempSync(join(tmpdir(), "sw-root-"));
+  const plugin = new Plugin(root);
+  plugins.push(plugin);
+  const paseo = fakePaseo(pluginDir);
+  plugin.saw(paseo.api);
+  const { project } = await plugin.openProject(repo, "main");
+  await plugin.idle();
+  const whole = (await plugin.leftovers()).find((l) => l.kind === "project")!;
+
+  paseo.gate.archiveFails = 1;
+  const stopped = await plugin.clean([whole.id]);
+  assert.equal(stopped[0]?.ok, false);
+  assert.match(stopped[0].text, /stays attached/);
+  assert.deepEqual(
+    plugin.projects().map((p) => p.id),
+    [project],
+    "still attached, not a folder with no project in it",
+  );
+  assert.match(git(repo, "show", "main:AGENTS.md"), /seatworks:begin/, "its note is back");
+
+  const removed = await plugin.clean([whole.id]);
+  assert.ok(removed[0]?.ok, removed[0]?.text);
+  assert.equal((await plugin.leftovers()).filter((l) => l.kind === "record").length, 1, "its record kept aside");
+});
+
+test("removing a project whose repository is gone lets it go from memory, and frees the machine it held", async () => {
+  const gone = repoWith("gone");
+  const other = repoWith("other");
+  const root = mkdtempSync(join(tmpdir(), "sw-root-"));
+  const plugin = new Plugin(root);
+  plugins.push(plugin);
+  const paseo = fakePaseo(pluginDir);
+  plugin.saw(paseo.api);
+  const { socketPath } = await plugin.whenReady();
+  const { project } = await plugin.openProject(gone, "main");
+  await plugin.idle();
+  const supervisor = await agentTools(socketPath, paseo.created[0]!.env);
+  const brief = { goal: { text: "Measure" }, kind: "discovery" };
+  assert.ok((await supervisor.call("open_scope", { parent: "root", role: "lead", paths: ["src/"], brief })).ok);
+  await plugin.idle();
+  const lead = await agentTools(socketPath, paseo.created[1]!.env);
+  const held = await lead.call("hold_machine", { hold: true, why: "measuring" });
+  assert.ok(held.ok, held.text);
+  for (const t of [supervisor, lead]) t.close();
+
+  await plugin.openProject(other, "main");
+  await plugin.idle();
+  assert.equal(paseo.created.length, 2, "the other project's copy waits while the machine is held");
+
+  rmSync(gone, { recursive: true, force: true });
+  const whole = (await plugin.leftovers()).find((l) => l.kind === "project" && l.project === project)!;
+  const removed = await plugin.clean([whole.id]);
+  assert.ok(removed[0]?.ok, removed[0]?.text);
+  assert.equal(plugin.statusOf(project, "root"), null, "no longer open in memory");
+  await plugin.idle();
+  assert.equal(paseo.created.length, 3, "the other project's Supervisor starts once the hold is let go");
+});

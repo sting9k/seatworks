@@ -28,6 +28,12 @@ export class MachineHolds {
     if (!hold) for (const listener of this.listeners) listener();
   }
 
+  /** Lets go of every hold a project's actors keep: a removed project has no ledger left to release them. */
+  releaseProject(project: string): void {
+    this.db.prepare("DELETE FROM holds WHERE project = ?").run(project);
+    for (const listener of this.listeners) listener();
+  }
+
   /** Called when a hold lifts, so every project's dispatcher starts what waited. */
   onRelease(listener: () => void): () => void {
     this.listeners.add(listener);
