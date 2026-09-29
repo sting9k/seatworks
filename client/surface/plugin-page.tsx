@@ -159,7 +159,7 @@ export function PluginPage({
             <View style={{ flexDirection: "row", alignItems: "center", gap: SPACE.md, padding: SPACE.lg }}>
               <Text style={[muted, { flex: 1 }]}>
                 {confirming
-                  ? `Removed for good${wholeProjects > 0 ? `, ${plural(wholeProjects, "project")} with its record and agents` : ""}. Press again to remove.`
+                  ? `Removed for good${wholeProjects > 0 ? `, ${plural(wholeProjects, "project")} with its agents; its record is kept until you delete it` : ""}. Press again to remove.`
                   : "A copy holding uncommitted work is never removed."}
               </Text>
               <Button

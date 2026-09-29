@@ -139,7 +139,7 @@ on an implementation without the rule before it is trusted.
 | The root's plan settles a word, and later another                                 | `GLOSSARY.md` on the base holds both between the plugin's markers; a word written by hand below them stays |
 | A lane lands after its Lead reported                                              | `docs/seatworks/MAP.md` on the base lists it, with what was decided and assumed; the checkout stays clean |
 | An agent is seated                                                                | Its first words point at the glossary, the ADRs and the map         |
-| The Human removes a project                                                       | Its agents archived, every branch made for it, its note and its record gone; offered to attach again |
+| The Human removes a project                                                       | Its agents archived, every branch made for it and its note gone, its record kept aside; offered to attach again |
 | Paseo's check says a newer release is out                                         | Shown with its review links and the command that applies it; nothing installed |
 | Paseo's command line is not on the daemon's PATH                                  | Said, with the command to run by hand                               |
 
