@@ -71,6 +71,15 @@ from Paseo 0.10.1: the plugin SDK, `@getpaseo/client`, `@getpaseo/protocol`, the
 
 ## To check before building on it
 
+What the code now assumes, and only a live daemon can confirm:
+
+- That `agent.turn_ended`'s timeline holds the turn's reasoning items for each agent, so the watch reads thinking.
+- That `send(text, { messageId })` becomes the user message's `clientMessageId`, so the Human's own words are told
+  apart from deliveries, and that an `agents.create` retried with the same `idempotencyKey` returns the same agent
+  across a daemon restart.
+- That `lastUsage.totalCostUsd` is the turn's cost rather than a running total; if it is a total, spend is counted
+  twice and the adapter must take differences.
+
 - Per-agent control of Paseo's tools: today it is per provider ID (`paseoTools` on a custom provider) and injection
   is off by default. If the Human turns it on, v3 needs provider entries of its own, the one reason to write Paseo's
   config.

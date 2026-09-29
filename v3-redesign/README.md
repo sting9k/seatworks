@@ -32,8 +32,11 @@ order is the agents'.
 2. The kernel, the agent host, workspaces and the evidence runner: one lane, end to end, and one agent alone for a
    small change. Built and proved against a stand-in for Paseo (`test/bridge/lane.test.ts`); what only a live daemon
    can show is in `spec/PASEO.md` and `spec/HARNESS.md`, To check.
-3. The Human's surface and the record.
-4. The reflex and the watch (`spec/REFLEX.md`, `spec/WATCH.md`), starting with their `active` sets.
+3. The Human's surface and the record. Built: a Paseo surface over the Human's view, the activity, a finding's chain
+   of change and the five signals.
+4. The reflex and the watch (`spec/REFLEX.md`, `spec/WATCH.md`), starting with their `active` sets. Built: Jev's
+   client and settings, the starting questions and moments, going in circles and spend counted in code, and a test
+   minting an API caught at the edit.
 5. Anything more only when the record shows a failure that needs it.
 
 ## Spec
