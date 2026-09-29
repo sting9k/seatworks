@@ -265,10 +265,12 @@ export function dropScope(ctx: Of<"drop_scope">): Refusal | undefined {
     scope,
   ];
   const ids = new Set(doomed.map((s) => s.id));
+  for (const o of ctx.state.obligations.values()) {
+    const about = scopeOf(ctx, o.about);
+    if (about !== null && ids.has(about))
+      ctx.emit({ type: "obligation_closed", obligation: o.id, how: `scope ${about} dropped` });
+  }
   for (const s of doomed) {
-    for (const o of ctx.state.obligations.values())
-      if (aboutScope(ctx, o.about, ids))
-        ctx.emit({ type: "obligation_closed", obligation: o.id, how: `scope ${s.id} dropped` });
     if (s.owner !== null && ctx.state.actors.get(s.owner)?.status === "seated")
       releaseSeat(ctx, s.owner, heir, ids, `scope ${s.id} dropped`);
     ctx.emit({ type: "scope_dropped", scope: s.id, reason: ctx.body.reason });
@@ -276,17 +278,11 @@ export function dropScope(ctx: Of<"drop_scope">): Refusal | undefined {
   return undefined;
 }
 
-/** Whether an obligation is about a finding, claim or candidate that lives in one of `scopes`. */
-function aboutScope(ctx: Context, about: { kind: string; id: string }, scopes: ReadonlySet<string>): boolean {
-  if (about.kind === "finding") {
-    const f = ctx.state.findings.get(about.id);
-    return f !== undefined && scopes.has(f.scope);
-  }
-  if (about.kind === "claim") {
-    const c = ctx.state.claims.get(about.id);
-    return c !== undefined && scopes.has(c.scope);
-  }
-  return false;
+/** The scope a finding or claim an obligation is about lives in; null for anything else. */
+function scopeOf(ctx: Context, about: { kind: string; id: string }): string | null {
+  if (about.kind === "finding") return ctx.state.findings.get(about.id)?.scope ?? null;
+  if (about.kind === "claim") return ctx.state.claims.get(about.id)?.scope ?? null;
+  return null;
 }
 
 export function release(ctx: Of<"release">): Refusal | undefined {

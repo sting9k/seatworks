@@ -195,7 +195,11 @@ test("a scope with open children is not integrated, and dropping a lane closes w
     }),
   );
   assert.equal(refusedBy(ledger.as(supervisor, "integrate", { scope: lane, evidence: ["e1"] })), "state");
-  ledger.must(ledger.as(supervisor, "drop_scope", { scope: lane, reason: "the server lane changed the plan" }));
+  const dropped = ledger.must(
+    ledger.as(supervisor, "drop_scope", { scope: lane, reason: "the server lane changed the plan" }),
+  );
+  const closed = dropped.flatMap((e) => (e.type === "obligation_closed" ? [e.obligation] : []));
+  assert.deepEqual(closed, [...new Set(closed)], "each obligation is closed once");
   assert.deepEqual([...ledger.state.scopes.keys()], ["root"]);
   assert.equal(ledger.state.obligations.size, 0);
   assert.equal(ledger.state.actors.size, 1);
