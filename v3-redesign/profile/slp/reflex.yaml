@@ -1,14 +1,32 @@
 # The SLP profile's reflex (spec/REFLEX.md): the questions asked of the record's events, the routes, and what code
 # settles before Jev is asked. The watch's questions are in watch.yaml, the project's rules in its own rules.yaml.
 #
-# `on` names a kernel event (KERNEL §7) or a fact the agent host reports (`turn_ended`, `permission_requested`).
+# `on` names a kernel event (KERNEL §7); `turn_ended` questions are asked of the turn's last words.
 #
 # Every question: one condition, the smallest state, an example of each outcome, English. `tell` holds only for the
 # wording and model in `for`; with no `for` it has not been earned yet, and the answer goes no further than a
 # candidate for the Watcher (a note) or the record (a fact). `judgement` evidence always shows its probability.
 
-# The starting set (spec/REFLEX.md, Decided). The others are written and wait for a look back to need them.
-active: [touches-goal-or-cost, mints-an-api, red-check]
+# The full set, asked from the first lane (spec/REFLEX.md, Decided). A threshold not yet earned by a look back sends
+# its answer no further than a candidate for the Watcher or the record, so the set is wide and the noise stays there.
+active:
+  - names-method
+  - cause-as-fact
+  - closed-options
+  - unobservable-goal
+  - reads-as-kind
+  - touches-goal-or-cost
+  - kept-without-answer
+  - unrecorded-structure
+  - loosens-assertion
+  - bends-product
+  - leaves-stand-in
+  - mints-an-api
+  - claim-gap
+  - cannot-be-undone
+  - human-words
+  - words-only
+  - red-check
 
 routes:
   openrouter:
@@ -174,7 +192,7 @@ questions:
 
   # A permission asked. To whoever answers it, a fact.
   cannot-be-undone:
-    on: [permission_requested]
+    on: [permission_asked]
     state: { action: permission.text }
     noul: Would `action` change something outside the agent's own working copy that cannot be put back?
     yes: A push, a deploy, a message sent, a row deleted in a shared database, a file removed outside the copy.
@@ -185,7 +203,7 @@ questions:
   # The Human's words in an agent's chat. To the Lead's copy, a fact.
   human-words:
     on: [message_sent]
-    when: { from: human, to: agent }
+    when: { from: human }
     state: { words: message.text }
     choice: What do `words` mainly do?
     labels:
@@ -194,13 +212,14 @@ questions:
       asks: Ask something without saying the code is wrong.
       approves: Accept or approve the work as it is.
       other: None of the above.
+    # The Lead's copy says what the words did when they change the work or say it is wrong.
+    matters: [sets-requirement, says-wrong]
     tell: 0.8
     tells: parent
 
-  # A turn that ended with no command. To the agent itself, a fact about delivery.
+  # A turn that ended with no command: asked only then, of its last words. To the agent itself, a fact about delivery.
   words-only:
     on: [turn_ended]
-    when: { commands: 0 }
     state: { last: turn.lastSaid }
     choice: What does `last` do?
     labels:
@@ -209,7 +228,7 @@ questions:
       waits: Says it waits for someone or something.
       working: Reports progress and goes on.
       other: None of the above.
-    # Told when handed-back, asked or waits passes `tell`.
+    matters: [handed-back, asked, waits]
     tell: 0.8
     tells: self
 

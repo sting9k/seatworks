@@ -184,13 +184,13 @@ export class Workspace {
     return found;
   }
 
-  /** Each file `tip` changed since it left `base` whose path matches `only`, with its own diff, capped per file. */
-  async fileDiffs(base: string, tip: string, only: RegExp): Promise<{ path: string; text: string }[]> {
+  /** Each file `tip` changed since it left `base`, with its own diff, capped per file and at twenty files. */
+  async fileDiffs(base: string, tip: string): Promise<{ path: string; text: string }[]> {
     const listed = await git(this.repo, ["diff", "--name-only", `${base}...${tip}`]);
     if (listed.code !== 0) return [];
     const paths = listed.stdout
       .split("\n")
-      .filter((p) => p && only.test(p))
+      .filter((p) => p !== "")
       .slice(0, 20);
     const out: { path: string; text: string }[] = [];
     for (const path of paths) {

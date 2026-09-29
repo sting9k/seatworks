@@ -131,6 +131,10 @@ on an implementation without the rule before it is trusted.
 | A check fails with a known missing-dependency message       | An environment fact, with no reflex call                   |
 | An instruction file changes                                 | The Supervisor is told to compile the rules again          |
 | A question renamed in `reflex.yaml`                         | Asked under its new name with no code change               |
+| Each event in REFLEX.md's table                             | Its questions asked, and no other's                        |
+| A brief given one kind, read as the other                   | Weighed on the other kind, not on the first label          |
+| A turn ends in words with no command                        | Its last words asked whether they hand back, ask or wait   |
+| A hand-back                                                 | Its diff asked hunk by hunk: test hunks and product hunks their own questions |
 
 ## Watch
 
@@ -164,4 +168,7 @@ on an implementation without the rule before it is trusted.
 | The Lead messages the Peer after an attention, saying nothing of it | Acted on: it climbs no further                     |
 | An attention to the Supervisor left past its next turn      | Climbs no further; shown in the Human's view               |
 | A lane's spend passes the amount its appetite names         | An attention to the Supervisor, now, with no model asked   |
+| A Peer's turns spend and record nothing, `silentTurns` in a row | An attention to its Lead, once                        |
+| A finding still unclassified when its Lead's second turn since it ends | An attention to the Supervisor, once           |
+| A Peer changes an existing assertion where its brief asks nothing of tests | An attention to its Lead; another test line, a candidate |
 

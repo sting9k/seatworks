@@ -53,10 +53,10 @@ profile's set, in `profile/slp/watch.yaml` with its questions and thresholds:
 | obeys-against-judgement | It does what it says it thinks is wrong because it was told to                           | Peer       |
 | builds-a-stand-in       | It plans a stub, fake, shim or second copy of state to fill a gap                        | Peer       |
 
-The first lane watches only the starting set in `watch.yaml`'s `active` list (big-decision, trades-the-goal,
-admits-wrong, mints-an-api, and the moments counted in code alone, which ask no model: going-in-circles and
-past-appetite, `STEERING.md`); the others wait until a look back shows the lane needed them. When is each owner's
-craft, so it is data. The anti-pattern list the moments draw on is shared across projects
+Every moment is watched from the first lane, those above and those counted in code alone, which ask no model
+(`STEERING.md`). A moment's `tell` is earned only at a look back, so until then what the reflex finds goes to the
+Watcher as a candidate and reaches an owner only if the Watcher attends to it. When is each owner's craft, so it is
+data. The anti-pattern list the moments draw on is shared across projects
 (`reference/ANTIPATTERNS.md`); a project adds a moment of its own only when a look back shows its agents keep making
 one mistake. A profile with no moments has no watch, so a team that works another way loses nothing.
 

@@ -2,9 +2,23 @@
 # and a moment that never leads to a change is removed. Questions are asked the way spec/REFLEX.md says: one
 # condition, the smallest state, every outcome described, English.
 
-# The starting set: the moments that bear most on design while it is cheap to change. The others wait.
-# going-in-circles and past-appetite are counted in code and ask no model, so they cost nothing to start with.
-active: [big-decision, trades-the-goal, admits-wrong, mints-an-api, going-in-circles, past-appetite]
+# The full set, watched from the first lane. Moments counted in code ask no model; the others go to the Watcher as
+# candidates until a look back earns their `tell` for this wording and model.
+active:
+  - big-decision
+  - struggling
+  - turning
+  - admits-wrong
+  - trades-the-goal
+  - mints-an-api
+  - obeys-against-judgement
+  - builds-a-stand-in
+  - detour
+  - going-in-circles
+  - check-made-to-pass
+  - silent-without-progress
+  - findings-waiting
+  - past-appetite
 
 item:
   chars: 1500 # a moment shows in a sentence or two; a longer item dilutes the question
@@ -161,7 +175,9 @@ moments:
   check-made-to-pass:
     watches: [peer]
     by: code
-    fact: a file under `testPath`, or a test runner's config, edited in a scope whose brief is not about tests
+    fact: >-
+      an existing line of a file under `testPath` changed or removed in a scope whose brief does not ask for work on
+      tests: a candidate, or an attention when an assertion's line is the one changed
 
   silent-without-progress:
     watches: [lead, peer]
@@ -171,7 +187,7 @@ moments:
   findings-waiting:
     watches: [lead]
     by: code
-    fact: a finding raised to the Lead and not classified by the end of the Lead's next turn
+    fact: a finding raised to the Lead and still unclassified when the Lead's second turn since it ends
 
   past-appetite:
     watches: [lead]

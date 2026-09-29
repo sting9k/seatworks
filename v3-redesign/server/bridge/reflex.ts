@@ -1,6 +1,7 @@
 import type { CommandBody } from "../../shared/contracts/commands.ts";
 import type { Event } from "../../shared/contracts/events.ts";
-import { ROOT } from "../../shared/contracts/ids.ts";
+import { HUMAN, ROOT } from "../../shared/contracts/ids.ts";
+import type { Brief, Line, Plan } from "../../shared/contracts/ledger.ts";
 import type { State } from "../../shared/kernel/state.ts";
 import { KeyedQueue } from "../core/keyed-queue.ts";
 import type { TurnItem } from "../satellites/agent-host/items.ts";
@@ -29,6 +30,14 @@ export class Reflex {
   private readonly queued = new Map<string, number>();
   /** Per agent, how often each failing call came back: going in circles counted in code (STEERING.md). */
   private readonly loops = new Map<string, Map<string, number>>();
+  /** Agents that sent the kernel a command since their last turn ended: a turn without one said its words only. */
+  private readonly acted = new Set<string>();
+  /** Per agent, turns in a row that spent and recorded nothing. */
+  private readonly silent = new Map<string, number>();
+  /** Per open finding, how many of its answerer's turns have ended since it was raised. */
+  private readonly unanswered = new Map<string, number>();
+  /** Test files each agent changed an existing line of, told once each. */
+  private readonly bent = new Set<string>();
 
   constructor(
     config: ReflexConfig,
@@ -44,22 +53,30 @@ export class Reflex {
     this.alarm = alarm;
   }
 
-  /** Questions the profile asks of committed events; a turn's end also settles the loop count and spend. */
+  /** Questions the profile asks of committed events; a turn's end also settles the loop count, spend and silence. */
   onEvents(project: string, events: readonly Event[], state: State): void {
     for (const e of events) {
-      if (e.type === "turn_ended") this.pastAppetite(project, e, state);
-      if (e.type === "actor_released" || e.type === "actor_gone") this.loops.delete(`${project}:${e.actor}`);
-      if (e.type === "claim_made" && this.config.questions.has("mints-an-api"))
-        this.mintsAtHandBack(project, e.claim.scope, e.claim.by, e.claim.commit);
+      if (state.actors.has(e.by)) this.acted.add(`${project}:${e.by}`);
+      if (e.type === "turn_ended") {
+        this.pastAppetite(project, e, state);
+        this.silence(project, e, state);
+        this.findingsWaiting(project, e.actor, state);
+      }
+      if (e.type === "actor_released" || e.type === "actor_gone") this.forgetActor(`${project}:${e.actor}`);
+      if (e.type === "finding_classified" || e.type === "finding_withdrawn")
+        this.unanswered.delete(`${project}:${e.finding}`);
+      if (e.type === "claim_made") this.handBack(project, e.claim.scope, e.claim.by, e.claim.commit, state);
       for (const [name, spec] of this.config.questions) {
-        // A question that borrows another's wording (`use`) is asked by that one's own path.
+        // Asked elsewhere: a question that borrows another's wording (`use`), one read hunk by hunk, one at a turn's end.
         if (!spec.on?.includes(e.type) || (spec.noul === undefined && spec.choice === undefined)) continue;
+        if (spec.hunks !== undefined) continue;
         const asked = this.subjectOf(e, state);
-        if (!asked || !matches(spec, e)) continue;
-        const values = stateFor(spec, { event: e, state, item: null, actor: asked.actor });
+        if (!asked || !matches(spec, e, state)) continue;
+        const ctx = { event: e, state, item: null, actor: asked.actor, scope: asked.scope };
+        const values = stateFor(spec, ctx);
         if (values)
           this.enqueue(project, () =>
-            this.askAndRecord(project, { [name]: spec }, values, asked.scope, asked.actor, asked.commit),
+            this.askAndRecord(project, { [name]: spec }, values, asked.scope, asked.actor, asked.commit, null, ctx),
           );
       }
     }
@@ -70,7 +87,12 @@ export class Reflex {
     const actor = state.actors.get(actorId);
     if (actor?.status !== "seated") return;
     this.circles(project, actorId, actor.scope, items);
-    for (const item of items) if (item.kind === "edit") this.mints(project, actorId, actor.role, actor.scope, item);
+    for (const item of items)
+      if (item.kind === "edit") {
+        this.mints(project, actorId, actor.role, actor.scope, item);
+        this.madeToPass(project, actorId, actor.role, actor.scope, item, state);
+      }
+    this.wordsOnly(project, actorId, actor.scope, items, state);
     const kinds = { thought: "thought", said: "said", edit: "edit", ran: null } as const;
     for (const item of items) {
       const reads = kinds[item.kind];
@@ -79,19 +101,50 @@ export class Reflex {
       for (const [name, spec] of this.config.moments)
         if (spec.by !== "code" && spec.watches?.includes(actor.role) && spec.reads?.includes(reads))
           moments[name] = spec;
-      const groups = groupByState(moments, (spec) =>
-        stateFor(spec, { event: null, state, item: item.text.slice(0, this.config.itemChars), actor: actorId }),
-      );
+      const ctx = {
+        event: null,
+        state,
+        item: item.text.slice(0, this.config.itemChars),
+        actor: actorId,
+        scope: actor.scope,
+      };
+      const groups = groupByState(moments, (spec) => stateFor(spec, ctx));
       for (const group of groups)
         this.enqueue(project, () =>
-          this.askAndRecord(project, group.questions, group.values, actor.scope, actorId, null, item.text),
+          this.askAndRecord(project, group.questions, group.values, actor.scope, actorId, null, item.text, ctx),
+        );
+    }
+  }
+
+  /** A turn that ended with words and no command: whether its last words hand back, ask or wait, which only a tool records. */
+  private wordsOnly(project: string, actor: string, scope: string, items: readonly TurnItem[], state: State): void {
+    const acted = this.acted.has(`${project}:${actor}`);
+    const last = items.findLast((i) => i.kind === "said")?.text ?? null;
+    if (acted || last === null) return;
+    for (const [name, spec] of this.config.questions) {
+      if (!spec.on?.includes("turn_ended")) continue;
+      const ctx = { event: null, state, item: last.slice(-this.config.itemChars), actor, scope };
+      const values = stateFor(spec, ctx);
+      if (values)
+        this.enqueue(project, () =>
+          this.askAndRecord(project, { [name]: spec }, values, scope, actor, null, null, ctx),
         );
     }
   }
 
   /** Lets go of what the reflex keeps for a project that left memory. */
   forget(project: string): void {
-    for (const key of this.loops.keys()) if (key.startsWith(`${project}:`)) this.loops.delete(key);
+    const mine = (key: string) => key.startsWith(`${project}:`);
+    for (const map of [this.loops, this.silent, this.unanswered])
+      for (const key of map.keys()) if (mine(key)) map.delete(key);
+    for (const set of [this.acted, this.bent]) for (const key of set) if (mine(key)) set.delete(key);
+  }
+
+  private forgetActor(key: string): void {
+    this.loops.delete(key);
+    this.silent.delete(key);
+    this.acted.delete(key);
+    for (const k of this.bent) if (k.startsWith(`${key}:`)) this.bent.delete(k);
   }
 
   private enqueue(project: string, work: () => Promise<void>): void {
@@ -123,6 +176,7 @@ export class Reflex {
     actor: string | null,
     commit: string | null,
     quoted: string | null = null,
+    ctx: Context | null = null,
   ): Promise<void> {
     const jev = this.jev();
     if (!jev) {
@@ -140,7 +194,8 @@ export class Reflex {
     for (const [name, spec] of Object.entries(questions)) {
       const a = asking.answers[name];
       if (!a) continue;
-      const asked = read(name, spec, a, asking.model);
+      const given = spec.against !== undefined && ctx ? valueOf(spec.against, ctx) : null;
+      const asked = read(name, spec, a, asking.model, given);
       await this.submit(
         project,
         observationOf(asked, scope, actor, commit, quoted === null ? null : this.masked(quoted)),
@@ -181,31 +236,155 @@ export class Reflex {
     });
   }
 
-  /** The same two questions over a hand-back's test diff, as judgement evidence on its commit for the Lead (REFLEX.md). */
-  private mintsAtHandBack(project: string, scope: string, actor: string, commit: string): void {
-    const spec = this.config.moments.get("mints-an-api");
+  /**
+   * A hand-back's diff, read hunk by hunk as REFLEX.md asks: the questions for test files over their hunks, those for
+   * the rest over theirs, and a minted API's two questions over the test files' added names. All go to the Lead as
+   * `judgement` evidence on the commit.
+   */
+  private handBack(project: string, scope: string, actor: string, commit: string, state: State): void {
     const test = this.config.testPath;
-    if (!spec || !test) return;
+    const mints = this.config.questions.has("mints-an-api") ? this.config.moments.get("mints-an-api") : undefined;
+    const byHunk = [...this.config.questions].filter(([, q]) => q.hunks !== undefined && q.on?.includes("claim_made"));
+    if (!test || (!mints && byHunk.length === 0)) return;
     this.enqueue(project, async () => {
-      for (const file of await this.code.testDiffs(project, scope, commit)) {
-        const names = namesIn(file.text, spec);
-        const known = await this.code.settled(project, actor, names);
-        const unsettled = names.filter((n) => !known.has(n));
-        if (unsettled.length === 0) continue;
-        const ask = (spec as { ask?: Record<string, QuestionSpec> }).ask ?? {};
-        const questions = Object.fromEntries(
-          Object.entries(ask).map(([k, q]) => [`mints-an-api.${k}`, { ...q, tells: "evidence" }]),
-        );
-        await this.askAndRecord(
-          project,
-          questions,
-          { hunk: added(file.text).slice(0, this.config.itemChars * 2), unsettled: unsettled.join(", ") },
-          scope,
-          actor,
-          commit,
-        );
+      for (const file of await this.code.diffs(project, scope, commit)) {
+        const side = test.test(file.path) ? "test" : "product";
+        if (mints && side === "test") await this.mintsIn(project, scope, actor, commit, file.text, mints);
+        const asks = Object.fromEntries(byHunk.filter(([, q]) => q.hunks === side));
+        for (const hunk of hunksOf(file.text)) {
+          const ctx = { event: null, state, item: hunk.slice(0, this.config.itemChars * 2), actor, scope };
+          for (const group of groupByState(asks, (q) => stateFor(q, ctx)))
+            await this.askAndRecord(project, group.questions, group.values, scope, actor, commit, null, ctx);
+        }
       }
     });
+  }
+
+  private async mintsIn(
+    project: string,
+    scope: string,
+    actor: string,
+    commit: string,
+    diff: string,
+    spec: QuestionSpec,
+  ): Promise<void> {
+    const names = namesIn(diff, spec);
+    const known = await this.code.settled(project, actor, names);
+    const unsettled = names.filter((n) => !known.has(n));
+    if (unsettled.length === 0) return;
+    const ask = (spec as { ask?: Record<string, QuestionSpec> }).ask ?? {};
+    const questions = Object.fromEntries(
+      Object.entries(ask).map(([k, q]) => [`mints-an-api.${k}`, { ...q, tells: "evidence" }]),
+    );
+    await this.askAndRecord(
+      project,
+      questions,
+      { hunk: added(diff).slice(0, this.config.itemChars * 2), unsettled: unsettled.join(", ") },
+      scope,
+      actor,
+      commit,
+    );
+  }
+
+  /**
+   * A check made to pass: an existing line of a test file changed or removed by an agent watched for it, in a scope
+   * whose brief does not ask for work on tests. Code sees it; the Watcher weighs it, and a removed assertion goes to
+   * the owner at once.
+   */
+  private madeToPass(project: string, actor: string, role: string, scope: string, item: TurnItem, state: State): void {
+    const spec = this.config.moments.get("check-made-to-pass");
+    const test = this.config.testPath;
+    if (!spec?.watches?.includes(role) || !test || item.path === null || !test.test(item.path)) return;
+    const brief = state.scopes.get(scope)?.brief;
+    const briefText = brief ? [brief.goal, ...brief.constraints].map((l) => l.text).join("\n") : "";
+    if (/\btests?\b|\bspecs?\b|\bassert/i.test(briefText)) return;
+    const removed = item.text.split("\n").filter((l) => l.startsWith("-") && !l.startsWith("---"));
+    if (removed.length === 0) return;
+    const key = `${project}:${actor}:${item.path}`;
+    if (this.bent.has(key)) return;
+    this.bent.add(key);
+    const assertion = removed.some((l) => /\b(expect|assert|should|toBe|toEqual)\b/.test(l));
+    void this.submit(project, {
+      type: "record_observation",
+      question: "check-made-to-pass",
+      actor,
+      scope,
+      source: "code",
+      model: null,
+      answer: assertion ? "an assertion changed" : "a test line changed",
+      level: assertion ? "tell" : "consider",
+      route: {
+        kind: "attention",
+        why: this.masked(
+          `${item.path} changed where the brief asks nothing of tests: ${removed.slice(0, 3).join(" ")}`.slice(0, 400),
+        ),
+        facts: [],
+        urgency: "now",
+      },
+    });
+  }
+
+  /** Silent without progress: turns in a row that spent and sent the kernel nothing, told once as they reach the count. */
+  private silence(project: string, e: Extract<Event, { type: "turn_ended" }>, state: State): void {
+    const key = `${project}:${e.actor}`;
+    const acted = this.acted.delete(key);
+    const spec = this.config.moments.get("silent-without-progress");
+    const actor = state.actors.get(e.actor);
+    if (!spec || !actor || !spec.watches?.includes(actor.role)) return;
+    if (acted || (e.tokens === 0 && e.usd === 0)) {
+      this.silent.delete(key);
+      return;
+    }
+    const n = (this.silent.get(key) ?? 0) + 1;
+    this.silent.set(key, n);
+    if (n !== this.config.silentTurns) return;
+    void this.submit(project, {
+      type: "record_observation",
+      question: "silent-without-progress",
+      actor: actor.id,
+      scope: actor.scope,
+      source: "code",
+      model: null,
+      answer: `${n} turns`,
+      level: "tell",
+      route: {
+        kind: "attention",
+        why: `${n} turns in a row spent and recorded nothing: no hand-back, finding, message or question`,
+        facts: [],
+        urgency: "later",
+      },
+    });
+  }
+
+  /** Findings waiting: one its answerer has let stand past the end of its next turn, told once to the owner above it. */
+  private findingsWaiting(project: string, actorId: string, state: State): void {
+    const actor = state.actors.get(actorId);
+    const spec = this.config.moments.get("findings-waiting");
+    if (!spec || !actor || !spec.watches?.includes(actor.role)) return;
+    for (const f of state.findings.values()) {
+      if (f.status !== "raised" || state.scopes.get(f.answeredBy)?.owner !== actorId) continue;
+      const key = `${project}:${f.id}`;
+      const n = (this.unanswered.get(key) ?? 0) + 1;
+      this.unanswered.set(key, n);
+      // The turn it arrived in, then the next: past that, it waits on the answerer.
+      if (n !== 2) continue;
+      void this.submit(project, {
+        type: "record_observation",
+        question: "findings-waiting",
+        actor: actorId,
+        scope: actor.scope,
+        source: "code",
+        model: null,
+        answer: `${f.id} unclassified`,
+        level: "tell",
+        route: {
+          kind: "attention",
+          why: this.masked(`${f.id} from ${f.raisedBy} is still unclassified: ${f.text}`.slice(0, 400)),
+          facts: [],
+          urgency: "later",
+        },
+      });
+    }
   }
 
   /** Going in circles: the same failing call again and again, counted with no model asked. */
@@ -270,16 +449,30 @@ export class Reflex {
 
   private subjectOf(e: Event, state: State): { scope: string; actor: string | null; commit: string | null } | null {
     const by = state.actors.has(e.by) ? e.by : null;
+    const seatOf = (actor: string) => {
+      const a = state.actors.get(actor);
+      return a ? { scope: a.scope, actor: a.id, commit: null } : null;
+    };
     switch (e.type) {
       case "finding_raised":
         return { scope: e.finding.scope, actor: e.finding.raisedBy, commit: null };
+      case "finding_classified": {
+        const f = state.findings.get(e.finding);
+        return f ? { scope: f.scope, actor: by, commit: null } : null;
+      }
       case "plan_amended":
+      case "brief_issued":
       case "brief_amended":
+      case "report_made":
         return { scope: e.scope, actor: by, commit: null };
       case "evidence_recorded":
         return { scope: e.evidence.scope, actor: null, commit: e.evidence.subject };
       case "claim_made":
         return { scope: e.claim.scope, actor: e.claim.by, commit: e.claim.commit };
+      case "permission_asked":
+        return seatOf(e.permission.actor);
+      case "message_sent":
+        return seatOf(e.message.to);
       default:
         return null;
     }
@@ -290,8 +483,8 @@ export class Reflex {
 export type Code = {
   /** What is already settled of these names for one agent: in its brief and plans, the base, or its own code. */
   settled(project: string, actor: string, names: readonly string[]): Promise<ReadonlySet<string>>;
-  /** The test files a handed-back commit changed, each with its diff. */
-  testDiffs(project: string, scope: string, commit: string): Promise<{ path: string; text: string }[]>;
+  /** The files a handed-back commit changed against its parent's branch, each with its diff. */
+  diffs(project: string, scope: string, commit: string): Promise<{ path: string; text: string }[]>;
 };
 
 /** The lines a diff adds, or the whole text when it is not a diff. */
@@ -302,6 +495,12 @@ function added(text: string): string {
     .filter((l) => l.startsWith("+") && !l.startsWith("+++"))
     .map((l) => l.slice(1))
     .join("\n");
+}
+
+/** A file's diff cut at each hunk header; a text that is not a diff is one hunk. */
+function hunksOf(diff: string): string[] {
+  const parts = diff.split(/^(?=@@ )/m).filter((p) => p.startsWith("@@"));
+  return parts.length > 0 ? parts : [diff];
 }
 
 function namesIn(text: string, spec: QuestionSpec): string[] {
@@ -317,12 +516,16 @@ function namesIn(text: string, spec: QuestionSpec): string[] {
   return [...found].slice(0, 40);
 }
 
-/** The answer read as a probability of the outcome that matters, and the label chosen. */
-function read(name: string, spec: QuestionSpec, a: Answer, model: string): Asked {
+/**
+ * The answer read as a probability of the outcome that matters, and the label chosen. A choice is weighed on the labels
+ * its `matters` names, or on every label but the one the record gives (`against`), or else on its first label.
+ */
+function read(name: string, spec: QuestionSpec, a: Answer, model: string, given: string | null): Asked {
   if (a.type === "noul") return { name, spec, p: a.noul, label: null, model };
-  // A choice is weighed on the label that means trouble: for these questions, the first label listed.
-  const first = Object.keys(spec.labels ?? {})[0] ?? a.choice;
-  return { name, spec, p: a.probabilities[first] ?? 0, label: a.choice, model };
+  const labels = Object.keys(spec.labels ?? {});
+  const weighed = spec.matters ?? (spec.against !== undefined ? labels.filter((l) => l !== given) : labels.slice(0, 1));
+  const p = weighed.reduce((sum, l) => sum + (a.probabilities[l] ?? 0), 0);
+  return { name, spec, p: Math.min(1, p), label: a.choice, model };
 }
 
 /** A threshold speaks only for the wording and model it was earned on (REFLEX.md); unearned, it goes no further than a candidate. */
@@ -368,7 +571,7 @@ function observationOf(
   return { ...base, level: level === "consider" ? "record" : level, route: { kind: "fact", to, text } };
 }
 
-function matches(spec: QuestionSpec, e: Event): boolean {
+function matches(spec: QuestionSpec, e: Event, state: State): boolean {
   const when = spec.when;
   if (!when) return true;
   if (e.type === "evidence_recorded") {
@@ -378,10 +581,20 @@ function matches(spec: QuestionSpec, e: Event): boolean {
   }
   if ((e.type === "brief_issued" || e.type === "brief_amended") && typeof when.kind === "string")
     return e.brief.kind === when.kind;
+  if (e.type === "finding_classified" && Array.isArray(when.verdict)) return when.verdict.includes(e.verdict);
+  if (e.type === "message_sent" && when.from === "human")
+    return e.message.from === HUMAN && e.message.copyOf === null && state.actors.has(e.message.to);
   return true;
 }
 
-type Context = { event: Event | null; state: State; item: string | null; actor: string | null };
+type Context = {
+  event: Event | null;
+  state: State;
+  /** What is judged when it is not the event: an item of a turn, a hunk, a turn's last words. */
+  item: string | null;
+  actor: string | null;
+  scope: string | null;
+};
 
 /** Each field a question reads, taken from where the record keeps it; null when one is missing, and nothing is asked. */
 function stateFor(spec: QuestionSpec, ctx: Context): Record<string, string> | null {
@@ -394,10 +607,32 @@ function stateFor(spec: QuestionSpec, ctx: Context): Record<string, string> | nu
   return out;
 }
 
-function valueOf(path: string, { event, state, item, actor }: Context): string | null {
+/** Lines as the state gives them; a list the record holds empty says so, since its absence is part of the answer. */
+const linesText = (lines: readonly Line[]) =>
+  lines.length > 0 ? lines.map((l) => `- ${l.text}`).join("\n") : "(none)";
+
+function briefOf({ event, state, scope }: Context): Brief | null {
+  if (event?.type === "brief_issued" || event?.type === "brief_amended") return event.brief;
+  return (scope ? state.scopes.get(scope)?.brief : null) ?? null;
+}
+
+/** The plan nearest above the scope: its own, or its parent's, up to the root's. */
+function planOf({ state, scope }: Context): Plan | null {
+  for (let at = scope; at !== null; at = state.scopes.get(at)?.parent ?? null) {
+    const plan = state.scopes.get(at)?.plan;
+    if (plan) return plan;
+  }
+  return null;
+}
+
+function valueOf(path: string, ctx: Context): string | null {
+  const { event, state, item, actor } = ctx;
   const root = state.scopes.get(ROOT);
+  const brief = briefOf(ctx);
   switch (path) {
     case "item":
+    case "hunk":
+    case "turn.lastSaid":
       return item;
     case "plan.goal":
       return root?.plan?.goal.text ?? null;
@@ -405,12 +640,58 @@ function valueOf(path: string, { event, state, item, actor }: Context): string |
       const a = root?.plan?.appetite;
       return a ? `${a.line.text}${a.usd !== null ? ` ($${a.usd})` : ""}` : null;
     }
+    case "plan.lines": {
+      const plan = planOf(ctx);
+      return plan ? linesText([plan.goal, ...plan.limits, ...plan.unknowns.map((u) => u.line)]) : "(no plan)";
+    }
     case "scope.brief.goal": {
       const scope = actor ? state.scopes.get(state.actors.get(actor)?.scope ?? "") : undefined;
       return scope?.brief?.goal.text ?? null;
     }
+    case "brief.goal":
+      return brief?.goal.text ?? null;
+    case "brief.constraints":
+      return brief ? linesText(brief.constraints) : null;
+    case "brief.choices":
+      return brief ? linesText(brief.choices) : null;
+    case "brief.context":
+      return brief ? linesText(brief.context) : null;
+    case "brief.kind":
+      return brief?.kind ?? null;
+    case "brief.text":
+      return brief
+        ? [
+            `Goal: ${brief.goal.text}`,
+            `Constraints:\n${linesText(brief.constraints)}`,
+            `Choices:\n${linesText(brief.choices)}`,
+            `Context:\n${linesText(brief.context)}`,
+          ].join("\n")
+        : null;
     case "step.logTail":
       return event?.type === "evidence_recorded" ? event.evidence.summary : null;
+    case "finding.evidence": {
+      const f = event?.type === "finding_classified" ? state.findings.get(event.finding) : undefined;
+      if (!f) return null;
+      const shown = f.evidence.flatMap((id) => {
+        const ev = state.evidence.get(id);
+        return ev ? [`${ev.kind} on ${ev.subject.slice(0, 8)}: ${ev.ok ? "ok" : "failing"}. ${ev.summary}`] : [];
+      });
+      return [`The finding: ${f.text}`, ...shown].join("\n");
+    }
+    case "finding.reason":
+      return event?.type === "finding_classified" ? event.reason : null;
+    case "report.lines":
+      return event?.type === "report_made"
+        ? [`Decided:\n${linesText(event.decided)}`, `Assumed:\n${linesText(event.assumed)}`].join("\n")
+        : null;
+    case "handback.text":
+      return event?.type === "claim_made"
+        ? [event.claim.text, ...event.claim.behaviours.map((b) => `- ${b.behaviour}`)].join("\n")
+        : null;
+    case "permission.text":
+      return event?.type === "permission_asked" ? event.permission.text : null;
+    case "message.text":
+      return event?.type === "message_sent" ? event.message.text : null;
     case "event.text":
       if (event?.type === "finding_raised") return event.finding.text;
       if (event?.type === "plan_amended")

@@ -23,6 +23,12 @@ const QuestionSchema = z
     watches: z.array(z.string()).optional(),
     reads: z.array(z.string()).optional(),
     by: z.literal("code").optional(),
+    /** A hand-back question asked hunk by hunk, of the test files or of the rest. */
+    hunks: z.enum(["test", "product"]).optional(),
+    /** The labels of a choice whose summed probability is weighed against the thresholds; the first by default. */
+    matters: z.array(z.string()).optional(),
+    /** A choice weighed on every label but the one the record already gives, such as the brief's kind. */
+    against: z.string().optional(),
   })
   .loose();
 export type QuestionSpec = z.infer<typeof QuestionSchema>;
@@ -53,6 +59,7 @@ const WatchFileSchema = z
       .object({
         repeats: z.number().int().positive(),
         repeatsTold: z.number().int().positive(),
+        silentTurns: z.number().int().positive(),
         testPath: z.string().optional(),
       })
       .loose(),
@@ -68,6 +75,7 @@ export type ReflexConfig = {
   readonly itemChars: number;
   readonly repeats: number;
   readonly repeatsTold: number;
+  readonly silentTurns: number;
   readonly testPath: RegExp | null;
 };
 
@@ -88,6 +96,7 @@ export function loadReflex(dir: string): ReflexConfig | null {
     itemChars: watch?.item.chars ?? 1500,
     repeats: watch?.facts.repeats ?? 3,
     repeatsTold: watch?.facts.repeatsTold ?? 5,
+    silentTurns: watch?.facts.silentTurns ?? 3,
     testPath: watch?.facts.testPath ? new RegExp(watch.facts.testPath) : null,
   };
 }

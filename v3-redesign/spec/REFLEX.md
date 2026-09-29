@@ -55,24 +55,25 @@ to do: V1's patterns carried advice in a `next` field, and v3 does not.
 
 ## Every use in v3
 
-Everything v3 asks Jev, in one place. Each row's questions live in the profile; the spec named owns the rest. Rows
-marked ★ hold the starting set the first lane asks (Decided); the rest wait for a look back to need them.
+Everything v3 asks Jev, in one place. Each row's questions live in the profile; the spec named owns the rest. Every
+row is asked from the first lane (Decided); those on the project's own rules start once it has its `rules.yaml`
+(The project's own rules).
 
 | Asked on                                   | What it asks                                                                 | Answer goes to                         | Spec          |
 | ------------------------------------------ | ---------------------------------------------------------------------------- | -------------------------------------- | ------------- |
 | A brief issued or amended                  | Framing: a fixed method, a cause given as fact, closed options, a goal nobody could observe, the other kind | The Supervisor, a note        | this file     |
-| ★ A finding, a plan or a brief amended       | Touches the goal or the cost the Human approved                              | The Supervisor, a note that wakes it   | this file     |
+| A finding, a plan or a brief amended       | Touches the goal or the cost the Human approved                              | The Supervisor, a note that wakes it   | this file     |
 | A finding kept                             | The reason does not meet the evidence                                        | The Supervisor, a note                 | this file     |
 | A report                                   | Settles a structure no plan line records                                     | The Supervisor, a note                 | this file     |
-| ★ An edit, on the paths a project rule covers | Breaks that rule of the project's instruction files                         | The writer, a fact quoting the rule and its line | this file |
-| ★ A hand-back's diff                       | Loosened assertions, bent product code, stand-ins, a minted API (★ this one only), a project rule broken | The Lead, `judgement` evidence | this file     |
-| ★ A check that failed                        | Failed on the environment (a missing dependency, a busy port, the network), or on the code | The Lead, a fact on the evidence | this file |
+| An edit, on the paths a project rule covers | Breaks that rule of the project's instruction files                         | The writer, a fact quoting the rule and its line | this file |
+| A hand-back's diff                       | Loosened assertions, bent product code, stand-ins, a minted API, a project rule broken | The Lead, `judgement` evidence | this file     |
+| A check that failed                        | Failed on the environment (a missing dependency, a busy port, the network), or on the code | The Lead, a fact on the evidence | this file |
 | A hand-back's claim                        | Names a part of the brief it did not do                                      | The Lead, `judgement` evidence         | this file     |
 | A permission asked                         | Cannot be undone from the agent's own copy                                   | Whoever answers it, a fact             | this file     |
 | The Human's words in an agent's chat       | Sets a requirement, says the code is wrong, asks, or approves                | The Lead's copy, a fact                | this file     |
-| A turn ended with no command               | Handed back, asked or waited in words only                                   | The agent, a delivery fact             | this file     |
-| ★ Each new item of a Lead's or Peer's work   | The watch's moments, one condition each                                      | The Watcher, or the owner above the work | `WATCH.md`    |
-| ★ An edit to a test with unsettled names     | Uses one as the code under test; a fake carries one                          | The Watcher, or the Peer's Lead        | `WATCH.md`    |
+| A turn ended with no command               | Handed back, asked or waited in words only, read from its last words         | The agent, a delivery fact             | this file     |
+| Each new item of a Lead's or Peer's work   | The watch's moments, one condition each                                      | The Watcher, or the owner above the work | `WATCH.md`    |
+| An edit to a test with unsettled names     | Uses one as the code under test; a fake carries one                          | The Watcher, or the Peer's Lead        | `WATCH.md`    |
 
 Nothing else asks it, and nothing it answers decides (I12).
 
@@ -334,5 +335,7 @@ ask(state, questions, model) -> Result<{ model, answers, tokens }>
 
 - A `judgement` step never holds an integration. It is shown beside the checks with its probability, and the Lead
   weighs it; a hold would make it the approval step N6 forbids.
-- The first lane asks only the starting set in each file's `active` list; the rest are written and waiting. A
-  question joins the set when a look back shows the lane needed what it notices (CONCEPT-V2 A3.9¶11: start simple).
+- Every question and moment is asked from the first lane: the owner chose the full set on 29 September 2026. Start
+  simple (CONCEPT-V2 A3.9¶11) still holds where it bears, on what reaches a role: a threshold not yet earned by a look
+  back sends its answer no further than a candidate for the Watcher or the record, so the wide set costs the owners
+  nothing until a question proves itself. A question that never leads to a change is removed at a look back.

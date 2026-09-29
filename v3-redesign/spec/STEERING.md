@@ -41,14 +41,14 @@ only it can decide. The watched agent still never learns it is watched: a Lead's
 | detour                          | The reflex: a mechanism added to work around a problem rather than fix it where it arises; code: layers added around one failing spot | The Lead | Ask what it works around; a finding upstream |
 | struggling                      | The reflex, early in a scope                                                              | The Lead    | Answer, or reopen the brief                       |
 | trades-the-goal, mints-an-api, builds-a-stand-in | The reflex and code (`WATCH.md`)                                         | The Lead    | Ask; carry it into the plan, or send it up        |
-| check-made-to-pass              | Code: a test or its config edited in a scope whose brief is not about tests; the reflex at hand-back | The Lead | Ask; a Reviewer; held-out tests |
+| check-made-to-pass              | Code: an existing line of a test changed in a scope whose brief asks nothing of tests, told at once when it is an assertion's; the reflex at hand-back | The Lead | Ask; a Reviewer; held-out tests |
 | silent-without-progress         | Code: turns with tokens spent and no commit, finding or message since the last hand-back or brief | The Lead | Ask where it stands; reseat |
 | big-decision, a framing that pre-solves, a plan kept without answering its evidence | The reflex and the Watcher | The Supervisor | An open question to the Lead |
-| a Lead ignoring its Peers' findings | Code: findings waiting on the Lead past its next turn                                  | The Supervisor | Ask; a hold; the Human                       |
+| a Lead ignoring its Peers' findings | Code: a finding still unclassified when the Lead's second turn since it ends        | The Supervisor | Ask; a hold; the Human                       |
 | past-appetite                   | Code: what a lane and its children spent passes the amount its appetite names             | The Supervisor | The Human, if the work should go on          |
 | a turn failed, an agent gone    | The agent host                                                                            | The owner above | Reseat, or release                          |
 
-The first lane's starting set is `watch.yaml`'s `active` list; the rest wait for a look back to need them.
+Every moment is watched from the first lane (`watch.yaml`'s `active` list, `REFLEX.md` Decided).
 
 ## What each role is given
 

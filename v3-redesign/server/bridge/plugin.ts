@@ -165,12 +165,12 @@ export class Plugin {
         },
         {
           settled: (project, actor, names) => this.settledNames(project, actor, names),
-          testDiffs: async (project, scope, commit) => {
+          diffs: async (project, scope, commit) => {
             const runtime = this.runtimes.get(project);
             const s = runtime?.project.view.scopes.get(scope);
             const parent = s?.parent ? runtime?.project.view.scopes.get(s.parent) : undefined;
-            if (!runtime || !parent?.branch || !config.testPath) return [];
-            return runtime.workspace.fileDiffs(parent.branch, commit, config.testPath);
+            if (!runtime || !parent?.branch) return [];
+            return runtime.workspace.fileDiffs(parent.branch, commit);
           },
         },
       );
