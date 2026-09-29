@@ -54,7 +54,8 @@ profile's set, in `profile/slp/watch.yaml` with its questions and thresholds:
 | builds-a-stand-in       | It plans a stub, fake, shim or second copy of state to fill a gap                        | Peer       |
 
 The first lane watches only the starting set in `watch.yaml`'s `active` list (big-decision, trades-the-goal,
-admits-wrong, mints-an-api); the others wait until a look back shows the lane needed them. When is each owner's
+admits-wrong, mints-an-api, and the moments counted in code alone, which ask no model: going-in-circles and
+past-appetite, `STEERING.md`); the others wait until a look back shows the lane needed them. When is each owner's
 craft, so it is data. The anti-pattern list the moments draw on is shared across projects
 (`reference/ANTIPATTERNS.md`); a project adds a moment of its own only when a look back shows its agents keep making
 one mistake. A profile with no moments has no watch, so a team that works another way loses nothing.
@@ -65,11 +66,11 @@ one mistake. A profile with no moments has no watch, so a team that works anothe
 agent host stream ─► eye (code): items and facts
     │
     ├─ reflex, on each item, each moment its role is watched for
-    │     p ≥ tell ───────────────────────────────────────────────────────────► Supervisor
+    │     p ≥ tell ───────────────────────────────────────────────────────────► owner
     │     consider ≤ p < tell ─┐
     ├─ facts that need judging ─┤  (a loop, a long turn, a full context, a test before its code)
     │                           ▼
-    ├─ sweep, scopes with new work ──────────────────────► Watcher ─ attend ──► owner    
+    ├─ sweep, scopes with new work ──────────────────────► Watcher ─ attend ──► owner
     │                                                          └──── pass (recorded)
     └─ alarms (a refused destructive command, two measurements at once, a flaky test) ─► Supervisor, the Human's view
 ```
@@ -178,7 +179,7 @@ since they last looked:
 
 - The decisions made for them.
 - The disagreements still open.
-- The attentions and what the Supervisor did with each.
+- The attentions, who they went to, and what each owner did.
 - The alarms.
 
 The view is built from the record, one line an item. What the Supervisor says about it is its own words. Reading it

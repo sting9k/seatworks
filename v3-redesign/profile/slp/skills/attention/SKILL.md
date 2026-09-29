@@ -18,6 +18,8 @@ please you; an open one leaves it free to say all is well.
 - Ask the Lead when it concerns its lane's design. Reach the Peer only when the Lead cannot carry it in time; the Lead
   gets a copy either way.
 - The same moment again after a question earns the next step, not a second question.
+- One that climbed from a Lead: the Lead's silence is part of it. Ask the Lead what it makes of its Peer's work before
+  you reach the Peer.
 - A moment that keeps firing on healthy work: `mark_noise`.
 
 ## How to ask

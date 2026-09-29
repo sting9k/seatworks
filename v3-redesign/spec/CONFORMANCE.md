@@ -12,10 +12,13 @@ on an implementation without the rule before it is trusted.
 | I1   | `handover` of the writer to another child                               | One event; no state in which both are writers             |
 | I2   | A Lead's child holds `src/net/`; the Lead's own seat tries to write there | Refused                                                 |
 | I3   | Two open siblings both hold `src/net/`, neither `after` the other       | Refused; accepted once one waits for the other            |
+| I3   | A waits for B, then B is set to wait for A                              | Refused                                                   |
 | I4   | `integrate` citing evidence on an older commit                          | Refused                                                   |
 | I4   | `integrate` over a failing check, with a reason                         | Accepted, the reason on the record                        |
 | I4   | `integrate` over a failing check, no reason                             | Refused                                                   |
+| I4   | `integrate` citing a verdict on an older commit                         | Refused                                                   |
 | I5   | A Peer amends its own brief                                             | Refused                                                   |
+| I5   | A Reviewer tries to write in its copy's paths through the kernel        | Refused: a reading scope has no paths                     |
 | I6   | The Lead amends the goal with no answer from the Human                  | Refused; accepted citing the answer                       |
 | I6   | A line marked the Human's with no message or answer from them behind it | Written as its caller's                                   |
 | I7   | The Supervisor sends a Peer a message that directs                      | The Lead has a copy and an obligation; it closes on carried or declined |
@@ -23,8 +26,6 @@ on an implementation without the rule before it is trusted.
 | I7   | The Human types into a Peer's chat                                      | The Lead has a copy and an obligation; the Human sees whether it was carried in |
 | I8   | `classify_finding` as `changes` with no change events                   | Refused                                                   |
 | I8   | `classify_finding` as `alternative` with no reason                      | Refused                                                   |
-| I4   | `integrate` citing a verdict on an older commit                         | Refused                                                   |
-| I5   | A Reviewer tries to write in its copy's paths through the kernel        | Refused: a reading scope has no paths                     |
 | I10  | A Lead calls `ask_human` in the SLP profile                             | Refused                                                   |
 | I10  | A Peer messages another Peer in the SLP profile                         | Refused; accepted in a profile that gives Peers `children` or a Peer edge |
 | I11  | A message asking for an answer; its reader is gone                      | The obligation moves to whoever is reseated; never closed by time |
@@ -59,6 +60,12 @@ on an implementation without the rule before it is trusted.
 | A finding touching the goal                                                             | Waits on a question; the raiser's default goes on; carried after the answer |
 | A small change: the Supervisor seats a Peer under the root and integrates it             | Works with no Lead                                         |
 | Reseat a Peer mid-task                                                                  | Same scope and copy; its obligations with the new actor    |
+| A tool call whose arguments name another agent as caller                                | Recorded as the agent whose key made the call              |
+| A Peer's turn fails on the host's error                                                 | A fact to its Lead; the seat, its obligations and mail stay |
+| A hand-back in a project with checks set                                                | Those checks run on its commit, as evidence                |
+| The Lead runs its own acceptance test on a Peer's commit with `run_checks`              | Evidence on that commit, by the Lead                       |
+| The Human reseats the Supervisor                                                        | Accepted: the Human stands as the root's parent            |
+| `publish` when the remote moved since the landing                                       | Refused by the workspace; nothing forced                   |
 
 ## Delivery
 
@@ -118,13 +125,13 @@ on an implementation without the rule before it is trusted.
 
 | Case                                                        | Expect                                                     |
 | ----------------------------------------------------------- | ---------------------------------------------------------- |
-| A Peer's thinking says it drops its approach, p past `tell` | One attention to the Supervisor; nothing to the Peer       |
+| A Peer's thinking says it drops its approach, p past `tell` | One attention to its Lead; nothing to the Peer             |
 | The same, p between `consider` and `tell`                   | A candidate to the Watcher, and an obligation on it        |
 | A restart with a candidate neither attended nor passed      | Given to the Watcher again                                 |
 | Jev's host unreachable                                      | Facts and sweeps reach the Watcher; nothing else changes   |
-| No Watcher role                                             | Only `tell` answers and alarms reach the Supervisor        |
-| Three moments on one Peer in one turn                       | One numbered message to the Supervisor, after its turn     |
-| The Supervisor marks a moment noise for a Peer              | That moment is not told again for that Peer and scope      |
+| No Watcher role                                             | Only `tell` answers, code moments and alarms reach the owners |
+| Three moments on one Peer in one turn                       | One numbered message to its Lead, after the Lead's turn    |
+| The Lead marks a moment noise for its Peer                  | That moment is not told again for that Peer and scope      |
 | A red test calls `addPoints`, which the brief names          | Nothing is asked                                           |
 | A test sets `user.points`; neither brief, plan, base nor the Peer's code has it | The reflex asks; past `tell`, an attention |
 | A test builds a fake user carrying `points`                 | The same, through the second question                      |
@@ -143,4 +150,7 @@ on an implementation without the rule before it is trusted.
 | The same call fails the same way three times                | A candidate for the Watcher, with no model asked           |
 | And five times                                              | An attention to the Lead, now                              |
 | A Peer's own turn after an attention about it               | Nothing about the attention reaches the Peer               |
+| The Lead messages the Peer after an attention, saying nothing of it | Acted on: it climbs no further                     |
+| An attention to the Supervisor left past its next turn      | Climbs no further; shown in the Human's view               |
+| A lane's spend passes the amount its appetite names         | An attention to the Supervisor, now, with no model asked   |
 

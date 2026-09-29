@@ -34,7 +34,7 @@ Drawn from CONCEPT-V2 §3.1, §4.3, §7.2 and §9.4.
 | Lead       | the Supervisor, its own Peers                       |
 | Peer       | its Lead: findings, questions, hand-backs, requests |
 | Reviewer   | its Lead                                            |
-| Watcher    | the Supervisor                                      |
+| Watcher    | the Supervisor; its attentions go to the owner above the work, through `attend` |
 
 A Peer does not message another Peer: it reads the other's work, and asks the owner for a change through its Lead.
 An edge between Peers would be a change to the concept, the owner's to make in the profile.

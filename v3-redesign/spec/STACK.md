@@ -11,7 +11,9 @@ nothing but Paseo, Jev's key and git. Every part is either bundled by Paseo itse
   no Node, no React, nothing tied to one runtime. A module anywhere else is a compile error.
 - Paseo builds both bundles itself, from `index.server.ts` and `index.client.tsx`. A plugin's `build` steps are argv
   commands such as `npm ci --omit=dev`; nothing asks the user for a compiler.
-- The daemon runs on Node, and Paseo's own server already uses `node:sqlite`.
+- The plugin's server runs as a child the daemon forks with its own Node (`fork`, `--experimental-strip-types`), and
+  Paseo's own server already loads `node:sqlite` there (its Oh My Pi provider reads a database with it). Paseo's CI
+  runs Node 22, where `node:sqlite` is synchronous and prints an experimental warning once.
 - Its SDK, protocol and client are TypeScript, and its RPC contracts are zod schemas in `shared/`.
 
 ## The choice
@@ -23,7 +25,7 @@ nothing but Paseo, Jev's key and git. Every part is either bundled by Paseo itse
 | Bridge, agent host, delivery, workspace, evidence, machine, reflex, watch | TypeScript in `server/` | Paseo's SDK is TypeScript, so the adapter reads its types directly, and a release that changes one fails the typecheck in the one place that imports it (PASEO rule 1) |
 | Workspace's git                   | git's own CLI, as argv              | git is the specialist; v3 calls it with hooks, fsmonitor and configured commands switched off, never a library that reimplements it |
 | Git shim                          | TypeScript on Node, behind a two-line launcher (`sh`, and `.cmd` on Windows) | Parsing git's argv (`-C`, `-c`, aliases, `--git-dir`) correctly matters more than the 40 ms Node takes to start; V1's shim is the shape |
-| Team tools                        | TypeScript, the MCP SDK             | One stdio server per agent, the kernel's commands as tools, their arguments as zod schemas |
+| Team tools                        | TypeScript, the MCP SDK             | One stdio server per agent, the kernel's commands as tools, their arguments as zod schemas; it reaches the bridge over a local socket with the agent's key (`PORTS.md`, Tools) |
 | Pi extension                      | TypeScript                          | Pi loads extensions written in TypeScript                                  |
 | Human surface                     | TypeScript and React Native (TSX)   | What Paseo's client contributions are written in                           |
 | RPC between surface and daemon    | zod schemas in `shared/`            | Paseo's own contract form                                                  |

@@ -35,7 +35,8 @@ takes from Paseo, and how it survives Paseo's releases, is in `PASEO.md`.
 create(spec) -> Result<agentId>
   spec: { name, agent, model, thinking, systemPrompt, tools, cwd, env, labels, sandbox }
 send(agentId, text, key) -> Result<sent | duplicate>
-stream(agentId) -> events: turn_started, turn_ended, said, thought, tool_call, usage, permission_requested
+stream(agentId) -> events: turn_started, turn_ended(done | failed(why) | cancelled), said, thought, tool_call,
+                          usage(tokens, cost), permission_requested, gone(why)
 history(agentId, since) -> events
 answerPermission(agentId, requestId, allow, reason)
 archive(agentId)
@@ -58,6 +59,7 @@ merge(path, from) -> Result<sha | conflict(paths)>        // a conflict is undon
 advance(branch, fromSha, toSha, how) -> Result<sha>       // how: squash | merge | ff; refuses if branch moved
 state(path) -> { head, branch, uncommitted }
 remove(key) -> Result<removed | kept(why)>                // keeps a copy holding uncommitted work
+publish(branch, remote, expectedSha) -> Result<sha>       // never forced; refuses if the remote moved
 ```
 
 Invariants, taken from Symphony's workspace safety rules:
@@ -115,7 +117,8 @@ Shows the Human the kernel's views and the agents' own words, and takes the Huma
 
 ```text
 views: whatTheHumanNeeds, sinceTheyLooked, chainOfChange, openObligations, status, signals
-commands: answer_question, send_message, hold_scope, resume_scope, amend_plan (lines of theirs)
+commands: answer_question, send_message, hold_scope, resume_scope, amend_plan (lines of theirs), answer_permission,
+          set_checks, publish
 ```
 
 - It shows only what the kernel's views and the agents said. It writes no summary of its own.
@@ -161,12 +164,17 @@ Configured by data. It names no agent, role, IDE or server in code.
 
 ## Tools
 
-Not a satellite: the MCP server each agent is given. Each tool is one kernel command, shown to the roles whose `tools`
-name it, or a read: `status` (a scope's view), `record` (briefs, findings, reports, attentions), `look` (an agent's
-history between two points, through the agent host), `diff` (a scope's change at a commit). A reply is the command's
-result and the facts it produced, never advice on what to do next. A tool's description says what it is for, and
-`raise_finding`'s names the points of conflict it is the channel for: a check that cannot pass honestly, a premise the
-code contradicts, the same failure a third time, a layer about to hide a contradiction (`STEERING.md`).
+Not a satellite: the MCP server each agent is given, a stdio process that speaks to the bridge over a local socket.
+The shell makes a key for each agent when it creates it and puts it in the agent's environment; the server shows it
+on connecting, and the bridge takes the caller from it, never from a tool's arguments. A session opened again is given
+back the key its agent was bound to. It guards against mistakes, not intent, as the git shim does.
+
+Each tool is one kernel command, shown to the roles whose `tools` name it, or a read: `status` (a scope's view),
+`record` (briefs, findings, reports, attentions), `look` (an agent's history between two points, through the agent
+host), `diff` (a scope's change at a commit). A reply is the command's result and the facts it produced, never advice
+on what to do next. A tool's description says what it is for, and `raise_finding`'s names the points of conflict it is
+the channel for: a check that cannot pass honestly, a premise the code contradicts, the same failure a third time, a
+layer about to hide a contradiction (`STEERING.md`).
 
 ## Bridge
 

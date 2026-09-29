@@ -3,8 +3,8 @@
 # condition, the smallest state, every outcome described, English.
 
 # The starting set: the moments that bear most on design while it is cheap to change. The others wait.
-# going-in-circles is counted in code and asks no model, so it costs nothing to start with.
-active: [big-decision, trades-the-goal, admits-wrong, mints-an-api, going-in-circles]
+# going-in-circles and past-appetite are counted in code and ask no model, so they cost nothing to start with.
+active: [big-decision, trades-the-goal, admits-wrong, mints-an-api, going-in-circles, past-appetite]
 
 item:
   chars: 1500 # a moment shows in a sentence or two; a longer item dilutes the question
@@ -167,6 +167,11 @@ moments:
     watches: [lead]
     by: code
     fact: a finding raised to the Lead and not classified by the end of the Lead's next turn
+
+  past-appetite:
+    watches: [lead]
+    by: code
+    fact: what the Lead's scope and its children spent passes the amount its appetite names; told once per amount
 
   # Asked of the reflex.
   detour:

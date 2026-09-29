@@ -62,8 +62,9 @@ Human's question of where a line's authority came from, which is P8.
 
 ### The shell is thin
 
-- **Intake.** Every command, from a tool, a hook or the surface, carries an id. A command seen before returns its
-  earlier result, so a tool call retried after a dropped connection changes nothing twice.
+- **Intake.** Every command, from a tool, a hook or the surface, carries an id, and its caller: the agent whose key
+  its tool server showed, the Human for the surface, the bridge for a fact. A command seen before returns its earlier
+  result, so a tool call retried after a dropped connection changes nothing twice.
 - **One writer per project.** Commands for one project go through one queue; the kernel for that project runs one at
   a time. Projects run side by side.
 - **Commit.** The events and the effects they ask for are written in one SQLite transaction, with the expected

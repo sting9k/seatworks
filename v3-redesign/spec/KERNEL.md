@@ -56,7 +56,12 @@ A Supervisor that seats a Peer straight under the root is the path for a small c
 ## 3. Actors and scopes
 
 - **Actor.** An agent or the Human. An agent has one role and is bound to one scope while it lives. The Human is not
-  seated; they speak to anyone and answer questions.
+  seated; they speak to anyone and answer questions, and they stand where the root's parent would: whatever the
+  owner of a scope's parent may do to a scope, the Human may do to the root.
+  - An agent calls the kernel through its own tool server, which carries a key the shell made for that agent when it
+    was created. The caller is the agent the key belongs to, never a name in the arguments (`PORTS.md`, Tools).
+  - A turn that fails (the host's error, a model's limit) and an agent that is gone are facts for the owner of its
+    parent scope. Its seat, its obligations and its mail stay until that owner reseats or releases it.
 - **Scope.** A piece of the work. Fields: `id`, `parent` (none for the root), `owner` (an actor), `writer` (an
   actor or none), `kind` (`work`, or `reading` bound to a commit), `paths` (what it may write), `after` (scopes it
   waits for), `brief` (current version), `plan` (for a scope that delegates), `workspace`, `status`, `held`.
@@ -83,6 +88,11 @@ Every line of a plan, a brief, a report or a decision is a **line**: `{ id, text
 
 The owner's hypotheses for its scope (CONCEPT-V2 §5.2): `goal`, `limits`, `unknowns` (each with how it will be
 checked), `appetite` (what the scope is worth spending). Lines, each with its origin. Amended by the scope's owner.
+
+An appetite that names an amount of money or of hours also carries it as a number. What each agent spends is recorded
+turn by turn from the agent host's usage, and `status` sets what a scope and its children have spent beside it. A
+scope that passes its appetite is a fact for the owner above it: a change to what the work may cost is the Human's
+(I6), and passing the amount is how code notices one.
 
 ### 4.3 Brief
 
@@ -114,10 +124,13 @@ A premise, constraint or choice that the evidence shows does not fit (CONCEPT-V2
 
 ### 4.5 Evidence and claims
 
+- **Checks**: the project's own commands that prove a commit, `[{ name, run }]`, set for the project with `set_checks`
+  and run by the evidence runner on each hand-back. `run_checks` runs them, or commands named for one scope, on any
+  commit, so a Lead can prove acceptance with tests the writer did not write.
 - **Evidence**: `{ id, kind, subject, result, by, at, conditions }`. `kind` is `check` (a command run), `verdict` (a
-  reading scope's answer), `measurement`,
-  `judgement` (the reflex's answer on a commit, `REFLEX.md`), or `human` (their word on the record). `subject` is the
-  commit it is about. `conditions` says, for a measurement, whether the machine was held.
+  reading scope's answer), `measurement`, `judgement` (the reflex's answer on a commit, `REFLEX.md`), or `human` (their
+  word on the record). `subject` is the commit it is about. `conditions` says, for a measurement, whether the machine
+  was held.
 - **Claim**: what an agent says of its own work, such as a hand-back. Recorded as a claim, never as evidence.
 
 ### 4.6 Obligation
@@ -155,8 +168,14 @@ the bridge as caller. Past its question's threshold it is also delivered as a no
 names, as evidence of kind `judgement`, or as a fact for the actor it concerns (`REFLEX.md`). Between its question's two
 thresholds it is a **candidate** for the actor that `watches` over its scope, and opens an obligation on that actor,
 closed by `attend` or `pass`. An attention, whether the reflex's or an `attend`, is delivered to the owner of the
-watched actor's parent scope, and one left neither acted on nor acknowledged past its reader's next turn goes up one
-owner (`STEERING.md`).
+watched actor's parent scope (`STEERING.md`).
+
+- Its reader has **acted on** it when a command of theirs names the watched actor or its scope after the attention
+  arrived: a message to it, a brief amended, a finding raised, a hold, a reseat, a release, `acknowledge` or
+  `mark_noise`. What the command said is the reader's own; the kernel only sees that one was made.
+- One not acted on by the end of its reader's next turn, whose scope is still open, goes up one owner as
+  `attention_climbed`, with the first reader's silence beside it. At the root it climbs no further: the Human's view
+  shows it.
 
 ## 5. Invariants
 
@@ -166,7 +185,7 @@ The kernel MUST refuse a command that would break one of these, and MUST NOT ref
 | --- | -------------------------------------------------------------------------------------------------------------------- | ---------- |
 | I1  | A scope has at most one writer; the writer changes only through a handover event.                                    | §4.2       |
 | I2  | An actor that delegated a scope does not write the paths its open children hold.                                    | §4.2       |
-| I3  | Open sibling scopes whose paths overlap are ordered by `after`, so two never write the same path at once.            | §4.2       |
+| I3  | Open sibling scopes whose paths overlap are ordered by `after`, so two never write the same path at once; `after` makes no cycle, since a cycle would leave each waiting for ever. | §4.2 |
 | I4  | Integrating a scope cites evidence whose subject is the commit being integrated. A failing result is integrated only with a reason. | §8.3, N1 |
 | I5  | Only a scope's writer changes its paths, only its parent's owner its brief, only its owner its plan.                  | §4.2, §4.3 |
 | I6  | A change to the goal or appetite, or to a line whose origin is the Human, cites the Human's answer.                   | §7.3, §9   |
@@ -195,6 +214,9 @@ A command is called by an actor and checked against its role's properties and th
 | `hand_back`        | the writer                                          | Records a claim at a commit; asks for evidence on it                     |
 | `record_verdict`   | the actor of a reading scope                        | Records its verdict as evidence on its commit                            |
 | `record_evidence`  | the bridge, for a satellite's result                 | Records evidence                                                         |
+| `record_usage`     | the bridge, at each turn's end                       | Records what the turn spent, in tokens and money                         |
+| `set_checks`       | owner of the root, or the Human                      | Sets the project's checks                                                |
+| `run_checks`       | owner of the parent, or the writer                   | Runs the project's checks, or named commands, on a commit of the scope   |
 | `integrate`        | owner of the parent                                 | Brings the scope into its parent (I4)                                    |
 | `send_back`        | owner of the parent                                 | Does not integrate, and says why                                         |
 | `reseat`           | owner of the parent                                 | A new actor on the same scope, briefed from the record; obligations and undelivered messages move |
@@ -211,6 +233,7 @@ A command is called by an actor and checked against its role's properties and th
 | `acknowledge`      | whoever an attention goes to                        | Says it was seen and needs nothing now; the attention climbs no further  |
 | `attend`, `pass`   | an actor that `watches`                             | Sends a candidate or a moment of its own to the owner above the work, or records it passed, with a reason |
 | `release`          | owner of the parent                                 | Ends an actor's seat; its scope stays                                    |
+| `publish`          | owner of the root, or the Human                     | Pushes a landed branch to the project's remote, never forced             |
 
 Integrations into one scope MUST run one at a time: bring the parent in, run evidence on the result, then integrate.
 
@@ -230,8 +253,9 @@ Events: `scope_opened`, `actor_seated`, `brief_issued`, `brief_amended`, `plan_s
 `finding_reopened`, `finding_withdrawn`, `claim_made`, `evidence_recorded`, `integrated`, `sent_back`, `reseated`,
 `scope_dropped`, `scope_held`, `scope_resumed`, `report_made`, `message_sent`, `message_delivered`, `message_moved`,
 `question_asked`, `question_answered`, `obligation_opened`, `obligation_closed`, `obligation_moved`, `machine_held`,
-`machine_released`, `actor_released`, `actor_gone`, `observation_made`, `noise_marked`, `attended`, `passed`,
-`acknowledged`, `attention_climbed`, `permission_asked`, `permission_answered`.
+`machine_released`, `actor_released`, `actor_gone`, `turn_failed`, `usage_recorded`, `checks_set`, `published`,
+`observation_made`, `noise_marked`, `attended`, `passed`, `acknowledged`, `attention_climbed`, `permission_asked`,
+`permission_answered`.
 
 ## 8. Views
 
@@ -247,7 +271,8 @@ Read models over the log. Nothing in them is kept apart from it.
   the Human that led to a change; reviews and checks whose result led to a send-back or an amendment; interventions
   carried in late; messages, the reflex's notes among them, followed by no change.
 - **Open obligations**, by holder.
-- **Status** of a scope for its actors: its brief, its children, its edges, what waits on whom.
+- **Status** of a scope for its actors: its brief, its children, its edges, what waits on whom, and what it and its
+  children have spent beside its appetite.
 
 ## 9. What the kernel does not do
 

@@ -24,9 +24,10 @@ The decision belongs to whoever owns the scope above the work, so an attention g
 
 - About a Peer: to its Lead, who owns its scope and may steer it, reseat it or redraw its work.
 - About a Lead, a change to the goal or the cost, or anything across lanes: to the Supervisor.
-- **Up the ladder when left.** An attention its reader has not acted on by the end of its next turn, and that still
-  holds, goes up one owner, with the first reader's silence beside it. Acting includes deciding to do nothing: the
-  Lead says so with one word, and the ladder stops.
+- **Up the ladder when left.** An attention its reader has not acted on by the end of its next turn, while its scope
+  is still open, goes up one owner, with the first reader's silence beside it. Acting is any command of the reader's
+  that names the watched agent or its scope (`KERNEL.md` §4.9), and deciding to do nothing counts: the Lead says so
+  with `acknowledge`, and the ladder stops. At the root it stops too, and the Human's view shows it.
 - The Supervisor sees what went to its Leads, and what came of it, in `status`, without being woken by it.
 
 This moves a responsibility to the owner it belongs to (CONCEPT-V2 §10.4) and keeps the Supervisor's context for what
@@ -44,6 +45,8 @@ only it can decide. The watched agent still never learns it is watched: a Lead's
 | silent-without-progress         | Code: turns with tokens spent and no commit, finding or message since the last hand-back or brief | The Lead | Ask where it stands; reseat |
 | big-decision, a framing that pre-solves, a plan kept without answering its evidence | The reflex and the Watcher | The Supervisor | An open question to the Lead |
 | a Lead ignoring its Peers' findings | Code: findings waiting on the Lead past its next turn                                  | The Supervisor | Ask; a hold; the Human                       |
+| past-appetite                   | Code: what a lane and its children spent passes the amount its appetite names             | The Supervisor | The Human, if the work should go on          |
+| a turn failed, an agent gone    | The agent host                                                                            | The owner above | Reseat, or release                          |
 
 The first lane's starting set is `watch.yaml`'s `active` list; the rest wait for a look back to need them.
 

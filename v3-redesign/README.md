@@ -53,7 +53,8 @@ order is the agents'.
   thresholds, the project's own rules, red-check triage, and what the tools built on Jev taught.
 - `spec/STEERING.md`: when a Lead should steer a Peer, when a Peer should stop working around and raise it, and who
   is told, from what the research on agents found.
-- `spec/WATCH.md`: the watch, which tells the Supervisor when a Lead or Peer needs attention, and how it asks.
+- `spec/WATCH.md`: the watch, which tells the owner above the work when a Lead or Peer needs attention, and how it
+  asks.
 
 ## Layout
 

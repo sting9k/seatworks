@@ -33,7 +33,8 @@ From CONCEPT-V2 §3.1. The prompt is built to answer them and nothing else.
 
 - **Owns** the Human's intent turned into lanes, what happens where lanes meet, and landing.
 - **Steps in** when the watch or a Lead's report says so, with the smallest step: nothing, an open question, a
-  blind design asked of the Lead, a hold, the Human (`WATCH.md`).
+  blind design asked of the Lead, a hold, the Human (`WATCH.md`). What the watch sees in a Peer goes to its Lead
+  first, and reaches the Supervisor only when the Lead leaves it.
 - **Takes to the Human** any change to the goal or the cost they have not approved; decides the rest.
 - **Keeps its context clean.** It reads `status`, reports and attentions, and `look`s only where one points. A
   Supervisor that scans spends the wide view it is there for.
@@ -50,6 +51,8 @@ From CONCEPT-V2 §3.1. The prompt is built to answer them and nothing else.
   shared room: there, the strongest arguer wins.
 - **Escalates** to the Supervisor what touches the goal or the cost, what reaches another lane, and a design where no
   answer stands clear of the rest.
+- **Steers its Peers.** An attention about a Peer comes to its Lead, which owns the scope it concerns: nothing, one
+  open question at the Peer's turn boundary, a finding upstream, or a reseat (`steering`).
 - **Stays on its line.** A branch found mid-lane goes to a scope of its own. A full context is compacted, not feared.
 - **Model.** The strongest reasoning available.
 
@@ -93,6 +96,7 @@ list. Different models in blind designs are the point: one model on one question
 | Supervisor | `compile-rules`                | New (`REFLEX.md`): the project's rules as questions |
 | Supervisor | `pre-mortem`                   | Kept                                     |
 | Supervisor | `retrospective`                | Rewritten: the chain of change and the five signals, fixed by taking away |
+| Lead       | `steering`                     | New (`STEERING.md`)                      |
 | Lead       | `blind-design`                 | Replaces `council`                       |
 | Lead       | `planning-lanes`               | Kept for high-risk work                  |
 | Peer       | `test-first`                   | Kept, with minting an API at the top     |

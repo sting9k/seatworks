@@ -39,7 +39,7 @@ from Paseo 0.10.1: the plugin SDK, `@getpaseo/client`, `@getpaseo/protocol`, the
 | Per-session environment                | `before('agent.session_open')`, env only                                                                 | —                                  |
 | The Human's surface                    | Client contributions: a surface and sidebar item, workspace panels, Command Center items, slash commands, header buttons, composer pills, timeline renderers | —                                  |
 | Cards in a chat                        | `timeline.append` plugin rows: shown, not kept (a daemon restart drops them), so never the record         | —                                  |
-| Settings                               | `registerSettings`, per installation, kept across updates                                                | Its own settings store             |
+| Settings, Jev's key among them         | `registerSettings` with a host-scoped definition (`defineSettings`, `scope: "host"`, a version and a zod schema), kept per installation across updates. Only `host` is accepted: 0.10.1 throws on any other scope, which is the refusal V1 met | Its own settings store             |
 | Install and update                     | A Git source (`paseo plugin add owner/repo:path`), reviewed `paseo plugin update`, `build` argv steps    | —                                  |
 
 ## What v3 does not take
@@ -52,12 +52,15 @@ from Paseo 0.10.1: the plugin SDK, `@getpaseo/client`, `@getpaseo/protocol`, the
   at it. In SLP a Lead replaced or released does not end its Peers, so v3 keeps parentage in its own log.
 - **Provider plugins and ACP.** v3 is not an agent provider.
 
+## Checked in Paseo 0.10.1's source
+
+- A finish notification goes to a parent only for an agent made by Paseo's own `create_agent` tool with
+  `notifyOnFinish`. Agents v3 makes through the plugin API get none, so nothing reaches a Lead around delivery.
+- Plugin settings work when host-scoped, as above.
+
 ## To check before building on it
 
-- Whether an agent started with a parent gets Paseo's finish notification from its child; if so, it must be off or
-  go through delivery.
 - Per-agent control of Paseo's tools: today it is per provider ID (`paseoTools` on a custom provider) and injection
   is off by default. If the Human turns it on, v3 needs provider entries of its own, the one reason to write Paseo's
   config.
-- `registerSettings` on 0.10: V1 recorded a runtime refusal of host-scoped SDK settings.
 - Branch names and locking through `workspaces.create`, against what the workspace port needs.

@@ -17,6 +17,8 @@ Human ─goal─► 0 Intake ─► 1 Open ─► 2 Plan ─► 3 Work ─► 4 
 
 - The Supervisor questions the Human until the goal, the constraints and the appetite are settled.
 - When the project's instruction files are new or have changed, the Supervisor compiles their rules (`compile-rules`).
+- The first time, the Supervisor sets the project's checks from what the project already runs (its scripts, its CI),
+  and the Human sees them.
 - Kernel: records the plan (goal, limits, what is not yet known and how each is checked). Each line carries its
   origin, here the Human.
 - Prompt: when not to open a team. A small change goes to one agent that owns and writes it, its evidence still bound
@@ -46,8 +48,8 @@ Human ─goal─► 0 Intake ─► 1 Open ─► 2 Plan ─► 3 Work ─► 4 
 A Peer leaves its work in one of two ways.
 
 - **While it works.** An edit that appears to break one of the project's written rules comes back to the Peer at
-  once as a fact quoting the rule, and it repairs it while the change is small. The watch tells the Supervisor when
-  the Peer's work needs attention; the Peer never hears of the watch.
+  once as a fact quoting the rule, and it repairs it while the change is small. The watch tells its Lead when the
+  Peer's work needs attention (`STEERING.md`); the Peer never hears of the watch.
 - **Hand-back.** The Peer commits and the evidence runner runs on that commit. "Done" is a claim; the evidence is what
   the Lead weighs.
 - **Finding.** The code contradicts a premise, constraint or choice of the brief, and the Peer raises it with
@@ -87,6 +89,8 @@ Nothing blocks it.
 
 - Kernel: base merged into the lane, evidence on the head that lands, then it lands. A conflict between lanes: the
   Supervisor chooses which lane takes it.
+- Landing is local and can be undone. Publishing to the project's remote cannot: the Supervisor or the Human calls
+  `publish`, never forced, and the Supervisor tells the Human at once.
 
 ## 7. Look back: the Supervisor and the owner
 
@@ -107,8 +111,9 @@ Nothing blocks it.
 1. A Peer waiting on an escalation names its default and goes on with what the escalation does not touch.
 2. The Lead redraws ownership inside its lane, the Supervisor between lanes. A handover moves the writer in one
    event, so no scope ever has two.
-3. The watch reads the words and thinking of Leads and Peers as they work and tells the Supervisor when one needs
-   attention; the Supervisor decides whether to ask, and asks an open question (`WATCH.md`). The reflex also reads
+3. The watch reads the words and thinking of Leads and Peers as they work and tells the owner above the work when one
+   needs attention: a Peer's Lead, or the Supervisor for a Lead. The owner decides whether to ask, and asks an open
+   question (`WATCH.md`, `STEERING.md`). The reflex also reads
    each brief, finding and report as it lands (`REFLEX.md`).
 4. A branch found in the middle of a lane, such as authorization finding no authentication under it, goes to a scope
    of its own, and the lane waits for it; the Lead does not stretch to fill it. A Lead's full context is compacted,
