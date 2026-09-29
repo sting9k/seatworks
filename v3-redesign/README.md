@@ -63,6 +63,4 @@ bridge/        the Paseo plugin's entry, the only place that builds the whole
 
 - The kernel's language. The Paseo bridge is TypeScript whatever it is.
 - Which store backs the log: a file of its own, or a tracker the Human already reads.
-- Whether the record's text, diffs and agents' thinking may go to Jev's host or the Watcher's model, and whether a
-  `judgement` step can hold an integration (`spec/REFLEX.md`, `spec/WATCH.md`).
-- Whether the Watcher runs by default, and on what period (`spec/WATCH.md`).
+- Whether a `judgement` step can hold an integration (`spec/REFLEX.md`).

@@ -65,6 +65,7 @@ A Supervisor that seats a Peer straight under the root is the path for a small c
   waits for), `brief` (current version), `plan` (for a scope that delegates), `workspace`, `status`, `held`.
   - Status moves `open → integrated | dropped`. A scope integrated into its parent stays on the record.
   - A child's `paths` lie within its parent's. A `reading` scope has none.
+  - A scope whose actor `watches` names the scopes it is `over`; the root's watcher is over every scope.
   - A `blind` scope's actor cannot read its siblings' briefs, hand-backs or branches, nor they its, until the owner
     integrates or drops it.
   - A scope whose owner `writes` has itself as writer. A scope whose owner `delegates` has no writer.
@@ -152,7 +153,9 @@ an answer, an intervention, a question to the Human, a hand-back waiting on its 
 
 What the reflex answered about an event (`REFLEX.md`): `{ id, question, subject, model, answer, at }`, recorded with
 the bridge as caller. Past its question's threshold it is also delivered as a note along the relation the question
-names, as evidence of kind `judgement`, or as a delivery fact to the agent it is about.
+names, as evidence of kind `judgement`, or as a delivery fact to the agent it is about. Between its question's two
+thresholds it is a **candidate** for the actor that `watches` over its scope, and opens an obligation on that actor,
+closed by `attend` or `pass`. An `attend` is an observation of the watcher's, delivered to the root (`WATCH.md`).
 
 ## 5. Invariants
 
@@ -171,7 +174,7 @@ The kernel MUST refuse a command that would break one of these, and MUST NOT ref
 | I9  | Lines carry the origin the kernel set; a line is the Human's only via something the Human said.                     | §9.2       |
 | I10 | Only a role with `humanDoor` asks the Human; a message is sent only along the sender's `speaksTo`.                   | §3.1, §7.3 |
 | I11 | An obligation closes only when what is owed is done; it moves with its holder.                                       | §4.5       |
-| I12 | An observation changes only the record: it moves no line, finding, scope, hold or obligation, answers nothing, and is delivered only as a note that asks nothing, as `judgement` evidence, or as a delivery fact. | N1, N6     |
+| I12 | An observation changes only the record: it moves no line, finding, scope or hold, opens no obligation but a candidate's on its watcher, answers nothing, and is delivered only as a note that asks nothing, as `judgement` evidence, or as a delivery fact. | N1, N6     |
 
 ## 6. Commands
 
@@ -203,6 +206,7 @@ A command is called by an actor and checked against its role's properties and th
 | `answer_question`  | the Human                                           |                                                                          |
 | `hold_machine`     | any seated actor                                    | Holds or releases the machine                                            |
 | `mark_noise`       | the root's owner                                    | A moment of the watch is not told again for one actor and scope          |
+| `attend`, `pass`   | an actor that `watches`                             | Sends a candidate or a moment of its own to the root, or records it passed, with a reason |
 | `release`          | owner of the parent                                 | Ends an actor's seat; its scope stays                                    |
 
 Integrations into one scope MUST run one at a time: bring the parent in, run evidence on the result, then integrate.
@@ -221,7 +225,7 @@ Events: `scope_opened`, `actor_seated`, `brief_issued`, `brief_amended`, `plan_s
 `finding_reopened`, `finding_withdrawn`, `claim_made`, `evidence_recorded`, `integrated`, `sent_back`, `reseated`,
 `scope_dropped`, `scope_held`, `scope_resumed`, `report_made`, `message_sent`, `message_delivered`,
 `question_asked`, `question_answered`, `obligation_opened`, `obligation_closed`, `obligation_moved`,
-`machine_held`, `machine_released`, `actor_released`, `actor_gone`, `observation_made`, `noise_marked`.
+`machine_held`, `machine_released`, `actor_released`, `actor_gone`, `observation_made`, `noise_marked`, `attended`, `passed`.
 
 ## 8. Views
 

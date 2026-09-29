@@ -95,7 +95,11 @@ on an implementation without the rule before it is trusted.
 
 | Case                                                        | Expect                                                     |
 | ----------------------------------------------------------- | ---------------------------------------------------------- |
-| A Peer's thinking says it drops its approach                | One attention to the Supervisor; nothing to the Peer       |
+| A Peer's thinking says it drops its approach, p past `tell` | One attention to the Supervisor; nothing to the Peer       |
+| The same, p between `consider` and `tell`                   | A candidate to the Watcher, and an obligation on it        |
+| A restart with a candidate neither attended nor passed      | Given to the Watcher again                                 |
+| No reflex key                                               | Facts and sweeps reach the Watcher; nothing else changes   |
+| No Watcher role                                             | Only `tell` answers and alarms reach the Supervisor        |
 | Three moments on one Peer in one turn                       | One numbered message to the Supervisor, after its turn     |
 | The Supervisor marks a moment noise for a Peer              | That moment is not told again for that Peer and scope      |
 | A test calls a field that neither base nor brief has        | `mints-an-api`, with the missing names as a fact           |

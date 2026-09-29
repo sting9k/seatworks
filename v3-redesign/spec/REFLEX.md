@@ -143,6 +143,8 @@ questions:
 - `state` maps each field the question names to where the record keeps it. It never holds more.
 - `over` is the probability past which it speaks, and `because` its reason. There is one value per question; V1's
   forty tuning values in `attention.json` go.
+- `consider`, where a question has one, is the probability past which an answer under `over` goes to the actor that
+  watches the scope, as a candidate (`WATCH.md`).
 - `tells` is a relation (`root`, `owner`, `parent`, `self`) or `evidence`. `wakes: true` lets a note wake the role it
   is for. Otherwise it waits for the next message that asks something, as every note does.
 
@@ -156,7 +158,9 @@ questions:
 - A state past the budget is not cut to fit. The step says `too large`.
 - The key lives in the plugin's settings and is never written to a log. The SDK's `debug` level logs request bodies,
   so it stays at `warn`.
-- With no key set there is no reflex. The rest of v3 works the same without it.
+- With no key set there is no reflex, and the rest of v3 works the same. Setting the key is the Human's consent to
+  send the record's text to Jev's host: OpenRouter with data collection denied unless they choose TypeSafe's own
+  API. What looks like a secret is masked before any text leaves.
 
 ## Measured by the record, taken away by subtraction
 
@@ -198,6 +202,5 @@ ask(state, questions, model) -> Result<{ model, answers, tokens }>
 
 ## Open, for the owner
 
-- Whether briefs, findings and diffs may be sent to TypeSafe or OpenRouter at all, and on which route.
 - Whether a `judgement` step can hold an integration, as a failing check does under I4. The recommendation is no: it
   is shown beside the checks and never holds, since a hold would make it the approval step N6 forbids.
