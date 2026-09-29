@@ -16,6 +16,17 @@ test("I1: a scope's writer changes only by a reseat, which leaves no moment with
   assert.notEqual(ledger.state.actors.get("a3")?.status, "seated");
 });
 
+test("I1: a handover moves paths to a sibling in one event, so a path is never in two scopes at once", () => {
+  const { ledger, lead, task } = team();
+  ledger.must(ledger.as(lead, "open_scope", { parent: "1", role: "peer", paths: ["src/io/"], brief: brief("IO") }));
+  const events = ledger.must(
+    ledger.as(lead, "handover", { from: task, to: "1.2", paths: ["src/net/"], reason: "io owns the wire" }),
+  );
+  assert.equal(events.filter((e) => e.type === "handed_over").length, 1);
+  assert.deepEqual(ledger.state.scopes.get(task)?.paths, []);
+  assert.deepEqual(ledger.state.scopes.get("1.2")?.paths, ["src/io/", "src/net/"]);
+});
+
 test("I2: a Lead's scope has no writer, so the Lead hands back its lane's head and never writes its Peers' paths", () => {
   const { ledger, lead } = team();
   assert.equal(ledger.state.scopes.get("1")?.writer, null);

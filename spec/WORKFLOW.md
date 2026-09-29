@@ -114,8 +114,8 @@ Nothing blocks it.
 ## Decided
 
 1. A Peer waiting on an escalation names its default and goes on with what the escalation does not touch.
-2. The Lead redraws ownership inside its lane, the Supervisor between lanes. A handover moves the writer in one
-   event, so no scope ever has two.
+2. The Lead redraws ownership inside its lane, the Supervisor between lanes. A handover moves paths in one event, so
+   a path never has two writers.
 3. The watch reads the words and thinking of Leads and Peers as they work and tells the owner above the work when one
    needs attention: a Peer's Lead, or the Supervisor for a Lead. The owner decides whether to ask, and asks an open
    question (`WATCH.md`, `STEERING.md`). The reflex also reads

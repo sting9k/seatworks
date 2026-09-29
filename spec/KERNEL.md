@@ -60,8 +60,9 @@ A Supervisor that seats a Peer straight under the root is the path for a small c
   owner of a scope's parent may do to a scope, the Human may do to the root.
   - An agent calls the kernel through its own tool server, which carries a key the shell made for that agent when it
     was created. The caller is the agent the key belongs to, never a name in the arguments (`PORTS.md`, Tools).
-  - A turn that fails (the host's error, a model's limit) and an agent that is gone are facts for the owner of its
-    parent scope. Its seat, its obligations and its mail stay until that owner reseats or releases it.
+  - A turn that fails (the host's error, a model's limit) keeps the seat and is a fact for the owner of its parent
+    scope. An agent that is gone leaves its seat empty; what it owed and what waited for it moves to that owner,
+    until they reseat or drop the scope.
 - **Scope.** A piece of the work. Fields: `id`, `parent` (none for the root), `owner` (an actor), `writer` (an
   actor or none), `kind` (`work`, or `reading` bound to a commit), `paths` (what it may write), `after` (scopes it
   waits for), `brief` (current version), `plan` (for a scope that delegates), `workspace`, `status`, `held`.
@@ -188,7 +189,7 @@ The kernel MUST refuse a command that would break one of these, and MUST NOT ref
 
 | #   | Invariant                                                                                                            | CONCEPT-V2 |
 | --- | -------------------------------------------------------------------------------------------------------------------- | ---------- |
-| I1  | A scope has at most one writer; the writer changes only through a handover event.                                    | §4.2       |
+| I1  | A scope has at most one writer; paths move between sibling scopes only through a handover event, so a path is never written from two scopes at once. | §4.2       |
 | I2  | An actor that delegated a scope does not write the paths its open children hold.                                    | §4.2       |
 | I3  | Open sibling scopes whose paths overlap are ordered by `after`, so two never write the same path at once; `after` makes no cycle, since a cycle would leave each waiting for ever. | §4.2 |
 | I4  | Integrating a scope cites evidence whose subject is the commit being integrated. A failing result is integrated only with a reason. | §8.3, N1 |
@@ -212,7 +213,7 @@ A command is called by an actor and checked against its role's properties and th
 | `amend_brief`      | owner of the parent                                 | New brief version, with a reason and the finding it carries if any       |
 | `set_plan`, `amend_plan` | owner of the scope                            | Sets or amends the plan's lines (I6 for goal and appetite)               |
 | `add_edge`, `remove_edge` | owner of the scope the edge sits in          | `dependsOn`, `mayChange`, `mustTell`, with a reason                      |
-| `handover`         | owner of the parent                                 | Moves paths or the writer from one child to another in one event         |
+| `handover`         | owner of the parent                                 | Moves paths from one child to another in one event; they are written by the receiving scope's writer |
 | `raise_finding`    | any seated actor                                    | Opens a finding                                                          |
 | `classify_finding` | whoever answers it (§4.4)                           | `changes` with change events, or `alternative` / `minor` with a reason   |
 | `withdraw_finding` | the raiser                                          |                                                                          |

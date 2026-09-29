@@ -9,7 +9,7 @@ on an implementation without the rule before it is trusted.
 | Case | Setup                                                                  | Expect                                                    |
 | ---- | ---------------------------------------------------------------------- | --------------------------------------------------------- |
 | I1   | A scope with a writer; a second actor tries to take it without handover | Refused                                                   |
-| I1   | `handover` of the writer to another child                               | One event; no state in which both are writers             |
+| I1   | `handover` moves paths to a sibling                                     | One event; the moved paths' writer changes with them, never two at once |
 | I2   | A Lead's child holds `src/net/`; the Lead's own seat tries to write there | Refused                                                 |
 | I3   | Two open siblings both hold `src/net/`, neither `after` the other       | Refused; accepted once one waits for the other            |
 | I3   | A scope opened `after` an open sibling                                  | No copy and no agent until that sibling is integrated or dropped |
@@ -33,7 +33,7 @@ on an implementation without the rule before it is trusted.
 | I8   | `classify_finding` as `alternative` with no reason                      | Refused                                                   |
 | I10  | A Lead calls `ask_human` in the SLP profile                             | Refused                                                   |
 | I10  | A Peer messages another Peer in the SLP profile                         | Refused; accepted in a profile that gives Peers `children` or a Peer edge |
-| I11  | A message asking for an answer; its reader is gone                      | The obligation moves to whoever is reseated; never closed by time |
+| I11  | A message asking for an answer; its reader is gone                      | The obligation moves to the owner above; never closed by time |
 | I12  | An observation past its threshold on a finding                          | A note to the relation named; the finding, its obligation and every line unchanged |
 | I12  | A reflex question whose `tells` would classify, integrate or answer     | The profile is refused when loaded                        |
 

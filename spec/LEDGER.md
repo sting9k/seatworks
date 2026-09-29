@@ -214,7 +214,7 @@ agent also settles any open attention about the actors or scopes it names that t
 | Command            | Arguments                                                                                  | →                                       |
 | ------------------ | ------------------------------------------------------------------------------------------ | --------------------------------------- |
 | `open_scope`       | `parent, role, kind, paths, after, brief, commit?, over?, model?`                          | `scope_opened`, `actor_seated`, `brief_issued` |
-| `amend_brief`      | `scope, set: { goal?, constraints?, choices?, context?, kind? }, reason, carries?, via?`    | `brief_amended`                         |
+| `amend_brief`      | `scope, set: { goal?, constraints?, choices?, context?, kind? }, reason, carries?, cites?`    | `brief_amended`                         |
 | `set_plan`         | `scope, plan`                                                                              | `plan_set`                              |
 | `amend_plan`       | `scope, remove: LineId[], add: { section, text, check?, term?, avoid?, via? }[], appetite?, reason, carries?, cites?`; a term added under a word the plan holds replaces it | `plan_amended` |
 | `add_edge`, `remove_edge` | `scope, edge: after \| mayChange \| mustTell, target, reason, carries?`             | `edge_added`, `edge_removed`            |
@@ -240,7 +240,7 @@ agent also settles any open attention about the actors or scopes it names that t
 | `answer_permission`| `permission, allow, reason`                                                                | `permission_answered`, `obligation_closed` |
 | `acknowledge`      | `attention`                                                                                | `acknowledged`                          |
 | `mark_noise`       | `attention`                                                                                | `noise_marked`                          |
-| `attend`           | `candidate? (observation), actor, scope, moment, why, urgency`                             | `attended`, `attention_opened`, `obligation_closed`? |
+| `attend`           | `candidate? (observation), actor, moment, why, urgency`                             | `attended`, `attention_opened`, `obligation_closed`? |
 | `pass`             | `candidate, reason`                                                                        | `passed`, `obligation_closed`           |
 | `set_checks`       | `checks: { name, run: string[] }[]`                                                        | `checks_set`                            |
 | `publish`          | `remote`                                                                                   | `publish_requested`                     |
