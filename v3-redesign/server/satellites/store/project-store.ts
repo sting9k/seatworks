@@ -37,6 +37,7 @@ export class ProjectStore {
   private readonly pendingRows: StatementSync;
   private readonly settleRow: StatementSync;
   private readonly attemptRow: StatementSync;
+  private readonly recentRows: StatementSync;
 
   constructor(file: string) {
     if (file !== ":memory:") mkdirSync(dirname(file), { recursive: true });
@@ -60,6 +61,9 @@ export class ProjectStore {
       "UPDATE effects SET status = ?, result = ?, settled_at = ? WHERE key = ? AND status = 'pending'",
     );
     this.attemptRow = this.db.prepare("UPDATE effects SET attempts = attempts + 1 WHERE key = ?");
+    this.recentRows = this.db.prepare(
+      "SELECT seq, command_id, at, by, type, payload FROM events ORDER BY seq DESC LIMIT ?",
+    );
   }
 
   /** Appends one command's events and the effects they ask for, atomically; fails if another append came first. */
@@ -104,6 +108,11 @@ export class ProjectStore {
       .prepare("SELECT seq, command_id, at, by, type, payload FROM events WHERE seq > ? ORDER BY seq")
       .iterate(fromSeq))
       yield toEvent(row);
+  }
+
+  /** The latest events, newest last, for the Human's view of what happened. */
+  recent(limit: number): Event[] {
+    return this.recentRows.all(limit).map(toEvent).reverse();
   }
 
   pending(): PendingEffect[] {

@@ -4,6 +4,9 @@ import { join } from "node:path";
 import type { PaseoApi } from "@getpaseo/client";
 import type { Caller, CommandBody } from "../../shared/contracts/commands.ts";
 import type { ReadName } from "../../shared/contracts/tools.ts";
+import { activityLine } from "../../shared/views/activity.ts";
+import type { HumanView } from "../../shared/contracts/rpc.ts";
+import { humanView } from "../../shared/views/human.ts";
 import { statusText } from "../../shared/views/status.ts";
 import { Keys } from "../core/keys.ts";
 import { daemonLog } from "../core/logger.ts";
@@ -14,6 +17,7 @@ import { PaseoLink } from "../satellites/agent-host/paseo-link.ts";
 import { EvidenceRunner } from "../satellites/evidence/runner.ts";
 import { MachineHolds } from "../satellites/machine/holds.ts";
 import { ProjectStore } from "../satellites/store/project-store.ts";
+import { git } from "../satellites/workspace/git.ts";
 import { Workspace } from "../satellites/workspace/workspace.ts";
 import { type Bundle, loadBundle, profileDir } from "../profile/bundle.ts";
 import { Dispatcher } from "./dispatcher.ts";
@@ -107,9 +111,10 @@ export class Plugin {
   }
 
   /** Opens a project for a repository, or the one already open for it, and starts its Supervisor. */
-  async openProject(repo: string, base: string): Promise<{ project: string; outcome: Submitted }> {
+  async openProject(repo: string, base: string | undefined): Promise<{ project: string; outcome: Submitted }> {
     const ready = await this.whenReady();
     const real = realpathSync(repo);
+    const branch = base ?? (await currentBranch(real));
     const id = createHash("sha256").update(real).digest("hex").slice(0, 12);
     const dir = projectDir(this.root, id);
     mkdirSync(dir, { recursive: true });
@@ -120,7 +125,7 @@ export class Plugin {
     const outcome = await this.submitAs(
       runtime,
       { kind: "human" },
-      { type: "open_project", base, remote: null, profileHash: ready.bundle.hash, model },
+      { type: "open_project", base: branch, remote: null, profileHash: ready.bundle.hash, model },
     );
     return { project: id, outcome };
   }
@@ -130,6 +135,34 @@ export class Plugin {
     const ready = await this.whenReady();
     const runtime = this.runtimes.get(project) ?? this.open(project, ready);
     return this.submitAs(runtime, { kind: "human" }, body);
+  }
+
+  /** Every project the plugin keeps, open in memory or not. */
+  projects(): { id: string; repo: string; open: boolean }[] {
+    const dir = join(this.root, "projects");
+    if (!existsSync(dir)) return [];
+    return readdirSync(dir).flatMap((id) => {
+      const file = join(dir, id, "project.json");
+      if (!existsSync(file)) return [];
+      const { repo } = JSON.parse(readFileSync(file, "utf8")) as { repo: string };
+      return [{ id, repo, open: this.runtimes.has(id) }];
+    });
+  }
+
+  /** The Human's view of one project: what they need to know, and the last things that happened. */
+  async view(project: string): Promise<{ human: HumanView; activity: string[]; root: string } | null> {
+    const ready = await this.whenReady();
+    if (!existsSync(join(projectDir(this.root, project), "project.json"))) return null;
+    const runtime = this.runtimes.get(project) ?? this.open(project, ready);
+    const activity = runtime.store
+      .recent(200)
+      .flatMap((e) => activityLine(e) ?? [])
+      .slice(-60);
+    return {
+      human: humanView(runtime.project.view),
+      activity,
+      root: statusText(runtime.project.view, "root", null) ?? "",
+    };
   }
 
   statusOf(project: string, scope: string): string | null {
@@ -335,6 +368,12 @@ export class Plugin {
   private async submitAs(runtime: Runtime, caller: Caller, body: CommandBody): Promise<Submitted> {
     return runtime.project.submit({ id: crypto.randomUUID(), at: new Date().toISOString(), caller, body });
   }
+}
+
+/** The branch a repository has checked out, the base a team lands on unless the Human names another. */
+async function currentBranch(repo: string): Promise<string> {
+  const run = await git(repo, ["symbolic-ref", "-q", "--short", "HEAD"]);
+  return run.code === 0 && run.stdout.trim() ? run.stdout.trim() : "main";
 }
 
 function harnessOf(dir: string, provider: string): Harness | null {

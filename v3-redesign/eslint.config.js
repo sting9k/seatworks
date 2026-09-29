@@ -47,5 +47,11 @@ export default defineConfig(
       ],
     },
   },
+  {
+    files: ["client/**/*.{ts,tsx}", "index.client.tsx"],
+    languageOptions: {
+      parserOptions: { projectService: false, project: "./tsconfig.client.json", tsconfigRootDir: import.meta.dirname },
+    },
+  },
   { files: ["eslint.config.js"], extends: [tseslint.configs.disableTypeChecked] },
 );

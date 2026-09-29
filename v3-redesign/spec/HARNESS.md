@@ -25,9 +25,10 @@ A role's properties (`KERNEL.md` §2) are all the harness reads:
    does not write: the copy is the guard, on every agent alike.
 2. **Only commits count.** The kernel integrates a writer's commits and nothing else (I4, I5), so no stray edit
    reaches a lane.
-3. **One git guard.** The shim first on every agent's `PATH` refuses push, pull, checkout, switch, update-ref, stash,
-   worktree changes, forced or deleting branch moves, and git outside the agent's own copy. For a role without
-   `writes` it also refuses commit, merge, reset, rebase and cherry-pick. It reads the role's properties from the
+3. **One git guard.** The shim first on every agent's `PATH` refuses push, pull, checkout, switch, update-ref,
+   symbolic-ref, stash, worktree changes, forced, copying or deleting branch moves, an alias that runs a shell, and
+   git outside the agent's own copy. For a role without `writes` it also refuses what makes a commit or moves the
+   branch: commit, merge, reset, rebase, cherry-pick, revert and am. It reads the role's properties from the
    agent's environment, so the five per-agent git deny lists of V1 go.
 
 Rules that match a command's text (Claude's `Bash(git push *)`, Codex's exec policy, Oh My Pi's `bash.patterns`)

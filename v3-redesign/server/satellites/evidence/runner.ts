@@ -31,7 +31,11 @@ export class EvidenceRunner {
     const path = join(this.scratch, key.replace(/[^A-Za-z0-9._-]/g, "_"));
     if (existsSync(path)) await git(this.repo, ["worktree", "remove", "--force", "--force", path]);
     const made = await git(this.repo, ["worktree", "add", "--detach", path, at], 300_000);
-    if (made.code !== 0) return { ok: false, steps: [], summary: `no copy for the run: ${said(made)}` };
+    if (made.code !== 0) {
+      // A failed add can leave git's record of the copy behind; prune it so nothing accumulates.
+      await git(this.repo, ["worktree", "prune"]);
+      return { ok: false, steps: [], summary: `no copy for the run: ${said(made)}` };
+    }
     try {
       const results: Step[] = [];
       let failed: { name: string; tail: string } | null = null;

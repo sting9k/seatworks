@@ -64,6 +64,15 @@ export default function contribute(server: PluginServerContext) {
       ? { ok: true, text: `Recorded ${outcome.events.length} events.` }
       : { ok: false, text: outcome.refused.says };
   });
+  server.handle(RPC.projects, (_input, { paseo }) => {
+    plugin.saw(paseo);
+    return { projects: plugin.projects() };
+  });
+  server.handle(RPC.view, async (input, { paseo }) => {
+    plugin.saw(paseo);
+    const view = await plugin.view(input.project);
+    return view ?? { human: null, activity: [], root: "No such project." };
+  });
   server.handle(RPC.status, (input, { paseo }) => {
     plugin.saw(paseo);
     return { text: plugin.statusOf(input.project, input.scope) ?? "No such project or scope is open." };

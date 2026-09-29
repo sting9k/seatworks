@@ -56,7 +56,7 @@ test("an agent's tool server lists its role's tools and carries a call to the ke
     roleTools: (actor: string) => ledger.profile.roles.get(ledger.state.actors.get(actor)?.role ?? "")?.tools ?? null,
     read: () => Promise.resolve("status text"),
   };
-  const socket = new TeamSocket(join(root, "team.sock"), keys, (id) => (id === "p" ? (port) : undefined));
+  const socket = new TeamSocket(join(root, "team.sock"), keys, (id) => (id === "p" ? port : undefined));
   await socket.listen();
   const server = mcp(join(root, "team.sock"), {
     SEATWORKS_PROJECT: "p",
