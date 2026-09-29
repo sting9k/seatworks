@@ -104,7 +104,7 @@ It holds no state of its own: a hold is the kernel's.
 Shows the Human the kernel's views and the agents' own words, and takes the Human's commands.
 
 ```text
-views: whatTheHumanNeeds, chainOfChange, openObligations, status, signals
+views: whatTheHumanNeeds, sinceTheyLooked, chainOfChange, openObligations, status, signals
 commands: answer_question, send_message, hold_scope, resume_scope, amend_plan (lines of theirs)
 ```
 

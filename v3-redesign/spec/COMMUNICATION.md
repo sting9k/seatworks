@@ -11,12 +11,13 @@ are the concept's and the agents'. The plugin delivers, records, and keeps what 
   is answered, whoever reads it and however long it takes; nothing that cleans up closes it.
 - **Routes along the edges the profile declares.** Who speaks to whom is data in the profile, so another arrangement
   needs no code.
-- **Tells the Lead.** A message from the Supervisor or the Human straight to a Peer gives its Lead a copy and stays
-  open until the change reaches the lane's state. This is the one constraint the concept asks of the plugin.
+- **Tells the Lead.** A message from the Supervisor or the Human straight to a Peer gives its Lead a copy. One that
+  directs stays open until the change reaches the lane's state; an open question does not. This is the one constraint the concept asks of the plugin.
 - **Adds facts, never advice.** A message may carry what the record knows (the brief line it cites, the commit it
   names, who is waiting on it). It never carries what to do, an order of importance, or a judgement that two
   messages are the same.
-- **Makes reading easy.** Every agent can read any scope's brief, hand-backs and branch. A Peer that needs to know
+- **Makes reading easy.** Every agent can read any scope's brief, hand-backs and branch, except a blind design's
+  siblings until their Lead brings them together. A Peer that needs to know
   something reads it; one that needs something changed asks its Lead.
 
 ## The SLP profile's edges
@@ -29,6 +30,7 @@ Drawn from CONCEPT-V2 §3.1, §4.3, §7.2 and §9.4.
 | Supervisor | the Human, the Leads; a Peer, its Lead told         |
 | Lead       | the Supervisor, its own Peers                       |
 | Peer       | its Lead: findings, questions, hand-backs, requests |
+| Watcher    | the Supervisor                                      |
 
 A Peer does not message another Peer: it reads the other's work, and asks the owner for a change through its Lead.
 An edge between Peers would be a change to the concept, the owner's to make in the profile.

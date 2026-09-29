@@ -18,8 +18,9 @@ on an implementation without the rule before it is trusted.
 | I5   | A Peer amends its own brief                                             | Refused                                                   |
 | I6   | The Lead amends the goal with no answer from the Human                  | Refused; accepted citing the answer                       |
 | I6   | A line marked the Human's with no message or answer from them behind it | Written as its caller's                                   |
-| I7   | The Supervisor messages a Peer                                          | The Lead has an obligation; it closes on carried or declined |
-| I7   | The Human types into a Peer's chat                                      | Same as above                                             |
+| I7   | The Supervisor sends a Peer a message that directs                      | The Lead has a copy and an obligation; it closes on carried or declined |
+| I7   | The Supervisor asks a Peer an open question                             | The Lead has a copy and no obligation                     |
+| I7   | The Human types into a Peer's chat                                      | The Lead has a copy; an obligation if it directs          |
 | I8   | `classify_finding` as `changes` with no change events                   | Refused                                                   |
 | I8   | `classify_finding` as `alternative` with no reason                      | Refused                                                   |
 | I10  | A Lead calls `ask_human` in the SLP profile                             | Refused                                                   |
@@ -89,3 +90,15 @@ on an implementation without the rule before it is trusted.
 | A state past the budget                                     | Not cut to fit; the step says `too large`                  |
 | An answer with one question missing                         | The call fails; nothing is recorded as answered            |
 | A question renamed in `reflex.yaml`                         | Asked under its new name with no code change               |
+
+## Watch
+
+| Case                                                        | Expect                                                     |
+| ----------------------------------------------------------- | ---------------------------------------------------------- |
+| A Peer's thinking says it drops its approach                | One attention to the Supervisor; nothing to the Peer       |
+| Three moments on one Peer in one turn                       | One numbered message to the Supervisor, after its turn     |
+| The Supervisor marks a moment noise for a Peer              | That moment is not told again for that Peer and scope      |
+| A test calls a field that neither base nor brief has        | `mints-an-api`, with the missing names as a fact           |
+| The Watcher's period passes with no new work                | The Watcher is not woken                                   |
+| A blind scope's actor reads its sibling's branch            | Refused until the Lead integrates or drops the sibling     |
+| A profile with no moments                                   | No watch; every other case the same                        |

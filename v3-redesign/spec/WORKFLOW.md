@@ -31,8 +31,11 @@ Human ─goal─► 0 Intake ─► 1 Open ─► 2 Plan ─► 3 Work ─► 4 
 ## 2. Plan: the Lead
 
 - The Lead reads, sends a scout for what it cannot see, and splits the work by who writes which files.
+- A hard decision with several sound answers goes to two or three blind designs: discovery scopes with the same brief,
+  none of which sees the others' work, which the Lead then brings together. No shared room: in one, the strongest
+  arguer wins, not the best design.
 - Kernel: each sub-scope gets a brief (goal, constraints that must hold, choices made so far) and a kind,
-  verification or discovery. Each line records who wrote it. Checks one writer per scope, and that the Lead writes in
+  verification or discovery, and may be blind to its siblings until the Lead integrates or drops them. Each line records who wrote it. Checks one writer per scope, and that the Lead writes in
   no scope it gave away.
 - Prompt: a plan is a set of hypotheses. Brief the symptom, not a cause chosen in advance. A narrow brief only for
   verification.
@@ -88,8 +91,9 @@ Nothing blocks it.
 
 - The Human sees at any time the brief each agent works to, which constraints are theirs, which decisions an agent
   made, and which disagreements are open.
-- A word from the Human or the Supervisor straight to a Peer gives its Lead a copy and an obligation that stays open
-  until the change reaches the lane's state. The Human sees whether it did.
+- A word from the Human or the Supervisor straight to a Peer gives its Lead a copy. One that directs also opens an
+  obligation that stays open until the change reaches the lane's state; the Human sees whether it did. An open
+  question directs nothing.
 - A Peer measuring holds the machine, and the plugin starts nothing beside it.
 
 ## Decided
@@ -97,7 +101,9 @@ Nothing blocks it.
 1. A Peer waiting on an escalation names its default and goes on with what the escalation does not touch.
 2. The Lead redraws ownership inside its lane, the Supervisor between lanes. A handover moves the writer in one
    event, so no scope ever has two.
-3. The Supervisor checks how a Lead frames work by reading the briefs with their origins and the chain of findings. The
-   reflex reads each brief, finding and report as it lands and tells the Supervisor what it notices (`REFLEX.md`);
-   it reads the record, not thinking. A watch on agents' words comes back only if a look back shows the record is not
-   enough, as questions in the profile.
+3. The watch reads the words and thinking of Leads and Peers as they work and tells the Supervisor when one needs
+   attention; the Supervisor decides whether to ask, and asks an open question (`WATCH.md`). The reflex also reads
+   each brief, finding and report as it lands (`REFLEX.md`).
+4. A branch found in the middle of a lane, such as authorization finding no authentication under it, goes to a scope
+   of its own, and the lane waits for it; the Lead does not stretch to fill it. A Lead's full context is compacted,
+   not feared.

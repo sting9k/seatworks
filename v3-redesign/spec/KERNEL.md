@@ -30,6 +30,7 @@ profile, with no change to the kernel. A role renamed with its properties kept b
 | `delegates` | May own a scope that is split into child scopes, and integrate them.                      |
 | `writes`    | May be the writer of a scope.                                                             |
 | `reading`   | Is seated on one commit, writes nothing, and returns a verdict.                            |
+| `watches`   | Writes nothing, is given the words of the agents in the scopes it is seated over, and reports what it sees. |
 | `spawns`    | The roles it may seat under a scope it owns.                                              |
 | `speaksTo`  | Relations it may message: `parent`, `children`, `descendants`, `human`.                   |
 | `humanDoor` | May put a question to the Human.                                                          |
@@ -42,7 +43,7 @@ The SLP profile, from CONCEPT-V2 §3:
 
 ```yaml
 roles:
-  supervisor: { root: true, delegates: true, spawns: [lead, peer], humanDoor: true,
+  supervisor: { root: true, delegates: true, spawns: [lead, peer, watcher], humanDoor: true,
                 speaksTo: [human, children, descendants] }
   lead:       { delegates: true, spawns: [peer, reviewer, architect, auditor],
                 speaksTo: [parent, children] }
@@ -50,6 +51,7 @@ roles:
   reviewer:   { reading: true, speaksTo: [parent] }
   architect:  { like: reviewer }
   auditor:    { like: reviewer }
+  watcher:    { watches: true, speaksTo: [parent] }   # seated under the root, so it speaks to the Supervisor
 ```
 
 A Supervisor that seats a Peer straight under the root is the path for a small change done by one agent (P17).
@@ -63,6 +65,8 @@ A Supervisor that seats a Peer straight under the root is the path for a small c
   waits for), `brief` (current version), `plan` (for a scope that delegates), `workspace`, `status`, `held`.
   - Status moves `open → integrated | dropped`. A scope integrated into its parent stays on the record.
   - A child's `paths` lie within its parent's. A `reading` scope has none.
+  - A `blind` scope's actor cannot read its siblings' briefs, hand-backs or branches, nor they its, until the owner
+    integrates or drops it.
   - A scope whose owner `writes` has itself as writer. A scope whose owner `delegates` has no writer.
 - **Edges.** The five relations of CONCEPT-V2 §2.2, as data: `spawned` and `owns` follow from scopes; `dependsOn`
   from `after`; `mayChange` and `mustTell` are kept as edges that the owner of the scope they sit in may add or
@@ -131,7 +135,8 @@ an answer, an intervention, a question to the Human, a hand-back waiting on its 
 
 ### 4.7 Messages and questions
 
-- **Message**: `{ id, from, to, text, asksAnswer, replyTo }`. Routed along the sender's `speaksTo`. What the Human
+- **Message**: `{ id, from, to, text, asksAnswer, directs, replyTo }`. Routed along the sender's `speaksTo`.
+  `directs` says it changes what the reader is to do; an open question does not. What the Human
   types straight into an agent's chat is recorded as a message from the Human.
 - **Question**: from the role with `humanDoor` to the Human: `{ id, text, about, options?, recommend?, answer? }`.
   `about` names the finding or line that waits on it.
@@ -161,7 +166,7 @@ The kernel MUST refuse a command that would break one of these, and MUST NOT ref
 | I4  | Integrating a scope cites evidence whose subject is the commit being integrated. A failing result is integrated only with a reason. | §8.3, N1 |
 | I5  | Only a scope's writer changes its paths, only its parent's owner its brief, only its owner its plan.                  | §4.2, §4.3 |
 | I6  | A change to the goal or appetite, or to a line whose origin is the Human, cites the Human's answer.                   | §7.3, §9   |
-| I7  | A message to an actor from outside its own scope and its parent's owner (the Human counts as the root's) opens an obligation on that owner, closed when it is carried in or declined with a reason. | §7.2, §9.4 |
+| I7  | A message to an actor from outside its own scope and its parent's owner (the Human counts as the root's) gives that owner a copy; one that `directs` also opens an obligation on the owner, closed when it is carried in or declined with a reason. | §7.2, §9.4 |
 | I8  | A finding classified `changes` points to the change events it made; one kept carries a reason.                      | §6.3, §6.4 |
 | I9  | Lines carry the origin the kernel set; a line is the Human's only via something the Human said.                     | §9.2       |
 | I10 | Only a role with `humanDoor` asks the Human; a message is sent only along the sender's `speaksTo`.                   | §3.1, §7.3 |
@@ -197,6 +202,7 @@ A command is called by an actor and checked against its role's properties and th
 | `ask_human`        | a role with `humanDoor`                             | Opens a question                                                         |
 | `answer_question`  | the Human                                           |                                                                          |
 | `hold_machine`     | any seated actor                                    | Holds or releases the machine                                            |
+| `mark_noise`       | the root's owner                                    | A moment of the watch is not told again for one actor and scope          |
 | `release`          | owner of the parent                                 | Ends an actor's seat; its scope stays                                    |
 
 Integrations into one scope MUST run one at a time: bring the parent in, run evidence on the result, then integrate.
@@ -215,7 +221,7 @@ Events: `scope_opened`, `actor_seated`, `brief_issued`, `brief_amended`, `plan_s
 `finding_reopened`, `finding_withdrawn`, `claim_made`, `evidence_recorded`, `integrated`, `sent_back`, `reseated`,
 `scope_dropped`, `scope_held`, `scope_resumed`, `report_made`, `message_sent`, `message_delivered`,
 `question_asked`, `question_answered`, `obligation_opened`, `obligation_closed`, `obligation_moved`,
-`machine_held`, `machine_released`, `actor_released`, `actor_gone`, `observation_made`.
+`machine_held`, `machine_released`, `actor_released`, `actor_gone`, `observation_made`, `noise_marked`.
 
 ## 8. Views
 

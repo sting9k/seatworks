@@ -47,8 +47,8 @@ to do: V1's patterns carried advice in a `next` field, and v3 does not.
 ## Where it looks: the record, on its events
 
 It reads what the record already holds: briefs, plans, findings, answers, hand-backs and reports, a hand-back's diff,
-and a permission an agent asks for. It does not read agents' thinking; WORKFLOW decision 3 settles that the record
-comes first. Whatever code can check stays code. A constraint whose origin is not the Human, a hand-back with no
+and a permission an agent asks for. What it reads of agents' words and thinking, it reads for the watch
+(`WATCH.md`). Whatever code can check stays code. A constraint whose origin is not the Human, a hand-back with no
 evidence on its commit, a claim of green checks against a red run, a deleted test, an added skip marker, and the same
 failing step run again are facts the kernel's views already show. The reflex takes only what needs a reading of
 meaning.
@@ -61,7 +61,7 @@ The SLP profile's starting questions:
 | `finding_raised`, `plan_amended`, `brief_amended` | Touches the goal or cost the Human approved (§7.3), beyond what I6 catches from origins | the root, a note that wakes it |
 | `finding_classified` as kept               | The reason does not meet the evidence the raiser gave                                     | the root, a note      |
 | `report_made`                              | Settles how the system is built, a structure or contract others will build on, with no line of the plan recording it | the root, a note      |
-| `hand_back`                                | The diff loosens an assertion; bends product code so a check passes; leaves a stub or fake where the brief asked for the thing; breaks one of the project's own written rules | evidence on the commit |
+| `hand_back`                                | The diff loosens an assertion; bends product code so a check passes; leaves a stub or fake where the brief asked for the thing; has a test call names neither the code nor the brief has; breaks one of the project's own written rules | evidence on the commit |
 | `hand_back`                                | The claim names a part of the brief it did not do                                          | evidence on the commit |
 | `permission_requested`                     | The action cannot be undone from the agent's own copy                                     | a fact for whoever answers it |
 | a message the Human types into an agent's chat | Whether it sets a requirement, says the code is wrong, asks, or approves                  | a fact on the Lead's copy |
@@ -71,10 +71,8 @@ They come from V1's patterns and checks that read the record (pre-solves, closed
 gaming, proof-bends-product, stand-in, summary-admits-gap, instruction-kind), and from two tools that guard coding
 agents with Jev. One asks a question for each project rule, over the rule and the diff and never the conversation, so
 the 200th edit is judged like the first. The other asks whether a tool call can be undone before it runs. The
-questions that read thinking stay in V1's history (struggling, turning, admits-wrong, obeys-against-judgement,
-wrapper, builds-for-maybe). If a look back shows a late intervention the record could not have shown, the owner adds
-a question that reads the agent's words to the profile. The agent host already streams them, so that is a data
-change, not a code change.
+questions that read words and thinking (struggling, turning, admits-wrong and the rest) are the watch's moments, in
+`WATCH.md`.
 
 The project's rules are the project's: the lines of its `AGENTS.md` that a linter cannot check, each turned once into
 a question when the file changes, and asked only of the hunks it could apply to.
