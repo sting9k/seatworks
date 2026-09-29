@@ -79,6 +79,7 @@ on an implementation without the rule before it is trusted.
 | The Lead runs its own acceptance test on a Peer's commit with `run_checks`              | Evidence on that commit, by the Lead                       |
 | The Human reseats the Supervisor                                                        | Accepted: the Human stands as the root's parent            |
 | `publish` when the remote moved since the landing                                       | Refused by the workspace; nothing forced                   |
+| `drop_scope` while the scope's merge is in flight                                       | Refused: the record cannot call it dropped once the integration is physical                |
 
 ## Delivery
 

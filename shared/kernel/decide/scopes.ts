@@ -257,6 +257,7 @@ export function dropScope(ctx: Of<"drop_scope">): Refusal | undefined {
   if (scope.parent === null) return refuse("state", "the root is never dropped");
   const denied = asParentOwner(ctx, scope);
   if (denied) return denied;
+  if (scope.integrating) return refuse("state", `scope ${scope.id} is being integrated`);
   const heir = ctx.party;
   const doomed = [
     ...descendants(ctx.state, scope.id)

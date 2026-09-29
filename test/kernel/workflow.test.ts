@@ -235,6 +235,36 @@ test("a scope with open children is not integrated, and dropping a lane closes w
   assert.equal(ledger.state.actors.size, 1);
 });
 
+test("a scope being integrated cannot be dropped before the merge's result lands", () => {
+  const { ledger, lead, peer, task } = team();
+  ledger.must(ledger.as(peer, "hand_back", { commit: SHA(4), text: "wired" }));
+  ledger.must(
+    ledger.fact("record_candidate", {
+      scope: task,
+      commit: SHA(4),
+      result: { candidate: SHA(5), parentHead: SHA(6) },
+    }),
+  );
+  ledger.must(
+    ledger.fact("record_evidence", {
+      scope: task,
+      subject: SHA(5),
+      ok: true,
+      summary: "",
+      steps: [],
+      heldMachine: false,
+    }),
+  );
+  ledger.must(ledger.as(lead, "integrate", { scope: task, evidence: ["e1"] }));
+  assert.equal(
+    refusedBy(ledger.as(lead, "drop_scope", { scope: task, reason: "changed the plan" })),
+    "state",
+    "the merge was already asked for; the record cannot say dropped while the branch holds it",
+  );
+  const landed = ledger.must(ledger.fact("record_integration", { scope: task, result: { sha: SHA(7) } }));
+  assert.ok(landed.some((e) => e.type === "integrated"));
+});
+
 test("a permission is answered by the owner above the asking agent, or the Human, never by another Peer", () => {
   const { ledger, lead, peer } = team();
   ledger.must(ledger.as(lead, "open_scope", { parent: "1", role: "peer", paths: ["src/ui/"], brief: brief("UI") }));
