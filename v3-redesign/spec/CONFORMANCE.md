@@ -66,6 +66,11 @@ on an implementation without the rule before it is trusted.
 | ----------------------------------------------------------- | ---------------------------------------------- |
 | Three messages while the reader is mid-turn                 | One message after the turn, numbered, in order |
 | The same message key posted twice                           | Delivered once                                 |
+| Five Peers send to their Lead during its turn               | One numbered delivery when the turn ends, in the order sent |
+| Only a copy and a fact are queued for an idle Lead          | The Lead is not woken; they go with the next delivery that asks |
+| A delivery refused as busy                                  | Sent again at the next turn's end, once                  |
+| A Peer reseated with three messages queued                  | The new Peer receives the three                          |
+| A batch longer than one message allows                      | Several deliveries in a row; nothing cut                 |
 | Restart with messages queued                                | All delivered after                            |
 
 ## Recovery

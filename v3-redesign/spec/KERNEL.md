@@ -195,7 +195,7 @@ A command is called by an actor and checked against its role's properties and th
 | `record_evidence`  | the bridge, for a satellite's result                 | Records evidence                                                         |
 | `integrate`        | owner of the parent                                 | Brings the scope into its parent (I4)                                    |
 | `send_back`        | owner of the parent                                 | Does not integrate, and says why                                         |
-| `reseat`           | owner of the parent                                 | A new actor on the same scope, briefed from the record; obligations move |
+| `reseat`           | owner of the parent                                 | A new actor on the same scope, briefed from the record; obligations and undelivered messages move |
 | `drop_scope`       | owner of the parent                                 | Closes the scope unintegrated, with a reason                             |
 | `hold_scope`, `resume_scope` | owner of the parent, or the Human         |                                                                          |
 | `report`           | owner of the scope                                  | Lines for its parent's owner: decided, assumed, still open               |
@@ -225,7 +225,7 @@ Integrations into one scope MUST run one at a time: bring the parent in, run evi
 Events: `scope_opened`, `actor_seated`, `brief_issued`, `brief_amended`, `plan_set`, `plan_amended`, `edge_added`,
 `edge_removed`, `handed_over`, `finding_raised`, `finding_classified`, `finding_waiting`, `finding_resumed`,
 `finding_reopened`, `finding_withdrawn`, `claim_made`, `evidence_recorded`, `integrated`, `sent_back`, `reseated`,
-`scope_dropped`, `scope_held`, `scope_resumed`, `report_made`, `message_sent`, `message_delivered`, `question_asked`,
+`scope_dropped`, `scope_held`, `scope_resumed`, `report_made`, `message_sent`, `message_delivered`, `message_moved`, `question_asked`,
 `question_answered`, `obligation_opened`, `obligation_closed`, `obligation_moved`, `machine_held`, `machine_released`,
 `actor_released`, `actor_gone`, `observation_made`, `noise_marked`, `attended`, `passed`, `permission_asked`,
 `permission_answered`.

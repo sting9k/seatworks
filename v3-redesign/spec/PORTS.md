@@ -87,13 +87,16 @@ run(path, sha, steps, timeout) -> { sha, ok, steps: [{ name, exit, log, seconds,
 Carries messages to agents. The rules are in `COMMUNICATION.md`.
 
 ```text
-post(agentId, message: { key, text, asksAnswer }) -> Result<queued>
-facts: delivered(key, at) | unreachable(agentId, why)
+deliver(agentId, batch: { key, items: [{ key, from, text, asks }] }) -> Result<delivered | busy>
+facts: delivered(batchKey, itemKeys, at) | busy(agentId) | unreachable(agentId, why)
 ```
 
-- A message never lands inside a turn. Messages waiting for one reader go as one, numbered, in the order they came.
-- Delivery is durable: a restart loses no message.
-- A message is never dropped. A reader that is gone is reported `unreachable`, and the kernel moves what it was owed.
+- The queue is the kernel's: a mailbox is the delivery effects not yet settled for a seat (`COMMUNICATION.md`, The
+  mailbox). The satellite only sends a batch it is given, when the agent host reports the reader between turns, and
+  answers `busy` rather than push into a turn.
+- Delivery is durable: a restart loses no message, and a batch sent twice lands once, by its key.
+- A message is never dropped. A reader that is gone is reported `unreachable`, and the kernel moves what it was owed
+  and what was waiting for it.
 
 ## Machine
 
