@@ -108,20 +108,36 @@ export function addWaitingPills(client: PluginClientContext): () => void {
     if (!project || !workspaceId || archivedAt) gone(id);
     else seat(id, workspaceId, project);
   });
+  // Paseo sends agent updates only to a listing that subscribes; its snapshot comes again after each reconnect.
+  let disposed = false;
+  let release: (() => void) | null = null;
   client.paseo.agents
-    .list({ filter: { includeArchived: false } })
-    .then(({ entries }) => {
-      for (const { agent } of entries) {
-        const project = agent.labels[PROJECT_LABEL];
-        if (project && agent.workspaceId && !agent.archivedAt) seat(agent.id, agent.workspaceId, project);
-      }
-      poll();
+    .list({ filter: { includeArchived: false }, subscribe: {} })
+    .then(({ subscription }) => {
+      const stop = subscription.subscribe({
+        snapshot: ({ entries }) => {
+          for (const { agent } of entries) {
+            const project = agent.labels[PROJECT_LABEL];
+            if (project && agent.workspaceId && !agent.archivedAt) seat(agent.id, agent.workspaceId, project);
+          }
+          poll();
+        },
+        update: () => undefined,
+      });
+      release = () => {
+        stop();
+        // Released with the plugin: a daemon that is already gone holds nothing to let go of.
+        subscription.release().catch(() => undefined);
+      };
+      if (disposed) release();
     })
-    // Listed again as agents change: every update seats its pill.
+    // Without the listing no pill shows; every chat still works.
     .catch(() => undefined);
   const timer = setInterval(poll, EVERY_MS);
   return () => {
     clearInterval(timer);
+    disposed = true;
+    release?.();
     unsubscribe();
     for (const pill of pills.values()) pill.remove();
     pills.clear();

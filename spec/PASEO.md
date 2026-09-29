@@ -69,6 +69,9 @@ from Paseo 0.10.1: the plugin SDK, `@getpaseo/client`, `@getpaseo/protocol`, the
   directory install runs no build step at all.
 - The API reaches a plugin only with a hook or a panel call; it is one client, made before the plugin's contribution
   runs, that reconnects by itself. Work that needs it waits for the first hook or call.
+- In the app, `agents.subscribe` hears only what a listing made with `subscribe: {}` streams: the daemon sends no
+  `agent_update` otherwise. The listing's `subscription` gives its snapshot again after each reconnect and is released
+  with the plugin.
 - `agent.turn_ended` carries the turn's outcome and the agent's whole history as the daemon holds it in memory, not
   the turn alone (`timelineStore.getItems`, never trimmed). Each actor keeps how many items it has read (`seen`, on
   `turn_ended`), and the turn is what follows. A daemon restart rebuilds the history from the agent's transcript; one
