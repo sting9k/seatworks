@@ -151,7 +151,8 @@ Configured by data. It names no agent, role or server in code.
 ## Tools
 
 Not a satellite: the MCP server each agent is given. Each tool is one kernel command, shown to the roles whose
-`tools` name it. A reply is the command's result and the facts it produced, never advice on what to do next.
+`tools` name it, or a read: `status` (a scope's view), `record` (briefs, findings, reports, attentions), `look` (an
+agent's history between two points, through the agent host), `diff` (a scope's change at a commit). A reply is the command's result and the facts it produced, never advice on what to do next.
 
 ## Bridge
 

@@ -1,0 +1,56 @@
+# The SLP profile (spec/KERNEL.md §2, spec/ROLES.md). Properties are all the kernel reads; prompts, skills and
+# models are for the agent host. `models` names the Human's Paseo agent profiles, the first the default; whoever
+# opens a scope may pick another from the list.
+
+roles:
+  supervisor:
+    root: true
+    delegates: true
+    spawns: [lead, peer, watcher]
+    humanDoor: true
+    speaksTo: [human, children, descendants]
+    prompt: roles/supervisor.md
+    skills: [grilling, attention, pre-mortem, retrospective]
+    models: [slp-supervisor]
+    tools: [status, look, open_scope, amend_brief, set_plan, amend_plan, add_edge, remove_edge, handover,
+            classify_finding, integrate, send_back, reseat, drop_scope, hold_scope, resume_scope, release,
+            send_message, answer, ask_human, mark_noise]
+
+  lead:
+    delegates: true
+    spawns: [peer, reviewer, architect, auditor]
+    speaksTo: [parent, children]
+    prompt: roles/lead.md
+    skills: [blind-design, planning-lanes]
+    models: [slp-lead]
+    tools: [status, look, open_scope, amend_brief, set_plan, amend_plan, add_edge, remove_edge, handover,
+            raise_finding, withdraw_finding, classify_finding, integrate, send_back, reseat, drop_scope,
+            hold_scope, resume_scope, release, report, send_message, answer, hold_machine]
+
+  peer:
+    writes: true
+    speaksTo: [parent]
+    prompt: roles/peer.md
+    skills: [test-first, diagnosing-bugs]
+    models: [slp-peer, slp-peer-alt]
+    tools: [status, raise_finding, withdraw_finding, hand_back, send_message, answer, hold_machine]
+
+  reviewer:
+    reading: true
+    speaksTo: [parent]
+    prompt: roles/reviewer.md
+    models: [slp-reviewer, slp-peer-alt]
+    tools: [status, record_verdict, raise_finding, send_message, answer, hold_machine]
+
+  architect: { like: reviewer, prompt: roles/architect.md }
+  auditor: { like: reviewer, prompt: roles/auditor.md }
+
+  watcher:
+    watches: true
+    speaksTo: [parent]
+    prompt: roles/watcher.md
+    models: [slp-watcher]
+    tools: [look, record, diff, attend, pass]
+
+reflex: reflex.yaml
+watch: watch.yaml

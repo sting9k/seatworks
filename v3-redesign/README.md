@@ -43,6 +43,8 @@ order is the agents'.
 - `spec/PORTS.md`: what each satellite does and returns.
 - `spec/CONFORMANCE.md`: the cases an implementation proves.
 - `spec/PASEO.md`: what v3 takes from Paseo, what it leaves, and how it survives Paseo's releases.
+- `spec/ROLES.md`: the Supervisor, the Lead and the Peer: what each owns, what goes in a prompt, and what V1's
+  prompts carried that the kernel now holds.
 - `spec/HARNESS.md`: how Claude Code, Codex, Pi and Oh My Pi are run, with one policy and one set of guards.
 - `spec/REFLEX.md`: the reflex, a cheap typed judgement (Jev first) that notices on every event and decides nothing.
 - `spec/WATCH.md`: the watch, which tells the Supervisor when a Lead or Peer needs attention, and how it asks.
