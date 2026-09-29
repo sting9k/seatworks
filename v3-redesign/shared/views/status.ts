@@ -78,6 +78,9 @@ function planText(p: Plan): string {
     ...p.limits.map((l) => `Limit: ${lineText(l)}`),
     ...p.unknowns.map((u) => `Unknown: ${lineText(u.line)} · checked by: ${u.check}`),
     `Appetite: ${lineText(p.appetite.line)}`,
+    ...p.terms.map(
+      (t) => `Term ${t.name}: ${lineText(t.line)}${t.avoid.length > 0 ? ` · not: ${t.avoid.join(", ")}` : ""}`,
+    ),
   ].join("\n");
 }
 

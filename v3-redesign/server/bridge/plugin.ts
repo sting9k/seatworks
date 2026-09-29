@@ -595,6 +595,8 @@ export class Plugin {
       },
       scratch,
       checkTimeoutMs: CHECK_TIMEOUT_MS,
+      log: () => store.read(0),
+      marker: PLUGIN_ID,
     };
     const handlers = handlersFor(wiring);
     const dispatcher = new Dispatcher(project, store, handlers, () => this.holds.held());

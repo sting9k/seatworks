@@ -38,6 +38,7 @@ agentskills.io, SkillsBench and SkillReducer.
 | `supervisor/pre-mortem` | Gary Klein's project premortem; SLP `council` sealed seats |
 | `supervisor/retrospective` | Cemri et al.'s multi-agent failure taxonomy; the SLP author's talk |
 | `supervisor/grilling`, `guides/CONTEXT_FORMAT.md` | mattpocock `grilling` and `domain-modeling` (its `CONTEXT.md` format) |
+| v3 `profile/slp/skills/domain-docs`, the glossary and map v3 writes (`shared/views/docs.ts`) | mattpocock `domain-modeling` (its `GLOSSARY.md` and ADR formats and the three tests for an ADR), `setup-matt-pocock-skills` (`domain.md`: read before exploring, flag an ADR conflict), `wayfinder` (the map's destination, decisions so far and fog) |
 | `guides/PLANS.md`, `ADR.md`, `REVIEW.md` | Nygard's ADR, MADR, Zdun et al.'s Y-statement, AWS and Azure ADR guidance; HumanLayer plans, GitHub Spec Kit, Rust stabilization reports, Kubernetes KEPs, OpenAI ExecPlans; Anthropic prompting guidance and BMAD templates; OpenAI harness-engineering lints and Factory's lint-driven agents |
 | `examples/WORKSPACE_PROTOCOL.md`, `records/NOTEBOOK.md` | the SLP author's workspace protocol and notebook; ITIL problem management and Google's SRE workbook; ACE, Mem0 and Xiong et al.; Gloaguen et al. and OpenAI harness engineering |
 

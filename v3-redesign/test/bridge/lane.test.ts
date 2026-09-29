@@ -39,10 +39,17 @@ test("one lane end to end: a Supervisor, a Lead and a Peer land a change on main
   const supervisorAgent = paseo.created[0]!;
   assert.match(supervisorAgent.systemPrompt, /# Supervisor/);
   assert.match(supervisorAgent.prompt, /Scope root/);
+  assert.match(
+    supervisorAgent.prompt,
+    /`GLOSSARY\.md`, `docs\/adr`, `docs\/seatworks\/MAP\.md` in your copy/,
+    "its brief points at the docs",
+  );
 
   const supervisor = await agentTools(socketPath, supervisorAgent.env);
   assert.equal(supervisor.welcome.type, "welcome");
   assert.ok((await supervisor.call("set_checks", { checks: [{ name: "encoded", run: ["sh", "check.sh"] }] })).ok);
+  const plan = { goal: { text: "Directions travel encoded" }, appetite: { line: { text: "A day" } } };
+  assert.ok((await supervisor.call("set_plan", { scope: "root", plan })).ok);
   const lane = await supervisor.call("open_scope", {
     parent: "root",
     role: "lead",
@@ -94,6 +101,8 @@ test("one lane end to end: a Supervisor, a Lead and a Peer land a change on main
   assert.equal(existsSync(peerAgent.cwd), false, "and its copy is gone");
 
   const laneHead = git(repo, "rev-parse", `sw/${opened.project}/1`);
+  const reported = { decided: ["Directions are int16"], assumed: ["No client sends more than 8 directions"] };
+  assert.ok((await lead.call("report", reported)).ok);
   assert.ok((await lead.call("hand_back", { commit: laneHead, text: "the lane is done" })).ok);
   await plugin.idle();
   await plugin.idle();
@@ -108,6 +117,13 @@ test("one lane end to end: a Supervisor, a Lead and a Peer land a change on main
     "int16\n",
     "main has the Peer's change, checked out and clean",
   );
+  const map = git(repo, "show", "main:docs/seatworks/MAP.md");
+  assert.match(
+    map,
+    /### 1: Encode directions\n\nLanded [0-9a-f]{12} on [\d-]{10}\.\n\nDecided:\n- Directions are int16\n\nAssumed, not yet checked:\n- No client sends more than 8 directions/,
+    "the map lists the lane landed, with what its Lead decided and assumed",
+  );
+  assert.equal(git(repo, "status", "--porcelain"), "", "and the checkout stays clean");
   for (const t of [supervisor, lead, peer]) t.close();
 });
 

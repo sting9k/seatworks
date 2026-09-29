@@ -12,6 +12,7 @@ const path = z
 const sha = z.string().regex(/^[0-9a-f]{7,64}$/);
 const ref = z.object({ kind: z.enum(["message", "question", "finding", "evidence"]), id });
 const lineInput = z.object({ text, via: ref.optional() });
+const term = z.string().trim().min(1).max(200);
 const check = z.object({ name: z.string().trim().min(1).max(200), run: z.array(z.string().min(1)).min(1).max(100) });
 
 export const BriefInput = z.object({
@@ -34,6 +35,10 @@ export const PlanInput = z.object({
     usd: z.number().positive().nullable().default(null),
     hours: z.number().positive().nullable().default(null),
   }),
+  terms: z
+    .array(z.object({ name: term, line: lineInput, avoid: z.array(term).max(20).default([]) }))
+    .max(200)
+    .default([]),
 });
 
 export const COMMANDS = {
@@ -65,7 +70,18 @@ export const COMMANDS = {
     scope: id,
     remove: z.array(id).max(100).default([]),
     add: z
-      .array(z.object({ section: z.enum(["limits", "unknowns"]), text, check: text.optional(), via: ref.optional() }))
+      .array(
+        z
+          .object({
+            section: z.enum(["limits", "unknowns", "terms"]),
+            text,
+            check: text.optional(),
+            term: term.optional(),
+            avoid: z.array(term).max(20).default([]),
+            via: ref.optional(),
+          })
+          .refine((a) => a.section !== "terms" || a.term !== undefined, "a term added names the word it defines"),
+      )
       .max(100)
       .default([]),
     goal: lineInput.optional(),

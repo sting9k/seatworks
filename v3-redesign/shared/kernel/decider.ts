@@ -114,7 +114,13 @@ function closeCarriedDirections(ctx: Context): void {
       e.type === "brief_amended"
         ? [e.brief.goal, ...e.brief.constraints, ...e.brief.choices, ...e.brief.context]
         : e.type === "plan_amended"
-          ? [e.plan.goal, ...e.plan.limits, ...e.plan.unknowns.map((u) => u.line), e.plan.appetite.line]
+          ? [
+              e.plan.goal,
+              ...e.plan.limits,
+              ...e.plan.unknowns.map((u) => u.line),
+              e.plan.appetite.line,
+              ...e.plan.terms.map((t) => t.line),
+            ]
           : [];
     for (const l of lines) if (l.via?.kind === "message" && l.at === ctx.at) cited.add(l.via.id);
   }

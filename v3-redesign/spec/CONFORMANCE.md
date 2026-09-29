@@ -21,6 +21,7 @@ on an implementation without the rule before it is trusted.
 | I5   | A Reviewer tries to write in its copy's paths through the kernel        | Refused: a reading scope has no paths                     |
 | I6   | The Lead amends the goal with no answer from the Human                  | Refused; accepted citing the answer                       |
 | I6   | A line marked the Human's with no message or answer from them behind it | Written as its caller's                                   |
+| I6   | A term the Human settled is settled again without their word | Refused; accepted citing it                             |
 | I7   | The Supervisor sends a Peer a message that directs                      | The Lead has a copy and an obligation; it closes on carried or declined |
 | I7   | The Supervisor asks a Peer an open question                             | The Lead has a copy and no obligation                     |
 | I7   | The Human types into a Peer's chat                                      | The Lead has a copy and an obligation; the Human sees whether it was carried in |
@@ -123,6 +124,9 @@ on an implementation without the rule before it is trusted.
 | A project is attached                                                             | `AGENTS.md` on its base carries the note after the project's own rules, in a commit of that file alone; what the Human staged stays staged |
 | The Human removes a project while a copy holds uncommitted work                   | Refused, naming the copy; nothing touched, its agents still at work |
 | The Human removes a project while editing its `AGENTS.md`                         | Refused, naming the file; the edit kept                             |
+| The root's plan settles a word, and later another                                 | `GLOSSARY.md` on the base holds both between the plugin's markers; a word written by hand below them stays |
+| A lane lands after its Lead reported                                              | `docs/seatworks/MAP.md` on the base lists it, with what was decided and assumed; the checkout stays clean |
+| An agent is seated                                                                | Its first words point at the glossary, the ADRs and the map         |
 | The Human removes a project                                                       | Its agents archived, every branch made for it, its note and its record gone; offered to attach again |
 | Paseo's check says a newer release is out                                         | Shown with its review links and the command that applies it; nothing installed |
 | Paseo's command line is not on the daemon's PATH                                  | Said, with the command to run by hand                               |

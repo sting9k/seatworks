@@ -40,14 +40,17 @@ Map the request as a tree of decisions. A round asks every decision whose prereq
 Assumed: <what you decided yourself, one line each>
 ```
 
-- Sharpen vague words: "account" means the customer or the user? Propose the term to keep.
+- Sharpen vague words: "account" means the customer or the user? Propose the term to keep, and the words it
+  replaces.
 - Test a rule with a scenario at its edge.
 - Say when their words disagree with the plan or the code, and ask which is right.
 
 ## Writing it down
 
 Each settled answer becomes a line of the plan with `set_plan` or `amend_plan`, citing the answer it came from, so
-its origin is the Human's. One that changes an earlier answer amends that line.
+its origin is the Human's. One that changes an earlier answer amends that line. A settled word is a term of the plan:
+its definition in one or two sentences of what it is, and the words it replaces under `avoid`. The project's glossary
+is written from them, so every lane after this one speaks the Human's words.
 
 ## Read-back
 

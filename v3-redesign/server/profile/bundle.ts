@@ -13,7 +13,13 @@ export type Bundle = {
   readonly skills: ReadonlyMap<string, readonly { name: string; description: string; path: string }[]>;
   readonly environment: readonly string[];
   /** The note an attached project's instruction file carries, with `{branches}` and `{base}` to fill. */
-  readonly project: { readonly file: string; readonly note: string } | null;
+  readonly project: {
+    readonly file: string;
+    readonly note: string;
+    readonly glossary: string | null;
+    readonly map: string | null;
+    readonly adr: string | null;
+  } | null;
 };
 
 /** A profile in the state root replaces the shipped one whole, so another arrangement needs no fork. */
@@ -43,7 +49,13 @@ export function loadBundle(dir: string): Bundle {
   const reflex = reflexFile && existsSync(reflexFile) ? (parse(readFileSync(reflexFile, "utf8")) as { environment?: unknown }) : {};
   const environment = Array.isArray(reflex.environment) ? reflex.environment.filter((p): p is string => typeof p === "string") : [];
   const project = file.project
-    ? { file: file.project.file, note: readFileSync(join(dir, file.project.note), "utf8") }
+    ? {
+        file: file.project.file,
+        note: readFileSync(join(dir, file.project.note), "utf8"),
+        glossary: file.project.glossary ?? null,
+        map: file.project.map ?? null,
+        adr: file.project.adr ?? null,
+      }
     : null;
   const hash = createHash("sha256").update(text);
   for (const prompt of prompts.values()) hash.update(prompt);

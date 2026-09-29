@@ -22,7 +22,7 @@ roles:
     spawns: [peer, reviewer]
     speaksTo: [parent, children]
     prompt: roles/lead.md
-    skills: [steering, blind-design, planning-lanes]
+    skills: [steering, blind-design, planning-lanes, domain-docs]
     models: [slp-lead]
     tools: [status, record, diff, look, open_scope, amend_brief, set_plan, amend_plan, add_edge, remove_edge,
             handover, raise_finding, withdraw_finding, classify_finding, integrate, send_back, reseat, drop_scope, hand_back,
@@ -33,7 +33,7 @@ roles:
     writes: true
     speaksTo: [parent]
     prompt: roles/peer.md
-    skills: [test-first, diagnosing-bugs]
+    skills: [test-first, diagnosing-bugs, domain-docs]
     models: [slp-peer, slp-peer-alt]
     tools: [status, record, diff, raise_finding, withdraw_finding, hand_back, send_message, answer, hold_machine]
 
@@ -54,6 +54,10 @@ roles:
 reflex: reflex.yaml
 watch: watch.yaml
 # Kept in an attached project's instruction file, committed on its base, so every agent there knows the team is there.
+# The glossary and the map are written from the record and stay with the repository; decisions go in `adr`, by hand.
 project:
   file: AGENTS.md
   note: project.md
+  glossary: GLOSSARY.md
+  map: docs/seatworks/MAP.md
+  adr: docs/adr

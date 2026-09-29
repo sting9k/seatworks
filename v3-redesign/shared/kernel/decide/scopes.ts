@@ -145,11 +145,17 @@ export function amendPlan(ctx: Of<"amend_plan">): Refusal | undefined {
   const { body } = ctx;
   const removed: Line[] = [];
   for (const id of body.remove) {
-    const line = [...old.limits, ...old.unknowns.map((u) => u.line)].find((l) => l.id === id);
-    if (!line) return refuse("unknown", `no limit or unknown ${id} in scope ${scope.id}'s plan`);
+    const line = [...old.limits, ...old.unknowns.map((u) => u.line), ...old.terms.map((t) => t.line)].find(
+      (l) => l.id === id,
+    );
+    if (!line) return refuse("unknown", `no limit, unknown or term ${id} in scope ${scope.id}'s plan`);
     removed.push(line);
   }
-  const gone = new Set(body.remove);
+  const added = body.add.filter((a) => a.section === "terms");
+  // A term settled again under the same word replaces the old one, which is a change to its line.
+  const renamed = new Set(added.map((a) => a.term));
+  for (const t of old.terms) if (renamed.has(t.name) && !removed.includes(t.line)) removed.push(t.line);
+  const gone = new Set(removed.map((l) => l.id));
   const touched = [...removed, ...(body.goal ? [old.goal] : []), ...(body.appetite ? [old.appetite.line] : [])];
   const approved = scope.id === ROOT && (body.goal !== undefined || body.appetite !== undefined);
   const word = humanWordFor(ctx, touched, approved, body.cites);
@@ -169,6 +175,10 @@ export function amendPlan(ctx: Of<"amend_plan">): Refusal | undefined {
     appetite: body.appetite
       ? { line: lineFrom(ctx, body.appetite.line), usd: body.appetite.usd, hours: body.appetite.hours }
       : old.appetite,
+    terms: [
+      ...old.terms.filter((t) => !gone.has(t.line.id)),
+      ...added.map((a) => ({ name: a.term ?? "", line: lineFrom(ctx, a), avoid: a.avoid })),
+    ],
   };
   ctx.emit({ type: "plan_amended", scope: scope.id, plan, reason: body.reason, carries: body.carries });
   return undefined;

@@ -24,7 +24,8 @@ export const DESCRIPTIONS: Record<CommandType | ReadName, string> = {
   open_scope:
     "Opens a child scope under one you own, with its paths, its brief (goal, constraints, choices, context, kind) and an agent of the role you name.",
   amend_brief: "Amends a child scope's brief with a reason; `carries` names the finding it answers.",
-  set_plan: "Sets your scope's plan: goal, limits, unknowns with how each is checked, appetite.",
+  set_plan:
+    "Sets your scope's plan: goal, limits, unknowns with how each is checked, appetite, and the domain's terms as settled.",
   amend_plan: "Amends your plan's lines with a reason.",
   add_edge: "Adds `after` (a sibling waits for another), `mayChange` or `mustTell` to a scope, with a reason.",
   remove_edge: "Removes an edge, with a reason.",

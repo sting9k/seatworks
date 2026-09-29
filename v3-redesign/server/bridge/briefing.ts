@@ -13,10 +13,14 @@ export function systemPromptFor(bundle: Bundle, actor: Actor): string {
 }
 
 /** The first words an agent is sent: where it stands on the record, which is also what `status` shows. */
-export function firstPrompt(state: State, actor: Actor, reseated: boolean): string {
+export function firstPrompt(state: State, actor: Actor, reseated: boolean, docs: readonly string[]): string {
   const status = statusText(state, actor.scope, actor.id) ?? `Scope ${actor.scope}`;
   const lead = reseated
     ? "You take over this scope from an agent that left it. What it owed and what was sent to it are yours now; its commits are on your branch."
     : "You are seated on this scope.";
-  return `${lead} You are ${actor.id}.\n\n${status}`;
+  const read =
+    docs.length > 0
+      ? `\n\nWhat the project has settled so far is in ${docs.map((d) => `\`${d}\``).join(", ")} in your copy: read what bears on your work before you plan. One that is not there holds nothing yet.`
+      : "";
+  return `${lead} You are ${actor.id}.${read}\n\n${status}`;
 }

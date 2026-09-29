@@ -108,6 +108,10 @@ release, `--dir` for a checkout of your own), and names the Paseo agent profiles
   whose seat ended) and each project whole. Only what you pick and confirm is removed; a copy holding uncommitted work
   never is. Removing a project archives its agents, takes its note out of `AGENTS.md`, and deletes its copies,
   branches and record.
+- **The project's docs** go with its repository and stay after the team: `GLOSSARY.md` (the words settled with you,
+  kept between the plugin's markers), `docs/seatworks/MAP.md` (where the project is going and each lane landed, with
+  what it decided, assumed and left open), both written from the record, and `docs/adr/`, written by the agent whose
+  decision it records. Every agent is pointed at them before it plans.
 - **Check for updates**: the surface asks Paseo whether a newer release is out and links its changes. Updating stays
   Paseo's reviewed `paseo plugin update seatworks`.
 

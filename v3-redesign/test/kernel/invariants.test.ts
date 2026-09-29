@@ -139,6 +139,23 @@ test("I6: a goal the Human approved changes only on their word, and a line is th
   );
   const limit = ledger.state.scopes.get("root")!.plan!.limits.at(-1)!;
   assert.equal(limit.origin, supervisor);
+
+  const settle = (text: string, via?: unknown) =>
+    ledger.as(supervisor, "amend_plan", {
+      scope: "root",
+      add: [{ section: "terms", term: "Match", text, avoid: ["Game"], ...(via ? { via } : {}) }],
+      reason: "a word settled",
+      cites: via ?? null,
+    });
+  ledger.must(settle("One game between two players, won by the first to three", { kind: "message", id: said }));
+  const terms = () => ledger.state.scopes.get("root")!.plan!.terms;
+  assert.equal(terms()[0]!.line.origin, "human", "a word the Human settled is theirs");
+  assert.equal(refusedBy(settle("A best of five")), "I6", "and settled again under the same word only on their word");
+  ledger.must(settle("A best of five", { kind: "message", id: said }));
+  assert.deepEqual(
+    terms().map((t) => [t.name, t.line.text]),
+    [["Match", "A best of five"]],
+  );
 });
 
 test("I7: a word from outside a Peer's lane gives its Lead a copy; one that directs also leaves the Lead an obligation", () => {

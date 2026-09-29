@@ -87,7 +87,9 @@ Every line of a plan, a brief, a report or a decision is a **line**: `{ id, text
 ### 4.2 Plan
 
 The owner's hypotheses for its scope (CONCEPT-V2 §5.2): `goal`, `limits`, `unknowns` (each with how it will be
-checked), `appetite` (what the scope is worth spending). Lines, each with its origin. Amended by the scope's owner.
+checked), `appetite` (what the scope is worth spending), and `terms`: the domain's words as they were settled, each a
+line defining it and the words it stands in for. Lines, each with its origin. Amended by the scope's owner; a term
+settled again under the same word replaces the old line, so one the Human settled changes only on their word (I6).
 
 An appetite that names an amount of money or of hours also carries it as a number. What each agent spends is recorded
 turn by turn from the agent host's usage, and `status` sets what a scope and its children have spent beside it. The

@@ -27,6 +27,7 @@ export function planFrom(ctx: Context, input: z.output<typeof PlanInput>): Plan 
     limits: input.limits.map((l) => lineFrom(ctx, l)),
     unknowns: input.unknowns.map((u) => ({ line: lineFrom(ctx, u.line), check: u.check })),
     appetite: { line: lineFrom(ctx, input.appetite.line), usd: input.appetite.usd, hours: input.appetite.hours },
+    terms: input.terms.map((t) => ({ name: t.name, line: lineFrom(ctx, t.line), avoid: t.avoid })),
   };
 }
 
@@ -53,5 +54,11 @@ export function briefLines(brief: Brief): Line[] {
 }
 
 export function planLines(plan: Plan): Line[] {
-  return [plan.goal, ...plan.limits, ...plan.unknowns.map((u) => u.line), plan.appetite.line];
+  return [
+    plan.goal,
+    ...plan.limits,
+    ...plan.unknowns.map((u) => u.line),
+    plan.appetite.line,
+    ...plan.terms.map((t) => t.line),
+  ];
 }

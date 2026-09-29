@@ -19,8 +19,9 @@ Human ─goal─► 0 Intake ─► 1 Open ─► 2 Plan ─► 3 Work ─► 4 
 - When the project's instruction files are new or have changed, the Supervisor compiles their rules (`compile-rules`).
 - The first time, the Supervisor sets the project's checks from what the project already runs (its scripts, its CI),
   and the Human sees them.
-- Kernel: records the plan (goal, limits, what is not yet known and how each is checked). Each line carries its
-  origin, here the Human.
+- Kernel: records the plan (goal, limits, what is not yet known and how each is checked, and the words the domain is
+  spoken of in). Each line carries its origin, here the Human. The glossary and the map in the repository are
+  written from it, and each lane landed adds to the map.
 - Prompt: when not to open a team. A small change goes to one agent that owns and writes it, its evidence still bound
   to its commit. Work that needs the Human's feedback all along (UI, feel) stays with the Human.
 
@@ -99,6 +100,9 @@ Nothing blocks it.
 
 ## Always open
 
+- Every agent is pointed at the project's glossary, ADRs and map before it plans. A decision hard to reverse,
+  surprising without its reason and a real trade-off gets an ADR from whoever made it, in the commit it explains; work
+  that contradicts one is a finding.
 - The Human sees at any time the brief each agent works to, which constraints are theirs, which decisions an agent
   made, and which disagreements are open.
 - A word from the Human or the Supervisor straight to a Peer gives its Lead a copy. One that directs also opens an

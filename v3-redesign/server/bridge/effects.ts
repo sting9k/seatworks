@@ -1,8 +1,10 @@
 import { join } from "node:path";
 import type { CommandBody } from "../../shared/contracts/commands.ts";
+import type { Event } from "../../shared/contracts/events.ts";
 import { ACTOR_LABEL, PROJECT_LABEL, ROOT } from "../../shared/contracts/ids.ts";
 import type { Scope } from "../../shared/contracts/ledger.ts";
 import type { State } from "../../shared/kernel/state.ts";
+import { glossaryText, mapText } from "../../shared/views/docs.ts";
 import type { Keys } from "../core/keys.ts";
 import type { PaseoHost } from "../satellites/agent-host/host.ts";
 import { renderBatch } from "../satellites/delivery/render.ts";
@@ -30,6 +32,10 @@ export type Wiring = {
   };
   readonly scratch: string;
   readonly checkTimeoutMs: number;
+  /** The project's log from its start, which the docs are written from. */
+  readonly log: () => Iterable<Event>;
+  /** The name between whose markers the plugin keeps its part of a file it shares with the project. */
+  readonly marker: string;
 };
 
 const WAIT: Handled = { status: "wait" };
@@ -107,6 +113,9 @@ export function handlersFor(w: Wiring): Handlers {
           state,
           actor,
           [...state.actors.values()].some((a) => a.scope === actor.scope && a.id !== actor.id),
+          [w.bundle.project?.glossary, w.bundle.project?.adr, w.bundle.project?.map].filter(
+            (d): d is string => typeof d === "string",
+          ),
         ),
         env: withShim(w, env),
         tools: {
@@ -206,6 +215,24 @@ export function handlersFor(w: Wiring): Handlers {
 
     "workspace.publish": async (e) =>
       done({ type: "record_publish", result: await w.workspace.publish(e.remote, e.branch) }),
+
+    "docs.write": async (_e, { state }) => {
+      const docs = w.bundle.project;
+      const base = state.scopes.get(ROOT)?.branch;
+      if (!docs || !base) return { status: "dropped", why: "no docs to write, or no base yet" };
+      const plan = state.scopes.get(ROOT)?.plan ?? null;
+      const refused: string[] = [];
+      for (const [file, body] of [
+        [docs.glossary, glossaryText(plan)],
+        [docs.map, mapText(w.log(), state)],
+      ] as const) {
+        if (file === null || body === null) continue;
+        const put = await w.workspace.putBlock(base, file, w.marker, body, `Keep ${file} as the record holds it`);
+        if ("refused" in put) refused.push(`${file}: ${put.refused}`);
+      }
+      // A file left behind is written whole the next time the plan changes or a lane lands.
+      return refused.length === 0 ? done() : { status: "failed", why: refused.join("; ") };
+    },
 
     "machine.hold": (e) => {
       w.holds.set(w.project, e.actor, e.hold);

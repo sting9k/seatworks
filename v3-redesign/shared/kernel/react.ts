@@ -1,6 +1,6 @@
 import type { Effect, EffectBody } from "../contracts/effects.ts";
 import type { Event } from "../contracts/events.ts";
-import { HUMAN, type Party } from "../contracts/ids.ts";
+import { HUMAN, type Party, ROOT } from "../contracts/ids.ts";
 import { ownerAbove, ownerOfParent } from "./authority.ts";
 import type { State } from "./state.ts";
 
@@ -178,6 +178,7 @@ export function react(e: Event, s: State): readonly Effect[] {
         branch: scope?.branch ?? null,
         mergedInto: e.type === "integrated" ? (parent?.branch ?? null) : null,
       });
+      if (e.type === "integrated" && scope?.parent === ROOT) add("docs", { kind: "docs.write" });
       break;
     }
     case "turn_ended": {
@@ -235,6 +236,10 @@ export function react(e: Event, s: State): readonly Effect[] {
       break;
     case "publish_requested":
       add("publish", { kind: "workspace.publish", remote: e.remote, branch: e.branch });
+      break;
+    case "plan_set":
+    case "plan_amended":
+      if (e.scope === ROOT) add("docs", { kind: "docs.write" });
       break;
     default:
       break;

@@ -111,7 +111,8 @@ type Line = { id: LineId; text: string; origin: ActorId | "human"; via: Ref | nu
 type Brief = { version: number; goal: Line; constraints: readonly Line[]; choices: readonly Line[];
                context: readonly Line[]; kind: "verification" | "discovery" };
 type Plan = { goal: Line; limits: readonly Line[]; unknowns: readonly { line: Line; check: string }[];
-              appetite: { line: Line; usd: number | null; hours: number | null } };
+              appetite: { line: Line; usd: number | null; hours: number | null };
+              terms: readonly { name: string; line: Line; avoid: readonly string[] }[] };
 type Ref = { kind: "message" | "question" | "finding" | "evidence"; id: string };
 ```
 
@@ -214,7 +215,7 @@ agent also settles any open attention about the actors or scopes it names that t
 | `open_scope`       | `parent, role, kind, paths, after, brief, commit?, over?, model?`                          | `scope_opened`, `actor_seated`, `brief_issued` |
 | `amend_brief`      | `scope, set: { goal?, constraints?, choices?, context?, kind? }, reason, carries?, via?`    | `brief_amended`                         |
 | `set_plan`         | `scope, plan`                                                                              | `plan_set`                              |
-| `amend_plan`       | `scope, remove: LineId[], add: { section, text, via? }[], appetite?, reason, carries?, cites?` | `plan_amended`                     |
+| `amend_plan`       | `scope, remove: LineId[], add: { section, text, check?, term?, avoid?, via? }[], appetite?, reason, carries?, cites?`; a term added under a word the plan holds replaces it | `plan_amended` |
 | `add_edge`, `remove_edge` | `scope, edge: after \| mayChange \| mustTell, target, reason, carries?`             | `edge_added`, `edge_removed`            |
 | `handover`         | `from, to, paths, reason, carries?`                                                        | `handed_over`                           |
 | `raise_finding`    | `disputes?, about?, text, evidence, default`                                               | `finding_raised`, `obligation_opened`   |
@@ -383,6 +384,7 @@ it was delivered, an attention not settled climbs: `attention_climbed` opens a c
 | `permission_settled`                     | a note to its answerer that nothing is owed             | `<seq>:deliver`             |
 | `machine_held`, `machine_released`       | `machine.hold { project, actor, hold }`                  | `<seq>:machine`             |
 | `publish_requested`                      | `workspace.publish { branch, remote, expectedSha }`      | `<seq>:publish`             |
+| `plan_set`, `plan_amended` of the root; `integrated` of a lane | `docs.write`: the glossary and the map written again from the log | `<seq>:docs` |
 
 The shell holds effects that load the machine (`workspace.create`, `workspace.candidate`, `evidence.run`) while any
 project on the machine holds it.

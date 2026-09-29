@@ -17,6 +17,7 @@ export function humanView(state: State): HumanView {
       ...root.plan.limits,
       ...root.plan.unknowns.map((u) => u.line),
       root.plan.appetite.line,
+      ...root.plan.terms.map((t) => t.line),
     ]);
   const lanes = [...state.scopes.values()].filter((s) => s.parent === ROOT);
   for (const lane of lanes) if (lane.brief) agentLines(lane.id, lane.brief.choices);

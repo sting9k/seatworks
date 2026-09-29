@@ -23,7 +23,9 @@ export type EffectBody =
         | { kind: "attention"; id: AttentionId }
         | { kind: "note"; text: string; asks: boolean };
     }
-  | { kind: "machine.hold"; actor: ActorId; hold: boolean };
+  | { kind: "machine.hold"; actor: ActorId; hold: boolean }
+  /** The project's docs written again from the record, into its repository on its base. */
+  | { kind: "docs.write" };
 
 export type Effect = { readonly key: string; readonly body: EffectBody };
 

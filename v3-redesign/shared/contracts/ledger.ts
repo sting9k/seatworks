@@ -41,11 +41,15 @@ export type Appetite = { readonly line: Line; readonly usd: number | null; reado
 
 export type Unknown = { readonly line: Line; readonly check: string };
 
+/** A word of the project's domain as it was settled: its definition is a line, and the words it stands in for. */
+export type Term = { readonly name: string; readonly line: Line; readonly avoid: readonly string[] };
+
 export type Plan = {
   readonly goal: Line;
   readonly limits: readonly Line[];
   readonly unknowns: readonly Unknown[];
   readonly appetite: Appetite;
+  readonly terms: readonly Term[];
 };
 
 export type ScopeKind = "work" | "reading" | "watch";
