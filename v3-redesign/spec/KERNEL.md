@@ -16,9 +16,10 @@ The kernel:
 - MUST NOT decide acceptance, judge evidence, pick a result, or rank what a reader should read first. Those are the
   roles'.
 - MUST NOT compare a role to a name. It reads the properties the profile gives each role (§2).
-- MUST NOT do I/O. It takes commands and facts and returns events and effects; the bridge carries effects to the
-  satellites and their facts back. It is TypeScript in the plugin's `shared/` folder, importing nothing, so the daemon
-  and the app run the same fold (`STACK.md`).
+- MUST NOT do I/O, read the clock or make an id. It is a decider (`CORE.md`): `decide` turns a command into events or
+  a refusal, `evolve` folds an event into the state, and `react` names the effects an event asks for. The shell
+  stamps time and ids, carries effects to the satellites and their facts back. It is TypeScript in the plugin's
+  `shared/` folder, importing nothing, so the daemon and the app run the same fold (`STACK.md`).
 
 ## 2. The profile it reads
 
@@ -212,11 +213,13 @@ Integrations into one scope MUST run one at a time: bring the parent in, run evi
 
 ## 7. Events and state
 
-- State is a fold over an append-only log of events. Each event: `{ seq, at, by, command, payload }`.
+- State is a fold over an append-only log of events. Each event: `{ seq, at, by, command, commandId, payload }`.
+  Every command carries an id; one seen before returns its earlier result and appends nothing.
 - The log is the record. The chain of change, every line's origin and every open obligation are read from it, never
   kept beside it.
 - Snapshots MAY be kept to fold faster. They are caches: removing one loses nothing.
-- Effects carry the id of the event that asked for them, so a satellite that sees one twice does it once.
+- Effects carry a key made from the event that asked for them, and are written in the same transaction as it. A
+  satellite that sees a key twice does the work once, and a fact that carries a key already seen is dropped.
 - On restart the kernel folds the log. Open obligations are open again; effects without a result are asked again.
 
 Events: `scope_opened`, `actor_seated`, `brief_issued`, `brief_amended`, `plan_set`, `plan_amended`, `edge_added`,

@@ -38,6 +38,8 @@ order is the agents'.
 
 - `spec/WORKFLOW.md`: how a team works, stage by stage, and what was decided about it.
 - `spec/COMMUNICATION.md`: how words travel, and what the plugin does not do to them.
+- `spec/CORE.md`: how the kernel and the shell run: a decider, an outbox, one writer per project, and what the
+  systems that already run agents taught.
 - `spec/KERNEL.md`: the authority ledger: profile, scopes, lines, findings, evidence, obligations, invariants,
   commands, events, views.
 - `spec/PORTS.md`: what each satellite does and returns.

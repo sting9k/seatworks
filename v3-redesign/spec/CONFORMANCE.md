@@ -74,6 +74,10 @@ on an implementation without the rule before it is trusted.
 | ------------------------------------------------------------------ | ----------------------------------------------- |
 | Restart with open obligations, a pending evidence run, a held machine | Obligations open, the run asked again once, the hold kept |
 | Every snapshot deleted, then restart                               | The same state from the log                     |
+| A crash after commit, before an effect is dispatched               | The effect is dispatched once on restart        |
+| A satellite's fact delivered twice                                 | Recorded once                                   |
+| A tool call retried with the same command id                       | The earlier result; nothing appended            |
+| The same log folded by the daemon and by the surface               | The same state                                  |
 
 ## Workspace and evidence
 

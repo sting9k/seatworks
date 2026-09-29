@@ -11,7 +11,9 @@ Signatures are language-neutral. `Result` is a success with its value, or a fail
 Keeps the kernel's log.
 
 ```text
-append(project, events, expectedSeq) -> Result<seq>      // fails if another append came first
+append(project, events, effects, expectedSeq) -> Result<seq>   // fails if another append came first
+pending(project) -> effects                               // written, with no result yet
+settle(project, key, result)                              // a fact for an effect; a key settled before is dropped
 read(project, fromSeq) -> events
 putSnapshot(project, seq, state); getSnapshot(project) -> (seq, state)?
 ```
@@ -21,8 +23,8 @@ putSnapshot(project, seq, state); getSnapshot(project) -> (seq, state)?
 - One kernel writes a project's log at a time.
 
 It is a SQLite file of its own, on Node's built-in `node:sqlite` (`STACK.md`): events in an append-only table, the
-append a transaction that checks the expected sequence. The machine's holds live in one file per machine, beside the
-projects' logs.
+append a transaction that checks the expected sequence and writes the effects the events ask for beside them, as an
+outbox (`CORE.md`, The store). The machine's holds live in one file per machine, beside the projects' logs.
 
 ## Agent host
 
