@@ -96,7 +96,6 @@ export function integrate(ctx: Of<"integrate">): Refusal | undefined {
     return refuse("state", `scope ${scope.id} has open children (${open.join(", ")}): integrate or drop them first`);
   const candidate = scope.candidate;
   if (candidate === null) return refuse("I4", `scope ${scope.id} has no candidate commit: its writer hands back first`);
-  const cited: Evidence[] = [];
   for (const id of ctx.body.evidence) {
     const e = ctx.state.evidence.get(id);
     if (!e) return refuse("unknown", `no evidence ${id}`);
@@ -105,10 +104,10 @@ export function integrate(ctx: Of<"integrate">): Refusal | undefined {
         "I4",
         `evidence ${id} is on ${e.subject}, not on ${candidate.candidate}, the commit being integrated`,
       );
-    cited.push(e);
   }
-  if (cited.some((e) => !e.ok) && ctx.body.reason === null)
-    return refuse("I4", "a failing result is integrated only with a reason");
+  const failing = [...ctx.state.evidence.values()].find((e) => e.subject === candidate.candidate && !e.ok);
+  if (failing && ctx.body.reason === null)
+    return refuse("I4", `a failing result is integrated only with a reason: ${failing.id} failed on this commit`);
   ctx.emit({
     type: "integration_started",
     scope: scope.id,

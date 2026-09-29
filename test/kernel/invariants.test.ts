@@ -83,6 +83,22 @@ test("I4: integrating needs evidence on the very commit being integrated, and a 
   const failing = [...ledger.state.evidence.values()].find((e) => e.subject === SHA(2))!.id;
   assert.equal(refusedBy(ledger.as(lead, "integrate", { scope: task, evidence: [failing] })), "I4");
   ledger.must(
+    ledger.fact("record_evidence", {
+      scope: task,
+      subject: SHA(2),
+      ok: true,
+      summary: "",
+      steps: [],
+      heldMachine: false,
+    }),
+  );
+  const passing = [...ledger.state.evidence.values()].find((e) => e.subject === SHA(2) && e.ok)!.id;
+  assert.equal(
+    refusedBy(ledger.as(lead, "integrate", { scope: task, evidence: [passing] })),
+    "I4",
+    "the failing check is on the commit, cited or not",
+  );
+  ledger.must(
     ledger.as(lead, "integrate", {
       scope: task,
       evidence: [failing],
