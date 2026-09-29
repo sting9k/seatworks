@@ -4,9 +4,8 @@ Temporary folder for whoever fixes these next. Delete `handoff/` once every row 
 
 Five read-only reviews ran on 2026-09-29 against the code as it was then, under `v3-redesign/`. That code now sits at
 the repository root, so read every `v3-redesign/` path in the review files as the root. Three agents were then
-started to fix the kernel, server and client findings. They were stopped part way:
-- their finished commits are on this branch;
-- their unfinished work is saved here as patches.
+started to fix the kernel, server and client findings. They were stopped part way, with their finished commits on
+this branch and their unfinished work kept here as patches — all since applied, finished and committed.
 
 Before you start, read `AGENTS.md` and the skills in `.claude/skills/` (`kernel-change`, `satellite`,
 `paseo-boundary`, `testing`, `pre-commit-review`). Every fix needs a test that you have seen fail on the old code.
@@ -20,9 +19,6 @@ Run `npm run check` before each commit; it passed at the commit that added this 
 | `server-review.md`      | Full review of `server/`, `bin/`, the git shim and upkeep                                      |
 | `client-review.md`      | Full review of `client/`, `index.client.tsx`, `install.sh` and the manifest                   |
 | `readiness-review.md`   | What stops a first run on a real Paseo, the "to check" items, a 15-step manual test plan, and coverage gaps |
-| `kernel-wip.patch`      | Unfinished fix for kernel #3 (delivery after a reseat). Apply with `git apply`             |
-| `server-wip.patch`      | Unfinished fix for server boot #c (a failed create leaves an empty seat)                   |
-| `client-wip.patch`      | Unfinished fix for client mediums (false empty states when a call fails)                   |
 
 The profile review (prompts and skills against the kernel's rules) is already fixed in commit `4165575`. One item
 remains open from it; see "Owner decisions" below.
@@ -37,15 +33,12 @@ Status values:
 
 ### Where it stands (checkpoint for the next session)
 
-- The three WIP patches are applied, finished and committed; the patch files stay until every row is closed.
-- `npm run check` passes at 110 tests. The client has no Node test runner for its React Native surface, so client
+- Every row below is **DONE** or **NOT A BUG**; the three `.patch` files are deleted. This folder now holds only the
+  report and the reviews for the owner.
+- `npm run check` passes at 121 tests. The client has no Node test runner for its React Native surface, so client
   fixes are verified by typecheck, lint and review, not by failing-first tests.
-- Still to do: kernel `12`; server `e` and `9`; the kernel spec-vs-code mismatches below (each was checked and is
-  real unless noted); the three "unverified" kernel items; then delete the three `.patch` files and push.
 - **Push is blocked**: `git push` to `sting9k/seatworks` returns HTTP 403 — account `long7400` has no write access.
   All work is committed locally on `rebuild`; ask the owner for access or a fork to push to.
-- Server `e` cannot be verified from `node_modules/@getpaseo/*`: nothing there shows whether Paseo's worker runs
-  under Node or Electron. It needs Paseo's source or the owner's daemon.
 
 ### Kernel: `shared/kernel`, `shared/contracts`, `shared/views` (`kernel-review.md`)
 
@@ -62,30 +55,37 @@ Status values:
 | 9 | Low | `reviewsThatChanged` never counts a verdict: verdicts are keyed to the reading scope, send-backs to the reviewed one (`record.ts:118-126`) | **DONE** `824140a`: matched on the commit the evidence read |
 | 10 | Low | Citing the copy of a direction (`copyOf`) does not close it, in amend `via` or `answer` (`decider.ts:67`, `talk.ts`) | **DONE** `05b2cfe` |
 | 11 | Low | `activity.ts:219` hard-codes "the Supervisor", a role name in `shared/`, and is wrong when an attention climbs from a vacant seat | **DONE** `da8b2c8`; the architecture test now reads words in all strings the code says, and found two more (fixed in the same commit) |
-| 12 | Low | A Peer cannot raise a finding while its Lead's seat is empty (`findings.ts:37-38`), which is not an invariant | OPEN — real: `raiseFinding` refuses `scope has nobody seated to answer it` when the answerer's seat is empty. Route it to the next seated owner up, or the Human at the root |
+| 12 | Low | A Peer cannot raise a finding while its Lead's seat is empty (`findings.ts:37-38`), which is not an invariant | **DONE** `b83df48d`: the finding climbs past empty seats to the next seated owner, past the root to the Human (who gained `classify_finding` for it) |
 | 13 | Low | `chainOf` and `mapText` keep the old verdict after `finding_reopened` (`record.ts:48`, `docs.ts`). Now reachable: `4165575` gave Peers, Leads and Reviewers `reopen_finding` | **DONE** `4d8f687` |
 
-Kernel spec against code (fix the code or the spec, in the same commit). All re-checked; each is still open:
-- `handover` moves paths but never the writer, while KERNEL §6, I1, WORKFLOW and CONFORMANCE say it moves the writer,
-  and `invariants.test.ts:7` asserts the opposite. Confirmed: `scopes.ts` `handover` emits `handed_over` for paths
-  only.
-- KERNEL §3 says a gone actor's seat, obligations and mail stay; LEDGER §5 and the code empty the seat and move them.
-  Confirmed (`evolve.ts` `vacate`). LEDGER and code agree, so KERNEL.md is the one likely wrong.
-- `reseat` is accepted on a held scope, while KERNEL §4.8 says nothing new is seated in one. Confirmed: `reseat`
-  has no `held` check.
-- I6 guards only the root plan's goal and appetite (`scopes.ts:160`), while CONFORMANCE's I6 row expects a lane's goal
-  amended with no answer to be refused.
-- LEDGER names differ from the code: `publish` has no `expectedSha` (confirmed; same fix as server `9`); `via` vs
-  `cites`; `attend` has a `scope` argument in LEDGER only (confirmed — `commands.ts` `attend` has no `scope`).
-- `rpc.ts` says `lanes.owes` counts attentions; `human.ts` counts obligations only. Confirmed the texts disagree.
+Kernel spec against code — all resolved:
+- `handover` moves paths but never the writer, while KERNEL §6, I1, WORKFLOW and CONFORMANCE said it moves the writer.
+  The code was right — a handover atomically moves the paths and so their writer (the writer of a scope's paths is
+  its owner); moving a seat between scopes is `reseat`'s job. Spec wording fixed in `6b9df4bd`.
+- KERNEL §3 said a gone actor's seat, obligations and mail stay; LEDGER §5 and the code empty the seat and move them
+  to the heir. KERNEL.md wording fixed in `6b9df4bd` (I11: owed work must not die with the leaver).
+- `reseat` was accepted on a held scope, against KERNEL §4.8. Code fixed in `90c2c9c5` — nothing new is seated in a
+  held scope.
+- I6 guarded only the root plan's goal and appetite (`scopes.ts`). Code fixed in `a023f7f3` — a plan's goal or
+  appetite cites the Human at every level. (A brief's goal still asks no word, per the workflow row.)
+- LEDGER named an `attend` `scope` argument and a `via` citation the code does not have; `attend` derives the scope
+  from the watched actor and I6 citations use `cites` (`via` is per-line provenance). LEDGER fixed in `6b9df4bd`.
+- `rpc.ts` documented `lanes.owes` as counting open attentions too; `human.ts` counted obligations only. An unacked
+  attention does wait on its owner, so the doc was the better contract — `de461ecc`.
+- `publish`'s missing `expectedSha`: fixed under server `9` (`82b1fb62`).
 
-Unverified from the same review:
-- A Lead waiting on its checks may never be woken when the result lands (`react.ts:120-126`). Partly checked:
-  `evidence_recorded` of kind `check` does send a note to the scope's parent owner; confirm that note actually wakes
-  a waiting Lead before closing this.
-- `drop_scope` can land between `integration_started` and `record_integration`. Likely real: `dropScope` does not
-  check `integrating`; needs a test.
-- If the root's owner hands back, the Human owes the claim.
+Unverified items from the same review — all confirmed and fixed:
+- A Lead waiting on its checks was never woken when the result landed: `evidence_recorded` told the parent owner in
+  a note that `asks: false`, so the dispatcher never delivered it to an idle Lead. `2cb1952a`: `evidence_requested`
+  records who asked and `evidence_recorded` carries `wake` — the asker and any integrator with an open claim on the
+  scope are woken; the parent owner still gets the plain note.
+- `drop_scope` could land between `integration_started` and `record_integration`, writing "dropped" over a merge the
+  branch physically holds. `41c19556` refuses it on `integrating`, as `integrate` and `hand_back` already did.
+- If the root's owner hands back, the Human owed the claim with no way to settle it: `send_back` was not a Human
+  command, `published` did not close it, and no view showed it. `11faa721`: the Human may `send_back` (the root's
+  parent owner is the Human), `published` closes a live claim on the root, and the Human's view shows such claims
+  with publish / send-back cards. The shipped SLP profile never grants `hand_back` to the root's role, so this is
+  reachable only in a profile that does — the kernel's contract now holds for both.
 
 ### Server: `server/`, `bin/`, `package.json` (`server-review.md`, `readiness-review.md` blockers)
 
@@ -95,7 +95,7 @@ Unverified from the same review:
 | b | Blocker | The server imports types from `@getpaseo/client` and `@getpaseo/protocol`, which were devDependencies only, and the manifest builds with `npm ci --omit=dev` | **DONE** `00fdaa7` (both now dependencies at 0.10.1; `@getpaseo/plugin` is supplied by Paseo's worker) |
 | c | Blocker | `PaseoHost.create` rethrows every error except the two idempotency refusals, so a profile with no model leaves a seat with no agent forever: the dispatcher gives up after 5 tries with only a log line | **DONE** `d4c6f45` (patch applied, finished, test failed first) |
 | d | Blocker | After a daemon restart, `envFor`, `turnEnded`, `permissionAsked` and `archived` look the agent up before the plugin is ready (`plugin.ts` ~476-560). A resumed agent gets no git shim and no `SEATWORKS_*` environment, and early hooks are lost. No reconcile runs on start (PASEO.md rule 5) | **DONE** `2f2b769` + `dbd25d2` |
-| e | Med | `process.execPath` is used as `node` for the MCP server and the shim (`plugin.ts:620`, `shim.ts:8`); if Paseo's worker runs under Electron this breaks | OPEN. Cannot be verified from `node_modules/@getpaseo/*` (the worker's launcher is not published there); needs Paseo's source or the owner's daemon |
+| e | Med | `process.execPath` is used as `node` for the MCP server and the shim (`plugin.ts:620`, `shim.ts:8`); if Paseo's worker runs under Electron this breaks | **DONE** `d9f4faee` — verified against Paseo's source: the desktop daemon runs its Electron binary with `ELECTRON_RUN_AS_NODE=1` and forks plugin workers on `process.execPath`, so a clean-env child gets the Electron binary. The shim launcher and the team tool server now set `ELECTRON_RUN_AS_NODE=1` themselves |
 | 1 | High | `git.ts` treats `worktree` as a refs-only subcommand, so the repository's local config is not emptied first; `worktree add` checks files out and runs a smudge filter an agent could plant in `.git/config` | **DONE** `4055a6b` |
 | 2 | High | `putBlock` checks the file's status without `--ignored`, so a Human's gitignored `AGENTS.md` is overwritten with the note and committed | **DONE** `fe656c7` |
 | 3 | High | One failure at start (a transient error, or one project whose log no longer folds) disables every project until the plugin reloads; `dispose()` then throws and leaves the socket open | **DONE** `dbd25d2` + `2f2b769` |
@@ -104,7 +104,7 @@ Unverified from the same review:
 | 6 | Med | Git shim bypasses: `git fetch . HEAD:<branch>`, `git branch -Df`, `git --attr-source HEAD checkout` | **DONE** `5d4a99a` |
 | 7 | Med | A tool call retried after a dropped connection gets a new command id, so it is recorded twice | **DONE** `0835dd2` |
 | 8 | Med | Nothing catches up on start or reconnect: a permission request or turn end that arrives early or while down is lost | **DONE** `2f2b769`, the same fix as `d` |
-| 9 | Med | The `publish` effect has no `expectedSha`, so it pushes whatever the branch holds when it runs | OPEN — confirmed: `publish` takes only `remote`, `workspace.publish` is `{ remote, branch }`, `Workspace.publish` pushes unchecked. LEDGER already names `expectedSha`, so the code is the side to change |
+| 9 | Med | The `publish` effect has no `expectedSha`, so it pushes whatever the branch holds when it runs | **DONE** `82b1fb62`: the record tracks the base's head on the root (`workspace_ready`, `integrated`, `published`, `publish_refused`), `publish_requested` carries it, the workspace refuses when the tip moved and reports the tip it found, so asking again publishes the new head |
 
 Also from `readiness-review.md` (gaps, not bugs):
 - Only Claude and Pi have harness files.
