@@ -3,10 +3,11 @@ import {
   SettingsAction,
   SettingsCard,
   SettingsInput,
+  type SettingsInputHandle,
   SettingsSection,
   SettingsSelect,
 } from "@getpaseo/plugin/client/ui";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Text } from "react-native";
 import { reflexSettings } from "../shared/contracts/settings.ts";
 
@@ -15,10 +16,12 @@ const ROUTES = [
   { label: "TypeSafe's own API", value: "typesafe" },
 ] as const;
 
-/** Where the reflex asks Jev. The key is written, never read back: the field starts empty and saving keeps it. */
+/** Where the reflex asks Jev. The key is never shown: the field starts empty and is emptied once the key is saved. */
 export function JevSettings({ theme }: PluginSurfaceProps) {
   const settings = useSettings(reflexSettings);
   const [key, setKey] = useState("");
+  const [saved, setSaved] = useState(false);
+  const field = useRef<SettingsInputHandle>(null);
   if (settings.status === "loading") return <Text style={{ color: theme.colors.foregroundMuted }}>Loading…</Text>;
   if (settings.status !== "ready")
     return (
@@ -59,8 +62,18 @@ export function JevSettings({ theme }: PluginSurfaceProps) {
         />
         <SettingsInput
           label="Key"
-          hint={current.key ? "A key is set. Type a new one to replace it." : "No key is set."}
-          onChangeText={setKey}
+          hint={
+            saved
+              ? "Saved. Type a new one to replace it."
+              : current.key
+                ? "A key is set. Type a new one to replace it."
+                : "No key is set."
+          }
+          ref={field}
+          onChangeText={(text) => {
+            setKey(text);
+            setSaved(false);
+          }}
           secureTextEntry
           disabled={settings.saving}
           error={settings.saveError}
@@ -69,7 +82,14 @@ export function JevSettings({ theme }: PluginSurfaceProps) {
           label="Save the key"
           actionLabel="Save"
           disabled={settings.saving || key.trim() === ""}
-          onPress={() => void settings.save({ ...current, key: key.trim() }, settings.revision)}
+          onPress={() =>
+            void settings.save({ ...current, key: key.trim() }, settings.revision).then((ok) => {
+              if (!ok) return;
+              field.current?.replaceText("");
+              setKey("");
+              setSaved(true);
+            })
+          }
         />
       </SettingsCard>
     </SettingsSection>
