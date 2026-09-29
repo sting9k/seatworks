@@ -27,10 +27,9 @@ The plugin **serves** SLP so it works better with Paseo. It must **never constra
 ## Where the truth is
 
 1. **CONCEPT-V2**, read through the orchestration analysis, is the standard. Its rules are cited as P1–P17 (what the
-   plugin must provide), N1–N8 (what it must not do) and §sections; the article's paragraphs as A3.x¶n. Both live in
-   the owner's docs, not in this repository: "CONCEPT-V2 — Kim chỉ nam SLP cho Seatworks" and "Agent Orchestration &
-   SLP — Phân tích nghiên cứu chi tiết". The spec carries what a build needs from them; when a question needs the
-   source itself and you cannot read it, ask the owner.
+   plugin must provide), N1–N8 (what it must not do) and §sections; the article's paragraphs as A3.x¶n. Both are
+   in `concept/`, exported from the owner's docs: `CONCEPT-V2.md` and `ORCHESTRATION-ANALYSIS.md`. The owner's docs
+   stay the source; the copies here are refreshed from them, never edited.
 2. **`spec/`** turns it into what to build. `KERNEL.md` is the contract: invariants I1–I12, commands, events.
    `CONFORMANCE.md` lists the cases that prove it. `README.md` gives the order of work.
 3. **The code** does what the spec says. Where code and spec disagree, one of them is wrong: fix the code, or change

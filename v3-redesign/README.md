@@ -62,6 +62,7 @@ The plugin's layout, and the language of each part, are in `spec/STACK.md`. In s
 
 ```
 AGENTS.md      the rules for whoever builds it; .claude/skills/ holds their recipes
+concept/       CONCEPT-V2 and the orchestration analysis, exported from the owner's docs: the standard
 spec/          for whoever builds it
 profile/slp/   the SLP preset: profile.yaml, reflex.yaml, watch.yaml, roles/*.md, skills/, reference/ANTIPATTERNS.md;
                a project's own rules.yaml lives in that project's state, compiled from its instruction files
