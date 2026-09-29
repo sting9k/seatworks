@@ -115,7 +115,8 @@ A premise, constraint or choice that the evidence shows does not fit (CONCEPT-V2
 ### 4.5 Evidence and claims
 
 - **Evidence**: `{ id, kind, subject, result, by, at, conditions }`. `kind` is `check` (a command run), `verdict`
-  (a reading scope's answer), `measurement`, or `human` (their word on the record). `subject` is the commit it is
+  (a reading scope's answer), `measurement`, `judgement` (the reflex's answer on a commit, `REFLEX.md`), or `human`
+  (their word on the record). `subject` is the commit it is
   about. `conditions` says, for a measurement, whether the machine was held.
 - **Claim**: what an agent says of its own work, such as a hand-back. Recorded as a claim, never as evidence.
 
@@ -142,6 +143,12 @@ an answer, an intervention, a question to the Human, a hand-back waiting on its 
 - **Machine hold**: an actor measuring holds the machine; while held, the kernel defers the effects that would load it
   (evidence runs, workspace setup) and starts them when it is released.
 
+### 4.9 Observations
+
+What the reflex answered about an event (`REFLEX.md`): `{ id, question, subject, model, answer, at }`, recorded with
+the bridge as caller. Past its question's threshold it is also delivered as a note along the relation the question
+names, as evidence of kind `judgement`, or as a delivery fact to the agent it is about.
+
 ## 5. Invariants
 
 The kernel MUST refuse a command that would break one of these, and MUST NOT refuse for any other reason.
@@ -159,6 +166,7 @@ The kernel MUST refuse a command that would break one of these, and MUST NOT ref
 | I9  | Lines carry the origin the kernel set; a line is the Human's only via something the Human said.                     | §9.2       |
 | I10 | Only a role with `humanDoor` asks the Human; a message is sent only along the sender's `speaksTo`.                   | §3.1, §7.3 |
 | I11 | An obligation closes only when what is owed is done; it moves with its holder.                                       | §4.5       |
+| I12 | An observation changes only the record: it moves no line, finding, scope, hold or obligation, answers nothing, and is delivered only as a note that asks nothing, as `judgement` evidence, or as a delivery fact. | N1, N6     |
 
 ## 6. Commands
 
@@ -207,7 +215,7 @@ Events: `scope_opened`, `actor_seated`, `brief_issued`, `brief_amended`, `plan_s
 `finding_reopened`, `finding_withdrawn`, `claim_made`, `evidence_recorded`, `integrated`, `sent_back`, `reseated`,
 `scope_dropped`, `scope_held`, `scope_resumed`, `report_made`, `message_sent`, `message_delivered`,
 `question_asked`, `question_answered`, `obligation_opened`, `obligation_closed`, `obligation_moved`,
-`machine_held`, `machine_released`, `actor_released`, `actor_gone`.
+`machine_held`, `machine_released`, `actor_released`, `actor_gone`, `observation_made`.
 
 ## 8. Views
 
@@ -221,7 +229,7 @@ Read models over the log. Nothing in them is kept apart from it.
   after it.
 - **Signals** (§10.3), as ratios, never as rules: findings on the same line or paths again and again; questions to
   the Human that led to a change; reading scopes whose verdict led to a send-back or an amendment; interventions
-  carried in late; messages followed by no change.
+  carried in late; messages, the reflex's notes among them, followed by no change.
 - **Open obligations**, by holder.
 - **Status** of a scope for its actors: its brief, its children, its edges, what waits on whom.
 

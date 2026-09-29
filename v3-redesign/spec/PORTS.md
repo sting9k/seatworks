@@ -122,6 +122,21 @@ signals(project, since) -> ratios
 
 Read only. It never writes to the log and never turns a ratio into a rule.
 
+## Reflex
+
+Answers typed questions about a piece of text, each with a probability. What it may be asked, and where its answers
+go, is in `REFLEX.md`.
+
+```text
+ask(state, questions, model) -> Result<{ model, answers, tokens }>
+  question: noul | choice(labels) | score(rubric), each with instructions and a description per outcome
+  answer: p(yes) | label, confidence, p per label | score, confidence, p per level
+```
+
+- Every question is answered as asked, or the call fails.
+- Where it is sent is data: endpoint, pinned model, and a body sent with every request.
+- Never asked from a hook that can refuse, and nothing waits on it.
+
 ## Code index
 
 Lets agents search code through the servers a project configures.

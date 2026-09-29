@@ -44,15 +44,16 @@ order is the agents'.
 - `spec/CONFORMANCE.md`: the cases an implementation proves.
 - `spec/PASEO.md`: what v3 takes from Paseo, what it leaves, and how it survives Paseo's releases.
 - `spec/HARNESS.md`: how Claude Code, Codex, Pi and Oh My Pi are run, with one policy and one set of guards.
+- `spec/REFLEX.md`: the reflex, a cheap typed judgement (Jev first) that notices on every event and decides nothing.
 
 ## Layout
 
 ```
 spec/          for whoever builds it
-profile/slp/   the SLP preset: profile.yaml, roles/*.md, skills/, reference/ANTIPATTERNS.md
+profile/slp/   the SLP preset: profile.yaml, reflex.yaml, roles/*.md, skills/, reference/ANTIPATTERNS.md
 kernel/        entities, invariants, commands, views; no I/O, no Paseo, no role names
 satellites/    store, agent-host (with harness/<agent>/), workspace, evidence, delivery, machine, human, record,
-               code-index; each imports only its own port
+               code-index, reflex; each imports only its own port
 tools/         the MCP server; each role's tools from profile.yaml
 bridge/        the Paseo plugin's entry, the only place that builds the whole
 ```
@@ -61,3 +62,5 @@ bridge/        the Paseo plugin's entry, the only place that builds the whole
 
 - The kernel's language. The Paseo bridge is TypeScript whatever it is.
 - Which store backs the log: a file of its own, or a tracker the Human already reads.
+- Whether the record's text and diffs may go to Jev's host, and whether a `judgement` step can hold an integration
+  (`spec/REFLEX.md`).

@@ -97,5 +97,7 @@ Nothing blocks it.
 1. A Peer waiting on an escalation names its default and goes on with what the escalation does not touch.
 2. The Lead redraws ownership inside its lane, the Supervisor between lanes. A handover moves the writer in one
    event, so no scope ever has two.
-3. The Supervisor checks how a Lead frames work by reading the briefs with their origins and the chain of findings. A
-   watch comes back only if a look back shows the record is not enough.
+3. The Supervisor checks how a Lead frames work by reading the briefs with their origins and the chain of findings. The
+   reflex reads each brief, finding and report as it lands and tells the Supervisor what it notices (`REFLEX.md`);
+   it reads the record, not thinking. A watch on agents' words comes back only if a look back shows the record is not
+   enough, as questions in the profile.

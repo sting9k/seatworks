@@ -25,6 +25,8 @@ on an implementation without the rule before it is trusted.
 | I10  | A Lead calls `ask_human` in the SLP profile                             | Refused                                                   |
 | I10  | A Peer messages another Peer in the SLP profile                         | Refused; accepted in a profile that gives Peers `children` or a Peer edge |
 | I11  | A message asking for an answer; its reader is gone                      | The obligation moves to whoever is reseated; never closed by time |
+| I12  | An observation past its threshold on a finding                          | A note to the relation named; the finding, its obligation and every line unchanged |
+| I12  | A reflex question whose `tells` would classify, integrate or answer     | The profile is refused when loaded                        |
 
 ## The kernel adds nothing
 
@@ -77,3 +79,13 @@ on an implementation without the rule before it is trusted.
 | A merge with conflicts                                      | Undone; the conflicting paths reported   |
 | The copy moves while a check runs                           | The run fails                            |
 | An evidence run asked while the machine is held             | Starts when the hold is released         |
+
+## Reflex
+
+| Case                                                        | Expect                                                     |
+| ----------------------------------------------------------- | ---------------------------------------------------------- |
+| No key set; a full lane runs                                | The same events as with the reflex, less `observation_made` |
+| The reflex's host is down during a hand-back                | The command succeeds; the evidence step says `not run`     |
+| A state past the budget                                     | Not cut to fit; the step says `too large`                  |
+| An answer with one question missing                         | The call fails; nothing is recorded as answered            |
+| A question renamed in `reflex.yaml`                         | Asked under its new name with no code change               |
