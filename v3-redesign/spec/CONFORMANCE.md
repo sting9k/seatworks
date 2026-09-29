@@ -23,6 +23,8 @@ on an implementation without the rule before it is trusted.
 | I7   | The Human types into a Peer's chat                                      | The Lead has a copy and an obligation; the Human sees whether it was carried in |
 | I8   | `classify_finding` as `changes` with no change events                   | Refused                                                   |
 | I8   | `classify_finding` as `alternative` with no reason                      | Refused                                                   |
+| I4   | `integrate` citing a verdict on an older commit                         | Refused                                                   |
+| I5   | A Reviewer tries to write in its copy's paths through the kernel        | Refused: a reading scope has no paths                     |
 | I10  | A Lead calls `ask_human` in the SLP profile                             | Refused                                                   |
 | I10  | A Peer messages another Peer in the SLP profile                         | Refused; accepted in a profile that gives Peers `children` or a Peer edge |
 | I11  | A message asking for an answer; its reader is gone                      | The obligation moves to whoever is reseated; never closed by time |
@@ -34,6 +36,9 @@ on an implementation without the rule before it is trusted.
 | Case                                                         | Expect                                         |
 | ------------------------------------------------------------ | ---------------------------------------------- |
 | A hundred findings to one Lead                               | All accepted; none merged, ranked or capped    |
+| A scope integrated with no reading scope ever opened         | Accepted                                       |
+| A verdict of changes on a commit                             | Recorded as evidence; nothing held or sent back by it |
+| A permission asked by a Peer                                 | Answerable by its Lead or the Human, not by another Peer |
 | A plan amended ten times                                     | Accepted, each with its reason                 |
 | A red check with a reason                                    | Integrated; the kernel never overrules the integrator |
 
@@ -85,7 +90,7 @@ on an implementation without the rule before it is trusted.
 
 | Case                                                        | Expect                                                     |
 | ----------------------------------------------------------- | ---------------------------------------------------------- |
-| No key set                                                  | The bridge seats no agent, and says the key is missing     |
+| No key set, or the key refused                              | Agents are seated and commands run; a standing alarm to the Human |
 | The reflex's host is down during a hand-back                | The command succeeds; the evidence step says `not run`     |
 | A state past the budget                                     | Not cut to fit; the step says `too large`                  |
 | An answer with one question missing                         | The call fails; nothing is recorded as answered            |

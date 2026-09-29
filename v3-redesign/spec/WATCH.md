@@ -50,7 +50,9 @@ profile's set, in `profile/slp/watch.yaml` with its questions and thresholds:
 | obeys-against-judgement | It does what it says it thinks is wrong because it was told to                           | Peer       |
 | builds-a-stand-in       | It plans a stub, fake, shim or second copy of state to fill a gap                        | Peer       |
 
-When is each owner's craft, so it is data. The anti-pattern list the moments draw on is shared across projects
+The first lane watches only the starting set in `watch.yaml`'s `active` list (big-decision, trades-the-goal,
+admits-wrong, mints-an-api); the others wait until a look back shows the lane needed them. When is each owner's
+craft, so it is data. The anti-pattern list the moments draw on is shared across projects
 (`reference/ANTIPATTERNS.md`); a project adds a moment of its own only when a look back shows its agents keep making
 one mistake. A profile with no moments has no watch, so a team that works another way loses nothing.
 
@@ -183,7 +185,7 @@ aloud is a matter for the surface.
 | Present                    | The watch                                                              |
 | -------------------------- | ---------------------------------------------------------------------- |
 | All                        | As above                                                               |
-| Jev's host unreachable     | Facts and sweeps go to the Watcher until it answers again              |
+| Jev's host unreachable, or its key missing | Facts and sweeps go to the Watcher, and a standing alarm tells the Human |
 | No Watcher role            | Only the reflex's `tell` answers, the facts that need no judging, and the alarms reach the Supervisor |
 
 Every other part of v3 works the same in each case.

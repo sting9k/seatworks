@@ -2,6 +2,9 @@
 # and a moment that never leads to a change is removed. Questions are asked the way spec/REFLEX.md says: one
 # condition, the smallest state, every outcome described, English.
 
+# The starting set: the moments that bear most on design while it is cheap to change. The others wait.
+active: [big-decision, trades-the-goal, admits-wrong, mints-an-api]
+
 item:
   chars: 1500 # a moment shows in a sentence or two; a longer item dilutes the question
   everyItems: 20 # a look inside a long turn, where drift hides

@@ -174,7 +174,8 @@ questions:
   `attention.json` go.
 - `consider`, where a question has one, is the probability past which an answer under `tell` goes to the actor that
   watches the scope, as a candidate (`WATCH.md`).
-- `tells` is a relation (`root`, `owner`, `parent`, `self`), `answerer` (whoever answers a permission), or `evidence`.
+- `tells` is a relation (`root`, `owner`, `parent`, `self`), `answerer` (whoever may answer a permission: the owner
+  of the asking agent's parent scope, or the Human), or `evidence`.
   `wakes: true` lets a note wake the role it is for. Otherwise it waits for the next message that asks something, as
   every note does.
 
@@ -207,10 +208,16 @@ One client for the project, behind the reflex port. A call goes through the same
 An event that goes unread is recorded so. A hand-back's evidence step then says `not run`, so the Lead knows it is
 missing.
 
-**Setup.** Jev is a requirement of v3, like Paseo. The plugin's setup asks for the route and the key, and the bridge
-seats no agent until they are set. Installing v3 with them is the Human's consent to send the record's text and the
-agents' words to Jev's host: through OpenRouter with data collection denied, unless they choose TypeSafe's own API.
-The key lives in the plugin's settings and is never written to a log.
+**Setup, and failing open.** Jev is a requirement of v3: the plugin's setup asks for the route and the key, and
+installing v3 with them is the Human's consent to send the record's text and the agents' words to Jev's host, through
+OpenRouter with data collection denied unless they choose TypeSafe's own API. The key lives in the plugin's settings
+and is never written to a log.
+
+The reflex is advisory: it decides nothing (I12), so it is a soft dependency and fails open. A key missing, refused
+or out of credit never stops an agent from being seated or a command from running. It raises a standing alarm on the
+Human's surface, and the watch goes on with what is left: code facts and known patterns, the Watcher's sweeps, the
+Supervisor. Blocking the team on its sensor would make the tool constrain the way SLP works; failing closed is for a
+control that decides, and nothing that asks Jev does.
 
 **Cost.** A busy day, five agents with forty turns each and thirty items a turn, is about 6,000 calls of some 600
 tokens: under four million tokens, about fifteen cents. Events and hand-backs add little beside it.
@@ -322,7 +329,9 @@ ask(state, questions, model) -> Result<{ model, answers, tokens }>
   did for V1; until it is shown to, v3 uses the route V1 used.
 - The rate OpenRouter allows Jev, which it does not publish.
 
-## Open, for the owner
+## Decided
 
-- Whether a `judgement` step can hold an integration, as a failing check does under I4. The recommendation is no: it
-  is shown beside the checks and never holds, since a hold would make it the approval step N6 forbids.
+- A `judgement` step never holds an integration. It is shown beside the checks with its probability, and the Lead
+  weighs it; a hold would make it the approval step N6 forbids.
+- The first lane asks only the starting set in each file's `active` list; the rest are written and waiting. A
+  question joins the set when a look back shows the lane needed what it notices (CONCEPT-V2 A3.9¶11: start simple).

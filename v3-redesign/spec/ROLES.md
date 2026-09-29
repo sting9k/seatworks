@@ -64,7 +64,10 @@ From CONCEPT-V2 §3.1. The prompt is built to answer them and nothing else.
   trade of a quality the goal names.
 - **Model.** Chosen per task by the Lead from the role's list.
 
-V1's reading Peers (Reviewer, Architect, Auditor) are left out until the core runs.
+The Reviewer is a kind of Peer (CONCEPT-V2 §3.2): seated by its Lead on one commit, in a copy it cannot write
+back from, it returns a verdict that is evidence and decides nothing. It is worth its cost only when it changes the
+work, and the look back counts how often it does. The Architect and the Auditor, V1's other reading Peers, stay out
+until a look back shows a Lead needs them.
 
 ## Models per role
 
@@ -75,7 +78,7 @@ list. Different models in blind designs are the point: one model on one question
 
 | V1                                                                  | v3                                                   |
 | ------------------------------------------------------------------- | ---------------------------------------------------- |
-| The desk's mechanics as rules: merge queue, review rounds, severity ladder, lane review timing | The kernel and tool replies                          |
+| The desk's mechanics as rules: merge queue, review rounds, severity ladder, lane review timing | The kernel and tool replies; severity in the Reviewer's prompt |
 | A Lead that never reads code                                        | A Lead that reads and runs what it needs to decide   |
 | `council`: two reviewers asked a hard question                      | Blind designs: discovery scopes, blind to each other |
 | A Supervisor loop of thirteen numbered steps                        | Three questions, and the skills for each moment      |

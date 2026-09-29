@@ -5,6 +5,9 @@
 # wording and model in `for`; with no `for` it has not been earned yet, and the answer goes no further than a
 # candidate for the Watcher (a note) or the record (a fact). `judgement` evidence always shows its probability.
 
+# The starting set (spec/REFLEX.md, Decided). The others are written and wait for a look back to need them.
+active: [touches-goal-or-cost, mints-an-api, red-check]
+
 routes:
   openrouter:
     endpoint: https://openrouter.ai/api/alpha/decisions

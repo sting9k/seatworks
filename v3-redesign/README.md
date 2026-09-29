@@ -66,7 +66,8 @@ bridge/        the Paseo plugin's entry, the only place that builds the whole
 ## Requirements
 
 - Paseo `>=0.10.0`.
-- Jev, through OpenRouter or TypeSafe's own API, with its key set in the plugin's settings.
+- Jev, through OpenRouter or TypeSafe's own API, with its key set in the plugin's settings. It is a soft dependency:
+  without it the team still works, less watched, and the Human is told.
 - git.
 
 Nothing else. A requirement is added only when no one could do the work without it; what a Human already has, such as
@@ -76,4 +77,3 @@ an IDE's index, may be configured as a tool for agents and is never needed by v3
 
 - The kernel's language. The Paseo bridge is TypeScript whatever it is.
 - Which store backs the log: a file of its own, or a tracker the Human already reads.
-- Whether a `judgement` step can hold an integration (`spec/REFLEX.md`).

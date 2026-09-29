@@ -37,7 +37,7 @@ answerPermission(agentId, requestId, allow, reason)
 archive(agentId)
 ```
 
-- `sandbox` is built from role properties (`writes`), never from a role's name. Each agent's own format
+- `sandbox` is built from role properties (`writes`, `reading`), never from a role's name. Each agent's own format
   lives in `agent-host/harness/<agent>/`.
 - A prompt and a tool set are fixed when an agent is created: a change of either is a new agent.
 - A stream resumed after a reconnect MAY have missed events; the adapter reads `history` to fill the gap before it

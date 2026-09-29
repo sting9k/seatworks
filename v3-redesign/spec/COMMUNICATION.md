@@ -33,6 +33,7 @@ Drawn from CONCEPT-V2 §3.1, §4.3, §7.2 and §9.4.
 | Supervisor | the Human, the Leads; a Peer, its Lead told         |
 | Lead       | the Supervisor, its own Peers                       |
 | Peer       | its Lead: findings, questions, hand-backs, requests |
+| Reviewer   | its Lead                                            |
 | Watcher    | the Supervisor                                      |
 
 A Peer does not message another Peer: it reads the other's work, and asks the owner for a change through its Lead.
