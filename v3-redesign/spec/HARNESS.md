@@ -10,7 +10,9 @@ reaches it.
 
 ## The policy, once
 
-A role's properties (`KERNEL.md` §2) are all the harness reads:
+A role's properties (`KERNEL.md` §2) are all the harness reads. A harness file per provider, `harness/<provider>.json`,
+holds the settings each property adds (`always`, `writes`, `reads`) and, where the agent needs one, a `home` laid
+out under the plugin's state root and named to the agent through one variable.
 
 | Property  | Means for the agent                                                                            |
 | --------- | ---------------------------------------------------------------------------------------------- |
@@ -66,13 +68,18 @@ The shared `CODEX_HOME` holds that `config.toml` and a link to the Human's `auth
 
 ### Pi
 
-Pi has no permissions, no sandbox, no modes and no MCP of its own.
+Pi has no permissions, no sandbox, no modes and no MCP of its own. Paseo 0.10.1 hands it MCP servers only when the
+Human has `pi-mcp-adapter` installed, found by starting Pi once and looking for its `/mcp` command; otherwise it
+drops them without a word. Paseo passes Pi only its own `--extension`, and `extraArgs` are the provider's, not an
+agent's. So v3 gives every Pi agent one home of its own, through `PI_CODING_AGENT_DIR` (`harness/pi.json`):
 
 | Need                | How                                                                                           |
 | ------------------- | --------------------------------------------------------------------------------------------- |
 | Role prompt         | `systemPrompt`, appended by Paseo's extension                                                 |
-| Team tools          | A small Pi extension of v3's that registers the team's tools itself, instead of `pi-mcp-adapter`, which installs from the network on first start |
-| No subagents        | Pi has none; load no extension but v3's                                                        |
+| Team tools          | `harness/pi/extension.ts`, named in the home's `settings.json`: it asks the plugin's socket for the agent's tools, as `bin/team.ts` does, and registers them with their JSON Schemas, which Pi takes as they are |
+| The Human's login   | `auth.json` and `models.json` linked from their own Pi home, so a refreshed login reaches both |
+| No subagents        | Pi has none; the home's settings load no extension or package but v3's                        |
+| No planted config   | `defaultProjectTrust: "never"`: Pi in RPC mode then skips a copy's `.pi` extensions and settings, so an agent cannot plant one for another |
 | Writer              | Its worktree and the git shim; nothing native confines it                                     |
 
 ### Oh My Pi
@@ -96,7 +103,7 @@ Oh My Pi's instruction to delete incidental tests. V1's seven near-copies of the
 
 | V1                                                          | v3                                                   |
 | ----------------------------------------------------------- | ---------------------------------------------------- |
-| A seat directory per role, agent and project                | None for Claude; one shared home for Codex; one for Oh My Pi; an extension for Pi |
+| A seat directory per role, agent and project                | None for Claude; one shared home each for Codex, Oh My Pi and Pi |
 | Claude's seat-room wrapper and forced flags                 | Paseo's options                                      |
 | Git deny lists in five formats                              | The one shim, reading the role's properties          |
 | A provider per role and agent written into Paseo's config    | None while Paseo's tools stay off, as they are by default |
@@ -108,5 +115,4 @@ Oh My Pi's instruction to delete incidental tests. V1's seven near-copies of the
 - Whether `agents.enabled = false` alone keeps Codex 0.158 from starting agents, so the catalog rewrite can go.
 - Whether Paseo's fixed `settingSources` let a project's `.claude/settings.json` add hooks or servers to a Claude
   agent, and whether `extraArgs` can narrow them.
-- Whether a Pi extension can be loaded through Paseo without a custom provider entry.
 - Whether Oh My Pi is worth its own directory, or waits until Paseo gives it external MCP.

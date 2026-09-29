@@ -17,5 +17,5 @@
     "verbatimModuleSyntax": true,
     "erasableSyntaxOnly": true
   },
-  "include": ["index.server.ts", "shared/**/*.ts", "server/**/*.ts", "bin/**/*.ts", "test/**/*.ts"]
+  "include": ["index.server.ts", "shared/**/*.ts", "server/**/*.ts", "bin/**/*.ts", "harness/**/*.ts", "test/**/*.ts"]
 }

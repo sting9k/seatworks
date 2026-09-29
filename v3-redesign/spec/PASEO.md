@@ -81,6 +81,10 @@ from Paseo 0.10.1: the plugin SDK, `@getpaseo/client`, `@getpaseo/protocol`, the
   does. Tokens are running totals too, but Codex reports only its last model call's, and no cost. v3 records the
   totals and counts each turn's rise (`KERNEL.md` §4.2), so a Codex agent's money never counts toward an appetite.
 - `toolPolicy.preapproved` names each MCP tool; there is no wildcard.
+- A resumed session is started with no environment but what `before('agent.session_open')` returns: Paseo keeps
+  none of what `agents.create` gave. The hook gives a reopened agent its whole seat again, the git shim first on
+  its `PATH` among it, or a daemon restart would leave every agent unguarded.
+- Pi gets MCP servers only with `pi-mcp-adapter` installed (`HARNESS.md`, Pi).
 
 - A finish notification goes to a parent only for an agent made by Paseo's own `create_agent` tool with
   `notifyOnFinish`. Agents v3 makes through the plugin API get none, so nothing reaches a Lead around delivery.

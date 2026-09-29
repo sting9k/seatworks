@@ -41,9 +41,9 @@ export default function contribute(server: PluginServerContext) {
   server.on("agent.created", (_event, { paseo }) => {
     plugin.saw(paseo);
   });
-  server.before("agent.session_open", ({ request }, { paseo }) => {
+  server.before("agent.session_open", async ({ request }, { paseo }) => {
     plugin.saw(paseo);
-    const env = plugin.envFor(request.agentId);
+    const env = await plugin.envFor(request.agentId, request.provider);
     return env ? { ...request, env: { ...request.env, ...env } } : undefined;
   });
 

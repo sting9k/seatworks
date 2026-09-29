@@ -25,6 +25,8 @@ export type Harness = {
   always: Partial<PaseoAgentConfig>;
   writes: Partial<PaseoAgentConfig>;
   reads: Partial<PaseoAgentConfig>;
+  /** What the agent's process is given beside the seat's own environment, such as the home v3 lays out for it. */
+  env: Readonly<Record<string, string>>;
 };
 export type Unavailable = { unavailable: true };
 const UNAVAILABLE: Unavailable = { unavailable: true };
@@ -79,7 +81,7 @@ export class PaseoHost {
         title: spec.title,
         prompt: spec.prompt,
         clientMessageId: `${spec.key}:prompt`,
-        env: { ...spec.env },
+        env: { ...spec.env, ...harness?.env },
         labels: { ...spec.labels },
         config,
       })

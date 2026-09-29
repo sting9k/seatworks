@@ -36,7 +36,10 @@ Read from Paseo 0.10.1 unless marked as V1's finding.
 - **`systemPrompt` is set only at creation**: a prompt change reaches an agent the next time one is created.
 - **Only `before` hooks refuse, by throwing** (`agent.create`, `agent.session_open`, `workspace.create`). Every hook
   times out at 30 s, and on those three the timeout fails the user's action: no unbounded I/O and no reflex call there.
-- **`before('agent.session_open')` changes env only**: that is where a reopened agent gets back its tool key.
+- **`before('agent.session_open')` changes env only**, and a resumed session gets no other: Paseo keeps nothing of
+  the create's env. The hook returns the seat's whole env again, the shim's `PATH` among it.
+- **Pi gets `mcpServers` only if `pi-mcp-adapter` is installed**, and Paseo passes it only its own `--extension`:
+  v3's tools reach Pi through the extension its home's `settings.json` names (`PI_CODING_AGENT_DIR`).
 - **History comes back projected**: a tool call is one entry in its latest state, a run of text chunks one message.
   An entry's `seqEnd` can run past the entries after it, and an `after` page returns whole entries, restating rows
   before its cursor.

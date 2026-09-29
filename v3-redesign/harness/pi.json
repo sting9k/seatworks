@@ -1,0 +1,13 @@
+{
+  "home": {
+    "env": "PI_CODING_AGENT_DIR",
+    "from": "~/.pi/agent",
+    "link": ["auth.json", "models.json"],
+    "files": {
+      "settings.json": {
+        "extensions": ["{plugin}/harness/pi/extension.ts"],
+        "defaultProjectTrust": "never"
+      }
+    }
+  }
+}

@@ -232,6 +232,10 @@ test("a create whose reply was lost is tried again after the record moved on, an
   assert.ok((await plugin.human(project, { type: "hold_scope", scope: "1", reason: "wait for the release" })).ok);
   await plugin.idle();
   assert.equal(paseo.created.length, 2);
-  assert.notEqual(plugin.envFor(paseo.created[1]!.host), null, "the Lead's actor holds the agent Paseo made");
+  assert.notEqual(
+    await plugin.envFor(paseo.created[1]!.host, "claude"),
+    null,
+    "the Lead's actor holds the agent Paseo made",
+  );
   supervisor.close();
 });

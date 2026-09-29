@@ -93,7 +93,14 @@ on an implementation without the rule before it is trusted.
 | A tool call retried with the same command id                       | The earlier result; nothing appended            |
 | A satellite throws on an effect                                    | Tried again after a pause, with no change to wake it |
 | An agent's create loses its reply and is tried after the record moved on | The seat keeps the one agent made; a key Paseo cannot finish is its owner's fact |
+| An agent reopened after a daemon restart                           | Its whole seat's environment again, the git shim first on its PATH |
 | The same log folded by the daemon and by the surface               | The same state                                  |
+
+## Harness
+
+| Case                                                        | Expect                                                     |
+| ----------------------------------------------------------- | ---------------------------------------------------------- |
+| A Pi agent is seated                                        | v3's home, with the Human's login linked; the extension gives it the team's tools |
 
 ## Workspace and evidence
 

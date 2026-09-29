@@ -17,7 +17,7 @@ type Created = {
  * a keyed create keeps its request and refuses the key with a different one; `loseReplies` drops that many create
  * replies after the agent is made, as a dropped connection would.
  */
-export function fakePaseo(pluginDir: string) {
+export function fakePaseo(pluginDir: string, provider = "claude") {
   const created: Created[] = [];
   const sent: Sent[] = [];
   const archived: string[] = [];
@@ -54,7 +54,7 @@ export function fakePaseo(pluginDir: string) {
             agentProfiles: ["slp-supervisor", "slp-lead", "slp-peer", "slp-reviewer", "slp-watcher"].map((name) => ({
               id: name,
               name,
-              provider: "claude",
+              provider,
               model: "test",
             })),
           },

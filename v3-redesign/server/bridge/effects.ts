@@ -33,6 +33,33 @@ export type Wiring = {
 };
 
 const WAIT: Handled = { status: "wait" };
+
+/** What an agent's tools need to know of its seat: who it is, its key, whether it writes, its copy and the plugin. */
+export function seatEnv(
+  w: Pick<Wiring, "project" | "keys" | "team" | "workspace" | "scratch">,
+  actor: string,
+  scope: Scope,
+  writes: boolean,
+): { cwd: string; env: Record<string, string> } {
+  const cwd = scope.kind === "watch" ? w.scratch : w.workspace.pathOf(scope.id);
+  return {
+    cwd,
+    env: {
+      SEATWORKS_PROJECT: w.project,
+      SEATWORKS_ACTOR: actor,
+      SEATWORKS_KEY: w.keys.keyOf(w.project, actor),
+      SEATWORKS_WRITES: writes ? "1" : "0",
+      SEATWORKS_COPY: cwd,
+      SEATWORKS_SHIM_DIR: w.team.shimDir,
+      SEATWORKS_SOCKET: w.team.socket,
+    },
+  };
+}
+
+/** The seat's environment with the git shim first on its PATH, as its agent's own process gets it. */
+export function withShim(w: Pick<Wiring, "team">, env: Record<string, string>): Record<string, string> {
+  return { ...env, PATH: `${w.team.shimDir}${process.platform === "win32" ? ";" : ":"}${process.env.PATH ?? ""}` };
+}
 const done = (...facts: CommandBody[]): Handled => ({ status: "done", facts });
 
 /** Each effect the kernel asks for, carried to the satellite that does it, and what it found brought back as facts. */
@@ -69,16 +96,7 @@ export function handlersFor(w: Wiring): Handlers {
       const scope = state.scopes.get(actor.scope);
       const role = w.bundle.profile.roles.get(actor.role);
       if (!scope || !role) return { status: "dropped", why: `${e.actor}'s scope or role is gone` };
-      const cwd = scope.kind === "watch" ? w.scratch : w.workspace.pathOf(scope.id);
-      const agentKey = w.keys.keyOf(w.project, actor.id);
-      const env = {
-        SEATWORKS_PROJECT: w.project,
-        SEATWORKS_ACTOR: actor.id,
-        SEATWORKS_KEY: agentKey,
-        SEATWORKS_WRITES: role.writes ? "1" : "0",
-        SEATWORKS_COPY: cwd,
-        SEATWORKS_SHIM_DIR: w.team.shimDir,
-      };
+      const { cwd, env } = seatEnv(w, actor.id, scope, role.writes);
       const created = await w.host.create({
         key,
         title: `${actor.scope} · ${actor.role}`,
@@ -90,7 +108,7 @@ export function handlersFor(w: Wiring): Handlers {
           actor,
           [...state.actors.values()].some((a) => a.scope === actor.scope && a.id !== actor.id),
         ),
-        env: { ...env, PATH: `${w.team.shimDir}${process.platform === "win32" ? ";" : ":"}${process.env.PATH ?? ""}` },
+        env: withShim(w, env),
         tools: {
           command: w.team.command,
           args: [...w.team.args, w.team.socket],

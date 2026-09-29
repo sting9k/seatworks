@@ -10,6 +10,7 @@ import { type Chain, type Signals, chainOf, scopeRecordText, signalsOf } from ".
 import type { HumanView } from "../../shared/contracts/rpc.ts";
 import { humanView } from "../../shared/views/human.ts";
 import { statusText } from "../../shared/views/status.ts";
+import { type Home, layHome } from "../core/home.ts";
 import { Keys } from "../core/keys.ts";
 import { daemonLog } from "../core/logger.ts";
 import { projectDir } from "../core/paths.ts";
@@ -26,7 +27,7 @@ import { git } from "../satellites/workspace/git.ts";
 import { Workspace } from "../satellites/workspace/workspace.ts";
 import { type Bundle, loadBundle, profileDir } from "../profile/bundle.ts";
 import { Dispatcher } from "./dispatcher.ts";
-import { handlersFor, scratchFor } from "./effects.ts";
+import { type Wiring, handlersFor, scratchFor, seatEnv, withShim } from "./effects.ts";
 import { Project, type Submitted } from "./project.ts";
 import { Reflex } from "./reflex.ts";
 import { type ProjectPort, TeamSocket } from "./team-socket.ts";
@@ -44,6 +45,7 @@ type Runtime = {
   store: ProjectStore;
   dispatcher: Dispatcher;
   workspace: Workspace;
+  wiring: Wiring;
   stops: (() => void)[];
   lastActive: number;
 };
@@ -60,6 +62,7 @@ export class Plugin {
   readonly link = new PaseoLink();
   private readonly root: string;
   private readonly keys: Keys;
+  private readonly harnesses = new Map<string, Harness | null>();
   private readonly holds: MachineHolds;
   private readonly runtimes = new Map<string, Runtime>();
   private readonly byHost = new Map<string, { project: string; actor: string }>();
@@ -171,7 +174,7 @@ export class Plugin {
           },
         },
       );
-    const host = new PaseoHost(this.link, (provider) => harnessOf(dir, provider));
+    const host = new PaseoHost(this.link, (provider) => this.harness(dir, provider));
     const shimDir = installShim(this.root, join(dir, "bin", "git-shim.ts"));
     const socketPath =
       process.platform === "win32"
@@ -310,15 +313,27 @@ export class Plugin {
       );
   }
 
-  /** The environment a reopened session of one of the plugin's agents gets back: its key among it. */
-  envFor(hostId: string): Record<string, string> | null {
+  /** A provider's harness, laid out once per plugin process: a few providers at most. */
+  private harness(dir: string, provider: string): Harness | null {
+    if (!this.harnesses.has(provider)) this.harnesses.set(provider, harnessOf(dir, this.root, provider));
+    return this.harnesses.get(provider) ?? null;
+  }
+
+  /**
+   * The environment a reopened session of one of the plugin's agents gets back. Paseo keeps none of what the agent was
+   * started with, so it is the whole of it again: the seat, the git shim first on its PATH, and its harness's.
+   */
+  async envFor(hostId: string, provider: string): Promise<Record<string, string> | null> {
     const who = this.byHost.get(hostId);
     if (!who) return null;
-    return {
-      SEATWORKS_PROJECT: who.project,
-      SEATWORKS_ACTOR: who.actor,
-      SEATWORKS_KEY: this.keys.keyOf(who.project, who.actor),
-    };
+    const ready = await this.whenReady();
+    const runtime = this.runtimes.get(who.project) ?? this.open(who.project, ready);
+    const actor = runtime.project.view.actors.get(who.actor);
+    const scope = actor ? runtime.project.view.scopes.get(actor.scope) : undefined;
+    const role = actor ? ready.bundle.profile.roles.get(actor.role) : undefined;
+    if (!actor || !scope || !role) return null;
+    const { env } = seatEnv(runtime.wiring, actor.id, scope, role.writes);
+    return { ...withShim(runtime.wiring, env), ...this.harness(ready.dir, provider)?.env };
   }
 
   /** Resolves once no project has an effect in flight; for tests and a clean unload. */
@@ -371,7 +386,7 @@ export class Plugin {
     const workspace = new Workspace(repo, join(dir, "copies"));
     const scratch = scratchFor(this.root, id);
     mkdirSync(scratch, { recursive: true });
-    const handlers = handlersFor({
+    const wiring: Wiring = {
       project: id,
       workspace,
       evidence: new EvidenceRunner(repo, join(scratch, "evidence"), ready.bundle.environment),
@@ -387,9 +402,10 @@ export class Plugin {
       },
       scratch,
       checkTimeoutMs: CHECK_TIMEOUT_MS,
-    });
+    };
+    const handlers = handlersFor(wiring);
     const dispatcher = new Dispatcher(project, store, handlers, () => this.holds.held());
-    const runtime: Runtime = { project, store, dispatcher, workspace, stops: [], lastActive: Date.now() };
+    const runtime: Runtime = { project, store, dispatcher, workspace, wiring, stops: [], lastActive: Date.now() };
     this.runtimes.set(id, runtime);
     this.index(id, runtime);
     runtime.stops.push(
@@ -467,9 +483,11 @@ async function currentBranch(repo: string): Promise<string> {
   return run.code === 0 && run.stdout.trim() ? run.stdout.trim() : "main";
 }
 
-function harnessOf(dir: string, provider: string): Harness | null {
+/** A provider's harness file (HARNESS.md), with the home it describes laid out under the plugin's state root. */
+function harnessOf(dir: string, root: string, provider: string): Harness | null {
   const file = join(dir, "harness", `${provider}.json`);
   if (!existsSync(file)) return null;
-  const h = JSON.parse(readFileSync(file, "utf8")) as Partial<Harness>;
-  return { always: h.always ?? {}, writes: h.writes ?? {}, reads: h.reads ?? {} };
+  const h = JSON.parse(readFileSync(file, "utf8")) as Partial<Harness> & { home?: Home };
+  const env = h.home ? layHome(join(root, "homes", provider), h.home, dir) : {};
+  return { always: h.always ?? {}, writes: h.writes ?? {}, reads: h.reads ?? {}, env };
 }
