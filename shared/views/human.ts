@@ -51,7 +51,10 @@ export function humanView(state: State): HumanView {
     decisions,
     directions: [...state.obligations.values()]
       .filter((o) => o.about.kind === "direction" && o.owedTo === HUMAN)
-      .map((o) => ({ message: o.about.id, to: state.messages.get(o.about.id)?.to ?? "", owedBy: o.owedBy })),
+      .map((o) => {
+        const m = state.messages.get(o.about.id);
+        return { message: o.about.id, text: m?.text ?? "", to: m?.to ?? "", owedBy: o.owedBy };
+      }),
     lanes: lanes.map((s) => ({
       scope: s.id,
       owner: s.owner,

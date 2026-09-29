@@ -27,7 +27,7 @@ export const HumanViewSchema = z.object({
     }),
   ),
   decisions: z.array(z.object({ scope: z.string(), line: z.string(), text: z.string(), by: z.string() })),
-  directions: z.array(z.object({ message: z.string(), to: z.string(), owedBy: z.string() })),
+  directions: z.array(z.object({ message: z.string(), text: z.string(), to: z.string(), owedBy: z.string() })),
   lanes: z.array(
     z.object({
       scope: z.string(),

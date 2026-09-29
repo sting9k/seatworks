@@ -23,7 +23,11 @@ test("the Human sees what waits on them, what agents decided for them, and their
     [["Ship Friday or keep fairness?", "Fairness"]],
   );
   assert.ok(view.decisions.some((d) => d.scope === "root" && d.text === "A fair game" && d.by === supervisor));
-  assert.equal(view.directions.length, 1);
+  assert.deepEqual(
+    view.directions.map((d) => d.text),
+    ["use protobuf"],
+    "the Human's own words, not an id",
+  );
   assert.equal(view.supervisor, supervisor);
 
   ledger.must(ledger.human("answer_question", { question: view.questions[0]!.id, text: "Fairness" }));

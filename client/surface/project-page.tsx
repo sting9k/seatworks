@@ -117,7 +117,7 @@ export function ProjectPage({
             <SettingsSection title="Your words not yet carried in">
               <SettingsCard>
                 {human.directions.map((d) => (
-                  <SettingsRow key={d.message} label={`To ${d.to}`} hint={`${d.message} · owed by ${d.owedBy}`} />
+                  <SettingsRow key={d.message} label={d.text} hint={`To ${d.to} · owed by ${d.owedBy}`} />
                 ))}
               </SettingsCard>
             </SettingsSection>
