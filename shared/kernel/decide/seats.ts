@@ -25,12 +25,12 @@ export function releaseSeat(
   closing: ReadonlySet<string>,
   reason: string | null,
 ): void {
-  const closed = new Set(ctx.events.flatMap((e) => (e.type === "obligation_closed" ? [e.obligation] : [])));
   if (reason !== null) ctx.emit({ type: "actor_released", actor, reason });
+  closeAskedPermissions(ctx, actor);
+  const closed = new Set(ctx.events.flatMap((e) => (e.type === "obligation_closed" ? [e.obligation] : [])));
   for (const o of ctx.state.obligations.values()) {
     if (o.owedBy !== actor || closed.has(o.id)) continue;
-    if (o.about.kind === "permission") ctx.emit({ type: "obligation_closed", obligation: o.id, how: "its asker left" });
-    else if (o.about.kind === "candidate")
+    if (o.about.kind === "candidate")
       ctx.emit({ type: "obligation_closed", obligation: o.id, how: "its watcher left" });
     else ctx.emit({ type: "obligation_moved", obligation: o.id, to: heir });
   }
@@ -40,6 +40,13 @@ export function releaseSeat(
   const gone = ctx.state.actors.get(actor);
   for (const t of ctx.state.attentions.values())
     if (t.to === actor && !closing.has(t.about.scope)) climb(ctx, t, gone ? ownerAbove(ctx.state, gone) : HUMAN);
+}
+
+/** What an actor asked leave for closes when it leaves its seat: the prompt that waited on the answer leaves with it. */
+export function closeAskedPermissions(ctx: Context, actor: ActorId): void {
+  for (const o of ctx.state.obligations.values())
+    if (o.about.kind === "permission" && o.owedTo === actor)
+      ctx.emit({ type: "obligation_closed", obligation: o.id, how: "its asker left" });
 }
 
 /** An attention left by its reader goes up one owner; past the root it stays in the Human's view (LEDGER.md §7). */

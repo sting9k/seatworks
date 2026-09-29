@@ -175,7 +175,7 @@ What closes each obligation:
 | `question_asked`               | the Human                   | `question_answered`                                          |
 | `claim_made`                   | the parent's owner          | `integrated`, `sent_back`, `scope_dropped`, or a newer claim on the scope |
 | an observation between thresholds | the watcher over it      | `attended` or `passed`                                       |
-| `permission_asked`             | its answerer                | `permission_answered`, `permission_settled`, or the asking actor gone |
+| `permission_asked`             | its answerer                | `permission_answered`, `permission_settled`, or the asking actor leaving its seat |
 
 When an actor is released, reseated or gone, every obligation it owes moves to the new holder of its seat or, with
 no seat left, to the owner of its scope's parent (`obligation_moved`). An obligation owed by the Human never moves.
@@ -199,7 +199,8 @@ Written once in `shared/kernel/authority.ts` and used by every command.
 - `maySpawn(caller, parent, role)`: the caller owns `parent`, its role `delegates`, and its `spawns` holds `role`.
 - `maySpeak(from, to)`: along `speaksTo`: `parent` is the owner of the sender's scope's parent; `children` the
   owners of its scope's child scopes; `descendants` any below; `human` the Human. The Human speaks to anyone.
-- `answererOf(permission)`: the owner of the asking actor's scope's parent, or the Human.
+- `answererOf(permission)`: the owner of the asking actor's scope's parent, whoever holds its obligation after that
+  seat was left empty, or the Human.
 - `ownerAbove(actor)`: the owner of the actor's scope's parent: where an attention about it goes.
 
 ## 5. Commands

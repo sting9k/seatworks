@@ -250,6 +250,29 @@ test("a permission answered in the agent's own prompt settles on the record, wit
   );
 });
 
+test("a permission moves with the seat that answers it, and closes when the agent that asked leaves", () => {
+  const { ledger, supervisor, peer, lane } = team();
+  const owedBy = (permission: string) =>
+    [...ledger.state.obligations.values()].find((o) => o.about.kind === "permission" && o.about.id === permission)
+      ?.owedBy;
+  ledger.must(ledger.fact("record_permission", { actor: peer, request: "r1", text: "rm -rf build/" }));
+  ledger.must(ledger.as(supervisor, "reseat", { scope: lane, reason: "fresh context" }));
+  assert.equal(owedBy("p1"), "a4");
+  ledger.must(ledger.as("a4", "answer_permission", { permission: "p1", allow: true, reason: "a build dir" }));
+  assert.ok(ledger.effects.some((e) => e.body.kind === "agent.permission" && e.body.actor === peer && e.body.allow));
+
+  ledger.must(ledger.fact("record_permission", { actor: peer, request: "r2", text: "git clean -fdx" }));
+  ledger.must(ledger.as(supervisor, "release", { actor: "a4", reason: "the lane is the Supervisor's now" }));
+  assert.equal(owedBy("p2"), supervisor, "the Peer still waits, and whoever left the seat empty owes the answer");
+  ledger.must(ledger.as(supervisor, "answer_permission", { permission: "p2", allow: false, reason: "not now" }));
+
+  ledger.must(ledger.fact("record_permission", { actor: peer, request: "r3", text: "npm install" }));
+  assert.equal(owedBy("p3"), "human");
+  ledger.must(ledger.fact("record_gone", { actor: peer, why: "the process died" }));
+  assert.equal(owedBy("p3"), undefined, "nothing is owed to an agent that is gone");
+  assert.equal(ledger.state.permissions.size, 0);
+});
+
 test("a reseated Peer finds its undelivered mail waiting, and the Human may reseat the Supervisor", () => {
   const { ledger, lead, task } = team();
   ledger.must(ledger.as(lead, "send_message", { to: "a3", text: "one" }));

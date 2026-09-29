@@ -233,7 +233,7 @@ A command is called by an actor and checked against its role's properties and th
 | `ask_human`        | a role with `humanDoor`                             | Opens a question                                                         |
 | `answer_question`  | the Human                                           |                                                                          |
 | `hold_machine`     | any seated actor                                    | Holds or releases the machine                                            |
-| `answer_permission` | owner of the asking agent's parent scope, or the Human | Allows or refuses what an agent's harness asked leave to do, with a reason |
+| `answer_permission` | owner of the asking agent's parent scope, whoever its obligation moved to, or the Human | Allows or refuses what an agent's harness asked leave to do, with a reason |
 | `mark_noise`       | whoever an attention goes to                        | A moment of the watch is not told again for one actor and scope          |
 | `acknowledge`      | whoever an attention goes to                        | Says it was seen and needs nothing now; the attention climbs no further  |
 | `attend`, `pass`   | an actor that `watches`                             | Sends a candidate or a moment of its own to the owner above the work, or records it passed, with a reason |

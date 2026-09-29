@@ -5,7 +5,7 @@ import { within } from "../paths.ts";
 import { descendants, ownerOfParent } from "../authority.ts";
 import { type Context, type Refusal, isRefusal, refuse } from "./context.ts";
 import { briefFrom, humanWordFor, lineFrom, planFrom } from "./lines.ts";
-import { carriedFinding, releaseSeat } from "./seats.ts";
+import { carriedFinding, closeAskedPermissions, releaseSeat } from "./seats.ts";
 
 type Of<T extends CommandBody["type"]> = Context<Extract<CommandBody, { type: T }>>;
 
@@ -315,13 +315,9 @@ export function reseat(ctx: Of<"reseat">): Refusal | undefined {
     { type: "reseated", scope: scope.id, from: old, to: actor, reason: ctx.body.reason },
     { type: "actor_seated", actor, role: scope.role, scope: scope.id, model },
   );
-  for (const o of ctx.state.obligations.values()) {
-    if (old !== null && o.owedBy === old) {
-      if (o.about.kind === "permission")
-        ctx.emit({ type: "obligation_closed", obligation: o.id, how: "its asker left" });
-      else ctx.emit({ type: "obligation_moved", obligation: o.id, to: actor });
-    }
-  }
+  if (old !== null) closeAskedPermissions(ctx, old);
+  for (const o of ctx.state.obligations.values())
+    if (old !== null && o.owedBy === old) ctx.emit({ type: "obligation_moved", obligation: o.id, to: actor });
   for (const m of ctx.state.messages.values())
     if (old !== null && m.to === old && m.delivered === null)
       ctx.emit({ type: "message_moved", message: m.id, from: old, to: actor });

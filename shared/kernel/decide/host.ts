@@ -76,7 +76,11 @@ export function answerPermission(ctx: Of<"answer_permission">): Refusal | undefi
   if (!permission) return refuse("unknown", `no open permission ${ctx.body.permission}`);
   const asker = ctx.state.actors.get(permission.actor);
   const answerer = asker ? ownerAbove(ctx.state, asker) : null;
-  if (ctx.party !== HUMAN && ctx.party !== answerer)
+  const owed = [...ctx.state.obligations.values()].filter(
+    (o) => o.about.kind === "permission" && o.about.id === permission.id,
+  );
+  // The answer moves with its obligation when the answering seat is left empty (I11), so its new holder answers too.
+  if (ctx.party !== HUMAN && ctx.party !== answerer && !owed.some((o) => o.owedBy === ctx.party))
     return refuse(
       "authority",
       `only ${answerer ?? "the owner above"} or the Human answers ${permission.actor}'s permission`,
@@ -89,9 +93,7 @@ export function answerPermission(ctx: Of<"answer_permission">): Refusal | undefi
     allow: ctx.body.allow,
     reason: ctx.body.reason,
   });
-  for (const o of ctx.state.obligations.values())
-    if (o.about.kind === "permission" && o.about.id === permission.id)
-      ctx.emit({ type: "obligation_closed", obligation: o.id, how: "answered" });
+  for (const o of owed) ctx.emit({ type: "obligation_closed", obligation: o.id, how: "answered" });
   return undefined;
 }
 
