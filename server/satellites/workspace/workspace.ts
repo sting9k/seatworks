@@ -198,7 +198,8 @@ export class Workspace {
     if (after === before) return { unchanged: true };
     const at = await this.checkedOutAt(branch);
     if (at) {
-      const status = await git(at, ["status", "--porcelain", "--", file]);
+      // An ignored file is the Human's own, kept out of git: writing the note over it would lose it.
+      const status = await git(at, ["status", "--porcelain", "--ignored", "--", file]);
       if (status.code !== 0 || status.stdout.trim() !== "")
         return { refused: `${file} has uncommitted changes in ${at}: commit them, then attach again` };
     }

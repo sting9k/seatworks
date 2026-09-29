@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { chmodSync, existsSync, mkdtempSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
@@ -50,6 +50,19 @@ test("the plugin's git runs no hook and no filter an agent planted in the reposi
   assert.ok(made.ok);
   assert.equal(existsSync(hook), false, "no hook ran");
   assert.equal(existsSync(smudge), false, "no smudge filter ran on the copy's checkout");
+});
+
+test("a note is not written over an instruction file the Human keeps ignored in their checkout", async () => {
+  const { root, ws } = repo();
+  writeFileSync(join(root, ".gitignore"), "AGENTS.md\n");
+  run(root, "add", ".gitignore");
+  run(root, "commit", "-q", "-m", "ignore");
+  writeFileSync(join(root, "AGENTS.md"), "MY PRIVATE NOTES\n");
+  const main = run(root, "rev-parse", "main");
+  const put = await ws.putBlock("main", "AGENTS.md", "seatworks", "The team's note.", "note");
+  assert.ok("refused" in put, JSON.stringify(put));
+  assert.equal(readFileSync(join(root, "AGENTS.md"), "utf8"), "MY PRIVATE NOTES\n");
+  assert.equal(run(root, "rev-parse", "main"), main, "nothing committed");
 });
 
 test("a candidate takes the moved parent in without a checkout; a conflict names its files", async () => {

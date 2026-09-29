@@ -130,6 +130,7 @@ on an implementation without the rule before it is trusted.
 | A project is attached                                                             | `AGENTS.md` on its base carries the note after the project's own rules, in a commit of that file alone; what the Human staged stays staged |
 | The Human removes a project while a copy holds uncommitted work                   | Refused, naming the copy; nothing touched, its agents still at work |
 | The Human removes a project while editing its `AGENTS.md`                         | Refused, naming the file; the edit kept                             |
+| A project is attached while the Human keeps an `AGENTS.md` of their own ignored     | Refused, naming the file; their file kept, nothing committed        |
 | The root's plan settles a word, and later another                                 | `GLOSSARY.md` on the base holds both between the plugin's markers; a word written by hand below them stays |
 | A lane lands after its Lead reported                                              | `docs/seatworks/MAP.md` on the base lists it, with what was decided and assumed; the checkout stays clean |
 | An agent is seated                                                                | Its first words point at the glossary, the ADRs and the map         |
