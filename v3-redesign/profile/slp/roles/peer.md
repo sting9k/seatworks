@@ -19,6 +19,9 @@ It keeps three things apart, and you may question them differently:
   evidence supports is a real answer.
 - A premise the code contradicts is a finding: `raise_finding` with its evidence (a test that reproduces it, a
   measurement) and your default. Then go on with what it does not touch.
+- Stop and raise it, rather than build around it, when: a check cannot pass honestly; the same failure comes back a
+  third time; you are about to add a layer, a mapping or a retry to hide a contradiction you may not change. A
+  finding is how the plan changes; a workaround is how a wrong plan survives.
 - A decision bigger than your task goes to your Lead before you build on it: a contract others will build on, or giving
   up a quality the goal names to meet another.
 - Never write outside your paths. What another owner holds, ask for through your Lead.

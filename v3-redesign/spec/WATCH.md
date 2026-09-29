@@ -4,19 +4,20 @@ W, the watch, is SLP's attention checker. An agent often gets something wrong no
 because it has not spent its attention there: it writes a long, wrong test, and one question later sees the fault
 itself. A question makes it spend its reasoning on what it is likely to get wrong. A closed question ("you are
 breaking an anti-pattern") makes it look for something to confess, to please; an open one leaves it neutral. So a
-small word from the Supervisor at the right moment is worth more than any rule.
+small word from the agent's Lead, or from the Supervisor, at the right moment is worth more than any rule.
 
-That leaves two questions: **when** to draw an agent's attention, and **how**. The watch answers when; the
-Supervisor answers whether, and how. The plugin finds the moments, carries them to the Supervisor without filling its
+That leaves two questions: **when** to draw an agent's attention, and **how**. The watch answers when; the owner of
+the scope above the work answers whether, and how: a Peer's Lead, or the Supervisor for a Lead and for what crosses
+lanes (`STEERING.md`, Who is told). The plugin finds the moments, carries them to that owner without filling its
 context, and measures which were worth it. It never speaks to the agent it watches and never decides.
 
 ## Decided
 
 The owner gave this design to the builder. These choices settle it, each with its reason.
 
-1. **A cascade.** Code and the reflex find candidates cheaply; the Watcher, a model, confirms them; the Supervisor
-   hears only what is confirmed or what the reflex is sure of. The Supervisor's context is the scarce thing, so the
-   cheap tiers buy recall and the Watcher buys precision.
+1. **A cascade.** Code and the reflex find candidates cheaply; the Watcher, a model, confirms them; the owner hears
+   only what is confirmed or what the reflex is sure of. An owner's context is the scarce thing, so the cheap tiers buy
+   recall and the Watcher buys precision.
 2. **One Watcher per project, over every scope.** The Supervisor may seat more, each over the lanes it names, for work
    where many answers can be right and the design will be tested as it is built.
 3. **Jev is required; the Watcher adds no new reader.** The reflex is part of v3, and installing it with its key is
@@ -25,11 +26,11 @@ The owner gave this design to the builder. These choices settle it, each with it
    leaves, what looks like a secret is masked.
 4. **Driven by the work, with one sweep.** A turn's end or a long turn's growth starts a look. A sweep every 15
    minutes reads only scopes with new work since the last one, so an idle project costs nothing.
-5. **An attention asks nothing of the Supervisor.** No obligation opens: making it answer every one would be the
-   ceremony the concept warns of. Silence is an answer; marking a moment noise is the one thing it may do to quiet
-   one.
-6. **The agent never learns it is watched.** An agent that knows plays to the watch (V1). The Supervisor's question
-   is its own, with no attention's words, id or source in it.
+5. **An attention opens no obligation, but climbs if left.** Making its reader answer every one would be the
+   ceremony the concept warns of. One its reader has neither acted on nor acknowledged by the end of its next turn,
+   and that still holds, goes up one owner (`STEERING.md`). `mark_noise` quiets a moment for one agent and scope.
+6. **The agent never learns it is watched.** An agent that knows plays to the watch (V1). The owner's question is its
+   own, with no attention's words, id or source in it.
 7. **An open question to a Peer copies its Lead and opens no obligation**, since it directs nothing (KERNEL I7).
 8. **Blind designs narrow no one's reading.** A design is blind to its Lead's framing and to the other designs
    because the Lead does not put them in its brief, and Peers do not message each other. What an agent may read stays
@@ -68,7 +69,7 @@ agent host stream ─► eye (code): items and facts
     │     consider ≤ p < tell ─┐
     ├─ facts that need judging ─┤  (a loop, a long turn, a full context, a test before its code)
     │                           ▼
-    ├─ sweep, scopes with new work ──────────────────────► Watcher ─ attend ──► Supervisor
+    ├─ sweep, scopes with new work ──────────────────────► Watcher ─ attend ──► owner    
     │                                                          └──── pass (recorded)
     └─ alarms (a refused destructive command, two measurements at once, a flaky test) ─► Supervisor, the Human's view
 ```
@@ -89,7 +90,7 @@ agent host stream ─► eye (code): items and facts
 
 Each new item is one call, with the item as `text` and every moment its role is watched for as a question beside it
 (`REFLEX.md`, Asking well). A moment that needs more than the item names it: `trades-the-goal` reads the scope's
-`goal`. Two thresholds per moment: `tell` goes straight to the Supervisor, `consider` goes to
+`goal`. Two thresholds per moment: `tell` goes straight to the owner, `consider` goes to
 the Watcher. Everything is recorded.
 
 ### A test that mints an API
@@ -112,14 +113,14 @@ It needs nothing v3 does not already run: git, the record and the reflex.
    questions: whether the test uses one of them as part of the code under test, and whether it builds a fake, stub or
    adapter that gives the code under test one of them.
 4. Past `consider`, a candidate goes to the Watcher with the brief beside it; past `tell`, an attention goes to the
-   Supervisor at once.
+   Peer's Lead at once.
 
 The same two questions are asked over a hand-back's test diff, as `judgement` evidence for the Lead (`REFLEX.md`).
 
 ### The Watcher
 
 A role in the profile (`profile/slp/roles/watcher.md`), seated under the root over the scopes it watches. It writes
-nothing and speaks only to the Supervisor.
+nothing and speaks only to the Supervisor; what it attends to reaches the owner of the watched agent's scope.
 
 - **Model.** The profile names one of the Human's Paseo agent profiles: a cheap model with a long context.
 - **Tools.** `look` (an agent's items between two points), `record` (a scope's brief, findings, reports, and earlier
@@ -134,9 +135,9 @@ nothing and speaks only to the Supervisor.
   is a label the reflex's thresholds are later set from.
 - **Its memory is the log.** Its context is compacted when full, and a new Watcher is seated from the record.
 
-## What reaches the Supervisor
+## What reaches the owner
 
-An attention is an observation (KERNEL §4.9) delivered to the root:
+An attention is an observation (KERNEL §4.9) delivered to the owner of the watched agent's parent scope:
 
 ```text
 ATTENTION 2 of 3 · L2-T4 Peer · trades-the-goal · watcher · now
@@ -145,27 +146,28 @@ facts: 3 rewrites of net/encode.ts this turn
 at: history 8812–8840 · look for more
 ```
 
-- It wakes the Supervisor when marked `now`, never inside its turn; `later` waits for the next message that asks
+- It wakes its reader when marked `now`, never inside its turn; `later` waits for the next message that asks
   something. The reflex's sure answers are `now`; the Watcher chooses.
 - Several on one agent in one turn go as one numbered message. The watch may combine its own reports; it never
   combines the agents' words.
-- The Supervisor reads more with `look`, so its context holds quotes and pointers, not transcripts.
+- Its reader reads more with `look`, so its context holds quotes and pointers, not transcripts.
 - `mark_noise` stops one moment for one agent and scope (V1's rule 8).
 
-## How: the Supervisor's open question
+## How: the owner's open question
 
-What the Supervisor does is its judgement: nothing, one open question, a blind design asked of the Lead, a hold, or the
-Human. The craft is its skill (`profile/slp/skills/attention/`): ask about the area and never the fault, presuppose
+What the owner does is its judgement. A Lead: nothing, one open question at its Peer's turn boundary, a finding
+upstream, a reseat (`steering`). The Supervisor: nothing, one open question, a blind design asked of the Lead, a hold,
+or the Human (`attention`). The craft is the same in both skills: ask about the area and never the fault, presuppose
 nothing so that "no" is easy, one question, no anti-pattern named, and nothing that shows a watch exists.
 
 ## Measured, and taken away
 
-- For each moment and tier, the look back reads how many attentions the Supervisor acted on, and after how many the
+- For each moment and tier, the look back reads how many attentions their owner acted on, and after how many the
   agent changed something within its next turns: a finding, an amendment, a commit that undoes the work, a question
   to its Lead.
 - An attention that arrived after the work it concerns was integrated counts toward "interventions that came too
   late" (§10.3).
-- The Watcher's passes and attentions label the reflex's candidates, and the Supervisor's acts label the Watcher's.
+- The Watcher's passes and attentions label the reflex's candidates, and the owners' acts label the Watcher's.
   Thresholds are set from those labels at the look back, never by code.
 - A moment that never leads to a change leaves the profile.
 
@@ -188,7 +190,7 @@ aloud is a matter for the surface.
 | -------------------------- | ---------------------------------------------------------------------- |
 | All                        | As above                                                               |
 | Jev's host unreachable, or its key missing | Facts and sweeps go to the Watcher, and a standing alarm tells the Human |
-| No Watcher role            | Only the reflex's `tell` answers, the facts that need no judging, and the alarms reach the Supervisor |
+| No Watcher role            | Only the reflex's `tell` answers, the facts that need no judging, and the alarms reach the owners |
 
 Every other part of v3 works the same in each case.
 
@@ -198,7 +200,7 @@ Every other part of v3 works the same in each case.
 | --------------------------------------------------------- | -------------------------------------------------------------------- |
 | The eye on words and thinking, at turn end and in long turns | Kept                                                              |
 | Moments and anti-patterns as data                         | Kept, with `trades-the-goal` and `mints-an-api` added                |
-| W speaks to the Supervisor only; noise marking; the watched never know | Kept                                                    |
+| W speaks to the Supervisor only; noise marking; the watched never know | The watched never know and noise marking kept; attentions go to the owner above the work, climbing if left |
 | A 30 s tick over every seat                               | The stream's events, and a sweep only where there is new work        |
 | Four brain modes and their switches                       | One cascade; a part is absent or present                             |
 | An incident book beside the ledger                        | Observations in the one log                                          |

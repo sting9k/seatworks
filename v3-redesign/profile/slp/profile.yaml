@@ -14,18 +14,19 @@ roles:
     models: [slp-supervisor]
     tools: [status, record, diff, look, open_scope, amend_brief, set_plan, amend_plan, add_edge, remove_edge,
             handover, classify_finding, integrate, send_back, reseat, drop_scope, hold_scope, resume_scope, release,
-            send_message, answer, ask_human, answer_permission, mark_noise]
+            send_message, answer, ask_human, answer_permission, mark_noise, acknowledge]
 
   lead:
     delegates: true
     spawns: [peer, reviewer]
     speaksTo: [parent, children]
     prompt: roles/lead.md
-    skills: [blind-design, planning-lanes]
+    skills: [steering, blind-design, planning-lanes]
     models: [slp-lead]
     tools: [status, record, diff, look, open_scope, amend_brief, set_plan, amend_plan, add_edge, remove_edge,
             handover, raise_finding, withdraw_finding, classify_finding, integrate, send_back, reseat, drop_scope,
-            hold_scope, resume_scope, release, report, send_message, answer, answer_permission, hold_machine]
+            hold_scope, resume_scope, release, report, send_message, answer, answer_permission, hold_machine,
+            mark_noise, acknowledge]
 
   peer:
     writes: true

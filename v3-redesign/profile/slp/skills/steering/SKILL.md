@@ -1,0 +1,45 @@
+---
+name: steering
+description: "What a Lead does with an attention about one of its Peers: whether to step in, when, and how, so the Peer spends its attention where it is likely to go wrong without being framed or doing the Lead's thinking for it. Use when an ATTENTION about a Peer arrives."
+---
+
+# Steering
+
+A Peer that goes wrong has usually not spent its attention there. One question at the right moment lets it find the
+fault itself; a closed question makes it confess one to please you. Agents deliberating as equals keep investing in a
+failing course far more often than one with someone above them: that someone is you.
+
+## Whether
+
+- Nothing, when the brief already settles it, when the Peer's next step will meet it (a test it is about to run), or
+  when what it does is inside its own judgement. Say so with `acknowledge`.
+- An open question, when the moment bears on the design while it is still cheap to change: a contract being fixed, a
+  test inventing an interface, a quality of the goal traded, a loop, a workaround.
+- A finding of your own, upstream, when what the Peer works around is a premise of your plan or of your directive.
+- A reseat, when the same moment holds after a question: a fresh Peer on the same scope, briefed from the record.
+- Never the fix yourself: you do not write in the scope you gave (I2), and a Lead that builds loses the distance it
+  judges from.
+
+## When
+
+At the Peer's turn boundary: your message waits for its turn to end. A question in the middle of its work costs more
+than the same question a minute later.
+
+## How
+
+- About the area, never the fault. Presuppose nothing, so "no" is an easy answer. One question.
+- Never name an anti-pattern, quote the attention, or say that anything watches.
+
+| Moment               | A question that opens                                                                |
+| -------------------- | ------------------------------------------------------------------------------------ |
+| going-in-circles     | What has each attempt told you about the cause?                                      |
+| detour               | What is this working around, and who owns the place it comes from?                   |
+| mints-an-api         | What does this test assume about the interface it calls, and where was that settled? |
+| trades-the-goal      | Does this change what the goal promised, and who should weigh it?                    |
+| check-made-to-pass   | What would this check show if the behaviour were still missing?                      |
+| struggling           | What would you need to know to be sure what it means?                                |
+| silent-without-progress | Where does it stand, and what is in the way?                                      |
+
+## After
+
+If the answer changes the plan, the Peer raises a finding and you classify it, with a reason either way.

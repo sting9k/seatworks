@@ -3,7 +3,8 @@
 # condition, the smallest state, every outcome described, English.
 
 # The starting set: the moments that bear most on design while it is cheap to change. The others wait.
-active: [big-decision, trades-the-goal, admits-wrong, mints-an-api]
+# going-in-circles is counted in code and asks no model, so it costs nothing to start with.
+active: [big-decision, trades-the-goal, admits-wrong, mints-an-api, going-in-circles]
 
 item:
   chars: 1500 # a moment shows in a sentence or two; a longer item dilutes the question
@@ -14,7 +15,9 @@ sweep:
   digestChars: 40000 # what a cheap long-context model reads well at once; the rest is left to `look`
 
 facts:
-  repeats: 3 # the same failing command three times is a loop, not a retry
+  repeats: 3 # the same call failing the same way three times is a loop, not a retry: a candidate
+  repeatsTold: 5 # at five the loop has outlasted a nudge in coding-agent harnesses: an attention now
+  silentTurns: 3 # turns with tokens spent and no commit, finding or message since the last brief or hand-back
   longTurnTimes: 3 # three times the agent's median over its last 20 turns
   contextShare: 0.8 # compaction is near, and what was said early is about to go
   testPath: "(^|/)(tests?|specs?|__tests__)/|[._-](test|spec)\\.[a-z]+$|(^|/)test_[^/]*\\.[a-z]+$"
@@ -143,3 +146,39 @@ moments:
       It builds the real part, or uses a test double only inside a test for a dependency that already exists.
     tell: 0.9 # earned only at a look back, for this wording and model (spec/REFLEX.md)
     consider: 0.5
+
+  # Moments counted in code (spec/STEERING.md). They ask no model; `by: code` names the fact that raises them.
+  going-in-circles:
+    watches: [lead, peer]
+    by: code
+    fact: the same call and the same failure, normalized, `repeats` times (a candidate) or `repeatsTold` times (told)
+
+  check-made-to-pass:
+    watches: [peer]
+    by: code
+    fact: a file under `testPath`, or a test runner's config, edited in a scope whose brief is not about tests
+
+  silent-without-progress:
+    watches: [lead, peer]
+    by: code
+    fact: "`silentTurns` turns in a row with tokens spent and nothing recorded"
+
+  findings-waiting:
+    watches: [lead]
+    by: code
+    fact: a finding raised to the Lead and not classified by the end of the Lead's next turn
+
+  # Asked of the reflex.
+  detour:
+    watches: [peer]
+    reads: [thought, said]
+    phase: item
+    state: { text: item }
+    noul: Does `text` add a mechanism to work around a problem instead of fixing it where the problem arises?
+    yes: >-
+      It adds a mapping table, a retry, an intermediate state, a sync layer or a special path to compensate for a
+      contradiction elsewhere that it does not change.
+    no: It fixes the problem where it arises, or changes code unrelated to any problem it names.
+    tell: 0.9 # earned only at a look back, for this wording and model (spec/REFLEX.md)
+    consider: 0.5
+

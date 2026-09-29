@@ -71,8 +71,8 @@ marked ★ hold the starting set the first lane asks (Decided); the rest wait fo
 | A permission asked                         | Cannot be undone from the agent's own copy                                   | Whoever answers it, a fact             | this file     |
 | The Human's words in an agent's chat       | Sets a requirement, says the code is wrong, asks, or approves                | The Lead's copy, a fact                | this file     |
 | A turn ended with no command               | Handed back, asked or waited in words only                                   | The agent, a delivery fact             | this file     |
-| ★ Each new item of a Lead's or Peer's work   | The watch's moments, one condition each                                      | The Watcher or the Supervisor          | `WATCH.md`    |
-| ★ An edit to a test with unsettled names     | Uses one as the code under test; a fake carries one                          | The Watcher or the Supervisor          | `WATCH.md`    |
+| ★ Each new item of a Lead's or Peer's work   | The watch's moments, one condition each                                      | The Watcher, or the owner above the work | `WATCH.md`    |
+| ★ An edit to a test with unsettled names     | Uses one as the code under test; a fake carries one                          | The Watcher, or the Peer's Lead        | `WATCH.md`    |
 
 Nothing else asks it, and nothing it answers decides (I12).
 

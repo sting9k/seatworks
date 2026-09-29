@@ -51,6 +51,8 @@ order is the agents'.
 - `spec/HARNESS.md`: how Claude Code, Codex, Pi and Oh My Pi are run, with one policy and one set of guards.
 - `spec/REFLEX.md`: the reflex: every place v3 asks Jev, how a call runs, how questions are asked well and earn their
   thresholds, the project's own rules, red-check triage, and what the tools built on Jev taught.
+- `spec/STEERING.md`: when a Lead should steer a Peer, when a Peer should stop working around and raise it, and who
+  is told, from what the research on agents found.
 - `spec/WATCH.md`: the watch, which tells the Supervisor when a Lead or Peer needs attention, and how it asks.
 
 ## Layout

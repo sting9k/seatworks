@@ -131,3 +131,16 @@ on an implementation without the rule before it is trusted.
 | The Peer wrote `points` in its code first, then the test    | Nothing is asked                                           |
 | The Watcher's period passes with no new work                | The Watcher is not woken                                   |
 | A profile with no moments                                   | No watch; every other case the same                        |
+
+## Steering
+
+| Case                                                        | Expect                                                     |
+| ----------------------------------------------------------- | ---------------------------------------------------------- |
+| An attention about a Peer                                   | To its Lead, not the Supervisor                            |
+| An attention about a Lead, or one that crosses lanes        | To the Supervisor                                          |
+| The Lead neither acts on nor acknowledges one by the end of its next turn, and it still holds | Climbs to the Supervisor, with the Lead's silence beside it |
+| The Lead acknowledges it                                    | It climbs no further                                       |
+| The same call fails the same way three times                | A candidate for the Watcher, with no model asked           |
+| And five times                                              | An attention to the Lead, now                              |
+| A Peer's own turn after an attention about it               | Nothing about the attention reaches the Peer               |
+

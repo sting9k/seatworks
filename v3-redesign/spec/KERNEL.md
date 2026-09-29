@@ -154,7 +154,9 @@ What the reflex answered about an event (`REFLEX.md`): `{ id, question, subject,
 the bridge as caller. Past its question's threshold it is also delivered as a note along the relation the question
 names, as evidence of kind `judgement`, or as a fact for the actor it concerns (`REFLEX.md`). Between its question's two
 thresholds it is a **candidate** for the actor that `watches` over its scope, and opens an obligation on that actor,
-closed by `attend` or `pass`. An `attend` is an observation of the watcher's, delivered to the root (`WATCH.md`).
+closed by `attend` or `pass`. An attention, whether the reflex's or an `attend`, is delivered to the owner of the
+watched actor's parent scope, and one left neither acted on nor acknowledged past its reader's next turn goes up one
+owner (`STEERING.md`).
 
 ## 5. Invariants
 
@@ -205,8 +207,9 @@ A command is called by an actor and checked against its role's properties and th
 | `answer_question`  | the Human                                           |                                                                          |
 | `hold_machine`     | any seated actor                                    | Holds or releases the machine                                            |
 | `answer_permission` | owner of the asking agent's parent scope, or the Human | Allows or refuses what an agent's harness asked leave to do, with a reason |
-| `mark_noise`       | the root's owner                                    | A moment of the watch is not told again for one actor and scope          |
-| `attend`, `pass`   | an actor that `watches`                             | Sends a candidate or a moment of its own to the root, or records it passed, with a reason |
+| `mark_noise`       | whoever an attention goes to                        | A moment of the watch is not told again for one actor and scope          |
+| `acknowledge`      | whoever an attention goes to                        | Says it was seen and needs nothing now; the attention climbs no further  |
+| `attend`, `pass`   | an actor that `watches`                             | Sends a candidate or a moment of its own to the owner above the work, or records it passed, with a reason |
 | `release`          | owner of the parent                                 | Ends an actor's seat; its scope stays                                    |
 
 Integrations into one scope MUST run one at a time: bring the parent in, run evidence on the result, then integrate.
@@ -227,7 +230,7 @@ Events: `scope_opened`, `actor_seated`, `brief_issued`, `brief_amended`, `plan_s
 `finding_reopened`, `finding_withdrawn`, `claim_made`, `evidence_recorded`, `integrated`, `sent_back`, `reseated`,
 `scope_dropped`, `scope_held`, `scope_resumed`, `report_made`, `message_sent`, `message_delivered`, `message_moved`, `question_asked`,
 `question_answered`, `obligation_opened`, `obligation_closed`, `obligation_moved`, `machine_held`, `machine_released`,
-`actor_released`, `actor_gone`, `observation_made`, `noise_marked`, `attended`, `passed`, `permission_asked`,
+`actor_released`, `actor_gone`, `observation_made`, `noise_marked`, `attended`, `passed`, `acknowledged`, `attention_climbed`, `permission_asked`,
 `permission_answered`.
 
 ## 8. Views
