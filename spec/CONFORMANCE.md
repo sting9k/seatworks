@@ -26,6 +26,7 @@ on an implementation without the rule before it is trusted.
 | I6   | A line marked the Human's with no message or answer from them behind it | Written as its caller's                                   |
 | I6   | A term the Human settled is settled again without their word | Refused; accepted citing it                             |
 | I7   | The Supervisor sends a Peer a message that directs                      | The Lead has a copy and an obligation; it closes on carried or declined |
+| I7   | The Lead cites, or answers, the copy of a direction it was given        | The direction's obligation closes                         |
 | I7   | The Supervisor asks a Peer an open question                             | The Lead has a copy and no obligation                     |
 | I7   | The Human types into a Peer's chat                                      | The Lead has a copy and an obligation; the Human sees whether it was carried in |
 | I8   | `classify_finding` as `changes` with no change events                   | Refused                                                   |

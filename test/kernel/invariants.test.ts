@@ -297,3 +297,22 @@ test("a profile with every role renamed behaves the same", () => {
     l.log.filter((e) => e.type !== "plan_set" && e.type !== "workspace_ready").map((e) => e.type);
   assert.deepEqual(shape(other).slice(0, 6), shape(ledger).slice(0, 6));
 });
+
+test("I7: the Lead carries a direction in by citing, or answering, the copy it was given", () => {
+  const { ledger, supervisor, lead, peer } = team();
+  const copyTo = () => [...ledger.state.messages.values()].filter((m) => m.to === lead && m.copyOf !== null).at(-1)!;
+  const directions = () => [...ledger.state.obligations.values()].filter((o) => o.about.kind === "direction");
+  ledger.must(ledger.as(supervisor, "send_message", { to: peer, text: "Use int8", directs: true }));
+  ledger.must(
+    ledger.as(lead, "amend_brief", {
+      scope: "1.1",
+      set: { choices: [{ text: "int8", via: { kind: "message", id: copyTo().id } }] },
+      reason: "the Supervisor's call",
+    }),
+  );
+  assert.equal(directions().length, 0, "carried in through its copy");
+
+  ledger.must(ledger.as(supervisor, "send_message", { to: peer, text: "Drop protobuf", directs: true }));
+  ledger.must(ledger.as(lead, "answer", { replyTo: copyTo().id, text: "Kept: the server lane shares it" }));
+  assert.equal(directions().length, 0, "declined through its copy");
+});

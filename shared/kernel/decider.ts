@@ -122,7 +122,8 @@ function closeCarriedDirections(ctx: Context): void {
               ...e.plan.terms.map((t) => t.line),
             ]
           : [];
-    for (const l of lines) if (l.via?.kind === "message" && l.at === ctx.at) cited.add(l.via.id);
+    for (const l of lines)
+      if (l.via?.kind === "message" && l.at === ctx.at) cited.add(ctx.state.messages.get(l.via.id)?.copyOf ?? l.via.id);
   }
   for (const o of ctx.state.obligations.values())
     if (o.about.kind === "direction" && cited.has(o.about.id) && o.owedBy === ctx.party)

@@ -31,9 +31,11 @@ export function sendMessage(ctx: Of<"send_message">): Refusal | undefined {
 export function answer(ctx: Of<"answer">): Refusal | undefined {
   const asked = ctx.state.messages.get(ctx.body.replyTo);
   if (!asked) return refuse("unknown", `no open message ${ctx.body.replyTo}`);
+  // Answering the copy of a direction answers the direction it copies.
+  const about = asked.copyOf ?? asked.id;
   const owed = [...ctx.state.obligations.values()].filter(
     (o) =>
-      o.owedBy === ctx.party && (o.about.kind === "message" || o.about.kind === "direction") && o.about.id === asked.id,
+      o.owedBy === ctx.party && (o.about.kind === "message" || o.about.kind === "direction") && o.about.id === about,
   );
   if (asked.to !== ctx.party && owed.length === 0) return refuse("authority", `message ${asked.id} was not to you`);
   // An answer goes back to whoever asked, whatever the edges: I10 governs who may start a conversation.
