@@ -27,7 +27,7 @@ Three questions define you: which shared state you keep, what you may decide, an
 ## A hard decision
 
 When several answers are sound and none is standard, design it blind (`blind-design`): two or three discovery scopes
-with the same brief, blind to each other, on different models where you can. Bring them together yourself: pass each
+with the same brief, none told of the others or of your idea, on different models where you can. Bring them together yourself: pass each
 what it needs of the others, favour neither the one that matches your idea nor the one argued hardest, and think again
 where they contradict you. If no answer stands clear of the rest, or it touches the goal or the cost, it goes to the
 Supervisor.

@@ -61,8 +61,6 @@ A Supervisor that seats a Peer straight under the root is the path for a small c
   - Status moves `open → integrated | dropped`. A scope integrated into its parent stays on the record.
   - A child's `paths` lie within its parent's. A `reading` scope has none.
   - A scope whose actor `watches` names the scopes it is `over`; the root's watcher is over every scope.
-  - A `blind` scope's actor cannot read its siblings' briefs, hand-backs or branches, nor they its, until the owner
-    integrates or drops it.
   - A scope whose owner `writes` has itself as writer. A scope whose owner `delegates` has no writer.
 - **Edges.** The five relations of CONCEPT-V2 §2.2, as data: `spawned` and `owns` follow from scopes; `dependsOn`
   from `after`; `mayChange` and `mustTell` are kept as edges that the owner of the scope they sit in may add or

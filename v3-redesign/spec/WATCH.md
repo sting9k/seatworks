@@ -31,8 +31,10 @@ The owner gave this design to the builder. These choices settle it, each with it
 6. **The agent never learns it is watched.** An agent that knows plays to the watch (V1). The Supervisor's question
    is its own, with no attention's words, id or source in it.
 7. **An open question to a Peer copies its Lead and opens no obligation**, since it directs nothing (KERNEL I7).
-8. **Blind designs do not break N2.** N2 forbids narrowing what an agent may read to make writing safe. A blind
-   design narrows reading so its designs stay independent, and only until its Lead brings them together.
+8. **Blind designs narrow no one's reading.** A design is blind to its Lead's framing and to the other designs
+   because the Lead does not put them in its brief, and Peers do not message each other. What an agent may read stays
+   open (CONCEPT-V2 §4.3, N2): the article's parachute is an agent that may only read about the parachute (A3.2¶6),
+   and independence of thought comes from reading widely (A3.3¶6).
 
 ## When: moments
 

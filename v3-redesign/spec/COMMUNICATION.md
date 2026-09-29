@@ -19,9 +19,9 @@ are the concept's and the agents'. The plugin delivers, records, and keeps what 
   wrote, quoted; words that never reached the record; a red check that failed on the environment (`REFLEX.md`). A fact
   asks nothing, so it never wakes its reader on its own. It never carries what to do, an order of importance, or a
   judgement that two messages are the same.
-- **Makes reading easy.** Every agent can read any scope's brief, hand-backs and branch, except a blind design's
-  siblings until their Lead brings them together. A Peer that needs to know
-  something reads it; one that needs something changed asks its Lead.
+- **Makes reading easy.** Every agent can read any scope's brief, hand-backs and branch. A Peer that needs to know
+  something reads it; one that needs something changed asks its Lead. Nothing narrows what an agent may read
+  (CONCEPT-V2 §4.3, N2).
 
 ## The SLP profile's edges
 

@@ -80,7 +80,7 @@ list. Different models in blind designs are the point: one model on one question
 | ------------------------------------------------------------------- | ---------------------------------------------------- |
 | The desk's mechanics as rules: merge queue, review rounds, severity ladder, lane review timing | The kernel and tool replies; severity in the Reviewer's prompt |
 | A Lead that never reads code                                        | A Lead that reads and runs what it needs to decide   |
-| `council`: two reviewers asked a hard question                      | Blind designs: discovery scopes, blind to each other |
+| `council`: two reviewers asked a hard question                      | Blind designs: discovery scopes briefed apart         |
 | A Supervisor loop of thirteen numbered steps                        | Three questions, and the skills for each moment      |
 | `CONTEXT.md` and a notebook beside the ledger                       | The Human's lines in the plan, with their origin     |
 

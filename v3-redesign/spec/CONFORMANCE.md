@@ -121,5 +121,4 @@ on an implementation without the rule before it is trusted.
 | A test builds a fake user carrying `points`                 | The same, through the second question                      |
 | The Peer wrote `points` in its code first, then the test    | Nothing is asked                                           |
 | The Watcher's period passes with no new work                | The Watcher is not woken                                   |
-| A blind scope's actor reads its sibling's branch            | Refused until the Lead integrates or drops the sibling     |
 | A profile with no moments                                   | No watch; every other case the same                        |
