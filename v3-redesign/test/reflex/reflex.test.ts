@@ -350,3 +350,20 @@ test("turns that spend and record nothing, a finding left unclassified, and a ch
     `silent-without-progress → ${lead}`,
   ]);
 });
+
+test("a Watcher is woken by a sweep once its agents' new work passes the size the profile names, never by a clock", async () => {
+  const { ledger, reflex, supervisor, peer } = wired(0.1);
+  ledger.must(ledger.as(supervisor, "open_scope", { parent: "root", role: "watcher", over: "all" }));
+  const watcher = [...ledger.state.actors.values()].find((a) => a.role === "watcher")!.id;
+  const sweeps = () =>
+    [...ledger.state.messages.values()].filter((m) => m.to === watcher && m.wakes && m.text.startsWith("A sweep"));
+  const work = (n: number) => thought(`step ${n}: ${"x".repeat(1400)}`);
+  for (let i = 0; i < 10; i++) reflex.onTurn("p", peer, [work(i)], ledger.state);
+  await settle();
+  assert.equal(sweeps().length, 0);
+  for (let i = 10; i < 30; i++) reflex.onTurn("p", peer, [work(i)], ledger.state);
+  await settle();
+  assert.equal(sweeps().length, 1);
+  assert.match(sweeps()[0]!.text, new RegExp(`${peer} \\(peer, scope 1\\.1\\): \\d+ items`));
+  assert.ok(sweeps()[0]!.text.length <= 18_000);
+});

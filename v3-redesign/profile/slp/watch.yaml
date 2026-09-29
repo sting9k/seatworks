@@ -25,8 +25,8 @@ item:
   everyItems: 20 # a look inside a long turn, where drift hides
 
 sweep:
-  minutes: 15 # the author's own period; only scopes with new work are read
-  digestChars: 40000 # what a cheap long-context model reads well at once; the rest is left to `look`
+  everyChars: 30000 # new work across the agents a Watcher watches, about a few turns each; an idle project sends none
+  digestChars: 18000 # what one note holds (20,000 at most); the rest is left to `look`
 
 facts:
   repeats: 3 # the same call failing the same way three times is a loop, not a retry: a candidate

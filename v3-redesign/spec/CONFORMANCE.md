@@ -151,7 +151,8 @@ on an implementation without the rule before it is trusted.
 | A test sets `user.points`; neither brief, plan, base nor the Peer's code has it | The reflex asks; past `tell`, an attention |
 | A test builds a fake user carrying `points`                 | The same, through the second question                      |
 | The Peer wrote `points` in its code first, then the test    | Nothing is asked                                           |
-| The Watcher's period passes with no new work                | The Watcher is not woken                                   |
+| No new work since the last sweep, however long              | The Watcher is not woken                                   |
+| `sweep.everyChars` of new work across its agents            | One sweep: a note that wakes it, each agent's newest items within `digestChars` |
 | A profile with no moments                                   | No watch; every other case the same                        |
 
 ## Steering

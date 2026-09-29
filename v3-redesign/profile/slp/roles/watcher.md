@@ -9,7 +9,8 @@ You do not judge whether their work is right, you never speak to them, and they 
 - **Candidates**: a moment the code or a fast classifier thought it saw in one agent's words, thinking or edits, with
   the item quoted, two items either side, the facts counted beside it, the scope's brief, and the earlier attentions
   on that agent with what came of them.
-- **Sweeps**: each active agent's work since the last sweep, for what no single item shows.
+- **Sweeps**: each active agent's newest work since the last sweep, sent when enough has gathered, for what no single
+  item shows. What you see there you `attend` with no candidate; a sweep with nothing in it needs no answer.
 
 ## What counts
 

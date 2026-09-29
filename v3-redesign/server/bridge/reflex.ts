@@ -2,6 +2,7 @@ import type { CommandBody } from "../../shared/contracts/commands.ts";
 import type { Event } from "../../shared/contracts/events.ts";
 import { HUMAN, ROOT } from "../../shared/contracts/ids.ts";
 import type { Brief, Line, Plan } from "../../shared/contracts/ledger.ts";
+import { isWithin } from "../../shared/kernel/authority.ts";
 import type { State } from "../../shared/kernel/state.ts";
 import { KeyedQueue } from "../core/keyed-queue.ts";
 import type { TurnItem } from "../satellites/agent-host/items.ts";
@@ -26,6 +27,8 @@ export class Reflex {
   private readonly submit: (project: string, body: Observation) => Promise<void>;
   private readonly alarm: (text: string | null) => void;
   private readonly code: Code;
+  /** The roles some moment watches: only their work is gathered for a sweep. */
+  private readonly watched: ReadonlySet<string>;
   private readonly queue = new KeyedQueue<string>();
   private readonly queued = new Map<string, number>();
   /** Per agent, how often each failing call came back: going in circles counted in code (STEERING.md). */
@@ -38,6 +41,8 @@ export class Reflex {
   private readonly unanswered = new Map<string, number>();
   /** Test files each agent changed an existing line of, told once each. */
   private readonly bent = new Set<string>();
+  /** Per Watcher, the work of the agents it watches since its last sweep: a line per item, the newest kept. */
+  private readonly unswept = new Map<string, Pile>();
 
   constructor(
     config: ReflexConfig,
@@ -48,6 +53,7 @@ export class Reflex {
   ) {
     this.code = code;
     this.config = config;
+    this.watched = new Set([...config.moments.values()].flatMap((m) => m.watches ?? []));
     this.jev = jev;
     this.submit = submit;
     this.alarm = alarm;
@@ -93,6 +99,7 @@ export class Reflex {
         this.madeToPass(project, actorId, actor.role, actor.scope, item, state);
       }
     this.wordsOnly(project, actorId, actor.scope, items, state);
+    this.gather(project, actorId, items, state);
     const kinds = { thought: "thought", said: "said", edit: "edit", ran: null } as const;
     for (const item of items) {
       const reads = kinds[item.kind];
@@ -116,6 +123,45 @@ export class Reflex {
     }
   }
 
+  /**
+   * A sweep, driven by the work rather than a clock (WATCH.md, decision 4): each Watcher gathers the items of the agents
+   * it watches, and once they pass `sweep.everyChars` it is woken with a digest of them, the newest of each agent kept.
+   * An idle project gathers nothing and sends nothing.
+   */
+  private gather(project: string, actorId: string, items: readonly TurnItem[], state: State): void {
+    const sweep = this.config.sweep;
+    const actor = state.actors.get(actorId);
+    if (!sweep || !actor || !this.watched.has(actor.role) || items.length === 0) return;
+    for (const watcher of watchersOver(state, actor.scope)) {
+      const key = `${project}:${watcher.id}`;
+      const pile: Pile = this.unswept.get(key) ?? { chars: 0, lines: new Map(), counts: new Map() };
+      this.unswept.set(key, pile);
+      const mine = pile.lines.get(actorId) ?? [];
+      pile.lines.set(actorId, mine);
+      pile.counts.set(actorId, (pile.counts.get(actorId) ?? 0) + items.length);
+      for (const item of items) {
+        const line = `${item.kind}${item.path ? ` ${item.path}` : ""}: ${item.text.slice(0, this.config.itemChars)}`;
+        mine.push(this.masked(line));
+        pile.chars += line.length;
+      }
+      // Only the newest a digest can hold are kept, so a Watcher that never sweeps holds a bounded pile.
+      while (mine.join("\n").length > sweep.digestChars && mine.length > 1) mine.shift();
+      if (pile.chars < sweep.everyChars) continue;
+      this.unswept.delete(key);
+      void this.submit(project, {
+        type: "record_observation",
+        question: "sweep",
+        actor: watcher.id,
+        scope: watcher.scope,
+        source: "code",
+        model: null,
+        answer: `${pile.chars} characters of new work`,
+        level: "tell",
+        route: { kind: "note", to: "self", text: digestOf(pile, state, sweep.digestChars), wakes: true },
+      });
+    }
+  }
+
   /** A turn that ended with words and no command: whether its last words hand back, ask or wait, which only a tool records. */
   private wordsOnly(project: string, actor: string, scope: string, items: readonly TurnItem[], state: State): void {
     const acted = this.acted.has(`${project}:${actor}`);
@@ -135,12 +181,13 @@ export class Reflex {
   /** Lets go of what the reflex keeps for a project that left memory. */
   forget(project: string): void {
     const mine = (key: string) => key.startsWith(`${project}:`);
-    for (const map of [this.loops, this.silent, this.unanswered])
+    for (const map of [this.loops, this.silent, this.unanswered, this.unswept])
       for (const key of map.keys()) if (mine(key)) map.delete(key);
     for (const set of [this.acted, this.bent]) for (const key of set) if (mine(key)) set.delete(key);
   }
 
   private forgetActor(key: string): void {
+    this.unswept.delete(key);
     this.loops.delete(key);
     this.silent.delete(key);
     this.acted.delete(key);
@@ -495,6 +542,38 @@ function added(text: string): string {
     .filter((l) => l.startsWith("+") && !l.startsWith("+++"))
     .map((l) => l.slice(1))
     .join("\n");
+}
+
+/** The seated Watchers whose watch scope reaches a scope: `over` all, or a scope it lies within. */
+function watchersOver(state: State, scope: string): { id: string; scope: string }[] {
+  const out: { id: string; scope: string }[] = [];
+  for (const s of state.scopes.values()) {
+    if (s.kind !== "watch" || s.status !== "open" || s.owner === null) continue;
+    if (s.over === "all" || s.over.some((o) => isWithin(state, scope, o))) out.push({ id: s.owner, scope: s.id });
+  }
+  return out;
+}
+
+/** One Watcher's gathered work: each agent's newest lines, and how many items it had in all. */
+type Pile = { chars: number; lines: Map<string, string[]>; counts: Map<string, number> };
+
+/** A sweep's note: each agent's newest items since the last sweep, an equal share each, with how many were left out. */
+function digestOf(pile: Pile, state: State, chars: number): string {
+  const share = Math.floor(chars / Math.max(1, pile.lines.size)) - 200;
+  const parts = [...pile.lines].map(([id, items]) => {
+    const a = state.actors.get(id);
+    const kept: string[] = [];
+    let used = 0;
+    for (let i = items.length - 1; i >= 0 && used + items[i]!.length <= share; i--) {
+      kept.unshift(items[i]!);
+      used += items[i]!.length + 1;
+    }
+    const all = pile.counts.get(id) ?? kept.length;
+    const left = all - kept.length;
+    const head = `${id} (${a?.role ?? "?"}, scope ${a?.scope ?? "?"}): ${all} items${left > 0 ? `, the ${left} oldest left to \`look\`` : ""}`;
+    return [head, ...kept].join("\n");
+  });
+  return ["A sweep: the work since the last one.", ...parts].join("\n\n").slice(0, chars);
 }
 
 /** A file's diff cut at each hunk header; a text that is not a diff is one hunk. */

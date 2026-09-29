@@ -55,6 +55,9 @@ const WatchFileSchema = z
   .object({
     active: z.array(z.string()).default([]),
     item: z.object({ chars: z.number().int().positive(), everyItems: z.number().int().positive() }).loose(),
+    sweep: z
+      .object({ everyChars: z.number().int().positive(), digestChars: z.number().int().positive().max(19_000) })
+      .optional(),
     facts: z
       .object({
         repeats: z.number().int().positive(),
@@ -77,6 +80,8 @@ export type ReflexConfig = {
   readonly repeatsTold: number;
   readonly silentTurns: number;
   readonly testPath: RegExp | null;
+  /** New work, in characters, that starts a sweep for the Watcher, and how much of it the sweep's note carries. */
+  readonly sweep: { readonly everyChars: number; readonly digestChars: number } | null;
 };
 
 /** The profile's active questions and moments; one not in its file's `active` list is written but not asked. */
@@ -98,6 +103,7 @@ export function loadReflex(dir: string): ReflexConfig | null {
     repeatsTold: watch?.facts.repeatsTold ?? 5,
     silentTurns: watch?.facts.silentTurns ?? 3,
     testPath: watch?.facts.testPath ? new RegExp(watch.facts.testPath) : null,
+    sweep: watch?.sweep ?? null,
   };
 }
 

@@ -24,8 +24,10 @@ The owner gave this design to the builder. These choices settle it, each with it
    the Human's consent to send agents' words to Jev's host, through OpenRouter with data collection denied unless
    they choose TypeSafe's own API (`REFLEX.md`). The Watcher runs on a provider the team already uses. Before any text
    leaves, what looks like a secret is masked.
-4. **Driven by the work, with one sweep.** A turn's end or a long turn's growth starts a look. A sweep every 15
-   minutes reads only scopes with new work since the last one, so an idle project costs nothing.
+4. **Driven by the work, sweeps too.** A turn's end or a long turn's growth starts a look. A sweep is not a clock
+   and not a shadow reading the stream: each Watcher gathers the work of the agents it watches, and once it passes
+   `sweep.everyChars` it is woken with a digest of it. A busy lane is swept often, an idle project never, and the
+   Watcher, a model, runs only when there is work to read (AGENTS.md: no seat runs on a heartbeat).
 5. **An attention opens no obligation, but climbs if left.** Making its reader answer every one would be the
    ceremony the concept warns of. One its reader has neither acted on nor acknowledged by the end of its next turn,
    and that still holds, goes up one owner (`STEERING.md`). `mark_noise` quiets a moment for one agent and scope.
@@ -130,8 +132,9 @@ nothing and speaks only to the Supervisor; what it attends to reaches the owner 
   candidates batch themselves.
 - **A candidate** comes with the agent, scope, moment, probability, the item quoted with two items either side, the
   facts beside it, the scope's brief, and the earlier attentions on that agent and what came of them.
-- **A sweep** holds each active agent's items since the last sweep up to `sweep.digestChars`, with a count and a
-  pointer for the rest.
+- **A sweep** is a note that wakes it once `sweep.everyChars` of new work has gathered: each active agent's newest
+  items since the last sweep, an equal share each up to `sweep.digestChars`, with a count and `look` for the rest.
+  What it sees there it attends to with no candidate.
 - **Every candidate is attended or passed.** Each opens an obligation on the Watcher, so a restart loses none; a pass
   is a label the reflex's thresholds are later set from.
 - **Its memory is the log.** Its context is compacted when full, and a new Watcher is seated from the record.
