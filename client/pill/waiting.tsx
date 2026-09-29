@@ -5,6 +5,7 @@ import { Text, View } from "react-native";
 import { PROJECT_LABEL } from "../../shared/contracts/ids.ts";
 import { RPC } from "../../shared/contracts/rpc.ts";
 import { AttentionCard } from "../decide/attention-card.tsx";
+import { ClaimCard } from "../decide/claim-card.tsx";
 import { PermissionCard } from "../decide/permission-card.tsx";
 import { QuestionCard } from "../decide/question-card.tsx";
 import { FONT, SPACE } from "../kit/theme.ts";
@@ -45,6 +46,16 @@ function waitingContent(project: string, counted: (count: number) => void) {
         ))}
         {human.attentions.map((t) => (
           <AttentionCard key={t.id} project={project} attention={t} theme={theme} onAnswered={refresh} />
+        ))}
+        {human.claims.map((c) => (
+          <ClaimCard
+            key={`${c.scope}:${c.commit}`}
+            project={project}
+            claim={c}
+            remote={human.remote}
+            theme={theme}
+            onAnswered={refresh}
+          />
         ))}
       </ScrollView>
     );

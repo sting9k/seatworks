@@ -216,7 +216,10 @@ export function publishFact(ctx: Of<"record_publish">): Refusal | undefined {
   const branch = root?.branch ?? "";
   const r = ctx.body.result;
   if ("refused" in r) ctx.emit({ type: "publish_refused", remote, branch, why: r.refused, found: r.at });
-  else ctx.emit({ type: "published", remote, branch, sha: r.sha });
+  else {
+    ctx.emit({ type: "published", remote, branch, sha: r.sha });
+    if (root?.claim !== null && root?.claim !== undefined) closeAbout(ctx, "claim", root.claim, "published");
+  }
   return undefined;
 }
 

@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { Ledger, SHA, brief, refusedBy, team } from "./ledger.ts";
+import { HUMAN } from "../../shared/contracts/ids.ts";
+import { humanView } from "../../shared/views/human.ts";
+import { Ledger, SHA, brief, refusedBy, slpProfile, team } from "./ledger.ts";
 
 test("one lane end to end: hand back, candidate, checks, integrate, land; then only the root stays in memory", () => {
   const { ledger, supervisor, lead, peer, lane, task } = team();
@@ -154,6 +156,37 @@ test("publish names the head the record last saw on the base; a moved tip is rec
     SHA(9),
     "the refusal told the record the tip it found",
   );
+});
+
+test("a hand-back from the root owes the Human, who sends it back or publishes over it", () => {
+  // The shipped SLP profile does not give the root's role hand_back; the contract must hold for a profile that does.
+  const slp = slpProfile();
+  const sup = slp.roles.get("supervisor");
+  assert.ok(sup);
+  const roles = new Map(slp.roles);
+  const handed = { ...sup, tools: new Set([...sup.tools, "hand_back"]) };
+  roles.set("supervisor", handed);
+  const profile = { roles, root: slp.root.name === "supervisor" ? handed : slp.root };
+  const claimsOnHuman = (ledger: Ledger) =>
+    [...ledger.state.obligations.values()].filter((o) => o.owedBy === HUMAN && o.about.kind === "claim");
+
+  {
+    const { ledger, supervisor } = team(new Ledger(profile));
+    ledger.must(ledger.as(supervisor, "hand_back", { commit: SHA(9), text: "the project is done" }));
+    assert.equal(claimsOnHuman(ledger).length, 1, "the root's claim waits on its parent's owner");
+    const view = humanView(ledger.state);
+    assert.equal(view.claims.length, 1, "the Human sees what is claimed of them");
+    ledger.must(ledger.human("send_back", { scope: "root", reason: "not what I asked for" }));
+    assert.equal(claimsOnHuman(ledger).length, 0);
+  }
+  {
+    const { ledger, supervisor } = team(new Ledger(profile));
+    ledger.must(ledger.as(supervisor, "hand_back", { commit: SHA(9), text: "the project is done" }));
+    assert.equal(claimsOnHuman(ledger).length, 1);
+    ledger.must(ledger.human("publish", { remote: "origin" }));
+    ledger.must(ledger.fact("record_publish", { result: { sha: SHA(9) } }));
+    assert.equal(claimsOnHuman(ledger).length, 0, "publishing the claim settles it");
+  }
 });
 
 test("a small change: the Supervisor seats a Peer under the root and integrates it, with no Lead", () => {

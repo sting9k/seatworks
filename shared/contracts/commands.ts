@@ -288,6 +288,7 @@ export const HUMAN_COMMANDS: ReadonlySet<CommandType> = new Set<CommandType>([
   "mark_noise",
   "set_checks",
   "publish",
+  "send_back",
   "reseat",
   "release",
   "hold_machine",

@@ -12,6 +12,9 @@ export const HumanViewSchema = z.object({
     }),
   ),
   permissions: z.array(z.object({ id: z.string(), actor: z.string(), text: z.string() })),
+  /** A claim handed back to the Human — the root's own — waiting on their publish or send-back. */
+  claims: z.array(z.object({ scope: z.string(), by: z.string(), text: z.string(), commit: z.string() })),
+  remote: z.string().nullable(),
   /** What the watch saw that reached the root and stopped with the Human, until they acknowledge it or mark it noise. */
   attentions: z.array(
     z.object({ id: z.string(), actor: z.string(), scope: z.string(), why: z.string(), facts: z.array(z.string()) }),

@@ -80,6 +80,7 @@ on an implementation without the rule before it is trusted.
 | The Human reseats the Supervisor                                                        | Accepted: the Human stands as the root's parent            |
 | `publish` when the remote moved since the landing                                       | Refused by the workspace; nothing forced                   |
 | `drop_scope` while the scope's merge is in flight                                       | Refused: the record cannot call it dropped once the integration is physical                |
+| A profile where the root's role hands back                                              | Its claim waits on the Human, shown to them; their `send_back` or a `published` settles it |
 
 ## Delivery
 

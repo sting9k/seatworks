@@ -174,7 +174,7 @@ What closes each obligation:
 | a message that asks            | its reader                  | an `answer` with `replyTo` it                                |
 | a message that directs, copied | the owner told (I7)         | a change event citing it with `via`, or an `answer` to it declining with a reason |
 | `question_asked`               | the Human                   | `question_answered`                                          |
-| `claim_made`                   | the parent's owner          | `integrated`, `sent_back`, `scope_dropped`, or a newer claim on the scope |
+| `claim_made`                   | the parent's owner          | `integrated`, `sent_back`, `scope_dropped`, `published` on the root's claim, or a newer claim on the scope |
 | an observation between thresholds | the watcher over it      | `attended` or `passed`                                       |
 | `permission_asked`             | its answerer                | `permission_answered`, `permission_settled`, or the asking actor leaving its seat |
 
@@ -228,7 +228,7 @@ agent also settles any open attention about the actors or scopes it names that t
 | `record_verdict`   | `ok, text`                                                                                 | `evidence_recorded`                     |
 | `run_checks`       | `scope, commit, steps?`                                                                    | `evidence_requested`                    |
 | `integrate`        | `scope, evidence, reason?`; refused while the scope has open children                      | `integration_started`                   |
-| `send_back`        | `scope, reason`                                                                            | `sent_back`, `obligation_closed`        |
+| `send_back`        | `scope, reason`; by the scope's parent's owner — the Human sends the root's claim back     | `sent_back`, `obligation_closed`        |
 | `reseat`           | `scope, reason, model?`                                                                    | `reseated`, `actor_seated`, `obligation_moved`\*, `message_moved`\* |
 | `drop_scope`       | `scope, reason`                                                                            | `scope_dropped`, `obligation_closed`\*  |
 | `hold_scope`, `resume_scope` | `scope, reason`                                                                  | `scope_held`, `scope_resumed`           |

@@ -35,6 +35,13 @@ export function humanView(state: State): HumanView {
         const p = state.permissions.get(o.about.id);
         return p ? [{ id: p.id, actor: p.actor, text: p.text }] : [];
       }),
+    claims: owed
+      .filter((o) => o.about.kind === "claim")
+      .flatMap((o) => {
+        const c = state.claims.get(o.about.id);
+        return c ? [{ scope: c.scope, by: c.by, text: c.text, commit: c.commit }] : [];
+      }),
+    remote: state.project?.remote ?? null,
     attentions: [...state.attentions.values()]
       .filter((t) => t.to === HUMAN)
       .map((t) => ({ id: t.id, actor: t.about.actor, scope: t.about.scope, why: t.why, facts: [...t.facts] })),
