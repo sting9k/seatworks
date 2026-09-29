@@ -85,6 +85,30 @@ export class Plugin {
     });
   }
 
+  /** Names already settled for an agent: in its brief, its parent's plan, the base, or its own code. */
+  private async settledNames(project: string, actorId: string, names: readonly string[]): Promise<ReadonlySet<string>> {
+    const runtime = this.runtimes.get(project);
+    const view = runtime?.project.view;
+    const actor = view?.actors.get(actorId);
+    const scope = actor ? view?.scopes.get(actor.scope) : undefined;
+    if (!runtime || !view || !scope) return new Set(names);
+    const parent = scope.parent ? view.scopes.get(scope.parent) : undefined;
+    const lines = [
+      ...(scope.brief
+        ? [scope.brief.goal, ...scope.brief.constraints, ...scope.brief.choices, ...scope.brief.context]
+        : []),
+      ...(parent?.plan ? [parent.plan.goal, ...parent.plan.limits, ...parent.plan.unknowns.map((u) => u.line)] : []),
+    ].map((l) => l.text);
+    const words = new Set(lines.join(" ").split(/[^A-Za-z0-9_]+/));
+    const settled = new Set(names.filter((n) => words.has(n)));
+    const rest = names.filter((n) => !settled.has(n));
+    for (const n of await runtime.workspace.namesIn(runtime.workspace.repo, parent?.branch ?? "HEAD", rest))
+      settled.add(n);
+    const own = runtime.workspace.pathOf(scope.id);
+    if (existsSync(own)) for (const n of await runtime.workspace.namesIn(own, null, rest)) settled.add(n);
+    return settled;
+  }
+
   /** Where the reflex asks Jev, from the plugin's settings; the key is kept here only, never logged. */
   setReflex(route: string, key: string): void {
     this.reflexKey = { route, key };
@@ -132,6 +156,7 @@ export class Plugin {
         (text) => {
           this.alarmText = text;
         },
+        (project, actor, names) => this.settledNames(project, actor, names),
       );
     const host = new PaseoHost(this.link, (provider) => harnessOf(dir, provider));
     const shimDir = installShim(this.root, join(dir, "bin", "git-shim.ts"));

@@ -9,6 +9,16 @@ export type Candidate = { candidate: string; parentHead: string } | { conflict: 
 export type Moved = { sha: string } | { refused: string };
 
 const DIFF_CAP = 60_000;
+/** Test paths, left out when asking whether code already has a name. */
+const NOT_TESTS = [
+  ":(exclude,glob)**/test/**",
+  ":(exclude,glob)**/tests/**",
+  ":(exclude,glob)**/spec/**",
+  ":(exclude,glob)**/__tests__/**",
+  ":(exclude,glob)**/*.test.*",
+  ":(exclude,glob)**/*.spec.*",
+  ":(exclude,glob)**/test_*",
+];
 
 /** A key made safe for a path: `[A-Za-z0-9._-]`, with a stable hash when that changed it (Symphony's rule). */
 export function safeKey(key: string): string {
@@ -143,6 +153,35 @@ export class Workspace {
         ? `${patch.stdout.slice(0, DIFF_CAP)}\n… cut at ${DIFF_CAP} characters; read the files for the rest.`
         : patch.stdout;
     return `${stat.stdout.trim()}\n\n${body}`;
+  }
+
+  /**
+   * Which of `names` appear as whole words in code outside test paths: at a revision of the repository, or in a copy's
+   * working tree when `rev` is null. One git grep for all of them.
+   */
+  async namesIn(cwd: string, rev: string | null, names: readonly string[]): Promise<Set<string>> {
+    if (names.length === 0) return new Set();
+    // In a working tree, files the agent has not committed yet count too.
+    const args = [
+      "grep",
+      ...(rev ? [] : ["--untracked"]),
+      "-w",
+      "-o",
+      "-h",
+      "-I",
+      ...names.flatMap((n) => ["-e", n]),
+      ...(rev ? [rev] : []),
+      "--",
+      ".",
+      ...NOT_TESTS,
+    ];
+    const run = await git(cwd, args, 60_000);
+    const found = new Set<string>();
+    for (const line of run.stdout.split("\n")) {
+      const name = (line.includes(":") ? line.slice(line.lastIndexOf(":") + 1) : line).trim();
+      if (names.includes(name)) found.add(name);
+    }
+    return found;
   }
 
   /** Pushes a branch to a remote, never forced: a remote that moved refuses it. */

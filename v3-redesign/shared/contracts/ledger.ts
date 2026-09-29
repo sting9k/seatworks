@@ -186,6 +186,8 @@ export type Obligation = {
   readonly owedTo: Party;
   readonly about: Owed;
   readonly opened: string;
+  /** What a reader needs to act on it without looking it up, such as a candidate's moment and quote. */
+  readonly summary?: string;
 };
 
 export type Urgency = "now" | "later";

@@ -114,6 +114,7 @@ export function observation(ctx: Of<"record_observation">): Refusal | undefined 
           owedTo: above,
           about: { kind: "candidate", id },
           opened: ctx.at,
+          summary: `${b.question} · ${b.answer} · ${actor?.id ?? "?"} (${actor?.role ?? "?"}, scope ${b.scope}) · ${route.kind === "attention" ? route.why : route.text}`,
         },
       });
     return undefined;

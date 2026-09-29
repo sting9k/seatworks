@@ -49,7 +49,13 @@ const WatchFileSchema = z
   .object({
     active: z.array(z.string()).default([]),
     item: z.object({ chars: z.number().int().positive(), everyItems: z.number().int().positive() }).loose(),
-    facts: z.object({ repeats: z.number().int().positive(), repeatsTold: z.number().int().positive() }).loose(),
+    facts: z
+      .object({
+        repeats: z.number().int().positive(),
+        repeatsTold: z.number().int().positive(),
+        testPath: z.string().optional(),
+      })
+      .loose(),
     moments: z.record(z.string(), QuestionSchema).default({}),
   })
   .loose();
@@ -62,6 +68,7 @@ export type ReflexConfig = {
   readonly itemChars: number;
   readonly repeats: number;
   readonly repeatsTold: number;
+  readonly testPath: RegExp | null;
 };
 
 /** The profile's active questions and moments; one not in its file's `active` list is written but not asked. */
@@ -81,6 +88,7 @@ export function loadReflex(dir: string): ReflexConfig | null {
     itemChars: watch?.item.chars ?? 1500,
     repeats: watch?.facts.repeats ?? 3,
     repeatsTold: watch?.facts.repeatsTold ?? 5,
+    testPath: watch?.facts.testPath ? new RegExp(watch.facts.testPath) : null,
   };
 }
 

@@ -104,3 +104,17 @@ test("a key with slashes and spaces becomes a safe path with a stable suffix", (
   assert.match(safeKey("a b/c"), /^a_b_c-[0-9a-f]{8}$/);
   assert.equal(safeKey("a b/c"), safeKey("a b/c"));
 });
+
+test("a name counts as settled when code outside the tests has it, at a revision or in a copy's working tree", async () => {
+  const { root, ws } = repo();
+  writeFileSync(join(root, "points.ts"), "export function addPoints() {}\n");
+  execFileSync("mkdir", ["-p", join(root, "test")]);
+  writeFileSync(join(root, "test", "points.test.ts"), "user.points = 1;\n");
+  run(root, "add", ".");
+  run(root, "commit", "-q", "-m", "points");
+  assert.deepEqual([...(await ws.namesIn(root, "main", ["addPoints", "points", "missing"]))], ["addPoints"]);
+  const copy = await ws.create("1", { kind: "writer", branch: "sw/p/1", from: "main" });
+  assert.ok(copy.ok);
+  writeFileSync(join(copy.path, "user.ts"), "export type User = { points: number };\n");
+  assert.deepEqual([...(await ws.namesIn(copy.path, null, ["points", "missing"]))], ["points"]);
+});

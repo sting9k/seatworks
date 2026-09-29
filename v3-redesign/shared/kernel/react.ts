@@ -63,6 +63,17 @@ export function react(e: Event, s: State): readonly Effect[] {
       if (e.to.to !== HUMAN)
         add(`deliver:${e.to.id}`, { kind: "deliver", to: e.to.to, item: { kind: "attention", id: e.to.id } });
       break;
+    case "obligation_opened": {
+      const o = e.obligation;
+      if (o.about.kind === "candidate" && o.owedBy !== HUMAN)
+        tell(
+          o.owedBy,
+          "candidate",
+          `CANDIDATE ${o.about.id} · ${o.summary ?? ""}\n\`attend\` or \`pass\` it with candidate ${o.about.id}.`,
+          true,
+        );
+      break;
+    }
     case "finding_raised":
     case "finding_reopened": {
       const f = s.findings.get(e.type === "finding_raised" ? e.finding.id : e.finding);

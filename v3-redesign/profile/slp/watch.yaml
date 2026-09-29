@@ -101,6 +101,11 @@ moments:
       - "\\b([A-Za-z_][A-Za-z0-9_]*)\\s*\\(" # a call
       - "\\b([A-Za-z_][A-Za-z0-9_]*)\\s*:" # a key in an object literal, often a fake's field
       - "\\bnew\\s+([A-Za-z_][A-Za-z0-9_]*)" # a constructor
+    # Names a test library or the language gives every test; they never mint anything.
+    ignore: [describe, it, test, expect, assert, equal, deepEqual, strictEqual, ok, toBe, toEqual, toMatch, toThrow,
+      toHaveBeenCalled, beforeEach, afterEach, before, after, mock, fn, vi, jest, spyOn, require, import, from, const,
+      let, var, function, return, if, for, while, async, await, then, catch, console, log, JSON, Object, Array,
+      String, Number, Promise, Math, Date, Error, length, push, map, filter, self, cls, pytest, fixture, raises]
     settledBy: [brief, parentPlan, humanLines, baseCode, baseTests, ownCode]
     state: { hunk: item, unsettled: names.unsettled }
     ask:

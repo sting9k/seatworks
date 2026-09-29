@@ -39,6 +39,8 @@ function fakeJev(p: number) {
   return { jev, asked };
 }
 
+const settledNames = new Set(["addPoints", "User"]);
+
 function wired(p: number | null) {
   const t = team();
   const alarms: (string | null)[] = [];
@@ -51,6 +53,7 @@ function wired(p: number | null) {
       return Promise.resolve();
     },
     (text) => alarms.push(text),
+    (_project, _actor, names) => Promise.resolve(new Set(names.filter((n) => settledNames.has(n)))),
   );
   return { ...t, reflex, alarms, asked: fake?.asked ?? [] };
 }
@@ -130,5 +133,59 @@ test("with no key the reflex asks nothing and raises one standing alarm; the tea
   assert.equal(
     ledger.must(ledger.as(peer, "raise_finding", { text: "unclear term", default: "guess" })).length > 0,
     true,
+  );
+});
+
+test("a candidate reaches the Watcher as words that wake it, with the moment and the quote", async () => {
+  const { ledger, reflex, supervisor, peer } = wired(0.95);
+  ledger.must(ledger.as(supervisor, "open_scope", { parent: "root", role: "watcher", over: "all" }));
+  reflex.onTurn("p", peer, [thought("I'll send the direction as int8 to save bandwidth")], ledger.state);
+  await settle();
+  const told = ledger.effects.filter(
+    (e) => e.body.kind === "deliver" && e.body.to === "a4" && e.body.item.kind === "note",
+  );
+  const text = told
+    .map((e) => (e.body.kind === "deliver" && e.body.item.kind === "note" ? e.body.item.text : ""))
+    .join("\n");
+  assert.match(text, /CANDIDATE v\d+ · trades-the-goal/);
+  assert.match(text, /int8/);
+});
+
+const edit = (path: string, diff: string): TurnItem => ({
+  kind: "edit",
+  text: diff,
+  failed: null,
+  signature: null,
+  path,
+});
+
+test("a test that calls only settled names asks nothing; one that invents a field asks whether it uses or fakes it", async () => {
+  const settledOnly = wired(0.95);
+  settledOnly.reflex.onTurn(
+    "p",
+    settledOnly.peer,
+    [edit("test/points.test.ts", "+  const u = new User();\n+  addPoints(u, 5);")],
+    settledOnly.ledger.state,
+  );
+  await settle();
+  assert.ok(!settledOnly.asked.some((names) => names.some((n) => n.startsWith("mints-an-api"))));
+
+  const minting = wired(0.95);
+  minting.reflex.onTurn(
+    "p",
+    minting.peer,
+    [edit("test/points.test.ts", "+  const u = new User();\n+  expect(u.points).toBe(5);")],
+    minting.ledger.state,
+  );
+  await settle();
+  const asked = minting.asked.find((names) => names.includes("mints-an-api.uses"));
+  assert.deepEqual(asked?.sort(), ["mints-an-api.fakes", "mints-an-api.uses"]);
+
+  const product = wired(0.95);
+  product.reflex.onTurn("p", product.peer, [edit("src/points.ts", "+  u.points += 5;")], product.ledger.state);
+  await settle();
+  assert.ok(
+    !product.asked.some((names) => names.some((n) => n.startsWith("mints-an-api"))),
+    "only edits to tests are read",
   );
 });

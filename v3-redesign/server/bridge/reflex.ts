@@ -24,6 +24,7 @@ export class Reflex {
   private readonly jev: () => Jev | null;
   private readonly submit: (project: string, body: Observation) => Promise<void>;
   private readonly alarm: (text: string | null) => void;
+  private readonly settled: Settled;
   private readonly queue = new KeyedQueue<string>();
   private readonly queued = new Map<string, number>();
   /** Per agent, how often each failing call came back: going in circles counted in code (STEERING.md). */
@@ -34,7 +35,9 @@ export class Reflex {
     jev: () => Jev | null,
     submit: (project: string, body: Observation) => Promise<void>,
     alarm: (text: string | null) => void,
+    settled: Settled,
   ) {
+    this.settled = settled;
     this.config = config;
     this.jev = jev;
     this.submit = submit;
@@ -64,6 +67,7 @@ export class Reflex {
     const actor = state.actors.get(actorId);
     if (actor?.status !== "seated") return;
     this.circles(project, actorId, actor.scope, items);
+    for (const item of items) if (item.kind === "edit") this.mints(project, actorId, actor.role, actor.scope, item);
     const kinds = { thought: "thought", said: "said", edit: "edit", ran: null } as const;
     for (const item of items) {
       const reads = kinds[item.kind];
@@ -124,6 +128,39 @@ export class Reflex {
       const asked = read(name, spec, a, asking.model);
       await this.submit(project, observationOf(asked, scope, actor, commit, quoted));
     }
+  }
+
+  /**
+   * A test that mints an API (WATCH.md): the names its added lines give the code, less those the brief, the plans,
+   * the base or the agent's own code already settled. Only when some are left is Jev asked, two questions over them.
+   */
+  private mints(project: string, actor: string, role: string, scope: string, item: TurnItem): void {
+    const spec = this.config.moments.get("mints-an-api");
+    const test = this.config.testPath;
+    if (!spec?.watches?.includes(role) || !test || item.path === null || !test.test(item.path)) return;
+    const names = namesIn(item.text, spec);
+    if (names.length === 0) return;
+    this.enqueue(project, async () => {
+      const known = await this.settled(project, actor, names);
+      const unsettled = names.filter((n) => !known.has(n));
+      if (unsettled.length === 0) return;
+      const ask = (spec as { ask?: Record<string, QuestionSpec> }).ask ?? {};
+      const questions = Object.fromEntries(
+        Object.entries(ask).map(([k, q]) => [
+          `mints-an-api.${k}`,
+          { ...q, tell: spec.tell, consider: spec.consider, for: spec.for },
+        ]),
+      );
+      await this.askAndRecord(
+        project,
+        questions,
+        { hunk: added(item.text).slice(0, this.config.itemChars * 2), unsettled: unsettled.join(", ") },
+        scope,
+        actor,
+        null,
+        `${item.path}: ${unsettled.join(", ")}`,
+      );
+    });
   }
 
   /** Going in circles: the same failing call again and again, counted with no model asked. */
@@ -202,6 +239,32 @@ export class Reflex {
         return null;
     }
   }
+}
+
+/** What the plugin already settled of these names, for one agent: in its brief and plans, the base, or its own code. */
+export type Settled = (project: string, actor: string, names: readonly string[]) => Promise<ReadonlySet<string>>;
+
+/** The lines a diff adds, or the whole text when it is not a diff. */
+function added(text: string): string {
+  const lines = text.split("\n");
+  if (!lines.some((l) => l.startsWith("@@") || l.startsWith("+++"))) return text;
+  return lines
+    .filter((l) => l.startsWith("+") && !l.startsWith("+++"))
+    .map((l) => l.slice(1))
+    .join("\n");
+}
+
+function namesIn(text: string, spec: QuestionSpec): string[] {
+  const loose = spec as { names?: string[]; ignore?: string[] };
+  const ignore = new Set(loose.ignore ?? []);
+  const found = new Set<string>();
+  const body = added(text);
+  for (const pattern of loose.names ?? [])
+    for (const m of body.matchAll(new RegExp(pattern, "g"))) {
+      const name = m[1];
+      if (name && name.length > 1 && !ignore.has(name)) found.add(name);
+    }
+  return [...found].slice(0, 40);
 }
 
 /** The answer read as a probability of the outcome that matters, and the label chosen. */
