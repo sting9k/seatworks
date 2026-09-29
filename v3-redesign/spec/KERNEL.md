@@ -17,7 +17,8 @@ The kernel:
   roles'.
 - MUST NOT compare a role to a name. It reads the properties the profile gives each role (§2).
 - MUST NOT do I/O. It takes commands and facts and returns events and effects; the bridge carries effects to the
-  satellites and their facts back.
+  satellites and their facts back. It is TypeScript in the plugin's `shared/` folder, importing nothing, so the daemon
+  and the app run the same fold (`STACK.md`).
 
 ## 2. The profile it reads
 

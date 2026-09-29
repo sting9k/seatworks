@@ -20,7 +20,9 @@ putSnapshot(project, seq, state); getSnapshot(project) -> (seq, state)?
 - Snapshots are a cache: losing one MUST lose nothing.
 - One kernel writes a project's log at a time.
 
-Which store backs it, a file of its own or a tracker the Human already reads, is open (README).
+It is a SQLite file of its own, on Node's built-in `node:sqlite` (`STACK.md`): events in an append-only table, the
+append a transaction that checks the expected sequence. The machine's holds live in one file per machine, beside the
+projects' logs.
 
 ## Agent host
 

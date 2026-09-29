@@ -45,6 +45,7 @@ order is the agents'.
 - `spec/PASEO.md`: what v3 takes from Paseo, what it leaves, and how it survives Paseo's releases.
 - `spec/ROLES.md`: the Supervisor, the Lead and the Peer: what each owns, what goes in a prompt, and what V1's
   prompts carried that the kernel now holds.
+- `spec/STACK.md`: the language of each part and why, and the plugin's layout as Paseo builds it.
 - `spec/HARNESS.md`: how Claude Code, Codex, Pi and Oh My Pi are run, with one policy and one set of guards.
 - `spec/REFLEX.md`: the reflex: every place v3 asks Jev, how a call runs, how questions are asked well and earn their
   thresholds, the project's own rules, red-check triage, and what the tools built on Jev taught.
@@ -52,15 +53,16 @@ order is the agents'.
 
 ## Layout
 
+The plugin's layout, and the language of each part, are in `spec/STACK.md`. In short:
+
 ```
 spec/          for whoever builds it
 profile/slp/   the SLP preset: profile.yaml, reflex.yaml, watch.yaml, roles/*.md, skills/, reference/ANTIPATTERNS.md;
                a project's own rules.yaml lives in that project's state, compiled from its instruction files
-kernel/        entities, invariants, commands, views; no I/O, no Paseo, no role names
-satellites/    store, agent-host (with harness/<agent>/), workspace, evidence, delivery, machine, human, record,
-               code-index, reflex; each imports only its own port
-tools/         the MCP server; each role's tools from profile.yaml
-bridge/        the Paseo plugin's entry, the only place that builds the whole
+shared/        the kernel (pure TypeScript, run by the daemon and the app alike) and the zod contracts
+server/        the bridge and the satellites, in TypeScript on Node; the store is SQL on node:sqlite
+client/        the Human's surface, in React Native
+bin/, harness/ the git shim and the team's MCP server; each agent's shipped settings
 ```
 
 ## Requirements
@@ -73,7 +75,10 @@ bridge/        the Paseo plugin's entry, the only place that builds the whole
 Nothing else. A requirement is added only when no one could do the work without it; what a Human already has, such as
 an IDE's index, may be configured as a tool for agents and is never needed by v3 itself.
 
-## Open, for the owner
+## Decided
 
-- The kernel's language. The Paseo bridge is TypeScript whatever it is.
-- Which store backs the log: a file of its own, or a tracker the Human already reads.
+- The kernel is TypeScript in `shared/`, so it adapts to Paseo's own bundles and runs in both the daemon and the app.
+  Each part around it takes the language it is strongest in, as long as the user installs nothing more
+  (`spec/STACK.md`).
+- The log is a SQLite file of its own, on Node's built-in `node:sqlite`. A tracker may show the record; it cannot be
+  it.
