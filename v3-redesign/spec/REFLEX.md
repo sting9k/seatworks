@@ -59,7 +59,9 @@ Everything v3 asks Jev, in one place. Each row's questions live in the profile; 
 | A finding, a plan or a brief amended       | Touches the goal or the cost the Human approved                              | The Supervisor, a note that wakes it   | this file     |
 | A finding kept                             | The reason does not meet the evidence                                        | The Supervisor, a note                 | this file     |
 | A report                                   | Settles a structure no plan line records                                     | The Supervisor, a note                 | this file     |
+| An edit, on the paths a project rule covers | Breaks that rule of the project's instruction files                         | The writer, a fact quoting the rule and its line | this file |
 | A hand-back's diff                         | Loosened assertions, bent product code, stand-ins, a minted API, a project rule broken | The Lead, `judgement` evidence | this file     |
+| A check that failed                        | Failed on the environment (a missing dependency, a busy port, the network), or on the code | The Lead, a fact on the evidence | this file |
 | A hand-back's claim                        | Names a part of the brief it did not do                                      | The Lead, `judgement` evidence         | this file     |
 | A permission asked                         | Cannot be undone from the agent's own copy                                   | Whoever answers it, a fact             | this file     |
 | The Human's words in an agent's chat       | Sets a requirement, says the code is wrong, asks, or approves                | The Lead's copy, a fact                | this file     |
@@ -136,6 +138,20 @@ claim about the code. A claim is asked about on its own, and its answer says onl
 from the record (a brief, a Human's line) and what an agent wrote are separate fields, named for where they came
 from.
 
+**Judge work without the conversation.** A question about code reads the rule or the brief and the hunk, never the
+conversation around it, so the two-hundredth edit is judged like the first.
+
+**Show each outcome.** A description that carries an example, a line of code that is a yes and one that is a no,
+answers better than one that only names the condition.
+
+**Ask when the answer exists.** Each question has a phase: `item` (one piece of a turn), `edit` (one hunk), `turn`
+(the whole turn's diff) or `handback`. "Did this add more than was asked" has no answer after the first edit of
+twelve.
+
+**The subject whole, its context fitted.** What is judged, the item or the hunk, is never cut. What surrounds it (the
+items before, the brief) is fitted to the budget in stages: tool arguments shortened, long texts kept head and tail,
+old items reduced to one line each.
+
 **Questions and descriptions in English.** Agents' text goes in as they wrote it. How Jev reads Vietnamese is
 unmeasured, so a question over the Human's Vietnamese words waits until the look back has measured it.
 
@@ -160,13 +176,19 @@ questions:
     no: >-
       Every line states an outcome to reach or a limit to respect, and the approach is left open. Naming a file or
       module only as where the work happens is not a method.
+    phase: item
     over: 0.9
-    because: A start, where independent tests found yes answers reliable; set from this question's own answers at the first look back.
+    because: <what the look back measured, such as how many answers past it were acted on>
+    for: { wording: <hash of the question and its descriptions>, model: jev-1.13.0 }
     tells: root
 ```
 
 - `state` maps each field the question names to where the record keeps it. It never holds more.
-- `over` is the probability past which it speaks, and `because` its reason. There is one value per question; V1's
+- `over` is the probability past which it speaks, and `because` its reason. It holds only for the wording and the
+  model named in `for`: the hash of the question and its descriptions, and the version that answered. A question
+  whose wording or model no longer matches, or that has never been through a look back, still has every answer
+  recorded, but goes no further than a candidate for the Watcher. A threshold is earned on the question it was
+  measured on. There is one value per question; V1's
   forty tuning values in `attention.json` go.
 - `consider`, where a question has one, is the probability past which an answer under `over` goes to the actor that
   watches the scope, as a candidate (`WATCH.md`).
@@ -182,7 +204,8 @@ One client for the project, behind the reflex port. A call goes through the same
    questions cost about what one does. Questions that read different fields go in separate calls, side by side.
 3. **Mask.** What looks like a secret is replaced before any text leaves. The patterns are data, taken from V1's.
 4. **Fit.** The state and the longest question must fit the route's budget, the smaller of what the route lists
-   (32k on OpenRouter). What does not fit is not cut: it is recorded `too large`, and a diff is asked hunk by hunk.
+   (32k on OpenRouter). The context around the subject is fitted in stages (Asking well). A subject that alone does
+   not fit is not cut: it is recorded `too large`, and a diff is asked hunk by hunk.
 5. **Send.** Calls in one scope go one at a time; across scopes they run together, under the route's rate. Each has
    a time limit, and nothing waits on it.
 6. **Check.** Every question answered as asked, or the whole call fails.
@@ -216,10 +239,72 @@ tokens: under four million tokens, about fifteen cents. Events and hand-backs ad
 - The record gives each answer its label later: for each question, the look back reads how many notes were followed
   by an act of the role told on the same subject (an amendment, a hold, a question, a send-back). That is the
   ceremony signal (§10.3) applied to the reflex, and the data a threshold is set from.
+- From the first day, before any outcome is known, the answers' shape says whether a question works. A decisive one
+  answers near 0 or near 1. A weak one sits in the middle, with its median above 0.25 and nothing past 0.7: it is
+  underspecified, and is split, given a concrete shape, or given an example. A noisy one passes its threshold on
+  most subjects: it is too broad, and is narrowed.
+- Later, the outcome labels say whether it separates: do subjects that were acted on score higher than those that
+  were not? Many questions that read well separate nothing when measured, which is why a question earns `tell` only
+  by a look back.
 - A question that never leads to a change is removed from the profile at the look back. A threshold is never tuned by
   code: telemetry does not turn itself into a rule.
 - The model is pinned by version, never `jev-latest`, and the model that served each answer is recorded. The pin
   moves at a look back, and thresholds are set again from the answers the new version gives.
+
+## The project's own rules
+
+The rules in a project's instruction files (`AGENTS.md` and its kind) that no linter can check are asked of every
+edit on the paths they cover. The answer goes to the writer as a fact, quoting the rule and the line it came from:
+it is the project's written rule, read back like a failing lint, and the writer repairs it while the change is
+still small. It is not the watch; nothing in it judges the agent.
+
+- **Compiled once.** When the instruction files change, by hash, the Supervisor is told, and compiles them with
+  `compile-rules` into the project's `rules.yaml`: each rule with its source line, the paths it covers, its phase
+  and its question with an example of each outcome. A rule a linter can check goes to the linter instead.
+- **Checked against history.** A new rule is asked of recent hunks from the project's own history, and its answers'
+  shape says whether it works before any agent meets it. A weak or noisy rule goes back to the Supervisor to
+  rewrite.
+- **One call an edit.** Every rule an edit's paths fall under is one question in one call, over the rule text and
+  the hunk.
+
+## A red check
+
+A check that fails on the environment, not the code, sends a Peer to rework code that was never wrong. The evidence
+runner tells them apart, code first: known shapes of a missing dependency, a busy port or a dropped connection are
+matched from data. Only an output that matches none goes to the reflex, as a `choice` among `environment`, `code` and
+`other`. The answer is a fact on the evidence; the Lead weighs it, and the kernel still counts a failing result as
+failing (I4).
+
+## What the tools built on Jev taught
+
+Read on 29 September 2026: pi-warden and abide (guards for Pi, Claude Code, Codex and OpenCode, each with measured
+results), Foreman (a supervisor of coding workers), fast-jev-compaction, jev-harness, and two cookbooks.
+
+| Lesson                                                                                           | From               | In v3                               |
+| ------------------------------------------------------------------------------------------------ | ------------------ | ----------------------------------- |
+| Skip what code decides, match known patterns offline, ask Jev only for judgement                  | pi-warden, jev-harness | Decide in code first            |
+| Jev estimates named probabilities; ordinary code picks from a few allowed acts                    | Foreman            | I12; the roles are the ones who act |
+| A threshold belongs to the question's wording and the model it was measured on                    | pi-warden          | `for` beside every threshold        |
+| Most plausible questions separate nothing when measured                                          | pi-warden          | `tell` only after a look back       |
+| An answer's shape (decisive, weak, noisy) shows a bad question before any label exists            | abide              | The first look back                 |
+| Criteria with a concrete example of each outcome                                                 | abide              | Asking well                         |
+| Judge the hunk against the rule, never the conversation                                          | abide              | Asking well                         |
+| Some questions have an answer only at the end of the turn                                        | abide              | Phases                              |
+| A written rule broken is repaired fastest by the agent that broke it, told at once                | pi-warden, abide   | The project's own rules             |
+| Keep what is judged whole; fit what surrounds it in stages                                       | fast-jev-compaction | Asking well                        |
+| Coalesce a noisy stream; let lifecycle events through at once                                    | Foreman            | The watch's eye                     |
+| A red check on the environment is not a reason to rework code                                    | jev-harness        | A red check                         |
+| Failures never break the agent's session; misses are counted                                     | abide              | Running it                          |
+
+**Considered, and not taken:**
+
+- **Steering into a live turn, and stopping a worker by policy** (Foreman). v3 never lands a message inside a turn,
+  and only an agent's superior ends it.
+- **Routing each message to a model** (Jev routers). A scope's opener picks its model from the role's list (P15).
+- **Recommending skills before each prompt** (pi-warden's conscience). It measured 89% precision, below its own gate;
+  agents load their skills.
+- **Compaction by Jev** (fast-jev-compaction). Each agent's own harness compacts it. The Watcher's digest may use it
+  if the look back shows the Watcher's context is what costs.
 
 ## Port
 

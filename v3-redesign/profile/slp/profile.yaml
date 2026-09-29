@@ -10,7 +10,7 @@ roles:
     humanDoor: true
     speaksTo: [human, children, descendants]
     prompt: roles/supervisor.md
-    skills: [grilling, attention, pre-mortem, retrospective]
+    skills: [grilling, attention, compile-rules, pre-mortem, retrospective]
     models: [slp-supervisor]
     tools: [status, look, open_scope, amend_brief, set_plan, amend_plan, add_edge, remove_edge, handover,
             classify_finding, integrate, send_back, reseat, drop_scope, hold_scope, resume_scope, release,

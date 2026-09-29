@@ -27,6 +27,7 @@ moments:
   big-decision:
     watches: [lead, peer]
     reads: [thought, said]
+    phase: item
     state: { text: item }
     noul: Does `text` settle a structure, boundary, data shape or contract that other work will build on?
     yes: >-
@@ -34,44 +35,48 @@ moments:
       parts of the system will depend on.
     no: >-
       It plans steps, reports progress, or makes a choice local to one function or file that nothing else depends on.
-    tell: 0.9
+    tell: 0.9 # earned only at a look back, for this wording and model (spec/REFLEX.md)
     consider: 0.5
 
   struggling:
     watches: [lead, peer]
     reads: [thought, said]
+    phase: item
     state: { text: item }
     noul: Does `text` say the agent does not know, or is guessing, what a requirement, term, name or piece of code means?
     yes: It says a requirement, term, name or piece of code is unclear to it, or that it assumes or guesses its meaning.
     no: >-
       It states what things mean, or is unsure only about a result it is about to check by running something, such
       as whether a test passes.
-    tell: 0.9
+    tell: 0.9 # earned only at a look back, for this wording and model (spec/REFLEX.md)
     consider: 0.5
 
   turning:
     watches: [lead, peer]
     reads: [thought, said]
+    phase: item
     state: { text: item }
     noul: Does `text` say the agent is dropping the approach it was taking for a different one?
     yes: It abandons, scraps or replaces the way it was doing the work with another way.
     no: It keeps its approach, or fixes one step inside it, such as correcting a typo or a failing assertion.
-    tell: 0.9
+    tell: 0.9 # earned only at a look back, for this wording and model (spec/REFLEX.md)
     consider: 0.5
 
   admits-wrong:
     watches: [lead, peer]
     reads: [thought, said]
+    phase: item
     state: { text: item }
     noul: Does `text` say that something the agent itself did or claimed earlier was wrong?
     yes: It says one of its own earlier steps, results, claims or reports was wrong, false or premature.
     no: It says nothing of its own earlier work being wrong, or it says only that someone else's work is wrong.
-    tell: 0.9
+    tell: 0.9 # earned only at a look back, for this wording and model (spec/REFLEX.md)
     consider: 0.5
 
   trades-the-goal:
     watches: [peer]
     reads: [thought, said]
+    phase: item
     state: { text: item, goal: scope.brief.goal }
     noul: Does `text` give up a quality that `goal` names, to meet a different requirement?
     yes: >-
@@ -79,12 +84,13 @@ moments:
       order to satisfy another quality or a limit.
     no: >-
       It meets every quality `goal` names, or changes something `goal` does not mention.
-    tell: 0.9
+    tell: 0.9 # earned only at a look back, for this wording and model (spec/REFLEX.md)
     consider: 0.5
 
   mints-an-api:
     watches: [peer]
     reads: [edit]
+    phase: edit
     when: { path: testPath }
     # Code first: the names the added lines give the code, less those settled; nothing is asked when none is left.
     names:
@@ -110,22 +116,24 @@ moments:
           call.
         no: >-
           It builds no double, or its doubles carry only names outside `unsettled`, or names the test alone reads.
-    tell: 0.9
+    tell: 0.9 # earned only at a look back, for this wording and model (spec/REFLEX.md)
     consider: 0.5
 
   obeys-against-judgement:
     watches: [peer]
     reads: [thought, said]
+    phase: item
     state: { text: item }
     noul: Does `text` say the agent is doing something it thinks is wrong because it was told to?
     yes: It states a doubt or objection about what it was asked to do, and does it anyway because it was asked.
     no: It does what it was asked without doubting it, or it raises its doubt instead of going on.
-    tell: 0.9
+    tell: 0.9 # earned only at a look back, for this wording and model (spec/REFLEX.md)
     consider: 0.5
 
   builds-a-stand-in:
     watches: [peer]
     reads: [thought, said]
+    phase: item
     state: { text: item }
     noul: Does `text` say the agent builds a stub, mock, fake, placeholder, shim or second copy of state to fill a gap?
     yes: >-
@@ -133,5 +141,5 @@ moments:
       compat layer, fallback, or a second copy of state.
     no: >-
       It builds the real part, or uses a test double only inside a test for a dependency that already exists.
-    tell: 0.9
+    tell: 0.9 # earned only at a look back, for this wording and model (spec/REFLEX.md)
     consider: 0.5

@@ -92,6 +92,11 @@ on an implementation without the rule before it is trusted.
 | 401 from Jev's host                                         | Not retried; an alarm to the Human; nothing else stops     |
 | 429 with a wait named                                       | Asked once more after that wait, then unread               |
 | Twenty questions reading the same fields of one item        | One call                                                   |
+| A question past `tell` whose wording changed since its look back | A candidate for the Watcher, not an attention          |
+| A question whose answers sit between 0.3 and 0.6 on every subject | Marked weak at the look back                         |
+| An edit breaks a compiled project rule                      | A fact to the writer quoting the rule and its line         |
+| A check fails with a known missing-dependency message       | An environment fact, with no reflex call                   |
+| An instruction file changes                                 | The Supervisor is told to compile the rules again          |
 | A question renamed in `reflex.yaml`                         | Asked under its new name with no code change               |
 
 ## Watch

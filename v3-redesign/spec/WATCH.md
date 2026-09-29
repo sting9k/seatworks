@@ -75,6 +75,8 @@ agent host stream ─► eye (code): items and facts
   with its exit and first lines, an edit with its path and hunk. Items are clipped to `item.chars`: a moment shows in
   a sentence or two, and a long item dilutes the question.
 - A **look** is taken at each turn's end, and every `item.everyItems` items inside a long turn, where drift hides.
+  A noisy stream is coalesced so it does not make a call per line; a turn's end, a hand-back or a finding goes
+  through at once.
 - **Facts** are counted in code: the same failing command again, a turn far longer than the agent's usual, a context
   nearly full, a test file edited before the code it names exists.
 - After a reconnect the eye fills the gap from history (PASEO rule 5).
