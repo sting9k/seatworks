@@ -10,9 +10,6 @@ sweep:
   minutes: 15 # the author's own period; only scopes with new work are read
   digestChars: 40000 # what a cheap long-context model reads well at once; the rest is left to `look`
 
-watcher:
-  agentProfile: watcher # one of the Human's Paseo agent profiles: a cheap model with a long context
-
 facts:
   repeats: 3 # the same failing command three times is a loop, not a retry
   longTurnTimes: 3 # three times the agent's median over its last 20 turns

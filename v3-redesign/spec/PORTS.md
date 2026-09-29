@@ -99,7 +99,8 @@ Reads the machine as it is.
 read() -> { cpus, load, memory, busy: [{ what, since }] }
 ```
 
-It holds no state of its own: a hold is the kernel's.
+It holds no state of its own. A hold is recorded by the kernel that set it and read by every project's kernel on the
+machine, through the store.
 
 ## Human surface
 

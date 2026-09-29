@@ -38,17 +38,14 @@ profile, with no change to the kernel. A role renamed with its properties kept b
 
 Prompts, skills, models and harness choices are in the profile too, but the kernel does not read them.
 
-The SLP profile, from CONCEPT-V2 §3:
+The SLP profile, from CONCEPT-V2 §3, is `profile/slp/profile.yaml`. The properties the kernel reads from it:
 
-```yaml
-roles:
-  supervisor: { root: true, delegates: true, spawns: [lead, peer, watcher], humanDoor: true,
-                speaksTo: [human, children, descendants] }
-  lead:       { delegates: true, spawns: [peer],
-                speaksTo: [parent, children] }
-  peer:       { writes: true, speaksTo: [parent] }
-  watcher:    { watches: true, speaksTo: [parent] }   # seated under the root, so it speaks to the Supervisor
-```
+| Role       | Properties                                                                                   |
+| ---------- | -------------------------------------------------------------------------------------------- |
+| supervisor | `root`, `delegates`, `humanDoor`; spawns lead, peer, watcher; speaks to the Human, children, descendants |
+| lead       | `delegates`; spawns peer; speaks to its parent and children                                  |
+| peer       | `writes`; speaks to its parent                                                               |
+| watcher    | `watches`; seated under the root, so its parent is the Supervisor's                          |
 
 A Supervisor that seats a Peer straight under the root is the path for a small change done by one agent (P17).
 
@@ -133,7 +130,9 @@ an answer, an intervention, a question to the Human, a hand-back waiting on its 
 
 - **Message**: `{ id, from, to, text, asksAnswer, directs, replyTo }`. Routed along the sender's `speaksTo`.
   `directs` says it changes what the reader is to do; an open question does not. What the Human
-  types straight into an agent's chat is recorded as a message from the Human.
+  types straight into an agent's chat is recorded as a message from the Human that directs, so the change is followed
+  until it reaches the shared state and the Human sees whether it did (CONCEPT-V2 P11, §9.4); the Human asks an open
+  question through their surface.
 - **Question**: from the role with `humanDoor` to the Human: `{ id, text, about, options?, recommend?, answer? }`.
   `about` names the finding or line that waits on it.
 
@@ -142,7 +141,9 @@ an answer, an intervention, a question to the Human, a hand-back waiting on its 
 - **Scope hold**: while held, nothing new is seated in the scope and nothing is integrated from it. Set and lifted by
   the owner of its parent, or by the Human.
 - **Machine hold**: an actor measuring holds the machine; while held, the kernel defers the effects that would load it
-  (evidence runs, workspace setup) and starts them when it is released.
+  (evidence runs, workspace setup) and starts them when it is released. The hold is the machine's, not the project's:
+  every project's kernel on the machine sees it and defers the same way, since another project's build spoils a
+  measurement as surely as this one's (CONCEPT-V2 §8.4, P13).
 
 ### 4.9 Observations
 

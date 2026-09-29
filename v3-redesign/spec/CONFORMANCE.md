@@ -20,7 +20,7 @@ on an implementation without the rule before it is trusted.
 | I6   | A line marked the Human's with no message or answer from them behind it | Written as its caller's                                   |
 | I7   | The Supervisor sends a Peer a message that directs                      | The Lead has a copy and an obligation; it closes on carried or declined |
 | I7   | The Supervisor asks a Peer an open question                             | The Lead has a copy and no obligation                     |
-| I7   | The Human types into a Peer's chat                                      | The Lead has a copy; an obligation if it directs          |
+| I7   | The Human types into a Peer's chat                                      | The Lead has a copy and an obligation; the Human sees whether it was carried in |
 | I8   | `classify_finding` as `changes` with no change events                   | Refused                                                   |
 | I8   | `classify_finding` as `alternative` with no reason                      | Refused                                                   |
 | I10  | A Lead calls `ask_human` in the SLP profile                             | Refused                                                   |
@@ -79,6 +79,7 @@ on an implementation without the rule before it is trusted.
 | A merge with conflicts                                      | Undone; the conflicting paths reported   |
 | The copy moves while a check runs                           | The run fails                            |
 | An evidence run asked while the machine is held             | Starts when the hold is released         |
+| Another project on the machine asks for an evidence run during a hold | Deferred the same way          |
 
 ## Reflex
 
