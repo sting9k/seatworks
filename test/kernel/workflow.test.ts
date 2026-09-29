@@ -343,3 +343,26 @@ test("a lane's spend counts its Peers' turns, still after they are integrated an
   assert.deepEqual(ledger.state.scopes.get(lane)?.spent, { usd: 1.75, tokens: 1010 });
   assert.deepEqual(ledger.state.scopes.get("root")?.spent, { usd: 1.75, tokens: 1010 });
 });
+
+test("a Reviewer's verdict on the candidate is still citable once its reading scope is dropped", () => {
+  const { ledger, lead, peer, task, lane } = team();
+  ledger.must(ledger.as(peer, "hand_back", { commit: SHA(1), text: "encoded" }));
+  ledger.must(
+    ledger.fact("record_candidate", { scope: task, commit: SHA(1), result: { candidate: SHA(2), parentHead: SHA(3) } }),
+  );
+  ledger.must(
+    ledger.as(lead, "open_scope", {
+      parent: lane,
+      role: "reviewer",
+      paths: [],
+      commit: SHA(2),
+      brief: brief("Review"),
+    }),
+  );
+  ledger.must(ledger.fact("record_workspace", { scope: "1.2", ok: true, branch: null }));
+  ledger.must(ledger.as("a4", "record_verdict", { ok: true, text: "reads right" }));
+  const verdict = [...ledger.state.evidence.values()].find((e) => e.kind === "verdict")!.id;
+  ledger.must(ledger.as(lead, "drop_scope", { scope: "1.2", reason: "read" }));
+  ledger.must(ledger.as(lead, "integrate", { scope: task, evidence: [verdict] }));
+  assert.equal(ledger.state.scopes.get(task)?.integrating, true);
+});

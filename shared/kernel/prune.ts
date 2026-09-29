@@ -56,7 +56,11 @@ export function prune(s: State): State {
   const evidence = new Map(s.evidence);
   for (const id of gone) scopes.delete(id);
   for (const f of s.findings.values()) if (gone.has(f.scope)) findings.delete(f.id);
-  for (const e of s.evidence.values()) if (gone.has(e.scope)) evidence.delete(e.id);
+  // Evidence on a commit an open scope may still integrate stays citable, whichever scope recorded it (I4).
+  const citable = new Set<string>();
+  for (const scope of s.scopes.values())
+    if (!gone.has(scope.id) && scope.candidate) citable.add(scope.candidate.candidate);
+  for (const e of s.evidence.values()) if (gone.has(e.scope) && !citable.has(e.subject)) evidence.delete(e.id);
   const noise = new Set([...s.noise].filter((key) => !gone.has(key.split("|")[2] ?? "")));
 
   return { ...s, scopes, findings, evidence, claims, messages, attentions, permissions, actors, noise };

@@ -18,6 +18,7 @@ on an implementation without the rule before it is trusted.
 | I4   | `integrate` over a failing check, no reason                             | Refused                                                   |
 | I4   | `integrate` citing a pass, a failing check on the same commit uncited, no reason | Refused                                          |
 | I4   | `integrate` citing a verdict on an older commit                         | Refused                                                   |
+| I4   | `integrate` citing a verdict whose reading scope was dropped            | Accepted                                                  |
 | I5   | A Peer amends its own brief                                             | Refused                                                   |
 | I5   | A Reviewer tries to write in its copy's paths through the kernel        | Refused: a reading scope has no paths                     |
 | I6   | The Lead amends the goal with no answer from the Human                  | Refused; accepted citing the answer                       |

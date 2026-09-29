@@ -421,7 +421,8 @@ A project runs for months. Everything below is bounded by open work, not by hist
 
 - `State` holds what is open. After each command's events are folded (`foldCommand`, never between two events of one
   command), a scope integrated or dropped with no open descendant and no open obligation about its findings or claims
-  is let go, with its findings, claims and evidence; so are delivered messages that ask nothing or were answered,
+  is let go, with its findings, claims and evidence, except evidence on a commit an open scope may still integrate,
+  which stays citable; so are delivered messages that ask nothing or were answered,
   answered questions and permissions, attentions about closed scopes, and released or gone actors that nothing points
   at. Nothing an open obligation, attention or message still points at is let go, so pruning never closes anything
   (I11). The log keeps all of it for views, and replay prunes at the same command boundaries.
