@@ -139,21 +139,15 @@ ask(state, questions, model) -> Result<{ model, answers, tokens }>
 
 ## Code index
 
-Lets agents navigate code, and gives the watch the names a test calls that nothing defines. The first backend is a
-running JetBrains IDE through its IDE Index MCP Server plugin, carried over from V1's `catalog/mcp/intellij-index`.
+Optional. Lets agents navigate code through the servers a project configures, such as a JetBrains IDE's index
+(V1's `catalog/mcp/intellij-index`). Nothing else in v3 depends on it; the watch uses git and the record.
 
 ```text
-tools(config, role) -> ToolSpec[]                         // the IDE's tools each role is shown, from data
+tools(config, role) -> ToolSpec[]                         // what each role is shown, from data
 call(copy, name, args) -> Result<json>                    // every call pinned to the caller's own copy
-unresolved(copy, file, lines) -> Result<names | unavailable>
-defined(copy, names) -> Result<names>                     // those the index finds a symbol for
 ```
 
-- Which tools, which messages mean "cannot resolve" in each language, and how to open, wait for and close a copy are
-  data. The code names no IDE, tool or server.
-- A copy is opened in the IDE when first needed and closed when its scope ends; the IDE indexing is waited on, never
-  guessed at.
-- No IDE open, or one that cannot serve the copy, is `unavailable`, never an error that stops a caller.
+Configured by data. It names no agent, role, IDE or server in code.
 
 ## Tools
 

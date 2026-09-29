@@ -46,7 +46,7 @@ profile's set, in `profile/slp/watch.yaml` with its questions and thresholds:
 | turning                 | It drops the approach it was on for another                                              | Lead, Peer |
 | admits-wrong            | It says something it did or claimed earlier was wrong                                    | Lead, Peer |
 | trades-the-goal         | It gives up a quality the goal names (precision, latency, bandwidth) to meet another, such as sending a direction as int8 instead of int16 to save bandwidth | Peer |
-| mints-an-api            | A test calls a function, type or field that neither the code nor the brief has, so the test invents a contract the code will later be bent to fit | Peer |
+| mints-an-api            | A test, or a fake in it, fixes a name, field, signature or shape of the code under test that nothing has settled, so the code will later be bent to fit the test | Peer |
 | obeys-against-judgement | It does what it says it thinks is wrong because it was told to                           | Peer       |
 | builds-a-stand-in       | It plans a stub, fake, shim or second copy of state to fill a gap                        | Peer       |
 
@@ -88,21 +88,27 @@ the Watcher. Everything is recorded.
 
 ### A test that mints an API
 
-What code can check stays code, so `mints-an-api` starts from the IDE's index, not a model's reading:
+A red test that calls code not yet written is ordinary test-first. It mints an API when it fixes a name, field,
+signature or shape that nobody has settled: the brief asks for points after a purchase, `User` has no `points`, and
+the test writes `user.points` or builds a fake user that carries one. The code is then built to the test, the test
+stays, and a later agent, not knowing where it came from, bends the code to keep it green. The cheapest moment to ask
+is the first such test, before any code follows it.
 
-1. A Peer edits a file under a test path. Its copy is opened in the IDE the first time, and closed when its scope
-   ends.
-2. The code index syncs the file, waits for indexing, and reads the file's diagnostics for the lines the hunk
-   changed.
-3. Each problem whose message says a name cannot be resolved gives a name; names the brief's text contains are
-   dropped, since the brief settled them.
-4. What is left is `missing`. In a typed language it is the fact itself, and a candidate goes to the Watcher.
-5. Where the IDE flags nothing (a dynamic language, a member read on an untyped value), the names in the hunk that the
-   index finds no symbol for and the brief does not name are `missing`, and the reflex asks whether the test uses
-   them as the code under test.
+It needs nothing v3 does not already run: git, the record and the reflex.
 
-With no IDE the Human has open, `missing` comes from a text search of the base instead, and the reflex asks as in
-step 5.
+1. On an edit to a test path, code takes from the added lines the names they give the code: after a dot, before a
+   call, a key in an object literal, after `new`. The patterns are data and deliberately crude; the reflex and the
+   Watcher filter what they catch.
+2. A name is **settled** when it is in the scope's brief, its parent's plan or a line of the Human's; in the base at
+   the scope's start (`git grep`); or in code the Peer already wrote outside test paths in its copy, since a test of a
+   shape the Peer chose in code checks that shape rather than inventing it.
+3. No unsettled name: nothing is asked. Otherwise the reflex gets the hunk and the unsettled names, and asks two
+   questions: whether the test uses one of them as part of the code under test, and whether it builds a fake, stub or
+   adapter that gives the code under test one of them.
+4. Past `consider`, a candidate goes to the Watcher with the brief beside it; past `tell`, an attention goes to the
+   Supervisor at once.
+
+The same two questions are asked over a hand-back's test diff, as `judgement` evidence for the Lead (`REFLEX.md`).
 
 ### The Watcher
 
@@ -176,7 +182,6 @@ aloud is a matter for the surface.
 | -------------------------- | ---------------------------------------------------------------------- |
 | All                        | As above                                                               |
 | Jev's host unreachable     | Facts and sweeps go to the Watcher until it answers again              |
-| No IDE open for the copy   | `mints-an-api` from a text search and the reflex                       |
 | No Watcher role            | Only the reflex's `tell` answers, the facts that need no judging, and the alarms reach the Supervisor |
 
 Every other part of v3 works the same in each case.

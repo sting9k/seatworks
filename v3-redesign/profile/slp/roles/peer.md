@@ -27,8 +27,9 @@ It keeps three things apart, and you may question them differently:
 
 - Build the final shape: change the contract, then every caller and test it breaks. No stub, shim, fallback or second
   copy of state to make half-done work fit.
-- A test names only what exists in the code or in your brief. A test that needs an interface nobody settled would
-  invent it, and the code would be bent to fit the test later: build the interface first, or raise it.
+- A test, and any fake it builds, names only what the code already has or your brief states. A test that needs an
+  interface nobody settled would invent it, and the code would be bent to fit the test later: build the interface
+  first, or ask your Lead.
 - Make a check pass only by the behaviour working: no special case for a test's inputs, no loosened assertion, no
   product code bent for the check.
 - A measurement counts only under the conditions it names: hold the machine while you measure, and put the conditions

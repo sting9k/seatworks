@@ -61,7 +61,7 @@ The SLP profile's starting questions:
 | `finding_raised`, `plan_amended`, `brief_amended` | Touches the goal or cost the Human approved (§7.3), beyond what I6 catches from origins | the root, a note that wakes it |
 | `finding_classified` as kept               | The reason does not meet the evidence the raiser gave                                     | the root, a note      |
 | `report_made`                              | Settles how the system is built, a structure or contract others will build on, with no line of the plan recording it | the root, a note      |
-| `hand_back`                                | The diff loosens an assertion; bends product code so a check passes; leaves a stub or fake where the brief asked for the thing; has a test call names neither the code nor the brief has; breaks one of the project's own written rules | evidence on the commit |
+| `hand_back`                                | The diff loosens an assertion; bends product code so a check passes; leaves a stub or fake where the brief asked for the thing; has a test, or a fake in it, fix a shape nothing settled; breaks one of the project's own written rules | evidence on the commit |
 | `hand_back`                                | The claim names a part of the brief it did not do                                          | evidence on the commit |
 | `permission_requested`                     | The action cannot be undone from the agent's own copy                                     | a fact for whoever answers it |
 | a message the Human types into an agent's chat | Whether it sets a requirement, says the code is wrong, asks, or approves                  | a fact on the Lead's copy |

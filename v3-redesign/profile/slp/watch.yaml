@@ -17,7 +17,6 @@ facts:
   repeats: 3 # the same failing command three times is a loop, not a retry
   longTurnTimes: 3 # three times the agent's median over its last 20 turns
   contextShare: 0.8 # compaction is near, and what was said early is about to go
-  testBeforeCode: true # a test that names code not yet written is where `mints-an-api` starts
   testPath: "(^|/)(tests?|specs?|__tests__)/|[._-](test|spec)\\.[a-z]+$|(^|/)test_[^/]*\\.[a-z]+$"
 
 alarms: [destructive-refused, measuring-together, flaky]
@@ -87,17 +86,30 @@ moments:
     watches: [peer]
     reads: [edit]
     when: { path: testPath }
-    # The IDE's unresolved names in a typed language are the fact itself; this question is asked only where the IDE
-    # flags nothing or none is open (spec/WATCH.md).
-    fact: codeIndex.unresolvedNotInBrief
-    state: { hunk: item, missing: codeIndex.undefinedNotInBrief }
-    noul: Does `hunk` call, construct or read a function, type or field of the code under test that is listed in `missing`?
-    yes: >-
-      The test uses a name from `missing` as part of the code it tests: a function it calls, a type it constructs, or
-      a field it reads or sets on the code's objects.
-    no: >-
-      Every name from `missing` that `hunk` uses is local to the test: a helper, a fixture, a variable, or a
-      test-library call.
+    # Code first: the names the added lines give the code, less those settled; nothing is asked when none is left.
+    names:
+      - "\\.([A-Za-z_][A-Za-z0-9_]*)" # a member read, set or called
+      - "\\b([A-Za-z_][A-Za-z0-9_]*)\\s*\\(" # a call
+      - "\\b([A-Za-z_][A-Za-z0-9_]*)\\s*:" # a key in an object literal, often a fake's field
+      - "\\bnew\\s+([A-Za-z_][A-Za-z0-9_]*)" # a constructor
+    settledBy: [brief, parentPlan, humanLines, baseCode, baseTests, ownCode]
+    state: { hunk: item, unsettled: names.unsettled }
+    ask:
+      uses:
+        noul: Does `hunk` call, construct, read or set a name from `unsettled` as part of the code under test?
+        yes: >-
+          The test uses a name from `unsettled` on the code it tests: a function it calls, a type it constructs, or a
+          field it reads or sets on the code's objects.
+        no: >-
+          Every name from `unsettled` that `hunk` uses is the test's own: a helper, a fixture, a local variable, or a
+          call to the test library.
+      fakes:
+        noul: Does `hunk` build a fake, stub, mock or adapter that gives the code under test a name from `unsettled`?
+        yes: >-
+          A double built in the test carries a field or method from `unsettled` that the code under test would read or
+          call.
+        no: >-
+          It builds no double, or its doubles carry only names outside `unsettled`, or names the test alone reads.
     tell: 0.9
     consider: 0.5
 

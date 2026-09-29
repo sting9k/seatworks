@@ -19,7 +19,7 @@ A moment bears on the design or the implementation while it can still be changed
 - **turning**: dropping one approach for another, often for a reason nobody wrote down.
 - **admits-wrong**: an earlier step or claim of its own found wrong; what rested on it may be wrong too.
 - **trades-the-goal**: giving up a quality the goal names to meet another, which is the Lead's or the Human's to weigh.
-- **mints-an-api**: a test that invents the interface it calls, so the code will be bent to fit the test.
+- **mints-an-api**: a test, or a fake in it, that fixes an interface nobody settled, so the code will be bent to fit it.
 - **obeys-against-judgement**: doing what it thinks is wrong because it was told to.
 - **builds-a-stand-in**: a stub, fake or second copy of state filling a gap that stays.
 

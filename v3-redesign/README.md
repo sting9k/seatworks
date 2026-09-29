@@ -65,7 +65,10 @@ bridge/        the Paseo plugin's entry, the only place that builds the whole
 
 - Paseo `>=0.10.0`.
 - Jev, through OpenRouter or TypeSafe's own API, with its key set in the plugin's settings.
-- For the code index, a JetBrains IDE with the IDE Index MCP Server plugin. Without one, v3 falls back to text search.
+- git.
+
+Nothing else. A requirement is added only when no one could do the work without it; what a Human already has, such as
+an IDE's index, may be configured as a tool for agents and is never needed by v3 itself.
 
 ## Open, for the owner
 

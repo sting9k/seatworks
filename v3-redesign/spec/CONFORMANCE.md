@@ -101,9 +101,10 @@ on an implementation without the rule before it is trusted.
 | No Watcher role                                             | Only `tell` answers and alarms reach the Supervisor        |
 | Three moments on one Peer in one turn                       | One numbered message to the Supervisor, after its turn     |
 | The Supervisor marks a moment noise for a Peer              | That moment is not told again for that Peer and scope      |
-| A typed test reads a field the IDE cannot resolve and the brief does not name | `mints-an-api`, with the name as a fact, no reflex call |
-| The same name appears in the brief                          | No `mints-an-api`                                          |
-| No IDE open for the copy                                    | `missing` from a text search; the reflex asks              |
+| A red test calls `addPoints`, which the brief names          | Nothing is asked                                           |
+| A test sets `user.points`; neither brief, plan, base nor the Peer's code has it | The reflex asks; past `tell`, an attention |
+| A test builds a fake user carrying `points`                 | The same, through the second question                      |
+| The Peer wrote `points` in its code first, then the test    | Nothing is asked                                           |
 | The Watcher's period passes with no new work                | The Watcher is not woken                                   |
 | A blind scope's actor reads its sibling's branch            | Refused until the Lead integrates or drops the sibling     |
 | A profile with no moments                                   | No watch; every other case the same                        |
