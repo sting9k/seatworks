@@ -301,6 +301,7 @@ export function reseat(ctx: Of<"reseat">): Refusal | undefined {
   if (isRefusal(scope)) return scope;
   const denied = asParentOwner(ctx, scope);
   if (denied) return denied;
+  if (scope.held) return refuse("state", `scope ${scope.id} is held: nothing new is seated in it`);
   const old: ActorId | null = scope.owner;
   const before = old === null ? undefined : ctx.state.actors.get(old);
   const role = ctx.profile.roles.get(scope.role);

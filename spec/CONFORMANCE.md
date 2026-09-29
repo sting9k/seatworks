@@ -70,6 +70,7 @@ on an implementation without the rule before it is trusted.
 | A small change: the Supervisor seats a Peer under the root and integrates it             | Works with no Lead                                         |
 | The Lead amends only a brief's goal, beside a constraint that is the Human's              | A new version; every section it did not name as it was, and no word from the Human asked |
 | Reseat a Peer mid-task                                                                  | Same scope and copy; its obligations with the new actor    |
+| Reseat a Peer whose scope is held                                                        | Refused: nothing new is seated in a held scope             |
 | A tool call whose arguments name another agent as caller                                | Recorded as the agent whose key made the call              |
 | A Peer's turn fails on the host's error                                                 | A fact to its Lead; the seat, its obligations and mail stay |
 | Three turns an agent reports at $1, $3, then $0.50 after its session restarted          | It spent $3.50; its lane and the root the same             |

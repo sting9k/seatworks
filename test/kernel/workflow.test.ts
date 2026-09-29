@@ -313,6 +313,14 @@ test("the Human may reseat the Supervisor: they stand as the root's parent", () 
   assert.equal(ledger.state.scopes.get("root")?.owner, "a4");
 });
 
+test("a held scope seats nobody new until it is resumed", () => {
+  const { ledger, lead, task } = team();
+  ledger.must(ledger.as(lead, "hold_scope", { scope: task, reason: "waiting on the API" }));
+  assert.equal(refusedBy(ledger.as(lead, "reseat", { scope: task, reason: "stuck" })), "state");
+  ledger.must(ledger.as(lead, "resume_scope", { scope: task, reason: "the API is back" }));
+  ledger.must(ledger.as(lead, "reseat", { scope: task, reason: "stuck" }));
+});
+
 test("a finding left open when its scope is integrated stays in memory with its obligation, until it is answered", () => {
   const { ledger, lead, peer, task } = team();
   ledger.must(ledger.as(peer, "raise_finding", { text: "the retry hides a race", default: "keep the retry" }));
