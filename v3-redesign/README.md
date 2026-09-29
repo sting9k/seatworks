@@ -12,6 +12,10 @@ mind as a reference, not a model: well over half of it is the lesson of what wen
 painted on and each rule written three or four times. What it does well moves over, written again from the standard;
 where V1 and the standard differ, the standard wins.
 
+The plugin is a tool that serves the way SLP works, never a change to it. It checks what the concept says must hold,
+records what the concept says must be known, and carries what agents say. What to decide, what to say and in what
+order is the agents'.
+
 ## How the move goes
 
 - `plugin/` keeps running until this does what it does, then goes in one cut. Neither imports the other, and nothing
