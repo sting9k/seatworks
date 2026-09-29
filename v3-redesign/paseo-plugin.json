@@ -1,0 +1,8 @@
+{
+  "id": "seatworks",
+  "description": "A team of coding agents the SLP way: a Supervisor, Leads and Peers, with a ledger of who owns what and why.",
+  "requirements": {
+    "paseo": ">=0.10.0"
+  },
+  "build": [["npm", "ci", "--omit=dev", "--ignore-scripts"]]
+}

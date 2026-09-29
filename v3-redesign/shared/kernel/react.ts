@@ -1,0 +1,223 @@
+import type { Effect, EffectBody } from "../contracts/effects.ts";
+import type { Event } from "../contracts/events.ts";
+import { HUMAN, type Party } from "../contracts/ids.ts";
+import { ownerAbove, ownerOfParent } from "./authority.ts";
+import type { State } from "./state.ts";
+
+/** The effects an event asks for, each keyed by the event, from the state after it (CORE.md). */
+export function react(e: Event, s: State): readonly Effect[] {
+  const out: Effect[] = [];
+  const add = (name: string, body: EffectBody) => out.push({ key: `${e.seq}:${name}`, body });
+  const tell = (to: Party | null, name: string, text: string, asks = false) => {
+    if (to !== null && to !== HUMAN && s.actors.get(to)?.status === "seated")
+      add(name, { kind: "deliver", to, item: { kind: "note", text, asks } });
+  };
+  const parentOwner = (scope: string) => {
+    const x = s.scopes.get(scope);
+    return x ? ownerOfParent(s, x) : null;
+  };
+
+  switch (e.type) {
+    case "scope_opened":
+      if (e.scope.kind !== "watch") add("workspace", { kind: "workspace.create", scope: e.scope.id });
+      break;
+    case "actor_seated": {
+      const scope = s.scopes.get(e.scope);
+      if (scope?.workspace === "none" || scope?.workspace === "ready")
+        add("agent", { kind: "agent.create", actor: e.actor });
+      break;
+    }
+    case "workspace_ready": {
+      const owner = s.scopes.get(e.scope)?.owner;
+      if (owner != null && s.actors.get(owner)?.host === null) add("agent", { kind: "agent.create", actor: owner });
+      break;
+    }
+    case "workspace_failed":
+      tell(parentOwner(e.scope), "note", `The copy for scope ${e.scope} could not be made: ${e.why}`, true);
+      break;
+    case "reseated":
+      if (e.from !== null) add("archive", { kind: "agent.archive", actor: e.from });
+      break;
+    case "actor_released":
+      add("archive", { kind: "agent.archive", actor: e.actor });
+      break;
+    case "brief_amended":
+      tellBrief(s, e.scope, add);
+      break;
+    case "message_sent": {
+      const m = e.message;
+      if (m.queued && m.to !== HUMAN)
+        add(`deliver:${m.id}`, { kind: "deliver", to: m.to, item: { kind: "message", id: m.id } });
+      break;
+    }
+    case "attention_opened":
+      if (e.attention.to !== HUMAN)
+        add(`deliver:${e.attention.id}`, {
+          kind: "deliver",
+          to: e.attention.to,
+          item: { kind: "attention", id: e.attention.id },
+        });
+      break;
+    case "attention_climbed":
+      if (e.to.to !== HUMAN)
+        add(`deliver:${e.to.id}`, { kind: "deliver", to: e.to.to, item: { kind: "attention", id: e.to.id } });
+      break;
+    case "finding_raised":
+    case "finding_reopened": {
+      const f = s.findings.get(e.type === "finding_raised" ? e.finding.id : e.finding);
+      if (f)
+        tell(
+          s.scopes.get(f.answeredBy)?.owner ?? null,
+          "note",
+          `Finding ${f.id} from ${f.raisedBy}: ${f.text}\nMeanwhile: ${f.default}`,
+          true,
+        );
+      break;
+    }
+    case "finding_classified": {
+      const f = s.findings.get(e.finding);
+      if (f) tell(f.raisedBy, "note", `Finding ${f.id} was classified ${e.verdict}: ${e.reason}`, true);
+      break;
+    }
+    case "question_answered":
+      tell(e.asker, "note", `The Human answered question ${e.question}: ${e.text}`, true);
+      break;
+    case "claim_made":
+      add("candidate", { kind: "workspace.candidate", scope: e.claim.scope, commit: e.claim.commit });
+      tell(
+        parentOwner(e.claim.scope),
+        "note",
+        `Scope ${e.claim.scope} handed back ${e.claim.commit}: ${e.claim.text}`,
+        true,
+      );
+      break;
+    case "candidate_ready":
+      add("evidence", { kind: "evidence.run", scope: e.scope, subject: e.candidate, steps: s.project?.checks ?? [] });
+      break;
+    case "candidate_conflict": {
+      const text = `Scope ${e.scope}'s ${e.commit} conflicts with its parent in: ${e.paths.join(", ")}. Merge the parent into your branch and hand back again.`;
+      tell(s.scopes.get(e.scope)?.writer ?? null, "note", text, true);
+      tell(parentOwner(e.scope), "note-owner", `Scope ${e.scope} conflicts with its parent in: ${e.paths.join(", ")}.`);
+      break;
+    }
+    case "evidence_requested":
+      add("evidence", { kind: "evidence.run", scope: e.scope, subject: e.subject, steps: e.steps });
+      break;
+    case "evidence_recorded": {
+      const x = e.evidence;
+      if (x.kind === "check")
+        tell(
+          parentOwner(x.scope),
+          "note",
+          `Checks on ${x.subject} for scope ${x.scope}: ${x.ok ? "passed" : "failed"}. ${x.summary}`,
+        );
+      break;
+    }
+    case "report_made": {
+      const lines = (label: string, xs: readonly { text: string }[]) =>
+        xs.length ? `${label}:\n${xs.map((x) => `- ${x.text}`).join("\n")}` : "";
+      const text = [
+        `Report from scope ${e.scope}.`,
+        lines("Decided", e.decided),
+        lines("Assumed, unchecked", e.assumed),
+        lines("Open", e.open),
+      ]
+        .filter(Boolean)
+        .join("\n");
+      tell(parentOwner(e.scope), "note", text, true);
+      break;
+    }
+    case "sent_back":
+      tell(
+        s.scopes.get(e.scope)?.writer ?? s.scopes.get(e.scope)?.owner ?? null,
+        "note",
+        `Your hand-back was sent back: ${e.reason}`,
+        true,
+      );
+      break;
+    case "published":
+    case "publish_refused":
+      tell(
+        s.scopes.get("root")?.owner ?? null,
+        "note",
+        e.type === "published"
+          ? `Published ${e.branch} to ${e.remote} at ${e.sha}.`
+          : `Publishing ${e.branch} to ${e.remote} was refused: ${e.why}`,
+      );
+      break;
+    case "integration_started":
+      add("advance", { kind: "workspace.advance", scope: e.scope, from: e.parentHead, to: e.candidate });
+      break;
+    case "integration_refused": {
+      const claim = s.scopes.get(e.scope)?.claim;
+      const commit = claim ? s.claims.get(claim)?.commit : undefined;
+      if (e.why === "moved" && commit !== undefined)
+        add("candidate", { kind: "workspace.candidate", scope: e.scope, commit });
+      else tell(parentOwner(e.scope), "note", `Scope ${e.scope} was not integrated: ${e.why}`, true);
+      break;
+    }
+    case "integrated":
+    case "scope_dropped":
+      add("remove", { kind: "workspace.remove", scope: e.scope });
+      break;
+    case "turn_ended": {
+      const a = s.actors.get(e.actor);
+      if (a && e.outcome === "failed")
+        tell(ownerAbove(s, a), "note", `${a.id}'s turn in scope ${a.scope} failed: ${e.why ?? "no reason given"}`);
+      break;
+    }
+    case "actor_gone": {
+      const a = s.actors.get(e.actor);
+      if (a)
+        tell(
+          parentOwner(a.scope),
+          "note",
+          `${a.id} in scope ${a.scope} is gone: ${e.why}. Its seat is empty until you reseat or release it.`,
+          true,
+        );
+      break;
+    }
+    case "permission_asked": {
+      const a = s.actors.get(e.permission.actor);
+      if (a)
+        tell(
+          ownerAbove(s, a),
+          "note",
+          `${a.id} asks leave (permission ${e.permission.id}): ${e.permission.text}`,
+          true,
+        );
+      break;
+    }
+    case "permission_answered":
+      add("permission", {
+        kind: "agent.permission",
+        actor: e.actor,
+        request: e.request,
+        allow: e.allow,
+        reason: e.reason,
+      });
+      break;
+    case "machine_held":
+    case "machine_released":
+      add("machine", { kind: "machine.hold", actor: e.actor, hold: e.type === "machine_held" });
+      break;
+    case "publish_requested":
+      add("publish", { kind: "workspace.publish", remote: e.remote, branch: e.branch });
+      break;
+    default:
+      break;
+  }
+  return out;
+}
+
+/** An amended brief reaches the agent working to it, with what changed. */
+function tellBrief(s: State, scope: string, add: (name: string, body: EffectBody) => void): void {
+  const owner = s.scopes.get(scope)?.owner;
+  const brief = s.scopes.get(scope)?.brief;
+  if (owner == null || !brief || s.actors.get(owner)?.status !== "seated") return;
+  add("deliver:brief", {
+    kind: "deliver",
+    to: owner,
+    item: { kind: "note", text: `Your brief is now version ${brief.version}. Read it with status.`, asks: true },
+  });
+}

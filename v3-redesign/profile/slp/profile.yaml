@@ -25,7 +25,7 @@ roles:
     skills: [steering, blind-design, planning-lanes]
     models: [slp-lead]
     tools: [status, record, diff, look, open_scope, amend_brief, set_plan, amend_plan, add_edge, remove_edge,
-            handover, raise_finding, withdraw_finding, classify_finding, integrate, send_back, reseat, drop_scope,
+            handover, raise_finding, withdraw_finding, classify_finding, integrate, send_back, reseat, drop_scope, hand_back,
             hold_scope, resume_scope, release, report, send_message, answer, answer_permission, hold_machine,
             mark_noise, acknowledge, run_checks]
 

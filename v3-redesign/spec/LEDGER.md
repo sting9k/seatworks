@@ -218,10 +218,10 @@ agent also settles any open attention about the actors or scopes it names that t
 | `reopen_finding`   | `finding, evidence, text`                                                                  | `finding_reopened`, `obligation_opened` |
 | `classify_finding` | `finding, verdict, reason`                                                                 | `finding_classified`, `obligation_closed` |
 | `withdraw_finding` | `finding, reason`                                                                          | `finding_withdrawn`, `obligation_closed` |
-| `hand_back`        | `commit, text, behaviours`                                                                 | `claim_made`, `obligation_opened` (and closes the scope's previous claim's) |
+| `hand_back`        | `commit, text, behaviours`; by the writer, or the owner of a scope that delegates (a lane's head) | `claim_made`, `obligation_opened` (and closes the scope's previous claim's) |
 | `record_verdict`   | `ok, text`                                                                                 | `evidence_recorded`                     |
 | `run_checks`       | `scope, commit, steps?`                                                                    | `evidence_requested`                    |
-| `integrate`        | `scope, evidence, reason?`                                                                 | `integration_started`                   |
+| `integrate`        | `scope, evidence, reason?`; refused while the scope has open children                      | `integration_started`                   |
 | `send_back`        | `scope, reason`                                                                            | `sent_back`, `obligation_closed`        |
 | `reseat`           | `scope, reason, model?`                                                                    | `reseated`, `actor_seated`, `obligation_moved`\*, `message_moved`\* |
 | `drop_scope`       | `scope, reason`                                                                            | `scope_dropped`, `obligation_closed`\*  |
@@ -265,7 +265,7 @@ the shell and never reaches `decide`.
 | `record_agent`         | `actor, host`                                                           | `agent_started`                     |
 | `record_turn`          | `actor, outcome: done \| failed \| cancelled, why?, tokens, usd`        | `turn_ended`, `attention_climbed`\* |
 | `record_gone`          | `actor, why`                                                            | `actor_gone`, `obligation_moved`\*, `obligation_closed`\* (its permissions) |
-| `record_delivery`      | `messages, attentions`                                                  | `message_delivered`\*               |
+| `record_delivery`      | `messages, attentions`                                                  | `message_delivered`\*, `attention_delivered`\* |
 | `record_candidate`     | `scope, commit, result: { candidate, parentHead } \| { conflict: paths }` | `candidate_ready` or `candidate_conflict` |
 | `record_evidence`      | `scope, subject, ok, steps, heldMachine`                                | `evidence_recorded`                 |
 | `record_integration`   | `scope, result: { sha } \| { moved } \| { failed: why }`                | `integrated` or `integration_refused` |
@@ -315,7 +315,7 @@ Every event, with its payload. `evolve` handles each; an unknown type stops the 
 | `message_delivered`   | `message, at`                                                                                |
 | `message_moved`       | `message, from, to`                                                                          |
 | `question_asked`      | `question: Question`                                                                         |
-| `question_answered`   | `question, text`                                                                             |
+| `question_answered`   | `question, text, asker`                                                                      |
 | `obligation_opened`   | `obligation: Obligation`                                                                     |
 | `obligation_closed`   | `obligation, how`                                                                            |
 | `obligation_moved`    | `obligation, to`                                                                             |
@@ -328,9 +328,10 @@ Every event, with its payload. `evolve` handles each; an unknown type stops the 
 | `published`           | `remote, branch, sha`                                                                        |
 | `publish_refused`     | `remote, branch, why`                                                                        |
 | `permission_asked`    | `permission: Permission`                                                                     |
-| `permission_answered` | `permission, allow, reason`                                                                  |
+| `permission_answered` | `permission, actor, request, allow, reason`                                                  |
 | `observation_made`    | `observation: { id, question, subject, source, model, answer, level }`                       |
 | `attention_opened`    | `attention: Attention`                                                                       |
+| `attention_delivered` | `attention, at`                                                                              |
 | `attention_acted`     | `attention, by`                                                                              |
 | `acknowledged`        | `attention`                                                                                  |
 | `noise_marked`        | `attention, key`                                                                             |
@@ -376,10 +377,15 @@ it was delivered, an attention not settled climbs: `attention_climbed` opens a c
 | `permission_answered`                    | `agent.permission { host, request, allow, reason }`      | `<seq>:permission`          |
 | `machine_held`, `machine_released`       | `machine.hold { project, actor, hold }`                  | `<seq>:machine`             |
 | `publish_requested`                      | `workspace.publish { branch, remote, expectedSha }`      | `<seq>:publish`             |
-| `turn_ended`, `claim_made`, `brief_*`, `finding_*`, `report_made` | `reflex.look { ... }`, as the profile's questions ask | `<seq>:reflex` |
 
 The shell holds effects that load the machine (`workspace.create`, `workspace.candidate`, `evidence.run`) while any
 project on the machine holds it.
+
+An effect names ids, not copies (`shared/contracts/effects.ts`): the dispatcher reads the current state when it sends
+one, so a message moved to a reseated reader goes to the new reader, and one whose reader left is settled unsent.
+Facts and notes the kernel tells an actor (a hand-back, a finding, a failed turn, a report) are `deliver` effects with
+their text. The reflex is not an effect: the watch reads committed events, and missing one costs a look, not a
+promise.
 
 ## 9. Views
 
@@ -397,9 +403,12 @@ A project runs for months. Everything below is bounded by open work, not by hist
 
 **In memory.**
 
-- `State` holds what is open. When a scope is integrated or dropped and has no open descendant, `evolve` removes it,
-  with its findings, claims, evidence, delivered messages and closed questions. Released and gone actors go once
-  nothing is owed by or to them. The log keeps all of it for views.
+- `State` holds what is open. After each command's events are folded (`foldCommand`, never between two events of one
+  command), a scope integrated or dropped with no open descendant and no open obligation about its findings or claims
+  is let go, with its findings, claims and evidence; so are delivered messages that ask nothing or were answered,
+  answered questions and permissions, attentions about closed scopes, and released or gone actors that nothing points
+  at. Nothing an open obligation, attention or message still points at is let go, so pruning never closes anything
+  (I11). The log keeps all of it for views, and replay prunes at the same command boundaries.
 - A project with nothing open and no agent seated for a day is unloaded by the shell; the next command folds it from
   its latest snapshot.
 - Every map in the shell (per-project queues, per-agent subscriptions, delivery batches, the reflex's caches) has a
