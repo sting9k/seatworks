@@ -42,7 +42,7 @@ export type HumanView = z.infer<typeof HumanViewSchema>;
 /** Something a team left behind that nothing uses any more, or a whole project, for the Human to remove or keep. */
 export const LeftoverSchema = z.object({
   id: z.string(),
-  kind: z.enum(["copy", "branch", "agent", "project"]),
+  kind: z.enum(["copy", "branch", "agent", "project", "record"]),
   project: z.string(),
   label: z.string(),
   why: z.string(),

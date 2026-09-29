@@ -123,7 +123,7 @@ test("the Human attaches a Paseo project, clears what a dropped task left, and r
   const removed = await plugin.clean([whole.id]);
   assert.ok(removed[0]?.ok, removed[0]?.text);
   for (const a of paseo.created.slice(0, 2)) assert.ok(paseo.archived.includes(a.host), `${a.title} is archived`);
-  assert.equal(existsSync(join(root, "projects", project)), false, "its record is gone");
+  assert.equal(existsSync(join(root, "projects", project)), false, "the project is detached");
   assert.equal(git(repo, "for-each-ref", `refs/heads/sw/${project}/`), "", "and every branch made for it");
   assert.deepEqual(plugin.projects(), []);
   assert.deepEqual(
@@ -132,5 +132,16 @@ test("the Human attaches a Paseo project, clears what a dropped task left, and r
     "it can be attached again",
   );
   assert.equal(git(repo, "show", "main:AGENTS.md"), rules.trim(), "the note is taken out, the rules kept");
+
+  const [record, ...more] = await plugin.leftovers();
+  assert.deepEqual(more, [], "only the record is left");
+  assert.equal(record?.kind, "record", "the record is kept aside for a look back");
+  assert.equal(record.label, repo);
+  const shelved = join(root, "archive", record.project, "ledger.db");
+  assert.ok(existsSync(shelved), "with its log");
+  const deleted = await plugin.clean([record.id]);
+  assert.ok(deleted[0]?.ok, deleted[0]?.text);
+  assert.equal(existsSync(shelved), false, "deleted only when picked");
+  assert.deepEqual(await plugin.leftovers(), []);
   for (const t of [supervisor, lead]) t.close();
 });

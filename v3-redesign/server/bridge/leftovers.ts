@@ -83,9 +83,9 @@ export function projectLeftover(project: string, repo: string, view: State | nul
   const open = view ? [...view.scopes.values()].filter((s) => s.status === "open" && s.id !== ROOT).length : 0;
   const why =
     view === null
-      ? "its repository is gone: removing deletes the project's record and archives its agents"
+      ? "its repository is gone: removing archives its agents and keeps its record aside"
       : seated > 0 || open > 0
-        ? `${seated} agents seated and ${open} scopes open: removing archives them and deletes the project's record, copies and branches`
-        : "removing deletes the project's record, copies and branches";
+        ? `${seated} agents seated and ${open} scopes open: removing archives them, deletes the project's copies and branches, and keeps its record aside`
+        : "removing deletes the project's copies and branches, and keeps its record aside for a look back";
   return { id: leftoverId("project", project, ""), kind: "project", project, label: repo, why, removable: true };
 }

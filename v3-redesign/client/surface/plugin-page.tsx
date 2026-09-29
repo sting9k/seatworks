@@ -13,6 +13,7 @@ const KIND: Record<Leftover["kind"], string> = {
   branch: "Branch",
   agent: "Agent",
   project: "Whole project",
+  record: "Record kept",
 };
 
 const plural = (count: number, one: string) => `${count} ${one}${count === 1 ? "" : "s"}`;
@@ -122,7 +123,7 @@ export function PluginPage({
             }
             hint={
               !found
-                ? "Copies and branches no open scope uses, agents whose seat ended, and each project whole."
+                ? "Copies and branches no open scope uses, agents whose seat ended, each project whole, and the records of removed ones."
                 : "Switched on means it will be removed."
             }
           />

@@ -23,7 +23,7 @@ import { statusText } from "../../shared/views/status.ts";
 import { type Home, layHome } from "../core/home.ts";
 import { Keys } from "../core/keys.ts";
 import { daemonLog } from "../core/logger.ts";
-import { projectDir } from "../core/paths.ts";
+import { archiveDir, projectDir } from "../core/paths.ts";
 import { installShim } from "../core/shim.ts";
 import { type Harness, PaseoHost } from "../satellites/agent-host/host.ts";
 import { PaseoLink } from "../satellites/agent-host/paseo-link.ts";
@@ -308,6 +308,21 @@ export class Plugin {
         projectLeftover(id, repo, runtime.project.view),
       );
     }
+    const shelf = archiveDir(this.root);
+    for (const name of existsSync(shelf) ? readdirSync(shelf) : []) {
+      const file = join(shelf, name, "project.json");
+      const { repo, removedAt } = existsSync(file)
+        ? (JSON.parse(readFileSync(file, "utf8")) as { repo?: string; removedAt?: string })
+        : {};
+      found.push({
+        id: leftoverId("record", name, ""),
+        kind: "record",
+        project: name,
+        label: repo ?? join(shelf, name),
+        why: `the record of a project removed${removedAt ? ` on ${removedAt.slice(0, 10)}` : ""}: removing deletes it for good`,
+        removable: true,
+      });
+    }
     return found;
   }
 
@@ -329,6 +344,10 @@ export class Plugin {
 
   private async removeLeftover(item: Leftover): Promise<{ ok: boolean; text: string }> {
     if (item.kind === "project") return this.removeProject(item.project);
+    if (item.kind === "record") {
+      rmSync(join(archiveDir(this.root), item.project), { recursive: true, force: true });
+      return { ok: true, text: `Deleted the record of ${item.label}.` };
+    }
     const ref = refOf(item.id);
     const workspace = this.runtimes.get(item.project)?.workspace;
     let done: { removed: true } | { kept: string };
@@ -345,8 +364,9 @@ export class Plugin {
   }
 
   /**
-   * Detaches a project and removes what the plugin made for it: its agents archived, its copies and branches, its
-   * record. A copy holding unsaved work stops it before anything is touched.
+   * Detaches a project and removes what the plugin made for it: its agents archived, its copies and branches deleted.
+   * Its record is kept aside, since a look back reads the log after the team is gone (P14); deleting it is a pick of
+   * its own. A copy holding unsaved work stops it before anything is touched.
    */
   private async removeProject(id: string): Promise<{ ok: boolean; text: string }> {
     const ready = await this.whenReady();
@@ -398,8 +418,17 @@ export class Plugin {
       renameSync(aside, file);
       return { ok: false, text: `Its agents are archived, but some of it stayed: ${kept.join("; ")}` };
     }
-    rmSync(dir, { recursive: true, force: true });
-    return { ok: true, text: `Removed the project for ${repo}.` };
+    const removedAt = new Date().toISOString();
+    const into = join(archiveDir(this.root), `${id}-${removedAt.replace(/[:.]/g, "-")}`);
+    mkdirSync(archiveDir(this.root), { recursive: true });
+    renameSync(dir, into);
+    const moved = join(into, "project.removing.json");
+    writeFileSync(
+      join(into, "project.json"),
+      JSON.stringify({ ...(JSON.parse(readFileSync(moved, "utf8")) as object), removedAt }),
+    );
+    rmSync(moved);
+    return { ok: true, text: `Removed the project for ${repo}; its record is kept in ${into} until you delete it.` };
   }
 
   /** The Human's view of one project: what they need to know, and the last things that happened. */

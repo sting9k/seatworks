@@ -10,3 +10,8 @@ export function stateRoot(env: NodeJS.ProcessEnv = process.env): string {
 export function projectDir(root: string, project: string): string {
   return join(root, "projects", project);
 }
+
+/** Where a removed project's record is kept until the Human removes it too. */
+export function archiveDir(root: string): string {
+  return join(root, "archive");
+}

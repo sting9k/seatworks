@@ -142,7 +142,8 @@ upkeep: attach(repository), leftovers, clean(picked), checkUpdate
   ended, and each project as a whole. The Human picks and confirms, and the plugin removes only that, checked again
   against what is left over at that moment. A copy holding uncommitted work on its branch is listed and never
   removed, and a project with one is not removed at all. Removing a project archives its agents and deletes its
-  copies, branches and record: attached again, it starts from nothing.
+  copies and branches; its record is set aside, since a look back reads the log after the team is gone (P14), and is
+  listed as a leftover of its own until the Human deletes it. Attached again, the project starts from nothing.
 - The update check reads Paseo's own and installs nothing.
 - The project's docs go with its repository and stay when the team is gone: `GLOSSARY.md`, whose block between the
   plugin's markers holds the words settled in the root's plan, and `docs/seatworks/MAP.md`, the map (destination,
