@@ -202,3 +202,5 @@ Every other part of v3 works the same in each case.
 
 - How much thinking each agent shows through Paseo's stream: whole, summarized, or none.
 - What the Watcher costs on the first real lane, against the attentions that led to a change.
+- The `mints-an-api` patterns and the settled sources against the tests Peers really write: which names they catch,
+  which they miss, and how often nothing is left to ask.

@@ -88,6 +88,10 @@ on an implementation without the rule before it is trusted.
 | The reflex's host is down during a hand-back                | The command succeeds; the evidence step says `not run`     |
 | A state past the budget                                     | Not cut to fit; the step says `too large`                  |
 | An answer with one question missing                         | The call fails; nothing is recorded as answered            |
+| 400 `max_tokens_exceeded`                                   | Not retried; recorded `too large`                          |
+| 401 from Jev's host                                         | Not retried; an alarm to the Human; nothing else stops     |
+| 429 with a wait named                                       | Asked once more after that wait, then unread               |
+| Twenty questions reading the same fields of one item        | One call                                                   |
 | A question renamed in `reflex.yaml`                         | Asked under its new name with no code change               |
 
 ## Watch

@@ -19,6 +19,11 @@ come from third-party write-ups and independent tests of `jev-1.13.0`.
 - 70 to 500 ms a call, with a floor near 430 ms in one test; 800 questions in one call took under a second. $0.042
   per million input tokens, output free; a judgement of about 1,000 tokens costs $0.00004. 32k tokens for the state
   and the longest question, 64k in all; 255 labels at most; 1,200 requests a minute. †
+- No cap on the number of questions; the token budget is the only limit. Twenty yes-or-no questions on one state took
+  the time of one and 559 tokens instead of about 5,800, since the state is read once. †
+- OpenRouter serves it as `typesafe/jev-1.13` at `POST /api/alpha/decisions`, and at `POST /api/v1/systemone` with
+  TypeSafe's own body; it lists a 32k context there. `jev-1.13.0` is the only version so far, and every response
+  names the version that answered. †
 - Hosted only, with closed weights. No retention only on the enterprise tier; it is also served through OpenRouter,
   which V1 used with data collection denied. †
 - Agreement with frontier models' labels is about 68%, level with mid-price models and behind the frontier. One
@@ -43,6 +48,26 @@ Its output takes one of three forms, and nothing else:
 It never moves a line, classifies a finding, integrates, lands, answers a question or a permission, opens or closes
 an obligation, holds a scope, or ranks, merges or drops a message (KERNEL I12). A note says what was seen, never what
 to do: V1's patterns carried advice in a `next` field, and v3 does not.
+
+## Every use in v3
+
+Everything v3 asks Jev, in one place. Each row's questions live in the profile; the spec named owns the rest.
+
+| Asked on                                   | What it asks                                                                 | Answer goes to                         | Spec          |
+| ------------------------------------------ | ---------------------------------------------------------------------------- | -------------------------------------- | ------------- |
+| A brief issued or amended                  | Framing: a fixed method, a cause given as fact, closed options, a goal nobody could observe, the other kind | The Supervisor, a note        | this file     |
+| A finding, a plan or a brief amended       | Touches the goal or the cost the Human approved                              | The Supervisor, a note that wakes it   | this file     |
+| A finding kept                             | The reason does not meet the evidence                                        | The Supervisor, a note                 | this file     |
+| A report                                   | Settles a structure no plan line records                                     | The Supervisor, a note                 | this file     |
+| A hand-back's diff                         | Loosened assertions, bent product code, stand-ins, a minted API, a project rule broken | The Lead, `judgement` evidence | this file     |
+| A hand-back's claim                        | Names a part of the brief it did not do                                      | The Lead, `judgement` evidence         | this file     |
+| A permission asked                         | Cannot be undone from the agent's own copy                                   | Whoever answers it, a fact             | this file     |
+| The Human's words in an agent's chat       | Sets a requirement, says the code is wrong, asks, or approves                | The Lead's copy, a fact                | this file     |
+| A turn ended with no command               | Handed back, asked or waited in words only                                   | The agent, a delivery fact             | this file     |
+| Each new item of a Lead's or Peer's work   | The watch's moments, one condition each                                      | The Watcher or the Supervisor          | `WATCH.md`    |
+| An edit to a test with unsettled names     | Uses one as the code under test; a fake carries one                          | The Watcher or the Supervisor          | `WATCH.md`    |
+
+Nothing else asks it, and nothing it answers decides (I12).
 
 ## Where it looks: the record, on its events
 
@@ -148,20 +173,41 @@ questions:
 - `tells` is a relation (`root`, `owner`, `parent`, `self`) or `evidence`. `wakes: true` lets a note wake the role it
   is for. Otherwise it waits for the next message that asks something, as every note does.
 
-## How it runs
+## Running it
 
-- On an event already in the log. Never in a before-hook, never in the way of a command; the kernel never waits on
-  it. A permission's fact is the one answer something waits for, and a permission waits for its answerer anyway.
-- The calls for one event run side by side; events in one scope run one at a time. A call that fails is logged and
-  asked again once; after that the event goes unread. A hand-back's evidence step then says `not run`, so the Lead
-  knows it is missing.
-- A state past the budget is not cut to fit. The step says `too large`.
-- The key lives in the plugin's settings and is never written to a log. The SDK's `debug` level logs request bodies,
-  so it stays at `warn`.
-- Jev is a requirement of v3, like Paseo. The plugin's setup asks for the key, and the bridge seats no agent until it
-  is set; installing v3 with it is the Human's consent to send the record's text and agents' words to Jev's host,
-  through OpenRouter with data collection denied unless they choose TypeSafe's own API. What looks like a secret is
-  masked before any text leaves. An outage later is handled as above: nothing waits on the reflex.
+One client for the project, behind the reflex port. A call goes through the same steps whatever asked it:
+
+1. **Gather.** An event, an item or a hand-back names the questions its profile rows ask.
+2. **Group by state.** Questions that read the same fields go in one call: the state is paid for once, and twenty
+   questions cost about what one does. Questions that read different fields go in separate calls, side by side.
+3. **Mask.** What looks like a secret is replaced before any text leaves. The patterns are data, taken from V1's.
+4. **Fit.** The state and the longest question must fit the route's budget, the smaller of what the route lists
+   (32k on OpenRouter). What does not fit is not cut: it is recorded `too large`, and a diff is asked hunk by hunk.
+5. **Send.** Calls in one scope go one at a time; across scopes they run together, under the route's rate. Each has
+   a time limit, and nothing waits on it.
+6. **Check.** Every question answered as asked, or the whole call fails.
+7. **Record.** An `observation_made` for each answer, with its full probabilities and the version that answered.
+8. **Route.** By each question's thresholds: a note, a candidate, evidence, a fact, or nothing.
+
+**Failures.**
+
+| Answer                          | What v3 does                                                                  |
+| ------------------------------- | ----------------------------------------------------------------------------- |
+| 400 `max_tokens_exceeded`       | Never retried: the same call fails the same way. Recorded `too large`         |
+| 400 or 422, anything else       | Never retried. The question is broken, which is the profile's fault: an alarm names it |
+| 401, 403                        | Never retried. An alarm to the Human: the key is refused, and the reflex is idle until it is fixed |
+| 429, 5xx, a timeout, no answer  | Asked once more, after the time the answer names if it names one; then the event goes unread |
+
+An event that goes unread is recorded so. A hand-back's evidence step then says `not run`, so the Lead knows it is
+missing.
+
+**Setup.** Jev is a requirement of v3, like Paseo. The plugin's setup asks for the route and the key, and the bridge
+seats no agent until they are set. Installing v3 with them is the Human's consent to send the record's text and the
+agents' words to Jev's host: through OpenRouter with data collection denied, unless they choose TypeSafe's own API.
+The key lives in the plugin's settings and is never written to a log.
+
+**Cost.** A busy day, five agents with forty turns each and thirty items a turn, is about 6,000 calls of some 600
+tokens: under four million tokens, about fifteen cents. Events and hand-backs add little beside it.
 
 ## Measured by the record, taken away by subtraction
 
@@ -183,9 +229,10 @@ ask(state, questions, model) -> Result<{ model, answers, tokens }>
 
 - Every question is answered as it was asked, or the call fails. An answer with one question missing is not what was
   asked (V1).
-- Where to send it is data (`endpoint`, `model`, a `body` sent with every request such as OpenRouter's
-  `data_collection: deny`). TypeSafe's own API and OpenRouter's route take the same body, so one adapter serves both,
-  with no SDK.
+- A route is data: `endpoint`, the versioned `model` id as that route names it (`typesafe/jev-1.13` on OpenRouter,
+  `jev-1.13.0` on TypeSafe's API), the `budget`, and a `body` sent with every request, such as OpenRouter's
+  `provider: { data_collection: deny }`. One adapter serves both routes, with no SDK; V1's `adapters/decisions.ts`
+  is its shape: all or nothing, retried only where retrying can help, with a time limit that cuts a stalled body too.
 - Another model that answers typed questions with probabilities can stand behind the same port.
 
 ## What V1 did that v3 drops
@@ -200,6 +247,12 @@ ask(state, questions, model) -> Result<{ model, answers, tokens }>
 | No measure of whether a finding changed anything                     | Each question's yield, read at the look back                  |
 | J1–J5 at hand-back                                                   | Evidence steps on the commit                                  |
 | About 2,900 lines for the watch                                      | A port, one adapter and a data file                           |
+
+## To check before building on it
+
+- Whether OpenRouter's `/api/v1/systemone` honours `provider: { data_collection: deny }` as its `/api/alpha/decisions`
+  did for V1; until it is shown to, v3 uses the route V1 used.
+- The rate OpenRouter allows Jev, which it does not publish.
 
 ## Open, for the owner
 
