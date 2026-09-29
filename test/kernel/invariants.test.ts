@@ -174,6 +174,33 @@ test("I6: a goal the Human approved changes only on their word, and a line is th
   );
 });
 
+test("I6: a lane's goal or appetite changes only on the Human's word, as the root's does", () => {
+  const { ledger, lead, lane } = team();
+  const change = (cites: unknown) =>
+    ledger.as(lead, "amend_plan", {
+      scope: lane,
+      goal: { text: "Ship the API instead of the net layer" },
+      reason: "pivot",
+      cites,
+    });
+  assert.equal(refusedBy(change(null)), "I6");
+  assert.equal(
+    refusedBy(
+      ledger.as(lead, "amend_plan", {
+        scope: lane,
+        appetite: { line: { text: "two days" }, usd: 100 },
+        reason: "worth more",
+        cites: null,
+      }),
+    ),
+    "I6",
+  );
+
+  ledger.must(ledger.human("send_message", { to: lead, text: "yes, the API first" }));
+  const said = [...ledger.state.messages.values()].find((m) => m.from === "human")!.id;
+  ledger.must(change({ kind: "message", id: said }));
+});
+
 test("I7: a word from outside a Peer's lane gives its Lead a copy; one that directs also leaves the Lead an obligation", () => {
   const { ledger, supervisor, lead, peer } = team();
   ledger.must(ledger.as(supervisor, "send_message", { to: peer, text: "What does int16 buy us?" }));

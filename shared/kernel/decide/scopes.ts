@@ -157,7 +157,7 @@ export function amendPlan(ctx: Of<"amend_plan">): Refusal | undefined {
   for (const t of old.terms) if (renamed.has(t.name) && !removed.includes(t.line)) removed.push(t.line);
   const gone = new Set(removed.map((l) => l.id));
   const touched = [...removed, ...(body.goal ? [old.goal] : []), ...(body.appetite ? [old.appetite.line] : [])];
-  const approved = scope.id === ROOT && (body.goal !== undefined || body.appetite !== undefined);
+  const approved = body.goal !== undefined || body.appetite !== undefined;
   const word = humanWordFor(ctx, touched, approved, body.cites);
   if (word) return word;
   const plan: Plan = {
