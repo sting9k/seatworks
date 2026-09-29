@@ -158,9 +158,10 @@ questions:
 - A state past the budget is not cut to fit. The step says `too large`.
 - The key lives in the plugin's settings and is never written to a log. The SDK's `debug` level logs request bodies,
   so it stays at `warn`.
-- With no key set there is no reflex, and the rest of v3 works the same. Setting the key is the Human's consent to
-  send the record's text to Jev's host: OpenRouter with data collection denied unless they choose TypeSafe's own
-  API. What looks like a secret is masked before any text leaves.
+- Jev is a requirement of v3, like Paseo. The plugin's setup asks for the key, and the bridge seats no agent until it
+  is set; installing v3 with it is the Human's consent to send the record's text and agents' words to Jev's host,
+  through OpenRouter with data collection denied unless they choose TypeSafe's own API. What looks like a secret is
+  masked before any text leaves. An outage later is handled as above: nothing waits on the reflex.
 
 ## Measured by the record, taken away by subtraction
 
@@ -171,8 +172,8 @@ questions:
   ceremony signal (§10.3) applied to the reflex, and the data a threshold is set from.
 - A question that never leads to a change is removed from the profile at the look back. A threshold is never tuned by
   code: telemetry does not turn itself into a rule.
-- The model is pinned by version, never `jev-latest`, and the model that served each answer is recorded. A new
-  version is a release like Paseo's: the recorded states are asked again and thresholds checked before the pin moves.
+- The model is pinned by version, never `jev-latest`, and the model that served each answer is recorded. The pin
+  moves at a look back, and thresholds are set again from the answers the new version gives.
 
 ## Port
 

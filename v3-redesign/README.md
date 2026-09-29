@@ -61,6 +61,12 @@ tools/         the MCP server; each role's tools from profile.yaml
 bridge/        the Paseo plugin's entry, the only place that builds the whole
 ```
 
+## Requirements
+
+- Paseo `>=0.10.0`.
+- Jev, through OpenRouter or TypeSafe's own API, with its key set in the plugin's settings.
+- For the code index, a JetBrains IDE with the IDE Index MCP Server plugin. Without one, v3 falls back to text search.
+
 ## Open, for the owner
 
 - The kernel's language. The Paseo bridge is TypeScript whatever it is.

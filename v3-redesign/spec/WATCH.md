@@ -19,10 +19,10 @@ The owner gave this design to the builder. These choices settle it, each with it
    cheap tiers buy recall and the Watcher buys precision.
 2. **One Watcher per project, over every scope.** The Supervisor may seat more, each over the lanes it names, for work
    where many answers can be right and the design will be tested as it is built.
-3. **No new reader of the agents' thinking without the Human's act.** The Watcher runs on a provider the team already
-   uses, so it adds no one who reads that text. The reflex runs only once the Human sets its key, on OpenRouter with
-   data collection denied unless they choose TypeSafe's own API. Before any text leaves, what looks like a secret is
-   masked.
+3. **Jev is required; the Watcher adds no new reader.** The reflex is part of v3, and installing it with its key is
+   the Human's consent to send agents' words to Jev's host, through OpenRouter with data collection denied unless
+   they choose TypeSafe's own API (`REFLEX.md`). The Watcher runs on a provider the team already uses. Before any text
+   leaves, what looks like a secret is masked.
 4. **Driven by the work, with one sweep.** A turn's end or a long turn's growth starts a look. A sweep every 15
    minutes reads only scopes with new work since the last one, so an idle project costs nothing.
 5. **An attention asks nothing of the Supervisor.** No obligation opens: making it answer every one would be the
@@ -83,9 +83,26 @@ agent host stream ─► eye (code): items and facts
 
 Each new item is one call, with the item as `text` and every moment its role is watched for as a question beside it
 (`REFLEX.md`, Asking well). A moment that needs more than the item names it: `trades-the-goal` reads the scope's
-`goal`; `mints-an-api` reads a test hunk and `missing`, the names in it that the code index finds neither at the
-scope's base nor in its brief. Two thresholds per moment: `tell` goes straight to the Supervisor, `consider` goes to
+`goal`. Two thresholds per moment: `tell` goes straight to the Supervisor, `consider` goes to
 the Watcher. Everything is recorded.
+
+### A test that mints an API
+
+What code can check stays code, so `mints-an-api` starts from the IDE's index, not a model's reading:
+
+1. A Peer edits a file under a test path. Its copy is opened in the IDE the first time, and closed when its scope
+   ends.
+2. The code index syncs the file, waits for indexing, and reads the file's diagnostics for the lines the hunk
+   changed.
+3. Each problem whose message says a name cannot be resolved gives a name; names the brief's text contains are
+   dropped, since the brief settled them.
+4. What is left is `missing`. In a typed language it is the fact itself, and a candidate goes to the Watcher.
+5. Where the IDE flags nothing (a dynamic language, a member read on an untyped value), the names in the hunk that the
+   index finds no symbol for and the brief does not name are `missing`, and the reflex asks whether the test uses
+   them as the code under test.
+
+With no IDE the Human has open, `missing` comes from a text search of the base instead, and the reflex asks as in
+step 5.
 
 ### The Watcher
 
@@ -158,9 +175,9 @@ aloud is a matter for the surface.
 | Present                    | The watch                                                              |
 | -------------------------- | ---------------------------------------------------------------------- |
 | All                        | As above                                                               |
-| No reflex key              | Facts and sweeps go to the Watcher                                     |
-| No Watcher role            | Only the reflex's `tell` answers and the alarms reach the Supervisor   |
-| Neither                    | The alarms only                                                        |
+| Jev's host unreachable     | Facts and sweeps go to the Watcher until it answers again              |
+| No IDE open for the copy   | `mints-an-api` from a text search and the reflex                       |
+| No Watcher role            | Only the reflex's `tell` answers, the facts that need no judging, and the alarms reach the Supervisor |
 
 Every other part of v3 works the same in each case.
 

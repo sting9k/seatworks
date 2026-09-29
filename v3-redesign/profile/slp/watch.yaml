@@ -87,7 +87,10 @@ moments:
     watches: [peer]
     reads: [edit]
     when: { path: testPath }
-    state: { hunk: item, missing: codeIndex.absentFromBaseAndBrief }
+    # The IDE's unresolved names in a typed language are the fact itself; this question is asked only where the IDE
+    # flags nothing or none is open (spec/WATCH.md).
+    fact: codeIndex.unresolvedNotInBrief
+    state: { hunk: item, missing: codeIndex.undefinedNotInBrief }
     noul: Does `hunk` call, construct or read a function, type or field of the code under test that is listed in `missing`?
     yes: >-
       The test uses a name from `missing` as part of the code it tests: a function it calls, a type it constructs, or
