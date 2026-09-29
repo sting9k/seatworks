@@ -1,9 +1,0 @@
-{
-  "defaultTools": [
-    "read",
-    "bash",
-    "grep",
-    "find",
-    "ls"
-  ]
-}

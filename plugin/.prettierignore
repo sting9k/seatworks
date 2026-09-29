@@ -1,9 +1,0 @@
-node_modules
-/content
-/harness
-/catalog
-test/fixtures
-*.json
-*.md
-/mcp
-/bin

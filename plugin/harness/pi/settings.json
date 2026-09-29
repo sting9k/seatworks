@@ -1,7 +1,0 @@
-{
-  "packages": [
-    "npm:pi-mcp-adapter"
-  ],
-  "defaultProjectTrust": "never",
-  "quietStartup": true
-}

@@ -1,7 +1,0 @@
-sandbox_mode = "read-only"
-web_search = "disabled"
-
-[features]
-shell_tool = false
-view_image = false
-sleep_tool = false

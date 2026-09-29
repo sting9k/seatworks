@@ -1,8 +1,0 @@
-{
-  // For editors only. A language server takes the nearest tsconfig.json walking up from the file it
-  // has open, which for anything here is the server's, whose `include` does not cover `client/**` —
-  // so the file resolves as part of no project and falls back to default options, where a `.tsx`
-  // import is TS5097 and `@getpaseo/plugin` cannot be found. `npm run check` names both configs and
-  // never reads this one.
-  "extends": "../tsconfig.client.json"
-}

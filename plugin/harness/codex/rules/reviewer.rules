@@ -1,2 +1,0 @@
-prefix_rule(pattern = ["git", ["add", "commit", "rm", "mv", "restore", "revert", "clean", "apply", "am", "config"]], decision = "forbidden", justification = "The Reviewer reads; it changes nothing.")
-prefix_rule(pattern = ["git", ["merge", "reset", "rebase", "cherry-pick"]], decision = "forbidden", justification = "Only a Peer moves a branch, and only its own task branch.")

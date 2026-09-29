@@ -1,87 +1,58 @@
-# Skill sources
+# Notice
 
-The ten skills in `project/skills/` come three ways. Five are **SLP files** installed with edits;
-their text is the SLP author's. Three are **written for this kit**, adapting mechanisms from existing
-skills without copying text beyond short phrases. Two are **written from published research**. Both
-Python scripts come from SLP.
+Seatworks is MIT-licensed (`LICENSE`). Parts of what its agents read were drawn from other work, listed here with
+their licenses. Text is written for this repository unless a row says it was adapted; "ideas only" means no text was
+copied.
 
-"SLP material" is the reference set in the kit owner's `SLP/` folder: a practitioner's Codex setup
-(prompts, skills, concept notes) shared with the owner, with no stated license and used with the
-owner's agreement. "The SLP author's talk" is their recorded community session (`meeting.txt`);
-the kit borrows its mechanisms, not its words. Skills retired on 2026-09-12, with their sources, are
-in git history at `db20bff^`.
+"SLP material" is the reference set in the owner's `SLP/` folder: a practitioner's Codex setup (prompts, skills,
+concept notes) shared with the owner, with no stated license and used with the owner's agreement. "The SLP author's
+talk" is their recorded community session; its mechanisms are borrowed, not its words. The first version of this
+plugin, removed on 2026-09-29, is in git history, and several skills below began there.
 
-## Installed from SLP, with edits
+## What agents read: `profile/slp/`
 
-| File | Source | Changes |
-|---|---|---|
-| `lead/council` | `council/`, `references/report-format.md` | Codex guards and launch mechanics removed; models read from the workspace protocol's Routing; same-family Challenger named as a limitation |
-| `lead/ultra-review` | `ultra-review/`, `review-pack/` | merged into hunt and pack modes selected by Open Code Review's previews; Windows paths, PowerShell and Codex upload removed; ends in a rulings table |
-| `lead/repo-refresh` | `repo-refresh/` | deletions sent as Engineer briefs; opened on the Lead's judgment |
-| `peer/test-proof-debt-audit` | `test-proof-debt-audit-SKILL.md`, `catalog.md` | requester is the brief; catalog cut to search families and routes |
-| `supervisor/architecture-premise-audit` | `SKILL.md` | explicit-request gate dropped |
-| `guides/STRUCTURAL_LENSES.md` | `structural-antipatterns.md` | condensed, every lens kept |
-| `guides/FEATURE_INTAKE.md`, `guides/PLANS.md` | `FEATURE_INTAKE.md`, `PLANS.md` | paths pointed at `.seatworks/`; `PLANS.md` since rewritten |
-| `ultra-review/scripts/*.py` | SLP scripts | report script builds a coverage ledger and scout assignment from OCR JSON; pack script cut to what that JSON selects; comments removed |
+| File                                          | Draws on                                                                                                                  |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `roles/reviewer.md`                           | mattpocock `code-review`; SLP `ultra-review` lenses; OpenAI Codex's review rubric; Anthropic's code-review command         |
+| `skills/grilling`                             | mattpocock `grilling`, `domain-modeling` and `wayfinder`; superpowers `brainstorming`                                     |
+| `skills/pre-mortem`                           | Gary Klein's project premortem; SLP `council` sealed seats                                                                |
+| `skills/retrospective`                        | Cemri et al.'s multi-agent failure taxonomy; the SLP author's talk                                                        |
+| `skills/planning-lanes`                       | SLP material (feature intake and plans); addyosmani `api-and-interface-design`                                            |
+| `skills/blind-design`                         | SLP `council`, rewritten so the designs never share a room                                                                |
+| `skills/test-first`                           | superpowers `test-driven-development`; mattpocock `tdd`; SLP material and talk                                            |
+| `skills/diagnosing-bugs`                      | mattpocock `diagnosing-bugs`; superpowers `systematic-debugging`, `condition-based-waiting` and `find-polluter`            |
+| `skills/security-check`                       | addyosmani `security-and-hardening`; trailofbits `sharp-edges` (ideas only)                                               |
+| `skills/proof-audit`                          | SLP `test-proof-debt-audit` and its catalog; OpenClaw `test-audit` (MIT), through `.claude/skills/test-audit`, reworded   |
+| `skills/architecture-premise-audit`           | SLP `architecture-premise-audit` and its structural anti-patterns, condensed                                              |
+| `skills/repo-refresh`                         | SLP `repo-refresh`, rewritten for scopes and the record                                                                   |
+| `skills/domain-docs`, `shared/views/docs.ts`  | mattpocock `domain-modeling` (its `GLOSSARY.md` and ADR formats), `setup-matt-pocock-skills` and `wayfinder` (the map)   |
+| `skills/spike`                                | mattpocock `prototype`; superpowers `brainstorming`                                                                       |
+| `skills/measuring`                            | addyosmani `performance-optimization`                                                                                     |
+| `skills/tidy-first`                           | Kent Beck, _Tidy First?_; Martin Fowler, _Refactoring_ (ideas only); mattpocock `code-review`; addyosmani `code-simplification` |
+| `skills/acceptance-walk`                      | openclaw `behavior-validator`; superpowers `verification-before-completion`; anthropics `webapp-testing` (ideas only)    |
+| `skills/appetite`, `skills/lane-portfolio`    | Basecamp, _Shape Up_; Donald Reinertsen, _The Principles of Product Development Flow_; mattpocock `wayfinder` (ideas only) |
 
-On 2026-09-14 every skill was cut to the job, following Anthropic's skill authoring guidance,
-agentskills.io, SkillsBench and SkillReducer.
+## What builders read: `.claude/skills/`
 
-## Written for this kit
-
-| File | Draws on |
-|---|---|
-| `peer/test-first` | superpowers `test-driven-development`; a Codex adaptation of it; mattpocock `tdd`; SLP material and talk |
-| `peer/diagnosing-bugs` | mattpocock `diagnosing-bugs`; superpowers `systematic-debugging` |
-| `peer/security-check` | addyosmani `security-and-hardening`; trailofbits `sharp-edges` (ideas only) |
-| `prompts/REVIEWER.md` review procedure | mattpocock `code-review`; SLP `ultra-review` schema and lenses; alibaba/open-code-review's `delegate` contract; OpenAI Codex's review rubric; Anthropic's code-review command; Atlassian's review-agent ablation and BitsAI-CR; the PR-description bias study |
-| `supervisor/pre-mortem` | Gary Klein's project premortem; SLP `council` sealed seats |
-| `supervisor/retrospective` | Cemri et al.'s multi-agent failure taxonomy; the SLP author's talk |
-| `supervisor/grilling`, `guides/CONTEXT_FORMAT.md` | mattpocock `grilling` and `domain-modeling` (its `CONTEXT.md` format) |
-| v3 `profile/slp/skills/security-check` | V1 `peer/security-check`, rewritten for v3's hand-back and findings; addyosmani `security-and-hardening`; trailofbits `sharp-edges` (ideas only) |
-| v3 `profile/slp/skills/proof-audit` | V1 `peer/test-proof-debt-audit` and its catalog (SLP material); OpenClaw `test-audit` (MIT, © 2026 OpenClaw Foundation), through `v3-redesign/.claude/skills/test-audit`: its authoring gate and junk patterns, reworded |
-| v3 `profile/slp/skills/architecture-premise-audit` | V1 `supervisor/architecture-premise-audit` and its structural lenses (SLP material), condensed into one file for v3's tools |
-| v3 `profile/slp/skills/spike`, `grilling` (its fog section) | mattpocock `prototype` and `wayfinder`; superpowers `brainstorming` |
-| v3 `profile/slp/skills/measuring` | addyosmani `performance-optimization` |
-| v3 `profile/slp/skills/tidy-first` | Kent Beck, *Tidy First?*; Martin Fowler, *Refactoring* (ideas only); mattpocock `code-review`; addyosmani `code-simplification` |
-| v3 `profile/slp/skills/acceptance-walk` | openclaw `behavior-validator`; superpowers `verification-before-completion`; anthropics `webapp-testing` (ideas only) |
-| v3 `profile/slp/skills/repo-refresh` | V1 `lead/repo-refresh` (SLP material), rewritten for v3's scopes and record |
-| v3 `profile/slp/skills/appetite`, `lane-portfolio` | Basecamp, *Shape Up* (appetite, circuit breaker, betting table); Donald Reinertsen, *The Principles of Product Development Flow* (cost of delay); mattpocock `wayfinder` (ideas only) |
-| v3 `planning-lanes` (where scopes meet), `diagnosing-bugs` (a failure that comes and goes) | addyosmani `api-and-interface-design`; superpowers `condition-based-waiting` and `find-polluter` |
-| v3 `profile/slp/skills/domain-docs`, the glossary and map v3 writes (`shared/views/docs.ts`) | mattpocock `domain-modeling` (its `GLOSSARY.md` and ADR formats and the three tests for an ADR), `setup-matt-pocock-skills` (`domain.md`: read before exploring, flag an ADR conflict), `wayfinder` (the map's destination, decisions so far and fog) |
-| `guides/PLANS.md`, `ADR.md`, `REVIEW.md` | Nygard's ADR, MADR, Zdun et al.'s Y-statement, AWS and Azure ADR guidance; HumanLayer plans, GitHub Spec Kit, Rust stabilization reports, Kubernetes KEPs, OpenAI ExecPlans; Anthropic prompting guidance and BMAD templates; OpenAI harness-engineering lints and Factory's lint-driven agents |
-| `examples/WORKSPACE_PROTOCOL.md`, `records/NOTEBOOK.md` | the SLP author's workspace protocol and notebook; ITIL problem management and Google's SRE workbook; ACE, Mem0 and Xiong et al.; Gloaguen et al. and OpenAI harness engineering |
+| File                          | Draws on                                                                                             |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `.claude/skills/test-audit`   | OpenClaw's `.agents/skills/test-audit`, adapted; its license is in `.claude/skills/test-audit/LICENSE` |
 
 ## Sources and licenses
 
-| Source | Where | License |
-|---|---|---|
-| alibaba/open-code-review | https://github.com/alibaba/open-code-review | Apache-2.0, © 2026 Alibaba; run as a tool, no text copied |
-| openclaw/openclaw, `.agents/skills/test-audit` | https://github.com/openclaw/openclaw | MIT, © 2026 OpenClaw Foundation; adapted in `v3-redesign/.claude/skills/test-audit` |
-| openclaw/agent-skills, `behavior-validator` | https://github.com/openclaw/agent-skills | MIT, © 2026 openclaw; ideas only |
-| anthropics/skills, `webapp-testing` | https://github.com/anthropics/skills | Apache-2.0; ideas only |
-| Basecamp, *Shape Up* | https://basecamp.com/shapeup | © Basecamp; ideas only |
-| Donald Reinertsen, *The Principles of Product Development Flow* | ISBN 978-1935401001 | ideas only |
-| Kent Beck, *Tidy First?*; Martin Fowler, *Refactoring* | O'Reilly 2023; Addison-Wesley 2018 | ideas only |
-| obra/superpowers | https://github.com/obra/superpowers | MIT, © 2025 Jesse Vincent |
-| mattpocock/skills | https://github.com/mattpocock/skills | MIT, © 2026 Matt Pocock |
-| addyosmani/agent-skills | https://github.com/addyosmani/agent-skills | MIT, © 2025 Addy Osmani |
-| trailofbits/skills, `sharp-edges` | https://github.com/trailofbits/skills | CC-BY-SA-4.0; ideas only |
-| Gary Klein, "Performing a Project Premortem" | https://hbr.org/2007/09/performing-a-project-premortem | © Harvard Business Review; ideas only |
-| Cemri et al., "Why Do Multi-Agent LLM Systems Fail?" | https://arxiv.org/abs/2503.13657 | ideas only |
-| Michael Nygard, "Documenting Architecture Decisions" | https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions | ideas only |
-| MADR | https://adr.github.io/madr/ | ideas only |
-| Y-statement (Zdun et al.) | https://socadk.github.io/design-practice-repository/artifact-templates/DPR-ArchitecturalDecisionRecordYForm.html | ideas only |
-| AWS Prescriptive Guidance, ADR process | https://docs.aws.amazon.com/prescriptive-guidance/latest/architectural-decision-records/adr-process.html | ideas only |
-| HumanLayer, advanced context engineering | https://github.com/humanlayer/advanced-context-engineering-for-coding-agents | ideas only |
-| GitHub Spec Kit | https://github.com/github/spec-kit | ideas only |
-| OpenAI Cookbook, ExecPlans | https://developers.openai.com/cookbook/articles/codex_exec_plans | ideas only |
-| Rust stabilization guide | https://rustc-dev-guide.rust-lang.org/stabilization-guide.html | ideas only |
-| Anthropic, Claude prompting best practices | https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices | ideas only |
-| BMAD-METHOD | https://github.com/bmad-code-org/BMAD-METHOD | ideas only |
-| Factory, "Using linters to direct agents" | https://factory.ai/news/using-linters-to-direct-agents | ideas only |
-| ITIL problem management | https://wiki.en.it-processmaps.com/index.php/Problem_Management | ideas only |
-| Google SRE workbook, postmortem culture | https://sre.google/workbook/postmortem-culture/ | ideas only |
-| Gloaguen et al., repository context files | https://arxiv.org/abs/2602.11988 | ideas only |
-| Xiong et al., memory management for LLM agents | https://arxiv.org/abs/2505.16067 | ideas only |
-| SLP material | the kit owner's `SLP/` folder | no license stated; used with the owner's agreement |
+| Source                                                          | Where                                                                   | License                                           |
+| --------------------------------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------- |
+| obra/superpowers                                                | https://github.com/obra/superpowers                                     | MIT, © 2025 Jesse Vincent                         |
+| mattpocock/skills                                               | https://github.com/mattpocock/skills                                    | MIT, © 2026 Matt Pocock                           |
+| addyosmani/agent-skills                                         | https://github.com/addyosmani/agent-skills                              | MIT, © 2025 Addy Osmani                           |
+| openclaw/openclaw, `.agents/skills/test-audit`                  | https://github.com/openclaw/openclaw                                    | MIT, © 2026 OpenClaw Foundation                   |
+| openclaw/agent-skills, `behavior-validator`                     | https://github.com/openclaw/agent-skills                                | MIT, © 2026 openclaw; ideas only                  |
+| anthropics/skills, `webapp-testing`                             | https://github.com/anthropics/skills                                    | Apache-2.0; ideas only                            |
+| trailofbits/skills, `sharp-edges`                               | https://github.com/trailofbits/skills                                   | CC-BY-SA-4.0; ideas only                          |
+| Gary Klein, "Performing a Project Premortem"                    | https://hbr.org/2007/09/performing-a-project-premortem                  | © Harvard Business Review; ideas only             |
+| Cemri et al., "Why Do Multi-Agent LLM Systems Fail?"            | https://arxiv.org/abs/2503.13657                                        | ideas only                                        |
+| Basecamp, _Shape Up_                                            | https://basecamp.com/shapeup                                            | © Basecamp; ideas only                            |
+| Donald Reinertsen, _The Principles of Product Development Flow_ | ISBN 978-1935401001                                                     | ideas only                                        |
+| Kent Beck, _Tidy First?_; Martin Fowler, _Refactoring_          | O'Reilly 2023; Addison-Wesley 2018                                      | ideas only                                        |
+| Michael Nygard, "Documenting Architecture Decisions"            | https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions | ideas only                                       |
+| SLP material                                                    | the owner's `SLP/` folder                                               | no license stated; used with the owner's agreement |

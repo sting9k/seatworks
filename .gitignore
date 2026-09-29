@@ -1,8 +1,2 @@
-.DS_Store
-__pycache__/
 node_modules/
-node_modules
-
-# Scratch files an agent writes while probing behaviour. Never a deliverable.
-*probe*.test.ts
-probe.*
+.DS_Store

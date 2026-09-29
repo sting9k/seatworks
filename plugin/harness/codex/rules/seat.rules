@@ -1,3 +1,0 @@
-prefix_rule(pattern = ["git", "push"], decision = "forbidden", justification = "The desk lands branches; do not push.")
-prefix_rule(pattern = ["git", ["pull", "checkout", "switch", "update-ref", "stash"]], decision = "forbidden", justification = "Branches and working copies belong to the desk.")
-prefix_rule(pattern = ["git", "branch", ["-f", "-D", "--force"]], decision = "forbidden", justification = "Branches belong to the desk.")

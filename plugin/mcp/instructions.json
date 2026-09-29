@@ -1,7 +1,0 @@
-{
-  "supervisor": "The team desk's verbs for the Supervisor: open, steer, hold, land and drop lanes, and read status, incidents and records. Replies are plain text; a refusal says so and why, and a call that runs long answers by mail.",
-  "lead": "The team desk's verbs for a Lead: lay out tasks, start reviews, accept or send back work, ask the Supervisor and report the lane. Replies are plain text; a refusal says so and why, and a call that runs long answers by mail.",
-  "peer": "The team desk's verbs for a Peer: done hands the task back once your work is committed on your branch, and ask asks whoever gave you the task. A refusal says so and why.",
-  "reviewer": "The team desk's verbs for a reviewer: done hands your verdict, answers and findings back, and ask asks whoever gave you the review. A refusal says so and why.",
-  "watcher": "The team desk's verbs for the Watcher: judge answers the case you were sent, and record reads the record of the seat it is about."
-}
