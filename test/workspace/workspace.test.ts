@@ -99,6 +99,7 @@ test("advance moves a branch only from the head it was read at, and a checked-ou
   run(root, "checkout", "--", "a.txt");
   assert.deepEqual(await ws.advance("main", from, tip), { sha: tip });
   assert.equal(run(root, "rev-parse", "main"), tip);
+  assert.deepEqual(await ws.advance("main", from, tip), { sha: tip }, "asked again once it landed: landed");
 
   run(root, "branch", "lane", from);
   assert.deepEqual(await ws.advance("lane", tip, tip), { refused: "moved" });

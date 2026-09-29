@@ -99,6 +99,8 @@ export class Workspace {
    * ref update git refuses once the branch has moved. Nothing written in between is written over.
    */
   async advance(branch: string, from: string, to: string): Promise<Moved> {
+    // Asked again after it landed, as after a crash before the result was recorded: it landed.
+    if ((await sha(this.repo, `refs/heads/${branch}`)) === to) return { sha: to };
     const head = await git(this.repo, ["symbolic-ref", "-q", "--short", "HEAD"]);
     if (head.code === 0 && head.stdout.trim() === branch) {
       const status = await git(this.repo, ["status", "--porcelain", "--untracked-files=no"]);
