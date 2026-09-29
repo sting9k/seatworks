@@ -87,3 +87,23 @@ test("a Reviewer's red verdict followed by a send-back counts as a review that c
   ledger.must(ledger.as(lead, "send_back", { scope: task, reason: "fix the rounding" }));
   assert.deepEqual(signalsOf(ledger.log).reviewsThatChanged, [1, 1]);
 });
+
+test("a finding reopened with new evidence reads as not yet weighed in its chain", () => {
+  const { ledger, lead, peer, task } = team();
+  ledger.must(ledger.as(peer, "raise_finding", { text: "int16 is too coarse", default: "keep it" }));
+  ledger.must(ledger.as(lead, "classify_finding", { finding: "f1", verdict: "alternative", reason: "int16 holds" }));
+  ledger.must(
+    ledger.fact("record_evidence", {
+      scope: task,
+      subject: SHA(1),
+      ok: false,
+      summary: "",
+      steps: [],
+      heldMachine: false,
+    }),
+  );
+  ledger.must(ledger.as(peer, "reopen_finding", { finding: "f1", evidence: ["e1"], text: "measured: it drifts" }));
+  const chain = chainOf(ledger.log, "f1");
+  assert.equal(chain?.verdict, null, "the old verdict no longer stands");
+  assert.deepEqual(chain.evidence, ["e1"]);
+});

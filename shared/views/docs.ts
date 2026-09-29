@@ -89,6 +89,10 @@ export function mapText(events: Iterable<Event>, state: State): string | null {
       const f = findings.get(e.finding);
       if (f) findings.set(e.finding, { ...f, verdict: VERDICT[e.verdict] ?? e.verdict, reason: e.reason });
     }
+    if (e.type === "finding_reopened") {
+      const f = findings.get(e.finding);
+      if (f) findings.set(e.finding, { ...f, verdict: null, reason: null });
+    }
     if (e.type === "finding_withdrawn") {
       const f = findings.get(e.finding);
       if (f) findings.set(e.finding, { ...f, verdict: "withdrawn by whoever raised it", reason: e.reason });

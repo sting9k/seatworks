@@ -45,7 +45,13 @@ export function chainOf(events: Iterable<Event>, finding: string): Chain | null 
       chain.verdict = e.verdict;
       chain.reason = e.reason;
     }
-    if (e.type === "finding_reopened" && e.finding === finding) chain.evidence.push(...e.evidence);
+    if (e.type === "finding_reopened" && e.finding === finding) {
+      // Raised again, as the kernel keeps it: the verdict it had no longer stands.
+      chain.evidence.push(...e.evidence);
+      chain.classifiedAt = null;
+      chain.verdict = null;
+      chain.reason = null;
+    }
     const carries = "carries" in e ? e.carries : null;
     if (carries === finding) chain.changes.push({ at: e.at, by: e.by, what: e.type.replace(/_/g, " ") });
     if (e.type === "integrated" && chain.classifiedAt !== null)
