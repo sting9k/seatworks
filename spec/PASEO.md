@@ -58,9 +58,15 @@ from Paseo 0.10.1: the plugin SDK, `@getpaseo/client`, `@getpaseo/protocol`, the
 
 ## Checked in Paseo 0.10.1's source
 
-- The server bundle is compiled by Paseo and evaluated, not run from the plugin's directory, so the plugin cannot find
-  its own files from code. It reads its directory from `config.get()`'s `plugins.<id>.path`, through the published
-  API, and starts what needs its files (the profile, the tool server, the git shim) once that API arrives.
+- The server bundle is compiled by Paseo (esbuild, CommonJS) and evaluated in the worker, not run from the plugin's
+  directory, so `import.meta` is empty and the plugin cannot find its own files from code. It reads its directory
+  from `config.get()`'s `plugins.<id>.path`, through the published API, and starts what needs its files (the profile,
+  the tool server, the git shim) once that API arrives. A Git install is recorded there too, as a directory source
+  at its checkout (`installSource`).
+- Paseo supplies `@getpaseo/plugin` and its subpaths, `zod`, React and Node's modules to a bundle. Every other package
+  it imports must resolve from the plugin's directory at compile time, even one imported for its types alone, so
+  `@getpaseo/client` and `@getpaseo/protocol` are dependencies: a Git install's build installs no devDependency. A
+  directory install runs no build step at all.
 - The API reaches a plugin only with a hook or a panel call; it is one client, made before the plugin's contribution
   runs, that reconnects by itself. Work that needs it waits for the first hook or call.
 - `agent.turn_ended` carries the turn's outcome and the agent's whole history as the daemon holds it in memory, not
