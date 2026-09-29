@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, test } from "node:test";
@@ -252,4 +252,32 @@ test("a create Paseo refuses is a failed start the record shows, not a seat left
   assert.equal(paseo.created.length, 0);
   const activity = (await plugin.view(project))!.activity.join("\n");
   assert.match(activity, /is gone: Paseo could not make the agent: Expected config\.provider/);
+});
+
+test("a start that failed is tried again, and a project whose log cannot be read leaves the others working", async () => {
+  const repo = mkdtempSync(join(tmpdir(), "sw-start-"));
+  git(repo, "init", "-q", "-b", "main");
+  writeFileSync(join(repo, "a.txt"), "a\n");
+  git(repo, "add", ".");
+  git(repo, "commit", "-q", "-m", "start");
+  const root = mkdtempSync(join(tmpdir(), "sw-root-"));
+  const first = new Plugin(root);
+  plugins.push(first);
+  const paseo = fakePaseo(pluginDir);
+  first.saw(paseo.api);
+  const { project } = await first.openProject(repo, "main");
+  await first.idle();
+  await first.dispose();
+  const broken = join(root, "projects", "broken");
+  mkdirSync(broken, { recursive: true });
+  writeFileSync(join(broken, "project.json"), JSON.stringify({ repo }));
+  writeFileSync(join(broken, "ledger.db"), "not a database");
+
+  paseo.gate.configFails = 1;
+  const restarted = new Plugin(root);
+  plugins.push(restarted);
+  restarted.saw(paseo.api);
+  await assert.rejects(restarted.whenReady(), /socket reconnecting/);
+  await restarted.whenReady();
+  assert.match((await restarted.view(project))?.root ?? "", /Scope root/);
 });

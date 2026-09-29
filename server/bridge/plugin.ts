@@ -147,8 +147,12 @@ export class Plugin {
     this.link.set(api);
   }
 
+  /** The plugin started; a start that failed is forgotten, so the next hook or call tries again. */
   whenReady(): Promise<Ready> {
-    this.ready ??= this.start();
+    this.ready ??= this.start().catch((error: unknown) => {
+      this.ready = null;
+      throw error;
+    });
     return this.ready;
   }
 
@@ -200,8 +204,14 @@ export class Plugin {
     const ready: Ready = { dir, bundle, host, shimDir, socket, socketPath };
     this.readyNow = ready;
     const projects = join(this.root, "projects");
-    if (existsSync(projects))
-      for (const id of readdirSync(projects)) if (existsSync(join(projects, id, "project.json"))) this.open(id, ready);
+    for (const id of existsSync(projects) ? readdirSync(projects) : [])
+      if (existsSync(join(projects, id, "project.json")))
+        try {
+          this.open(id, ready);
+        } catch (error) {
+          // One project that cannot open, such as a log this code no longer folds, leaves the others working.
+          daemonLog.error(`seatworks could not open project ${id}`, error);
+        }
     return ready;
   }
 
@@ -621,7 +631,7 @@ export class Plugin {
     clearInterval(this.upkeep);
     for (const [id, runtime] of this.runtimes) await this.unload(id, runtime);
     this.byHost.clear();
-    if (this.ready) await (await this.ready).socket.close();
+    await this.readyNow?.socket.close();
     this.holds.close();
   }
 
@@ -631,8 +641,14 @@ export class Plugin {
     const dir = projectDir(this.root, id);
     const { repo } = JSON.parse(readFileSync(join(dir, "project.json"), "utf8")) as { repo: string };
     const store = new ProjectStore(join(dir, "ledger.db"));
-    store.sweep(Date.now());
-    const project = Project.open(id, store, ready.bundle.profile);
+    let project: Project;
+    try {
+      store.sweep(Date.now());
+      project = Project.open(id, store, ready.bundle.profile);
+    } catch (error) {
+      store.close();
+      throw error;
+    }
     const workspace = new Workspace(repo, join(dir, "copies"));
     const scratch = scratchFor(this.root, id);
     mkdirSync(scratch, { recursive: true });

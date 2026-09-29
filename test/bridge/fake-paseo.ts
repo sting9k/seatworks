@@ -16,14 +16,18 @@ type Created = {
  * The part of Paseo's API the plugin uses, recording what it was asked. Agents are always between turns. As Paseo does,
  * a keyed create keeps its request and refuses the key with a different one; `loseReplies` drops that many create
  * replies after the agent is made, and the list after each, as a dropped connection would; `refuse` rejects every
- * create with that error.
+ * create with that error; `configFails` rejects that many reads of Paseo's config.
  */
 export function fakePaseo(pluginDir: string, provider = "claude") {
   const created: Created[] = [];
   const sent: Sent[] = [];
   const archived: string[] = [];
   const byKey = new Map<string, { host: string; request: string }>();
-  const gate: { loseReplies: number; refuse: string | null } = { loseReplies: 0, refuse: null };
+  const gate: { loseReplies: number; refuse: string | null; configFails: number } = {
+    loseReplies: 0,
+    refuse: null,
+    configFails: 0,
+  };
   let down = false;
   /** Permissions each agent's own prompt still waits on, and those answered through the API. */
   const pending = new Map<string, Set<string>>();
@@ -71,17 +75,21 @@ export function fakePaseo(pluginDir: string, provider = "claude") {
     },
     config: {
       get: () =>
-        Promise.resolve({
-          config: {
-            plugins: { seatworks: { source: "directory", path: pluginDir } },
-            agentProfiles: ["slp-supervisor", "slp-lead", "slp-peer", "slp-reviewer", "slp-watcher"].map((name) => ({
-              id: name,
-              name,
-              provider,
-              model: "test",
-            })),
-          },
-        }),
+        gate.configFails-- > 0
+          ? Promise.reject(new Error("socket reconnecting"))
+          : Promise.resolve({
+              config: {
+                plugins: { seatworks: { source: "directory", path: pluginDir } },
+                agentProfiles: ["slp-supervisor", "slp-lead", "slp-peer", "slp-reviewer", "slp-watcher"].map(
+                  (name) => ({
+                    id: name,
+                    name,
+                    provider,
+                    model: "test",
+                  }),
+                ),
+              },
+            }),
     },
     agents: {
       list: (o: { filter: { labels: Record<string, string> } }) => {
