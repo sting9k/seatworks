@@ -1,28 +1,34 @@
 # Reflex
 
 A reflex is a fast, cheap, typed judgement: text and a few typed questions go in, and an answer to each comes back
-with a calibrated probability. Jev, TypeSafe's first System One model, is the first to back it. It lets the plugin
-look at every event as it happens, where V1 could afford to look only on a timer. **The reflex notices; the roles
-decide.** SLP's thinking stays with the agents, and the Supervisor is the one that judges.
+with a probability. Jev, TypeSafe's first System One model, is the first to back it. It lets the plugin look at every
+event as it happens, where V1 could afford to look only on a timer. **The reflex notices; the roles decide.** SLP's
+thinking stays with the agents, and the Supervisor is the one that judges.
 
 ## Jev, as read on 29 September 2026
 
 Read from `@typesafe-ai/sdk` 0.6.0 in full. TypeSafe's own pages are closed to this machine, so the figures marked †
-come from third-party write-ups of them.
+come from third-party write-ups and independent tests of `jev-1.13.0`.
 
-- `POST /v1/systemone` with `{ model, state, questions }`. `state` is text or JSON. Each question is a `noul`
-  (yes or no), a `choice` among named labels, or a `score` on an ordered rubric, each with instructions and a
-  description per outcome.
+- `POST /v1/systemone` with `{ model, state, questions }`. `state` is text, a JSON object or an array. Each question
+  is a `noul` (yes or no), a `choice` among named labels, or a `score` on an ordered rubric of at least two levels,
+  each with instructions and a description per outcome.
 - Every question is answered in one pass: `noul` gives the probability of yes, `choice` a label with its confidence
   and each label's probability, `score` an expected score with probabilities. No text is generated, so there is
   nothing to parse and no string to make up.
-- About 100 ms a call; $0.042 per million input tokens, output free; 32k tokens for the state and the longest
-  question, 64k in all; 255 labels at most; 1,200 requests a minute. †
+- 70 to 500 ms a call, with a floor near 430 ms in one test; 800 questions in one call took under a second. $0.042
+  per million input tokens, output free; a judgement of about 1,000 tokens costs $0.00004. 32k tokens for the state
+  and the longest question, 64k in all; 255 labels at most; 1,200 requests a minute. †
 - Hosted only, with closed weights. No retention only on the enterprise tier; it is also served through OpenRouter,
   which V1 used with data collection denied. †
-- Agreement with frontier models' labels is about 68%, below theirs. † Its strength is calibration: the probability
-  says how far to trust the answer. So a threshold holds only for the model it was set against, and the model is
-  pinned by version.
+- Agreement with frontier models' labels is about 68%, level with mid-price models and behind the frontier. One
+  compound question scored 62.6% where the same decision split into five one-condition questions, weighed in code,
+  scored 95.0%. Answers at 0.99 or above were all right in one test, and covered 60% of its traffic. †
+- TypeSafe names nine weak spots: literal reading, arithmetic and counting, ordering dates, questions that need
+  several hops, irrelevant text in the state, text in the state written to steer it, contradictory instructions,
+  probabilities of a question and its negation that need not sum to one, and no text out. Two more were measured:
+  about 13% of choices change when the labels are shuffled, and `choice` and `score` are overconfident while `noul`
+  is underconfident on the same inputs. †
 
 ## What it may do
 
@@ -40,11 +46,12 @@ to do: V1's patterns carried advice in a `next` field, and v3 does not.
 
 ## Where it looks: the record, on its events
 
-It reads what the record already holds: briefs, plans, findings, answers, hand-backs and reports, and a hand-back's
-diff. It does not read agents' thinking; WORKFLOW decision 3 settles that the record comes first. Whatever code can
-check stays code. A constraint whose origin is not the Human, a hand-back with no evidence on its commit, and a claim
-of green checks against a red run are facts the kernel's views already show. The reflex takes only what needs a
-reading of meaning.
+It reads what the record already holds: briefs, plans, findings, answers, hand-backs and reports, a hand-back's diff,
+and a permission an agent asks for. It does not read agents' thinking; WORKFLOW decision 3 settles that the record
+comes first. Whatever code can check stays code. A constraint whose origin is not the Human, a hand-back with no
+evidence on its commit, a claim of green checks against a red run, a deleted test, an added skip marker, and the same
+failing step run again are facts the kernel's views already show. The reflex takes only what needs a reading of
+meaning.
 
 The SLP profile's starting questions:
 
@@ -54,15 +61,65 @@ The SLP profile's starting questions:
 | `finding_raised`, `plan_amended`, `brief_amended` | Touches the goal or cost the Human approved (§7.3), beyond what I6 catches from origins | the root, a note that wakes it |
 | `finding_classified` as kept               | The reason does not meet the evidence the raiser gave                                     | the root, a note      |
 | `report_made`                              | Settles how the system is built, a structure or contract others will build on, with no line of the plan recording it | the root, a note      |
-| `hand_back`                                | The diff loosens or deletes an assertion; bends product code so a check passes; leaves a stub or fake where the brief asked for the thing; the claim names a gap in the work | evidence on the commit |
+| `hand_back`                                | The diff loosens an assertion; bends product code so a check passes; leaves a stub or fake where the brief asked for the thing; breaks one of the project's own written rules | evidence on the commit |
+| `hand_back`                                | The claim names a part of the brief it did not do                                          | evidence on the commit |
+| `permission_requested`                     | The action cannot be undone from the agent's own copy                                     | a fact for whoever answers it |
 | a message the Human types into an agent's chat | Whether it sets a requirement, says the code is wrong, asks, or approves                  | a fact on the Lead's copy |
 | `turn_ended` with no command in the turn   | Whether the agent handed back, asked, or said it waits, in words only                     | the agent, a delivery fact |
 
 They come from V1's patterns and checks that read the record (pre-solves, closed-choice, vague-goal, big-decision,
-gaming, proof-bends-product, stand-in, summary-admits-gap, instruction-kind). The ones that read thinking stay in the
-record's history (struggling, turning, admits-wrong, obeys-against-judgement, wrapper, builds-for-maybe). If a look
-back shows a late intervention the record could not have shown, the owner adds a question that reads the agent's
-words to the profile. The agent host already streams them, so that is a data change, not a code change.
+gaming, proof-bends-product, stand-in, summary-admits-gap, instruction-kind), and from two tools that guard coding
+agents with Jev. One asks a question for each project rule, over the rule and the diff and never the conversation, so
+the 200th edit is judged like the first. The other asks whether a tool call can be undone before it runs. The
+questions that read thinking stay in V1's history (struggling, turning, admits-wrong, obeys-against-judgement,
+wrapper, builds-for-maybe). If a look back shows a late intervention the record could not have shown, the owner adds
+a question that reads the agent's words to the profile. The agent host already streams them, so that is a data
+change, not a code change.
+
+The project's rules are the project's: the lines of its `AGENTS.md` that a linter cannot check, each turned once into
+a question when the file changes, and asked only of the hunks it could apply to.
+
+## Asking well
+
+Jev answers the question as written, not the question meant. Most of its accuracy is in how it is asked.
+
+**Decide in code first.** Counts, dates, sizes, what a diff deletes, which checks ran and how they came out, and
+whether a line's origin is the Human are computed and handed over as named facts ("tests removed: 2"), never left
+for the model to work out.
+
+**One condition to a question.** A compound judgement is split into questions of one condition each, and code
+combines their answers, as in the 62.6% to 95.0% case above. "Does the brief pre-solve?" becomes: does it name a
+method, does it state a cause as fact, does it offer a closed set of options.
+
+**The smallest state that answers.** Text beside the point lowers accuracy even well inside the budget. The state is
+a JSON object of named fields, and the question names the field it is about in backticks: `goal`, `constraints`,
+`hunk`, `rule`. Questions that read the same fields go in one call; questions that read different ones go in
+separate calls, run side by side. A diff goes hunk by hunk, never whole.
+
+**No hops.** The state holds what the question is about, not a way to find it: the text of the brief line a finding
+disputes, not its id; the rule itself, not the file it came from.
+
+**Describe every outcome.** A bare label costs confidence. Each outcome's description says what it covers and names
+the edge cases it does not, and it extends the question rather than restating or contradicting it: a `yes` that
+describes a no answers worse.
+
+**Mutually exclusive outcomes are one `choice`.** Never a question beside its own negation, since the two need not
+sum to one. A list that might not cover everything ends in `other`. Labels keep one fixed order every time, and a
+question is checked for order bias by shuffling its labels before it goes in the profile.
+
+**Agents' words are untrusted.** Jev does not treat the state as hostile, and a hand-back arguing that its tests are
+sound can move the answer about the diff. A question about code reads the code and the brief, never the agent's
+claim about the code. A claim is asked about on its own, and its answer says only what the claim says. What comes
+from the record (a brief, a Human's line) and what an agent wrote are separate fields, named for where they came
+from.
+
+**Questions and descriptions in English.** Agents' text goes in as they wrote it. How Jev reads Vietnamese is
+unmeasured, so a question over the Human's Vietnamese words waits until the look back has measured it.
+
+**Thresholds by type.** A `noul`'s probability runs low of the truth, while a `choice`'s or `score`'s runs high. A
+threshold is set for each question from its own recorded answers and outcomes, not taken from another. A `choice`
+is thresholded on the probability of the label that matters, not on its confidence. A `score` informs; it does not
+trigger.
 
 ## Questions are data
 
@@ -71,46 +128,49 @@ words to the profile. The agent host already streams them, so that is a data cha
 ```yaml
 model: jev-1.13.0
 questions:
-  presolve:
+  names-method:
     on: [brief_issued, brief_amended]
     when: { kind: discovery }
-    reads: [brief, parent.plan.goal]
-    noul: Does `brief` say how the work must be done, rather than what must be true once it is?
-    yes: It names the method, the fix or the design to use.
-    no: It names the outcome and the constraints, and leaves the method open.
-    over: 0.8
+    state: { goal: brief.goal, constraints: brief.constraints }
+    noul: Does `goal` or a line of `constraints` name the method, fix or design the work must use?
+    yes: A line says which approach, algorithm, library, data structure or fix to use.
+    no: >-
+      Every line states an outcome to reach or a limit to respect, and the approach is left open. Naming a file or
+      module only as where the work happens is not a method.
+    over: 0.9
+    because: A start, where independent tests found yes answers reliable; set from this question's own answers at the first look back.
     tells: root
 ```
 
-- One condition to a question. A model weighing two conditions in one answer loses one of them (V1).
-- Every question on one event goes in one call, since Jev answers them all in one pass.
-- `over` is the probability past which it speaks, with its reason written beside it. There is one value per question;
-  V1's forty tuning values in `attention.json` go.
+- `state` maps each field the question names to where the record keeps it. It never holds more.
+- `over` is the probability past which it speaks, and `because` its reason. There is one value per question; V1's
+  forty tuning values in `attention.json` go.
 - `tells` is a relation (`root`, `owner`, `parent`, `self`) or `evidence`. `wakes: true` lets a note wake the role it
   is for. Otherwise it waits for the next message that asks something, as every note does.
 
 ## How it runs
 
 - On an event already in the log. Never in a before-hook, never in the way of a command; the kernel never waits on
-  it.
-- One call an event, one at a time for each scope. A call that fails is logged and asked again once; after that the
-  event goes unread. A hand-back's evidence step then says `not run`, so the Lead knows it is missing.
-- A state past the budget is not cut to fit. The step says `too large`, and a diff is asked file by file over the
-  changed tests and the files the claim names.
+  it. A permission's fact is the one answer something waits for, and a permission waits for its answerer anyway.
+- The calls for one event run side by side; events in one scope run one at a time. A call that fails is logged and
+  asked again once; after that the event goes unread. A hand-back's evidence step then says `not run`, so the Lead
+  knows it is missing.
+- A state past the budget is not cut to fit. The step says `too large`.
 - The key lives in the plugin's settings and is never written to a log. The SDK's `debug` level logs request bodies,
   so it stays at `warn`.
 - With no key set there is no reflex. The rest of v3 works the same without it.
 
 ## Measured by the record, taken away by subtraction
 
-- Each answer is an `observation_made` event with its question, subject, model and probability, including those
-  under the threshold, so the look back can see calibration.
-- For each question, the look back reads how many notes were followed by an act of the role told on the same subject
-  (an amendment, a hold, a question, a send-back). That is the ceremony signal (§10.3) applied to the reflex.
+- Each answer is an `observation_made` event with its question, subject, model and full probabilities, including
+  those under the threshold, so the look back can see calibration.
+- The record gives each answer its label later: for each question, the look back reads how many notes were followed
+  by an act of the role told on the same subject (an amendment, a hold, a question, a send-back). That is the
+  ceremony signal (§10.3) applied to the reflex, and the data a threshold is set from.
 - A question that never leads to a change is removed from the profile at the look back. A threshold is never tuned by
   code: telemetry does not turn itself into a rule.
-- A new model version is a release like Paseo's. Its thresholds are checked against the recorded observations before
-  the pin moves.
+- The model is pinned by version, never `jev-latest`, and the model that served each answer is recorded. A new
+  version is a release like Paseo's: the recorded states are asked again and thresholds checked before the pin moves.
 
 ## Port
 
