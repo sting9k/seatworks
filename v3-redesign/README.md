@@ -5,6 +5,13 @@ came from, scopes with their owner and edges, and findings from the evidence tha
 Around it, satellites each do one job behind a port that names nothing of SLP: the agent host, workspaces, the evidence
 runner, delivery, the Human's surface, the record.
 
+## What it is built from
+
+CONCEPT-V2 and the orchestration analysis it is read through are the standard. The current plugin, V1, is kept in
+mind as a reference, not a model: well over half of it is the lesson of what went wrong, a delivery pipeline with SLP
+painted on and each rule written three or four times. What it does well moves over, written again from the standard;
+where V1 and the standard differ, the standard wins.
+
 ## How the move goes
 
 - `plugin/` keeps running until this does what it does, then goes in one cut. Neither imports the other, and nothing
