@@ -1,0 +1,10 @@
+{
+  "always": {
+    "modeId": "bypassPermissions",
+    "options": { "settings": { "permissions": { "deny": ["Agent", "Workflow", "AskUserQuestion"] } } }
+  },
+  "writes": {
+    "options": { "sandbox": { "enabled": true, "failIfUnavailable": true, "allowUnsandboxedCommands": false } }
+  },
+  "reads": {}
+}

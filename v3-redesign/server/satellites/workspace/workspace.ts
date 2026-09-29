@@ -8,6 +8,8 @@ export type CopyKind =
 export type Candidate = { candidate: string; parentHead: string } | { conflict: string[] };
 export type Moved = { sha: string } | { refused: string };
 
+const DIFF_CAP = 60_000;
+
 /** A key made safe for a path: `[A-Za-z0-9._-]`, with a stable hash when that changed it (Symphony's rule). */
 export function safeKey(key: string): string {
   const clean = key.replace(/[^A-Za-z0-9._-]/g, "_");
@@ -129,6 +131,18 @@ export class Workspace {
       if (tip && (await isAncestor(this.repo, tip, mergedInto))) await git(this.repo, ["branch", "-D", branch]);
     }
     return { removed: true };
+  }
+
+  /** What `tip` changed since it left `base`, capped so a huge change never fills a reader's context. */
+  async diff(base: string, tip: string): Promise<string> {
+    const stat = await git(this.repo, ["diff", "--stat", `${base}...${tip}`]);
+    if (stat.code !== 0) return `No diff: ${said(stat)}`;
+    const patch = await git(this.repo, ["diff", `${base}...${tip}`]);
+    const body =
+      patch.stdout.length > DIFF_CAP
+        ? `${patch.stdout.slice(0, DIFF_CAP)}\n… cut at ${DIFF_CAP} characters; read the files for the rest.`
+        : patch.stdout;
+    return `${stat.stdout.trim()}\n\n${body}`;
   }
 
   /** Pushes a branch to a remote, never forced: a remote that moved refuses it. */

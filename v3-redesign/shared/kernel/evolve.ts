@@ -218,8 +218,20 @@ function apply(s: State, e: Event, at: string): State {
         actor(s, e.actor, (a) => ({ ...a, status: "gone" })),
         e.actor,
       );
-    case "turn_ended":
-      return actor(s, e.actor, (a) => ({ ...a, turns: a.turns + 1, tokens: a.tokens + e.tokens, usd: a.usd + e.usd }));
+    case "turn_ended": {
+      const next = actor(s, e.actor, (a) => ({
+        ...a,
+        turns: a.turns + 1,
+        tokens: a.tokens + e.tokens,
+        usd: a.usd + e.usd,
+      }));
+      const scopes = new Map(next.scopes);
+      for (let at = next.actors.get(e.actor)?.scope ?? null; at !== null; at = scopes.get(at)?.parent ?? null) {
+        const x = scopes.get(at);
+        if (x) scopes.set(at, { ...x, spent: { usd: x.spent.usd + e.usd, tokens: x.spent.tokens + e.tokens } });
+      }
+      return { ...next, scopes };
+    }
     case "checks_set":
       return s.project ? { ...s, project: { ...s.project, checks: e.checks } } : s;
     case "publish_requested":

@@ -34,7 +34,7 @@ export type EventBody =
   | { type: "project_opened"; base: string; remote: string | null; profileHash: string }
   | { type: "scope_opened"; scope: Scope }
   | { type: "actor_seated"; actor: ActorId; role: string; scope: ScopeId; model: string }
-  | { type: "workspace_ready"; scope: ScopeId; branch: string }
+  | { type: "workspace_ready"; scope: ScopeId; branch: string | null }
   | { type: "workspace_failed"; scope: ScopeId; why: string }
   | { type: "agent_started"; actor: ActorId; host: string }
   | { type: "brief_issued"; scope: ScopeId; brief: Brief }

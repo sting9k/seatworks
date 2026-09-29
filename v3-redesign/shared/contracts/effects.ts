@@ -9,12 +9,12 @@ export type EffectBody =
   | { kind: "workspace.create"; scope: ScopeId }
   | { kind: "workspace.candidate"; scope: ScopeId; commit: string }
   | { kind: "workspace.advance"; scope: ScopeId; from: string; to: string }
-  | { kind: "workspace.remove"; scope: ScopeId }
+  | { kind: "workspace.remove"; scope: ScopeId; branch: string | null; mergedInto: string | null }
   | { kind: "workspace.publish"; remote: string; branch: string }
   | { kind: "evidence.run"; scope: ScopeId; subject: string; steps: readonly Check[] }
   | { kind: "agent.create"; actor: ActorId }
-  | { kind: "agent.archive"; actor: ActorId }
-  | { kind: "agent.permission"; actor: ActorId; request: string; allow: boolean; reason: string }
+  | { kind: "agent.archive"; actor: ActorId; host: string | null }
+  | { kind: "agent.permission"; actor: ActorId; host: string | null; request: string; allow: boolean; reason: string }
   | {
       kind: "deliver";
       to: ActorId;

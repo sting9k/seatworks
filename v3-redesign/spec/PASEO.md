@@ -54,6 +54,16 @@ from Paseo 0.10.1: the plugin SDK, `@getpaseo/client`, `@getpaseo/protocol`, the
 
 ## Checked in Paseo 0.10.1's source
 
+- The server bundle is compiled by Paseo and evaluated, not run from the plugin's directory, so the plugin cannot find
+  its own files from code. It reads its directory from `config.get()`'s `plugins.<id>.path`, through the published
+  API, and starts what needs its files (the profile, the tool server, the git shim) once that API arrives.
+- The API reaches a plugin only with a hook or a panel call; it is one client, made before the plugin's contribution
+  runs, that reconnects by itself. Work that needs it waits for the first hook or call.
+- `agent.turn_ended` carries the turn's outcome and its timeline items: words the Human typed into a chat are the
+  `user_message` items whose `clientMessageId` is none of the plugin's effect keys.
+- `agents.create` takes an `idempotencyKey` and `send` a `messageId`: the plugin passes its effect keys, so a retried
+  create or delivery is the same one. `toolPolicy.preapproved` names each MCP tool; there is no wildcard.
+
 - A finish notification goes to a parent only for an agent made by Paseo's own `create_agent` tool with
   `notifyOnFinish`. Agents v3 makes through the plugin API get none, so nothing reaches a Lead around delivery.
 - Plugin settings work when host-scoped, as above.

@@ -135,3 +135,34 @@ test("a settled effect's row is let go after a week, and only then", () => {
   assert.equal(store.sweep(at + 8 * 24 * 3600 * 1000), 1);
   store.close();
 });
+
+test("an effect that waits is tried again only after a change, never spun on while others finish", async () => {
+  const { store } = fresh();
+  const project = Project.open("p", store, profile);
+  let tries = 0;
+  const { handlers } = recordingHandlers((e) => {
+    if (e.kind === "workspace.create") {
+      tries += 1;
+      return { status: "wait" };
+    }
+    return { status: "done" };
+  });
+  const dispatcher = new Dispatcher(project, store, handlers, () => false);
+  await project.submit(command(human, "open_project", { base: "main", profileHash: "h", model: "m" }));
+  dispatcher.kick();
+  await dispatcher.idle();
+  store.append(
+    [{ type: "checks_set", checks: [], seq: store.seq() + 1, at: "", by: "human", commandId: "x" }],
+    [{ key: "99:machine", body: { kind: "machine.hold", actor: "a1", hold: true } }],
+    store.seq(),
+  );
+  dispatcher.kick("freed");
+  await dispatcher.idle();
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  assert.equal(tries, 1, "a freed channel does not retry what waits");
+  dispatcher.kick();
+  await dispatcher.idle();
+  assert.equal(tries, 2, "a change does");
+  dispatcher.dispose();
+  project.dispose();
+});

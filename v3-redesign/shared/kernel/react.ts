@@ -36,10 +36,11 @@ export function react(e: Event, s: State): readonly Effect[] {
       tell(parentOwner(e.scope), "note", `The copy for scope ${e.scope} could not be made: ${e.why}`, true);
       break;
     case "reseated":
-      if (e.from !== null) add("archive", { kind: "agent.archive", actor: e.from });
+      if (e.from !== null)
+        add("archive", { kind: "agent.archive", actor: e.from, host: s.actors.get(e.from)?.host ?? null });
       break;
     case "actor_released":
-      add("archive", { kind: "agent.archive", actor: e.actor });
+      add("archive", { kind: "agent.archive", actor: e.actor, host: s.actors.get(e.actor)?.host ?? null });
       break;
     case "brief_amended":
       tellBrief(s, e.scope, add);
@@ -157,9 +158,17 @@ export function react(e: Event, s: State): readonly Effect[] {
       break;
     }
     case "integrated":
-    case "scope_dropped":
-      add("remove", { kind: "workspace.remove", scope: e.scope });
+    case "scope_dropped": {
+      const scope = s.scopes.get(e.scope);
+      const parent = scope?.parent == null ? undefined : s.scopes.get(scope.parent);
+      add("remove", {
+        kind: "workspace.remove",
+        scope: e.scope,
+        branch: scope?.branch ?? null,
+        mergedInto: e.type === "integrated" ? (parent?.branch ?? null) : null,
+      });
       break;
+    }
     case "turn_ended": {
       const a = s.actors.get(e.actor);
       if (a && e.outcome === "failed")
@@ -192,6 +201,7 @@ export function react(e: Event, s: State): readonly Effect[] {
       add("permission", {
         kind: "agent.permission",
         actor: e.actor,
+        host: s.actors.get(e.actor)?.host ?? null,
         request: e.request,
         allow: e.allow,
         reason: e.reason,

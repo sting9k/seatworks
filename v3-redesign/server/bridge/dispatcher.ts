@@ -17,7 +17,12 @@ export type EffectHandler<K extends EffectBody["kind"] = EffectBody["kind"]> = (
   context: { project: string; state: State; key: string },
 ) => Promise<Handled>;
 
-export type Handlers = { [K in EffectBody["kind"]]: EffectHandler<K> };
+export type Delivery = Extract<EffectBody, { kind: "deliver" }>;
+
+/** Every kind has its handler; deliveries to one reader come as one batch, since a reader is woken once for them all. */
+export type Handlers = { [K in Exclude<EffectBody["kind"], "deliver">]: EffectHandler<K> } & {
+  deliver: (batch: readonly Delivery[], context: { project: string; state: State; key: string }) => Promise<Handled>;
+};
 
 /** Tries before an effect that keeps throwing is settled as failed and logged. */
 const MAX_ATTEMPTS = 5;
@@ -29,6 +34,8 @@ const MAX_ATTEMPTS = 5;
 export class Dispatcher {
   private readonly inFlight = new Set<string>();
   private readonly busyChannels = new Set<string>();
+  /** Effects that answered `wait` since the last change: bounded by what is pending, cleared on every change. */
+  private readonly waiting = new Set<string>();
   private readonly timers = new Set<NodeJS.Timeout>();
   private disposed = false;
   private readonly project: Project;
@@ -51,21 +58,37 @@ export class Dispatcher {
     this.now = now;
   }
 
-  /** Starts every pending effect whose channel is free; called after each commit, on start, and when a hold lifts. */
-  kick(): void {
+  /**
+   * Starts every pending effect whose channel is free. After a change (a commit, Paseo's API arriving, a hold lifting)
+   * effects that waited are tried again; when only a channel freed up, they are not, or a wait would spin.
+   */
+  kick(after: "change" | "freed" = "change"): void {
     if (this.disposed) return;
-    for (const effect of this.store.pending()) {
-      if (this.inFlight.has(effect.key)) continue;
+    if (after === "change") this.waiting.clear();
+    const pending = this.store.pending();
+    for (const effect of pending) {
+      if (this.inFlight.has(effect.key) || this.waiting.has(effect.key)) continue;
       const channel = channelOf(effect.body);
       if (this.busyChannels.has(channel)) continue;
       if (LOADS_MACHINE.has(effect.body.kind) && this.machineHeld()) continue;
-      this.inFlight.add(effect.key);
+      const to = effect.body.kind === "deliver" ? effect.body.to : null;
+      const batch =
+        to === null
+          ? [effect]
+          : pending.filter((p) => p.body.kind === "deliver" && p.body.to === to && !this.inFlight.has(p.key));
+      for (const e of batch) this.inFlight.add(e.key);
       this.busyChannels.add(channel);
-      void this.run(effect).finally(() => {
-        this.inFlight.delete(effect.key);
+      void this.run(batch).finally(() => {
+        for (const e of batch) this.inFlight.delete(e.key);
         this.busyChannels.delete(channel);
+        // An effect its channel held back while this one ran starts now.
+        this.kick("freed");
       });
     }
+  }
+
+  get busy(): boolean {
+    return this.inFlight.size > 0;
   }
 
   /** Settles when nothing is in flight; for tests and for a clean unload. */
@@ -79,20 +102,34 @@ export class Dispatcher {
     this.timers.clear();
   }
 
-  private async run(effect: PendingEffect): Promise<void> {
-    const handler = this.handlers[effect.body.kind] as EffectHandler;
+  private async run(batch: readonly PendingEffect[]): Promise<void> {
+    const effect = batch[0]!;
+    const context = { project: this.project.id, state: this.project.view, key: effect.key };
     let handled: Handled;
     try {
-      handled = await handler(effect.body, { project: this.project.id, state: this.project.view, key: effect.key });
+      handled =
+        effect.body.kind === "deliver"
+          ? await this.handlers.deliver(
+              batch.map((e) => e.body as Delivery),
+              context,
+            )
+          : await (this.handlers[effect.body.kind] as EffectHandler)(effect.body, context);
     } catch (error) {
       this.store.attempted(effect.key);
       if (effect.attempts + 1 >= MAX_ATTEMPTS) {
         this.store.settle(effect.key, "failed", String(error), this.now().toISOString());
         daemonLog.error(`project ${this.project.id}: effect ${effect.key} failed ${MAX_ATTEMPTS} times`, error);
-      } else this.later(2 ** effect.attempts * 1000);
+      } else {
+        for (const e of batch) this.waiting.add(e.key);
+        this.later(2 ** effect.attempts * 1000);
+      }
       return;
     }
-    if (handled.status === "wait" || this.disposed) return;
+    if (handled.status === "wait") {
+      for (const e of batch) this.waiting.add(e.key);
+      return;
+    }
+    if (this.disposed) return;
     const at = this.now().toISOString();
     // Facts before the settle: a crash between them re-runs the effect, and its facts come back with the same ids.
     const facts = handled.status === "done" || handled.status === "failed" ? (handled.facts ?? []) : [];
@@ -102,13 +139,13 @@ export class Dispatcher {
       if (!outcome.ok)
         daemonLog.error(`project ${this.project.id}: fact for ${effect.key} refused: ${outcome.refused.says}`);
     }
-    this.store.settle(effect.key, handled.status, handled.status === "done" ? null : handled.why, at);
+    for (const e of batch) this.store.settle(e.key, handled.status, handled.status === "done" ? null : handled.why, at);
   }
 
   private later(ms: number): void {
     const timer = setTimeout(() => {
       this.timers.delete(timer);
-      this.kick();
+      this.kick("freed");
     }, ms);
     timer.unref();
     this.timers.add(timer);

@@ -357,5 +357,6 @@ function blankScope(id: string, parent: string | null, role: string, kind: Scope
     candidate: null,
     integrating: false,
     children: 0,
+    spent: { usd: 0, tokens: 0 },
   };
 }

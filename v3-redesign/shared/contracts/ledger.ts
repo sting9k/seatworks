@@ -78,6 +78,8 @@ export type Scope = {
   readonly candidate: Candidate | null;
   readonly integrating: boolean;
   readonly children: number;
+  /** What agents in this scope and every scope below it have spent, kept as they report it. */
+  readonly spent: { readonly usd: number; readonly tokens: number };
 };
 
 export type ActorStatus = "seated" | "released" | "gone";
