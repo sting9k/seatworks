@@ -23,7 +23,10 @@ export function QuestionCard({
   theme: PluginTheme;
   onAnswered: () => void;
 }) {
-  const [choice, setChoice] = useState(question.recommend ?? question.options[0] ?? "");
+  const { options, recommend } = question;
+  const offered = recommend !== null && options.includes(recommend);
+  // Only a recommended option starts picked, in sight: anything else would answer for the Human in one press.
+  const [choice, setChoice] = useState(offered ? recommend : "");
   const [note, setNote] = useState("");
   const { busy, said, send } = useHumanCommand(project);
   const styles = useStyles(theme, (colors) => ({
@@ -73,9 +76,10 @@ export function QuestionCard({
           <Text style={styles.small}>{question.from} asks</Text>
         </View>
         <Text style={styles.question}>{question.text}</Text>
-        {question.options.length > 0 ? (
+        {recommend !== null && !offered ? <Text style={styles.small}>Recommended: {recommend}</Text> : null}
+        {options.length > 0 ? (
           <View accessibilityRole="radiogroup" accessibilityLabel={question.text}>
-            {question.options.map((option) => {
+            {options.map((option) => {
               const on = option === choice;
               return (
                 <Pressable
@@ -96,7 +100,7 @@ export function QuestionCard({
                   <Text
                     style={{ fontSize: FONT.base, color: on ? theme.colors.foreground : theme.colors.foregroundMuted }}
                   >
-                    {option === question.recommend ? `${option} (Recommended)` : option}
+                    {option === recommend ? `${option} (Recommended)` : option}
                   </Text>
                 </Pressable>
               );
@@ -108,7 +112,7 @@ export function QuestionCard({
           value={note}
           onChangeText={setNote}
           editable={!busy}
-          placeholder={question.options.length > 0 ? "A note with your answer (optional)" : "Your answer"}
+          placeholder={options.length > 0 ? "A note with your answer (optional)" : "Your answer"}
           placeholderTextColor={theme.colors.foregroundMuted}
           multiline
         />
