@@ -211,10 +211,11 @@ A command is called by an actor and checked against its role's properties and th
 | `raise_finding`    | any seated actor                                    | Opens a finding                                                          |
 | `classify_finding` | whoever answers it (§4.4)                           | `changes` with change events, or `alternative` / `minor` with a reason   |
 | `withdraw_finding` | the raiser                                          |                                                                          |
+| `reopen_finding`   | the raiser                                          | Reopens a kept finding with new evidence                                 |
 | `hand_back`        | the writer                                          | Records a claim at a commit; asks for evidence on it                     |
 | `record_verdict`   | the actor of a reading scope                        | Records its verdict as evidence on its commit                            |
 | `record_evidence`  | the bridge, for a satellite's result                 | Records evidence                                                         |
-| `record_usage`     | the bridge, at each turn's end                       | Records what the turn spent, in tokens and money                         |
+| `record_turn`, `record_workspace`, `record_agent`, `record_gone`, `record_delivery`, `record_candidate`, `record_integration`, `record_publish`, `record_permission`, `record_human_words`, `record_observation` | the bridge, for a fact | Records what a satellite or the agent host reported (`LEDGER.md` §5) |
 | `set_checks`       | owner of the root, or the Human                      | Sets the project's checks                                                |
 | `run_checks`       | owner of the parent, or the writer                   | Runs the project's checks, or named commands, on a commit of the scope   |
 | `integrate`        | owner of the parent                                 | Brings the scope into its parent (I4)                                    |
@@ -248,14 +249,7 @@ Integrations into one scope MUST run one at a time: bring the parent in, run evi
   satellite that sees a key twice does the work once, and a fact that carries a key already seen is dropped.
 - On restart the kernel folds the log. Open obligations are open again; effects without a result are asked again.
 
-Events: `scope_opened`, `actor_seated`, `brief_issued`, `brief_amended`, `plan_set`, `plan_amended`, `edge_added`,
-`edge_removed`, `handed_over`, `finding_raised`, `finding_classified`, `finding_waiting`, `finding_resumed`,
-`finding_reopened`, `finding_withdrawn`, `claim_made`, `evidence_recorded`, `integrated`, `sent_back`, `reseated`,
-`scope_dropped`, `scope_held`, `scope_resumed`, `report_made`, `message_sent`, `message_delivered`, `message_moved`,
-`question_asked`, `question_answered`, `obligation_opened`, `obligation_closed`, `obligation_moved`, `machine_held`,
-`machine_released`, `actor_released`, `actor_gone`, `turn_failed`, `usage_recorded`, `checks_set`, `published`,
-`observation_made`, `noise_marked`, `attended`, `passed`, `acknowledged`, `attention_climbed`, `permission_asked`,
-`permission_answered`.
+Every event and its payload is in `LEDGER.md` §6, with the state it folds into (§3) and the effects each asks for (§8).
 
 ## 8. Views
 

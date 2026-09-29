@@ -40,7 +40,7 @@ A port may have one adapter and its fake. An abstraction above that needs a seco
   showed, the Human, or the bridge for a fact). A command id seen before returns its earlier result.
 - One queue per project: commands run one at a time through `decide`; events and effects commit in one transaction.
 - Dispatch: pending effects go to their satellite after the commit, never before. The result comes back as a command
-  (`record_evidence`, `record_usage`, ...), carrying the effect's key.
+  (`record_evidence`, `record_turn`, ...), carrying the effect's key.
 - The machine hold is read from the machine's own file before dispatching anything that loads the machine.
 
 ## Git (workspace)
