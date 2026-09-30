@@ -25,6 +25,7 @@ import { type Home, layHome } from "../core/home.ts";
 import { Keys } from "../core/keys.ts";
 import { daemonLog } from "../core/logger.ts";
 import { archiveDir, projectDir } from "../core/paths.ts";
+import { rulesDir } from "../core/rules.ts";
 import { installShim } from "../core/shim.ts";
 import { type Harness, PaseoHost } from "../satellites/agent-host/host.ts";
 import { PaseoLink } from "../satellites/agent-host/paseo-link.ts";
@@ -712,6 +713,7 @@ export class Plugin {
         shimDir: ready.shimDir,
       },
       scratch,
+      rules: rulesDir(this.root),
       checkTimeoutMs: CHECK_TIMEOUT_MS,
       log: () => store.read(0),
       marker: PLUGIN_ID,

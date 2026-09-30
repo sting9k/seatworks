@@ -125,6 +125,10 @@ do (`profile.yaml`), prompts (`roles/`), skills (`skills/`), and what the watch 
 directory (`~/.local/share/seatworks/profile/` on Linux and macOS): it replaces the shipped one whole, with no change
 to code. Roles are data; nothing in the code knows their names.
 
+Rules of your own that should hold whatever the profile, such as how you want code written, go in `rules/` under the
+same directory: `all.md` for every agent, `<role>.md` for one role (`lead.md`). Each agent made from then on reads them
+after its role's prompt; an agent already running keeps what it started with.
+
 ## What to expect
 
 - Agents are real and cost real money. Watch the first lanes, and set an appetite with the Supervisor.

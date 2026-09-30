@@ -139,6 +139,8 @@ What the Human's surface shows as stuck: read from the log and the outbox, chang
 | Case                                                        | Expect                                                     |
 | ----------------------------------------------------------- | ---------------------------------------------------------- |
 | A Pi agent is seated                                        | Seatworks' home, with the Human's login linked; the extension gives it the team's tools |
+| The Human keeps `rules/all.md` and `rules/lead.md` under the state root | A Lead seated after gets both after its role's prompt; a Supervisor only `all.md` |
+| A rules file edited after one agent was made                | The next agent seated gets the edit                        |
 
 ## Workspace and evidence
 

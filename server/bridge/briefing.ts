@@ -3,13 +3,16 @@ import type { State } from "../../shared/kernel/state.ts";
 import { statusText } from "../../shared/views/status.ts";
 import type { Bundle } from "../profile/bundle.ts";
 
-/** An agent's standing instructions: its role's prompt, and its skills named with where to read each. */
-export function systemPromptFor(bundle: Bundle, actor: Actor): string {
-  const prompt = bundle.prompts.get(actor.role) ?? "";
+/**
+ * An agent's standing instructions: its role's prompt, its skills named with where to read each, and the rules the
+ * Human keeps for its role outside the profile.
+ */
+export function systemPromptFor(bundle: Bundle, actor: Actor, rules: string | null): string {
+  const prompt = (bundle.prompts.get(actor.role) ?? "").trimEnd();
   const skills = bundle.skills.get(actor.role) ?? [];
-  if (skills.length === 0) return prompt;
   const list = skills.map((s) => `- \`${s.name}\`: ${s.description} Read ${s.path} when it applies.`).join("\n");
-  return `${prompt.trimEnd()}\n\n## Skills\n\n${list}\n`;
+  const parts = [prompt, list && `## Skills\n\n${list}`, rules && `## The Human's rules\n\n${rules}`];
+  return `${parts.filter(Boolean).join("\n\n")}\n`;
 }
 
 /** The first words an agent is sent: where it stands on the record, which is also what `status` shows. */

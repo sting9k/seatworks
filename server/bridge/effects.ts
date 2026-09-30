@@ -6,6 +6,7 @@ import type { Scope } from "../../shared/contracts/ledger.ts";
 import type { State } from "../../shared/kernel/state.ts";
 import { glossaryText, mapText } from "../../shared/views/docs.ts";
 import type { Keys } from "../core/keys.ts";
+import { humanRules } from "../core/rules.ts";
 import type { PaseoHost } from "../satellites/agent-host/host.ts";
 import { renderBatch } from "../satellites/delivery/render.ts";
 import type { EvidenceRunner } from "../satellites/evidence/runner.ts";
@@ -31,6 +32,8 @@ export type Wiring = {
     readonly shimDir: string;
   };
   readonly scratch: string;
+  /** Where the Human keeps their own rules by role. */
+  readonly rules: string;
   readonly checkTimeoutMs: number;
   /** The project's log from its start, which the docs are written from. */
   readonly log: () => Iterable<Event>;
@@ -109,7 +112,7 @@ export function handlersFor(w: Wiring): Handlers {
         title: `${actor.scope} · ${actor.role}`,
         profile: actor.model,
         cwd,
-        systemPrompt: systemPromptFor(w.bundle, actor),
+        systemPrompt: systemPromptFor(w.bundle, actor, humanRules(w.rules, actor.role)),
         prompt: firstPrompt(
           state,
           actor,

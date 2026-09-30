@@ -14,6 +14,7 @@ Lead deep in one lane and its acceptance, the Peer deep in one task. None contai
 | Skills                  | A craft used now and then, loaded when the moment comes                                 |
 | `profile.yaml`          | Properties, tools, models, skills: the arrangement, as data                              |
 | `project.md`            | What every agent in an attached project must know of the team, kept in its `AGENTS.md`  |
+| The Human's rules       | Their own way of working, outside any profile: `rules/all.md` and `rules/<role>.md` under the state root, after the role's prompt of each agent made from then on |
 
 V1's prompts ran to 166 lines for the Lead and 135 for the Supervisor, most of it the desk's mechanics told as rules:
 merge queues, review timing, severity ladders. Each rule the kernel or a tool reply now holds leaves the prompt. What
