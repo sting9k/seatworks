@@ -127,6 +127,38 @@ test("a failed turn and a gone agent are told to the owner above", () => {
   assert.equal(ledger.state.scopes.get("1.1")?.owner, null);
 });
 
+test("a failed turn the plugin's words began gets them again once; a second failure is told; a stop is not", () => {
+  const { ledger, lead, peer } = team();
+  const turn = (outcome: string, began: string | null) =>
+    ledger.fact("record_turn", {
+      actor: peer,
+      outcome,
+      why: "529 overloaded",
+      began,
+      tokensSoFar: 0,
+      usdSoFar: 0,
+      seen: 0,
+    });
+  const toPeer = () => ledger.effects.filter((e) => e.body.kind === "deliver" && e.body.to === peer);
+  const toLead = () => ledger.effects.filter((e) => e.body.kind === "deliver" && e.body.to === lead);
+  const leadBefore = toLead().length;
+
+  ledger.must(turn("failed", "1 of 1 · m7 from a2\nWhy int16?"));
+  const again = toPeer().at(-1)?.body;
+  assert.ok(again?.kind === "deliver" && again.item.kind === "note");
+  assert.equal(again.item.asks, true);
+  assert.match(again.item.text, /529 overloaded[\s\S]*Why int16\?/);
+  assert.equal(toLead().length, leadBefore, "the owner above is not told of a turn sent again");
+
+  const peerBefore = toPeer().length;
+  ledger.must(turn("failed", again.item.text));
+  assert.equal(toPeer().length, peerBefore, "the words are sent again once, not a second time");
+  assert.equal(toLead().length, leadBefore + 1);
+
+  ledger.must(turn("cancelled", "1 of 1 · m9 from a2\nStop there"));
+  assert.equal(toPeer().length, peerBefore);
+});
+
 test("an attention about the root's own agent goes to the Human, who sees it and may mark it noise", () => {
   const { ledger, supervisor } = team();
   ledger.must(ledger.fact("record_observation", seen(supervisor, "root", "tell", "big-decision")));

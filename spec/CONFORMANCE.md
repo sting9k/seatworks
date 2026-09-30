@@ -72,7 +72,7 @@ on an implementation without the rule before it is trusted.
 | Reseat a Peer mid-task                                                                  | Same scope and copy; its obligations with the new actor    |
 | Reseat a Peer whose scope is held                                                        | Refused: nothing new is seated in a held scope             |
 | A tool call whose arguments name another agent as caller                                | Recorded as the agent whose key made the call              |
-| A Peer's turn fails on the host's error                                                 | A fact to its Lead; the seat, its obligations and mail stay |
+| A Peer's turn that no words of the plugin began fails on the host's error              | A fact to its Lead; the seat, its obligations and mail stay |
 | Three turns an agent reports at $1, $3, then $0.50 after its session restarted          | It spent $3.50; its lane and the root the same             |
 | The Human types into a Lead's chat, and two turns end, each hook carrying the whole history | Its Supervisor has one copy                          |
 | A hand-back in a project with checks set                                                | Those checks run on its commit, as evidence                |
@@ -96,6 +96,9 @@ on an implementation without the rule before it is trusted.
 | A Peer reseated with three messages queued                  | The new Peer receives the three                          |
 | A batch longer than one message allows                      | Several deliveries in a row; nothing cut                 |
 | Restart with messages queued                                | All delivered after                            |
+| A turn the plugin's words began fails on the host's error   | Those words sent again once, saying the turn failed and why; the owner above not told |
+| The turn they began fails too                               | A fact to the owner above; nothing sent again  |
+| A turn the plugin's words began is cancelled                | Nothing sent again: a stop is the Human's      |
 
 ## Recovery
 

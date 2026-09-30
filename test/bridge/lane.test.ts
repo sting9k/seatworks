@@ -207,6 +207,51 @@ test("the Human's words typed into a Lead's chat reach its Supervisor once, thou
   supervisor.close();
 });
 
+test("a turn the plugin's words began that fails in Paseo gets them again; one the Human's words began does not", async () => {
+  const repo = mkdtempSync(join(tmpdir(), "sw-failed-"));
+  git(repo, "init", "-q", "-b", "main");
+  writeFileSync(join(repo, "a.txt"), "a\n");
+  git(repo, "add", ".");
+  git(repo, "commit", "-q", "-m", "start");
+  const plugin = new Plugin(mkdtempSync(join(tmpdir(), "sw-root-")));
+  plugins.push(plugin);
+  const paseo = fakePaseo(pluginDir);
+  plugin.saw(paseo.api);
+  const { socketPath } = await plugin.whenReady();
+  await plugin.openProject(repo, "main");
+  await plugin.idle();
+  const supervisor = await agentTools(socketPath, paseo.created[0]!.env);
+  const lane = await supervisor.call("open_scope", {
+    parent: "root",
+    role: "lead",
+    paths: ["docs/"],
+    brief: { goal: { text: "Tidy the docs" }, kind: "verification" },
+  });
+  assert.ok(lane.ok, lane.text);
+  await plugin.idle();
+  const leadAgent = paseo.created[1]!;
+  const failed = { kind: "failed", error: { message: "529 overloaded" } };
+  const first = [{ type: "user_message" as const, text: leadAgent.prompt, clientMessageId: "7:agent:prompt" }];
+  await plugin.turnEnded(leadAgent.host, failed, first);
+  await plugin.idle();
+  const again = paseo.sent.filter((s) => s.host === leadAgent.host);
+  assert.equal(again.length, 1);
+  assert.ok(again[0]!.text.includes("529 overloaded") && again[0]!.text.includes(leadAgent.prompt));
+
+  await plugin.turnEnded(leadAgent.host, { kind: "completed" }, [
+    ...first,
+    { type: "user_message" as const, text: again[0]!.text, clientMessageId: again[0]!.messageId },
+  ]);
+  await plugin.turnEnded(leadAgent.host, failed, [
+    ...first,
+    { type: "user_message" as const, text: again[0]!.text, clientMessageId: again[0]!.messageId },
+    { type: "user_message" as const, text: "Rename the anchors", clientMessageId: "app-1" },
+  ]);
+  await plugin.idle();
+  assert.equal(paseo.sent.filter((s) => s.host === leadAgent.host).length, 1);
+  supervisor.close();
+});
+
 test("a create whose reply was lost is tried again after the record moved on, and the seat keeps the one agent made", async () => {
   const repo = mkdtempSync(join(tmpdir(), "sw-lost-"));
   git(repo, "init", "-q", "-b", "main");

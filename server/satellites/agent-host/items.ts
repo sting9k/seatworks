@@ -11,8 +11,16 @@ export type TurnItem = {
   readonly path: string | null;
 };
 
-/** What one turn showed: its items, the words a person typed into it, and how much of the history is now read. */
-export type Turn = { readonly items: readonly TurnItem[]; readonly typed: readonly string[]; readonly seen: number };
+/**
+ * What one turn showed: its items, the words a person typed into it, the plugin's words that began it if they did, and
+ * how much of the history is now read.
+ */
+export type Turn = {
+  readonly items: readonly TurnItem[];
+  readonly typed: readonly string[];
+  readonly began: string | null;
+  readonly seen: number;
+};
 
 /**
  * The turn that just ended. Paseo's hook hands over the agent's whole history, so the turn is what follows the `seen`
@@ -35,7 +43,9 @@ export function turnOf(
   const typed = window.flatMap((i) =>
     i.type === "user_message" && i.clientMessageId !== undefined && !ours(i.clientMessageId) ? [i.text] : [],
   );
-  return { items: turnItems(window), typed, seen: timeline.length };
+  const first = window.find((i) => i.type === "user_message");
+  const began = first?.clientMessageId !== undefined && ours(first.clientMessageId) ? first.text : null;
+  return { items: turnItems(window), typed, began, seen: timeline.length };
 }
 
 function turnItems(timeline: readonly AgentTimelineItem[]): TurnItem[] {

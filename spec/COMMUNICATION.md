@@ -71,7 +71,14 @@ sent ──► queued ──► delivered ──► answered        (if it asks 
 | Only what asks nothing: a copy, a fact, a note, an attention marked `later` | Not woken; goes with the next delivery | Waits the same way       |
 
 A turn's end is a fact from the agent host (`PASEO.md`). A delivery sent as a turn starts that the host refuses as
-busy waits for the next turn's end; it is never pushed into the turn.
+busy waits for the next turn's end; it is never pushed into the turn. A reader waiting on a permission is inside its
+turn, so nothing reaches it until the permission is answered.
+
+**When a turn fails.** Words the plugin sent that began a turn the host's error ended (a provider's outage, a crash)
+are sent again once, saying the turn failed and why, so the reader is not left idle with what it was asked. They are
+not sent again as new words: the host keeps them in the reader's history, and a copy beside them would read as a second
+message. If that turn fails too, its owner above is told, as for any failed turn. A turn cancelled is never sent again:
+a stop is the Human's.
 
 **What the Human types** straight into an agent's chat is not queued: Paseo delivers it, and the kernel records it as
 a message from the Human (`KERNEL.md` §4.7). What the Human sends from their surface goes through the mailbox like

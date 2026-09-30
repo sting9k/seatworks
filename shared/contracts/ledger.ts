@@ -103,6 +103,8 @@ export type Actor = {
   readonly reported: { readonly tokens: number; readonly usd: number };
   /** How many items of its agent's history were read by the end of its last turn. */
   readonly seen: number;
+  /** Its last turn failed and its words were sent again, so the next turn's failure is only told. */
+  readonly resent: boolean;
   readonly startedAt: string;
 };
 

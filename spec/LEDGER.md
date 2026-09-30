@@ -129,6 +129,7 @@ type Actor = { id: ActorId; role: RoleName; scope: ScopeId; model: string;
                turns: number; tokens: number; usd: number;   // what it spent, summed turn by turn
                reported: { tokens: number; usd: number };   // its session's running totals at its last turn's end
                seen: number;                                // items of its agent's history read by then
+               resent: boolean;                             // its last turn failed and its words went again
                startedAt: string };
 ```
 
@@ -269,7 +270,7 @@ the shell and never reaches `decide`.
 | ---------------------- | ----------------------------------------------------------------------- | ----------------------------------- |
 | `record_workspace`     | `scope, ok, branch?, head?, why?`                                              | `workspace_ready` or `workspace_failed` |
 | `record_agent`         | `actor, host`                                                           | `agent_started`                     |
-| `record_turn`          | `actor, outcome: done \| failed \| cancelled, why?, tokensSoFar, usdSoFar, seen` | `turn_ended`, `attention_climbed`\* |
+| `record_turn`          | `actor, outcome: done \| failed \| cancelled, why?, began?, tokensSoFar, usdSoFar, seen` | `turn_ended`, `attention_climbed`\* |
 | `record_gone`          | `actor, why`                                                            | `actor_gone`, `obligation_moved`\*, `obligation_closed`\* (its permissions) |
 | `record_delivery`      | `messages, attentions`                                                  | `message_delivered`\*, `attention_delivered`\* |
 | `record_candidate`     | `scope, commit, result: { candidate, parentHead } \| { conflict: paths }` | `candidate_ready` or `candidate_conflict` |
@@ -329,7 +330,7 @@ Every event, with its payload. `evolve` handles each; an unknown type stops the 
 | `machine_held`, `machine_released` | `actor, why`                                                                    |
 | `actor_released`      | `actor, reason`                                                                              |
 | `actor_gone`          | `actor, why`                                                                                 |
-| `turn_ended`          | `actor, outcome, why, tokens, usd` (this turn's share), `tokensSoFar, usdSoFar, seen`         |
+| `turn_ended`          | `actor, outcome, why, again, tokens, usd` (this turn's share), `tokensSoFar, usdSoFar, seen`; `again` is the text sent again for a failed turn the plugin's words `began`, none when its last turn was already one |
 | `checks_set`          | `checks`                                                                                     |
 | `publish_requested`   | `remote, branch, sha`                                                                        |
 | `published`           | `remote, branch, sha`                                                                        |
@@ -385,6 +386,7 @@ it was delivered, an attention not settled climbs: `attention_climbed` opens a c
 | `actor_released`                         | `agent.archive { host }`                                 | `<seq>:archive`             |
 | `permission_answered`                    | `agent.permission { host, request, allow, reason }`, sent only while the agent still waits on it | `<seq>:permission` |
 | `permission_settled`                     | a note to its answerer that nothing is owed             | `<seq>:deliver`             |
+| `turn_ended` with `again`                | `deliver` of the words again to the reader, asking; otherwise, when failed, a note to the owner above | `<seq>:again`, `<seq>:note` |
 | `machine_held`, `machine_released`       | `machine.hold { project, actor, hold }`                  | `<seq>:machine`             |
 | `publish_requested`                      | `workspace.publish { branch, remote, expectedSha }`      | `<seq>:publish`             |
 | `plan_set`, `plan_amended` of the root; `integrated` of a lane | `docs.write`: the glossary and the map written again from the log | `<seq>:docs` |

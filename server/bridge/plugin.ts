@@ -539,7 +539,7 @@ export class Plugin {
     const runtime = who ? this.runtimes.get(who.project) : undefined;
     if (!who || !runtime) return;
     const read = runtime.project.view.actors.get(who.actor)?.seen ?? 0;
-    const { items, typed, seen } = turnOf(timeline, read, (id) => OURS.test(id));
+    const { items, typed, began, seen } = turnOf(timeline, read, (id) => OURS.test(id));
     this.reflex?.onTurn(who.project, who.actor, items, runtime.project.view);
     const usage = await ready.host.usage(hostId);
     const result = outcome.kind === "completed" ? "done" : outcome.kind === "failed" ? "failed" : "cancelled";
@@ -553,6 +553,7 @@ export class Plugin {
         actor: who.actor,
         outcome: result,
         why: outcome.error?.message ?? null,
+        began,
         tokensSoFar: usage.tokens,
         usdSoFar: usage.usd,
         seen,

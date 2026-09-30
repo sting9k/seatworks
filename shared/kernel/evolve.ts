@@ -46,6 +46,7 @@ function apply(s: State, e: Event, at: string): State {
         usd: 0,
         reported: { tokens: 0, usd: 0 },
         seen: 0,
+        resent: false,
         startedAt: at,
       };
       return counted({ ...s, actors: withEntry(s.actors, e.actor, actor) }, "actor", e.actor);
@@ -243,6 +244,7 @@ function apply(s: State, e: Event, at: string): State {
         usd: a.usd + e.usd,
         reported: { tokens: e.tokensSoFar, usd: e.usdSoFar },
         seen: e.seen,
+        resent: e.again !== null,
       }));
       const scopes = new Map(next.scopes);
       for (let at = next.actors.get(e.actor)?.scope ?? null; at !== null; at = scopes.get(at)?.parent ?? null) {

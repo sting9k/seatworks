@@ -61,7 +61,8 @@ A Supervisor that seats a Peer straight under the root is the path for a small c
   - An agent calls the kernel through its own tool server, which carries a key the shell made for that agent when it
     was created. The caller is the agent the key belongs to, never a name in the arguments (`PORTS.md`, Tools).
   - A turn that fails (the host's error, a model's limit) keeps the seat and is a fact for the owner of its parent
-    scope. An agent that is gone leaves its seat empty; what it owed and what waited for it moves to that owner,
+    scope. When the plugin's own words began it, they are sent again once first, saying the turn failed and why: the
+    host's error, not the reader, ended it (`COMMUNICATION.md`). A turn cancelled is the Human's stop and gets nothing. An agent that is gone leaves its seat empty; what it owed and what waited for it moves to that owner,
     until they reseat or drop the scope.
 - **Scope.** A piece of the work. Fields: `id`, `parent` (none for the root), `owner` (an actor), `writer` (an
   actor or none), `kind` (`work`, or `reading` bound to a commit), `paths` (what it may write), `after` (scopes it

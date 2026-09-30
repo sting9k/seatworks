@@ -13,16 +13,24 @@ export function agentFact(ctx: Of<"record_agent">): Refusal | undefined {
   return undefined;
 }
 
-/** A turn's end: what it spent, and every attention its reader was sent and left, which climbs (LEDGER.md §7). */
+/**
+ * A turn's end: what it spent, and every attention its reader was sent and left, which climbs (LEDGER.md §7). A turn
+ * the plugin's words began that failed gets them again, once: the host's error, not the reader, ended it.
+ */
 export function turnFact(ctx: Of<"record_turn">): Refusal | undefined {
   const actor = ctx.state.actors.get(ctx.body.actor);
   if (actor?.status !== "seated") return undefined;
   const b = ctx.body;
+  const again =
+    b.outcome === "failed" && b.began !== null && !actor.resent
+      ? `Your last turn ended in an error before it finished: ${b.why ?? "no reason given"}. The words that began it, again:\n\n${b.began}`
+      : null;
   ctx.emit({
     type: "turn_ended",
     actor: actor.id,
     outcome: b.outcome,
     why: b.why,
+    again,
     tokens: rise(actor.reported.tokens, b.tokensSoFar),
     usd: rise(actor.reported.usd, b.usdSoFar),
     tokensSoFar: b.tokensSoFar,

@@ -195,7 +195,9 @@ export function react(e: Event, s: State): readonly Effect[] {
     }
     case "turn_ended": {
       const a = s.actors.get(e.actor);
-      if (a && e.outcome === "failed")
+      if (a && e.again !== null)
+        add("again", { kind: "deliver", to: a.id, item: { kind: "note", text: e.again, asks: true } });
+      else if (a && e.outcome === "failed")
         tell(ownerAbove(s, a), "note", `${a.id}'s turn in scope ${a.scope} failed: ${e.why ?? "no reason given"}`);
       break;
     }

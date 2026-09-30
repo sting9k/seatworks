@@ -56,7 +56,8 @@ const command = fc.oneof(
     type: fc.constant("record_turn"),
     args: fc.record({
       actor,
-      outcome: fc.constant("done"),
+      outcome: fc.constantFrom("done", "failed", "cancelled"),
+      began: fc.option(text),
       tokensSoFar: fc.nat(100),
       usdSoFar: fc.constant(0),
       seen: fc.nat(50),

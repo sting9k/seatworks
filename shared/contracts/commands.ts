@@ -194,6 +194,8 @@ export const COMMANDS = {
     actor: id,
     outcome: z.enum(["done", "failed", "cancelled"]),
     why: z.string().nullable().default(null),
+    /** The plugin's own words that began the turn, if its words began it. */
+    began: z.string().nullable().default(null),
     tokensSoFar: z.number().int().nonnegative(),
     usdSoFar: z.number().nonnegative(),
     seen: z.number().int().nonnegative(),

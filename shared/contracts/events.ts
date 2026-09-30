@@ -99,6 +99,8 @@ export type EventBody =
       actor: ActorId;
       outcome: "done" | "failed" | "cancelled";
       why: string | null;
+      /** What the plugin sends again for a failed turn its words began; none past one try. */
+      again: string | null;
       tokens: number;
       usd: number;
       tokensSoFar: number;
