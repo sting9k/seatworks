@@ -105,6 +105,12 @@ from Paseo 0.10.1: the plugin SDK, `@getpaseo/client`, `@getpaseo/protocol`, the
   its `PATH` among it, or a daemon restart would leave every agent unguarded.
 - Pi gets MCP servers only with `pi-mcp-adapter` installed (`HARNESS.md`, Pi).
 
+- A permission is asked inside a turn: the turn stays active while it waits, and a turn that ends denies what is
+  still pending (`agent-manager`, 0.10.2). So a delivery, sent only when `activeTurn` is empty, never reaches an agent
+  waiting on a permission, with no check of its own.
+- The `PaseoApi` a plugin is handed has no cancel and no change of model or thinking for a running agent; only the
+  low-level `DaemonClient` has them, which rule 2 keeps out. The Human stops a turn or changes a model in the agent's
+  own chat, which the surface opens.
 - A finish notification goes to a parent only for an agent made by Paseo's own `create_agent` tool with
   `notifyOnFinish`. Agents Seatworks makes through the plugin API get none, so nothing reaches a Lead around delivery.
 - Plugin settings work when host-scoped, as above.
