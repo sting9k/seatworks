@@ -68,6 +68,11 @@ test("one lane end to end: a Supervisor, a Lead and a Peer land a change on main
   const lead = await agentTools(socketPath, leadAgent.env);
   const refused = await lead.call("ask_human", { text: "?" });
   assert.equal(refused.ok, false);
+  const unheard = await lead.call("send_message", { to: "human", text: "?" });
+  assert.match(
+    unheard.text,
+    /^Refused \(I10\): .+\nWhat the record shows:\n- You are a2, a lead seated on scope 1, under a1\.\n- Your role speaks to: your parent's owner \(a1\); your children \(none seated\)\.$/,
+  );
   assert.ok(
     (
       await lead.call("open_scope", {

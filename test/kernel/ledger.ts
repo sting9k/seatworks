@@ -20,7 +20,8 @@ export function slpProfile(): Profile {
   return resolved.profile;
 }
 
-export type Outcome = { ok: true; events: Event[]; effects: Effect[] } | { ok: false; refused: Refusal };
+export type Outcome =
+  { ok: true; events: Event[]; effects: Effect[] } | { ok: false; refused: Refusal; standing: readonly string[] };
 
 /** The kernel driven as the shell drives it: parse at the boundary, decide, stamp, fold, react. */
 export class Ledger {

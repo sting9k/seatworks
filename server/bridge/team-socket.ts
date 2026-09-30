@@ -152,7 +152,7 @@ export class TeamSocket {
     });
     return outcome.ok
       ? { ok: true, text: recorded(outcome.events) }
-      : { ok: false, text: refusedText(outcome.refused) };
+      : { ok: false, text: refusedText(outcome.refused, outcome.standing) };
   }
 }
 
@@ -161,7 +161,8 @@ function recorded(events: readonly { type: string; [k: string]: unknown }[]): st
   return `Recorded: ${events.map((e) => e.type.replace(/_/g, " ")).join("; ")}.`;
 }
 
-function refusedText(r: Refusal): string {
+function refusedText(r: Refusal, standing: readonly string[]): string {
   const which = r.invariant.startsWith("I") ? ` (${r.invariant})` : "";
-  return `Refused${which}: ${r.says}`;
+  const shows = standing.length > 0 ? `\nWhat the record shows:\n${standing.map((l) => `- ${l}`).join("\n")}` : "";
+  return `Refused${which}: ${r.says}${shows}`;
 }

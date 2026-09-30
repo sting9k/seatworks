@@ -42,7 +42,8 @@ How the kernel and the shell around it are built, from what the systems that alr
 ### The kernel is a decider
 
 - `decide` checks a command against the state and the invariants (`KERNEL.md` §5) and returns events, or a refusal
-  that names the invariant. A refusal is a value, never a throw; a throw is a bug.
+  that names the invariant, with what the record shows of where the caller stands (`LEDGER.md` §2). A refusal is
+  a value, never a throw; a throw is a bug.
 - `evolve` folds one event into the state. It cannot refuse: the event already happened.
 - `react` is the third pure function: from an event and the state after it, the effects the event asks for, each
   with a key made from the event's sequence and the effect's kind. Keeping it apart from `decide` means a command's

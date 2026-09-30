@@ -295,6 +295,19 @@ test("I10: only the role with the Human's door asks them, and Peers do not messa
   assert.equal(refusedBy(ledger.as("a3", "send_message", { to: "a4", text: "hi" })), "I10");
 });
 
+test("a refusal shows what the record holds of each scope and actor its command names", () => {
+  const { ledger, lead, peer, task } = team();
+  const outside = ledger.as(peer, "send_message", { to: "a1", text: "Skip the Lead?" });
+  assert.ok(!outside.ok);
+  assert.ok(outside.standing.includes("a1: a supervisor, seated on scope root."), outside.standing.join("\n"));
+  const early = ledger.as(lead, "integrate", { scope: task, evidence: ["e1"] });
+  assert.ok(!early.ok);
+  assert.ok(
+    early.standing.includes("Scope 1.1: owned by a3, a peer; parent 1, owned by a2; open."),
+    early.standing.join("\n"),
+  );
+});
+
 test("I11: what a Peer was asked moves to whoever is reseated in its place, and never closes by itself", () => {
   const { ledger, lead, task } = team();
   ledger.must(ledger.as(lead, "send_message", { to: "a3", text: "Why int16?", asks: true }));

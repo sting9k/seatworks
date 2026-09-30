@@ -10,10 +10,14 @@ import * as watch from "./decide/watch.ts";
 import * as work from "./decide/work.ts";
 import { evolveAll } from "./evolve.ts";
 import { checkState } from "./invariants.ts";
+import { namedIn } from "./named.ts";
+import { standing } from "./standing.ts";
 import type { State } from "./state.ts";
 
+/** A refusal comes with what the record shows of where its caller stands (`standing.ts`). */
 export type Decision =
-  { readonly ok: true; readonly events: readonly EventBody[] } | { readonly ok: false; readonly refused: Refusal };
+  | { readonly ok: true; readonly events: readonly EventBody[] }
+  | { readonly ok: false; readonly refused: Refusal; readonly standing: readonly string[] };
 
 type Handler = (ctx: Context) => Refusal | undefined;
 type Handlers = { [T in CommandType]: (ctx: Context<Extract<CommandBody, { type: T }>>) => Refusal | undefined };
@@ -74,20 +78,28 @@ const SETTLES_ITSELF: ReadonlySet<CommandType> = new Set(["acknowledge", "mark_n
 
 /** The kernel: a command against the state gives events or one refusal (CORE.md). Pure: no I/O, clock or random id. */
 export function decide(command: Command, state: State, profile: Profile): Decision {
+  const refused = decideOrRefuse(command, state, profile);
+  return "invariant" in refused ? { ok: false, refused, standing: standing(state, profile, command) } : refused;
+}
+
+function decideOrRefuse(
+  command: Command,
+  state: State,
+  profile: Profile,
+): Refusal | { readonly ok: true; readonly events: readonly EventBody[] } {
   const denied = mayCall(command, state, profile);
-  if (denied) return { ok: false, refused: denied };
-  if (state.project === null && command.body.type !== "open_project")
-    return { ok: false, refused: refuse("state", "the project is not open") };
+  if (denied) return denied;
+  if (state.project === null && command.body.type !== "open_project") return refuse("state", "the project is not open");
   const ctx = new Context(state, profile, command);
   const handler = HANDLERS[command.body.type] as Handler;
   const refused = handler(ctx);
-  if (refused) return { ok: false, refused };
+  if (refused) return refused;
   if (command.caller.kind === "agent") {
     closeCarriedDirections(ctx);
     if (!SETTLES_ITSELF.has(command.body.type)) actOnAttentions(ctx);
   }
   const broken = checkState(evolveAll(state, ctx.events));
-  if (broken) return { ok: false, refused: broken };
+  if (broken) return broken;
   return { ok: true, events: ctx.events };
 }
 
@@ -137,18 +149,6 @@ function actOnAttentions(ctx: Context): void {
   for (const t of ctx.state.attentions.values())
     if (t.to === ctx.party && t.delivered !== null && (named.has(t.about.actor) || named.has(t.about.scope)))
       ctx.emit({ type: "attention_acted", attention: t.id, by: ctx.party });
-}
-
-const NAMING_KEYS = ["scope", "parent", "to", "actor", "from", "about", "target"] as const;
-
-function namedIn(body: CommandBody): Set<string> {
-  const found = new Set<string>();
-  const record = body as Record<string, unknown>;
-  for (const key of NAMING_KEYS) {
-    const value = record[key];
-    if (typeof value === "string") found.add(value);
-  }
-  return found;
 }
 
 export { isRefusal };

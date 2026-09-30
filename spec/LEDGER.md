@@ -41,13 +41,19 @@ type Command = {
   readonly fact?: EffectKey;         // a fact carries the key of the effect it answers
 };
 type Caller = { kind: "agent"; actor: ActorId } | { kind: "human" } | { kind: "bridge" };
-type Decision = { ok: true; events: readonly EventBody[] } | { ok: false; refused: Refusal };
+type Decision = { ok: true; events: readonly EventBody[] }
+             | { ok: false; refused: Refusal; standing: readonly string[] };
 type Refusal = { invariant: "I1" | "I2" | ... | "I12" | "authority" | "unknown" | "state"; says: string };
 ```
 
 `authority` is a caller whose role or relation does not allow the command (I5, I10 and the table in `KERNEL.md` §6);
 `unknown` names an id that does not exist; `state` is a move the entity's lifecycle does not have (a finding
 classified twice). Each says what failed in a sentence the caller can act on.
+
+`standing` is what the record shows of where the caller stands, read off the scope graph the refusal was checked
+against: its seat, the owner above it, whom its role speaks to by relation, and for each scope or actor the command
+names, its owner, parent and state or its role and seat. Facts only, so the caller sees why without a second call;
+never what to do instead.
 
 Events are stored as `{ seq, at, by, commandId, type, payload }`; `by` is the caller.
 

@@ -72,6 +72,8 @@ on an implementation without the rule before it is trusted.
 | Reseat a Peer mid-task                                                                  | Same scope and copy; its obligations with the new actor    |
 | Reseat a Peer whose scope is held                                                        | Refused: nothing new is seated in a held scope             |
 | A tool call whose arguments name another agent as caller                                | Recorded as the agent whose key made the call              |
+| A Lead sends a message to the Human, whom its role does not speak to                   | Refused (I10), with what the record shows of where it stands: its seat, the owner above, and whom its role speaks to |
+| A refused command that names a scope or an actor                                        | The refusal also says, of each, its owner, its parent and state, or its role and seat |
 | A Peer's turn that no words of the plugin began fails on the host's error              | A fact to its Lead; the seat, its obligations and mail stay |
 | Three turns an agent reports at $1, $3, then $0.50 after its session restarted          | It spent $3.50; its lane and the root the same             |
 | The Human types into a Lead's chat, and two turns end, each hook carrying the whole history | Its Supervisor has one copy                          |

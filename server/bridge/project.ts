@@ -11,7 +11,9 @@ import { decode, encode } from "../core/codec.ts";
 import { KeyedQueue } from "../core/keyed-queue.ts";
 import type { ProjectStore } from "../satellites/store/project-store.ts";
 
-export type Submitted = { ok: true; events: readonly Event[]; replayed: boolean } | { ok: false; refused: Refusal };
+export type Submitted =
+  | { ok: true; events: readonly Event[]; replayed: boolean }
+  | { ok: false; refused: Refusal; standing: readonly string[] };
 
 /** A snapshot every so many events, so a restart folds little. */
 const SNAPSHOT_EVERY = 500;
