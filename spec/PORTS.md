@@ -124,13 +124,16 @@ machine, through the store.
 Shows the Human the kernel's views and the agents' own words, and takes the Human's commands.
 
 ```text
-views: whatTheHumanNeeds, sinceTheyLooked, chainOfChange, openObligations, status, signals
+views: whatTheHumanNeeds, sinceTheyLooked, chainOfChange, openObligations, status, signals, stuck
 commands: answer_question, send_message, hold_scope, resume_scope, amend_plan (lines of theirs), answer_permission,
           set_checks, publish
 upkeep: attach(repository), leftovers, clean(picked), checkUpdate
 ```
 
 - It shows only what the kernel's views and the agents said. It writes no summary of its own.
+- `stuck` reads the state and the outbox: an effect its satellite keeps throwing on, with how many times, or gave up
+  on after its last try, with the error; an open scope with nobody seated, with its parent's owner; words queued for
+  a seated actor whose agent never started. Facts only; it changes nothing and suggests nothing.
 - A message the Human types here or straight into an agent's chat is the same message on the record.
 - Attaching opens a project for one of Paseo's projects and starts its Supervisor. The plugin serves only attached
   projects: every hook passes over an agent it did not start.

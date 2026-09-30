@@ -117,7 +117,7 @@ export class Dispatcher {
     } catch (error) {
       this.store.attempted(effect.key);
       if (effect.attempts + 1 >= MAX_ATTEMPTS) {
-        this.store.settle(effect.key, "failed", String(error), this.now().toISOString());
+        this.store.settle(effect.key, "abandoned", String(error), this.now().toISOString());
         daemonLog.error(`project ${this.project.id}: effect ${effect.key} failed ${MAX_ATTEMPTS} times`, error);
       } else {
         for (const e of batch) this.waiting.add(e.key);

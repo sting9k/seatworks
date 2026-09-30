@@ -204,6 +204,15 @@ export function ProjectPage({
       ) : null}
       {human && tab === "activity" ? (
         <>
+          {(view?.stuck ?? []).length > 0 ? (
+            <SettingsSection title="Stuck">
+              <SettingsCard>
+                {(view?.stuck ?? []).map((line) => (
+                  <SettingsRow key={line} label={line} />
+                ))}
+              </SettingsCard>
+            </SettingsSection>
+          ) : null}
           <Spend human={human} theme={theme} />
           <Card theme={theme}>
             <View style={{ padding: SPACE.md, gap: 4 }}>

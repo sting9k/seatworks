@@ -116,6 +116,17 @@ on an implementation without the rule before it is trusted.
 | A satellite throws on an effect                                    | Tried again after a pause, with no change to wake it |
 | An agent's create loses its reply and is tried after the record moved on | The seat keeps the one agent made; a key Paseo cannot finish is its owner's fact |
 | Two projects on one daemon start their first agents                | Each is made: the create's key names its project |
+
+## Stuck
+
+What the Human's surface shows as stuck: read from the log and the outbox, changing nothing.
+
+| Case                                                     | Expect                                                              |
+| -------------------------------------------------------- | ------------------------------------------------------------------- |
+| An effect whose satellite keeps throwing                 | Shown with how many times it threw; once given up, with its last error |
+| An open scope whose seat was left empty                  | Shown, with its parent's owner                                      |
+| Words queued for a seated actor whose agent never started | Shown, with how many deliveries wait                               |
+| A project where nothing is stuck                         | Nothing shown                                                       |
 | A create Paseo refuses, such as a profile with no model            | The seat is gone with Paseo's reason, which its owner hears |
 | An agent reopened after a daemon restart                           | Its whole seat's environment again, the git shim first on its PATH |
 | The plugin's start fails once, then is asked again                 | It starts                                       |

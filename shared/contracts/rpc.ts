@@ -99,6 +99,8 @@ export const RPC = {
     output: z.object({
       human: HumanViewSchema.nullable(),
       activity: z.array(z.string()),
+      /** What looks stuck, as facts (`shared/views/stuck.ts`). */
+      stuck: z.array(z.string()),
       root: z.string(),
       alarm: z.string().nullable(),
     }),

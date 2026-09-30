@@ -20,6 +20,7 @@ import { type Chain, type Signals, chainOf, scopeRecordText, signalsOf } from ".
 import type { HumanView, Leftover } from "../../shared/contracts/rpc.ts";
 import { humanView } from "../../shared/views/human.ts";
 import { statusText } from "../../shared/views/status.ts";
+import { stuckOf } from "../../shared/views/stuck.ts";
 import { type Home, layHome } from "../core/home.ts";
 import { Keys } from "../core/keys.ts";
 import { daemonLog } from "../core/logger.ts";
@@ -488,7 +489,7 @@ export class Plugin {
   }
 
   /** The Human's view of one project: what they need to know, and the last things that happened. */
-  async view(project: string): Promise<{ human: HumanView; activity: string[]; root: string } | null> {
+  async view(project: string): Promise<{ human: HumanView; activity: string[]; stuck: string[]; root: string } | null> {
     const ready = await this.whenReady();
     if (!existsSync(join(projectDir(this.root, project), "project.json"))) return null;
     const runtime = this.runtimes.get(project) ?? this.open(project, ready);
@@ -499,6 +500,7 @@ export class Plugin {
     return {
       human: humanView(runtime.project.view),
       activity,
+      stuck: stuckOf(runtime.project.view, runtime.store.pending(), runtime.store.abandoned()),
       root: statusText(runtime.project.view, "root", null) ?? "",
     };
   }

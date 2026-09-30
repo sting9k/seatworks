@@ -71,7 +71,9 @@ Human's question of where a line's authority came from, which is P8.
 - **Commit.** The events and the effects they ask for are written in one SQLite transaction, with the expected
   sequence checked. Nothing is sent before the commit, so nothing is sent for an event that was not kept.
 - **Dispatch.** A dispatcher takes each pending effect to its satellite, and records its result as a fact with the
-  effect's key. A fact whose key was seen is dropped.
+  effect's key. A fact whose key was seen is dropped. An effect whose satellite throws is tried again after a pause
+  that doubles; after five throws it is settled `abandoned`, which no fact reached, and the Human's `stuck` view shows
+  it.
 - **Idempotent effects.** Each effect either carries its key to the far side (an agent's create key) or checks before
   it acts (an agent looked for by its labels, a branch advanced only from the sha it expects). An effect that can be
   neither is not written. One gap is known: Paseo shows a message sent twice with one `clientMessageId` once but runs

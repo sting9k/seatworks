@@ -4,7 +4,8 @@ import { DatabaseSync, type StatementSync } from "node:sqlite";
 import type { Effect } from "../../../shared/contracts/effects.ts";
 import type { Event } from "../../../shared/contracts/events.ts";
 
-export type EffectStatus = "pending" | "done" | "dropped" | "failed";
+/** `abandoned`: its satellite threw on every try, so no fact about it reached the record. */
+export type EffectStatus = "pending" | "done" | "dropped" | "failed" | "abandoned";
 export type PendingEffect = Effect & { readonly seq: number; readonly attempts: number };
 
 const SCHEMA = `
@@ -120,6 +121,17 @@ export class ProjectStore {
       const r = row as { key: string; event_seq: number; payload: string; attempts: number };
       return { key: r.key, seq: r.event_seq, attempts: r.attempts, body: JSON.parse(r.payload) as Effect["body"] };
     });
+  }
+
+  /** Effects given up after throwing, with the last error, for as long as their rows are kept. */
+  abandoned(): (Effect & { why: string })[] {
+    return this.db
+      .prepare("SELECT key, payload, result FROM effects WHERE status = 'abandoned' ORDER BY event_seq, key")
+      .all()
+      .map((row) => {
+        const r = row as { key: string; payload: string; result: string };
+        return { key: r.key, body: JSON.parse(r.payload) as Effect["body"], why: String(JSON.parse(r.result)) };
+      });
   }
 
   /** Settles a pending effect; false when its key is unknown or was settled before, so a duplicate fact is dropped. */
