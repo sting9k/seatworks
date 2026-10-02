@@ -5,3 +5,4 @@ spec
 profile
 .claude
 *.md
+editor/dist

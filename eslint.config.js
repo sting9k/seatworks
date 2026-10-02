@@ -3,7 +3,7 @@ import { defineConfig } from "eslint/config";
 import tseslint from "typescript-eslint";
 
 export default defineConfig(
-  { ignores: ["node_modules", "concept", "spec", "profile", ".claude"] },
+  { ignores: ["node_modules", "concept", "spec", "profile", ".claude", "editor/dist"] },
   js.configs.recommended,
   tseslint.configs.strictTypeChecked,
   {
@@ -57,6 +57,12 @@ export default defineConfig(
     files: ["client/**/*.{ts,tsx}", "index.client.tsx"],
     languageOptions: {
       parserOptions: { projectService: false, project: "./tsconfig.client.json", tsconfigRootDir: import.meta.dirname },
+    },
+  },
+  {
+    files: ["editor/**/*.{ts,tsx}"],
+    languageOptions: {
+      parserOptions: { projectService: false, project: "./editor/tsconfig.json", tsconfigRootDir: import.meta.dirname },
     },
   },
   { files: ["eslint.config.js"], extends: [tseslint.configs.disableTypeChecked] },

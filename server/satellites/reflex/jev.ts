@@ -1,4 +1,4 @@
-import type { QuestionSpec, Route } from "./config.ts";
+import type { QuestionSpec, Route } from "../../../shared/contracts/reflex.ts";
 
 /** A question in the System One body, as TypeSafe's SDK sends it. */
 type Asked =

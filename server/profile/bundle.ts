@@ -2,7 +2,12 @@ import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parse } from "yaml";
-import { type Profile, ProfileFileSchema, resolveProfile } from "../../shared/contracts/profile.ts";
+import {
+  type Profile,
+  ProfileFileSchema,
+  resolveProfile,
+  skillDescription,
+} from "../../shared/contracts/profile.ts";
 
 /** What agents are started with from a profile directory: the kernel's profile, each role's prompt and skills. */
 export type Bundle = {
@@ -41,7 +46,7 @@ export function loadBundle(dir: string): Bundle {
       name,
       (role.skills ?? []).map((skill) => {
         const path = join(dir, "skills", skill, "SKILL.md");
-        return { name: skill, description: describe(readFileSync(path, "utf8")), path };
+        return { name: skill, description: skillDescription(readFileSync(path, "utf8")), path };
       }),
     );
   }
@@ -69,10 +74,4 @@ export function loadBundle(dir: string): Bundle {
     environment,
     project,
   };
-}
-
-/** A skill's `description` from its frontmatter. */
-function describe(skill: string): string {
-  const match = /^description:\s*"?(.*?)"?\s*$/m.exec(skill);
-  return match?.[1] ?? "";
 }

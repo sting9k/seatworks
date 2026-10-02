@@ -5,8 +5,9 @@ touching the plugin. SLP is the one Seatworks ships. A template is to Seatworks 
 ComfyUI: picked from a gallery, opened as a graph, changed, and run. `EDITOR.md` says how one is opened and changed;
 this says what a template is, what the plugin reads of it, and how it reaches a machine.
 
-None of this is built. The order it is built in is at the end. A change it asks of another spec file is listed under
-What this changes, and is made in the commit that builds it, so a spec and the code never disagree.
+Of this, only the editor's reading is built (`EDITOR.md`); the plugin behaves as it did. The order it is built in is at
+the end. A change it asks of another spec file is listed under What this changes, and is made in the commit that
+builds it, so a spec and the code never disagree.
 
 ## Open, not neutral
 
@@ -136,6 +137,9 @@ answered it, so a question reworded in a template has not earned its `tell` and 
 | `seatworks`   | The release of Seatworks it was made against                                                         |
 | `editor`      | The editor's own: where each node sits, and the steps the flow is written from                       |
 
+The gallery reads `name`, `description` and `tags` so far, and refuses a file with any other key; each of the rest
+is read from the step that uses it.
+
 What a template needs of a machine (the Paseo agent profiles its roles name, the variables its servers read) is read
 from `profile.yaml` by the gallery and the installer, never declared a second time here, where it could fall out of
 step. A template for an older core is not upgraded when read. It loads or it fails with what is wrong, as any profile
@@ -238,7 +242,6 @@ Each is made in the commit that builds it.
 | `PORTS.md`       | Agent host: `create` takes outside servers. Human surface: attaching names a profile; the docs pointed at are a list |
 | `HARNESS.md`     | Which agents take an outside server, and that the guards do not reach one                          |
 | `ROLES.md`       | What goes where: the Human's rules by profile; the team's flow                                     |
-| `STACK.md`       | The editor's stack and its folder (`EDITOR.md`)                                                    |
 | `CONFORMANCE.md` | The cases below, and `EDITOR.md`'s                                                                 |
 
 ## Cases

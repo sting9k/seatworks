@@ -115,3 +115,9 @@ export function resolveProfile(file: ProfileFile): { ok: true; profile: Profile 
   }
   return { ok: true, profile: { roles: resolved, root } };
 }
+
+/** A skill's `description` from its frontmatter: what an agent is told of the skill on every turn. */
+export function skillDescription(skill: string): string {
+  const match = /^description:\s*"?(.*?)"?\s*$/m.exec(skill);
+  return match?.[1] ?? "";
+}

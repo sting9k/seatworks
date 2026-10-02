@@ -1,0 +1,5 @@
+{
+  "name": "SLP",
+  "description": "A Supervisor works with the Human and sees across lanes, a Lead owns one lane and its acceptance, and a Peer owns one task and the judgement inside it. A Reviewer gives evidence, and the watch tells an owner when to look.",
+  "tags": ["team", "lanes", "review"]
+}

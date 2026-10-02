@@ -1,8 +1,10 @@
 # Editor
 
 Where a template is opened as a graph, changed and saved: a web page, after ComfyUI's three screens. `TEMPLATE.md`
-says what a template is; this says how a person makes and changes one. None of it is built; the order is in
-`TEMPLATE.md`.
+says what a template is; this says how a person makes and changes one. The order it is built in is in `TEMPLATE.md`.
+
+Built so far: a template is picked from the gallery and read. Its graph is drawn and laid out, its files are shown as
+text, and the node library lists the nodes it has. Nothing is changed or saved yet.
 
 ## Decided
 
@@ -42,7 +44,7 @@ says what a template is; this says how a person makes and changes one. None of i
 | Equipment | Skill               | Its folder: `SKILL.md` and the files beside it                           | To each role that has it           |
 | Equipment | Outside server      | Its command or address, the variables it names                           | To a role; the tools are picked on the wire |
 | Equipment | Optional tool group | Findings; the machine's hold                                             | To a role                          |
-| Attention | Reflex question     | The events it is asked on, its question, each outcome, its thresholds    | To whom it tells                   |
+| Attention | Reflex question     | The events it is asked on, its question, each outcome, its thresholds, whom it tells | None                   |
 | Attention | Watch moment        | Its question, what it reads, its thresholds                              | `watches`, to each role watched    |
 | Flow      | Step                | Its name and a line on what happens in it                                | `then`, to the next; from the role that does it |
 
@@ -63,6 +65,8 @@ A wire has a kind, a socket takes only its own kind, and every kind says what it
 - **Speaking is not a free wire.** A role speaks to its `parent`, its `children`, its `descendants` or the Human,
   counted along the tree of scopes. So it is four switches in the role's node, drawn as arrowheads on its `spawns`
   wires and as a wire to the Human.
+- **Nor is whom a question tells.** `tells` names a relation (`root`, `parent`, `evidence`, `answerer`, `self`), never
+  a role, so it is a field in the question's node and no wire leaves it.
 - **`then` is soft.** It makes words an agent reads, and nothing the kernel refuses (`TEMPLATE.md`, rule 1). A hard
   wire would stop the one thing SLP is for: whoever touches the code sending the plan back.
 - **A step is its own node** because a way of working reuses its roles: SLP's stages are done by three of them, and a
@@ -92,7 +96,10 @@ node, every tool ticked, and the author unticks what the role is not to be shown
 
 - Every tool an agent may be shown is in one group and only one.
 - A group in a role's node keeps that role's own ticks, which a node shared by several roles could not. Only the
-  optional groups and outside servers are nodes.
+  optional groups and outside servers are nodes; a wire from one that gives a role only part of the group says how
+  much.
+- A group is in a role's node when the role has its property, or is shown any of its tools: what a file holds is
+  never left off the graph.
 - Groups are the editor's. The template saved keeps the flat `tools` list the plugin reads today, and one opened is
   folded back into groups.
 - The SLP profile is these defaults less what it hides: the root's `hand_back` and `report`, the writer's `report`,
@@ -143,12 +150,11 @@ A template is some five to thirty nodes, so drawing is never slow; what is felt 
 
 ## Cases
 
-They join `CONFORMANCE.md` with the step that builds them.
+They join `CONFORMANCE.md` with the step that builds them; those of reading are there already.
 
 | Case                                                                 | Expect                                                           |
 | -------------------------------------------------------------------- | ---------------------------------------------------------------- |
 | The SLP profile opened and saved with nothing changed                | Every file byte for byte the same, comments kept                 |
-| The SLP profile opened                                               | Each role's ticked tools are exactly its `tools` in `profile.yaml` |
 | `delegates` switched on for a role                                   | Its five groups appear, every tool ticked                        |
 | A tool unticked in one role's group                                  | Gone from that role's `tools`; another role's list unchanged     |
 | A wire dragged to a socket of another kind                           | Not made                                                         |
@@ -158,7 +164,7 @@ They join `CONFORMANCE.md` with the step that builds them.
 | A file dropped into a skill's folder that `SKILL.md` does not name   | Kept; no fault                                                   |
 | A question's words changed                                           | Shown as not yet earned                                          |
 | A template with steps saved                                          | `flow.md` holds one line a step, in order, each with its role    |
-| A template with no positions opened                                  | Laid out; saved, its positions are in `template.json` and nowhere else |
+| A template laid out, then saved                                      | Its positions are in `template.json` and nowhere else            |
 
 ## To check before building on it
 

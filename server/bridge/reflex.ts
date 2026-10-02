@@ -2,11 +2,12 @@ import type { CommandBody } from "../../shared/contracts/commands.ts";
 import type { Event } from "../../shared/contracts/events.ts";
 import { HUMAN, ROOT } from "../../shared/contracts/ids.ts";
 import type { Brief, Line, Plan } from "../../shared/contracts/ledger.ts";
+import type { QuestionSpec } from "../../shared/contracts/reflex.ts";
 import { isWithin } from "../../shared/kernel/authority.ts";
 import type { State } from "../../shared/kernel/state.ts";
 import { KeyedQueue } from "../core/keyed-queue.ts";
 import type { TurnItem } from "../satellites/agent-host/items.ts";
-import { type QuestionSpec, type ReflexConfig, wordingOf } from "../satellites/reflex/config.ts";
+import { type ReflexConfig, wordingOf } from "../satellites/reflex/config.ts";
 import type { Answer, Jev } from "../satellites/reflex/jev.ts";
 
 type Observation = Extract<CommandBody, { type: "record_observation" }>;

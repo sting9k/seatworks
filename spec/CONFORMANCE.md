@@ -237,3 +237,13 @@ What the Human's surface shows as stuck: read from the log and the outbox, chang
 | A finding still unclassified when its Lead's second turn since it ends | An attention to the Supervisor, once           |
 | A Peer changes an existing assertion where its brief asks nothing of tests | An attention to its Lead; another test line, a candidate |
 
+## Editor
+
+A template's files in, what a person sees out (`EDITOR.md`).
+
+| Case                                                        | Expect                                                              |
+| ----------------------------------------------------------- | ------------------------------------------------------------------- |
+| The SLP profile opened                                      | A node for each role, skill, question and moment of its files and one for the Human; a wire for each `spawns`, each skill a role has, each role a moment watches and each role that may ask or tell the Human |
+| The SLP profile opened                                      | Each role's ticked tools are exactly its `tools` in `profile.yaml`, in its node's groups or on a wire to it |
+| A template that names a skill it does not carry             | Not opened, saying which skill                                      |
+| A template that keeps no positions opened                   | Every node placed, no two on top of each other                      |
