@@ -15,6 +15,8 @@ active:
   - closed-options
   - unobservable-goal
   - reads-as-kind
+  - dictates-inside
+  - asks-interim-state
   - touches-goal-or-cost
   - kept-without-answer
   - unrecorded-structure
@@ -89,6 +91,37 @@ questions:
       discovery: Find out what to build or why something happens; the answer is not known yet.
     # Told when the probability of the kind the brief was not given passes `tell`.
     against: brief.kind
+    tell: 0.9
+    tells: root
+
+  # A brief to a settled contract may name the contract; how the inside is written is the writer's.
+  dictates-inside:
+    on: [brief_issued, brief_amended]
+    when: { kind: verification }
+    state: { goal: brief.goal, constraints: brief.constraints }
+    noul: >-
+      Does `goal` or a line of `constraints` say how the inside of the work is written, such as which file or helper
+      to create, what to name it, or in what order code calls what?
+    yes: '"Create normalizeDir() in utils/dir.ts and call it from encode() before the switch."'
+    no: >-
+      "encode(dir) returns an int16 and throws RangeError out of range; encode.test.ts proves it." Naming an interface
+      other scopes call, or a file only as where the work happens, is not the inside.
+    tell: 0.9
+    tells: root
+
+  # A state the plan makes for its own sake is code a later agent takes for the design.
+  asks-interim-state:
+    on: [brief_issued, brief_amended]
+    state: { goal: brief.goal, constraints: brief.constraints, choices: brief.choices }
+    noul: >-
+      Does `goal`, `constraints` or `choices` ask for a state that later work is meant to replace or remove, such as
+      an old path kept beside a new one, something added that nothing uses yet, or a layer that makes old and new fit?
+    yes: >-
+      "Phase 1, add NewStore beside OldStore; leave the consumers for the next task." "Keep both paths behind a flag
+      for now."
+    no: >-
+      "Replace OldStore with NewStore in every consumer and delete OldStore." A small first task that settles a
+      contract others build on is not an interim state.
     tell: 0.9
     tells: root
 

@@ -257,12 +257,26 @@ test("each use in REFLEX.md's table is asked on its own event, and only there", 
     }),
   );
   assert.deepEqual(await on(opened), [
+    "asks-interim-state",
     "cause-as-fact",
     "closed-options",
     "names-method",
     "reads-as-kind",
     "unobservable-goal",
   ]);
+  const settled = ledger.must(
+    ledger.as(lead, "open_scope", {
+      parent: lane,
+      role: "peer",
+      paths: ["src/store/"],
+      brief: brief("Add the retry button the design shows", { kind: "verification" }),
+    }),
+  );
+  assert.deepEqual(
+    await on(settled),
+    ["asks-interim-state", "cause-as-fact", "dictates-inside", "reads-as-kind", "unobservable-goal"],
+    "a brief to a settled contract is asked how it frames the inside, not whether it names a method",
+  );
   const raised = ledger.must(ledger.as(peer, "raise_finding", { text: "int16 is too slow", default: "int8" }));
   assert.deepEqual(await on(raised), ["touches-goal-or-cost"]);
   const finding = [...ledger.state.findings.keys()].at(-1)!;

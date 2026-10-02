@@ -61,7 +61,7 @@ row is asked from the first lane (Decided); those on the project's own rules sta
 
 | Asked on                                   | What it asks                                                                 | Answer goes to                         | Spec          |
 | ------------------------------------------ | ---------------------------------------------------------------------------- | -------------------------------------- | ------------- |
-| A brief issued or amended                  | Framing: a fixed method, a cause given as fact, closed options, a goal nobody could observe, the other kind | The Supervisor, a note        | this file     |
+| A brief issued or amended                  | Framing: a fixed method, a cause given as fact, closed options, a goal nobody could observe, the other kind, how the inside is to be written, a state meant to be replaced | The Supervisor, a note        | this file     |
 | A finding, a plan or a brief amended       | Touches the goal or the cost the Human approved                              | The Supervisor, a note that wakes it   | this file     |
 | A finding kept                             | The reason does not meet the evidence                                        | The Supervisor, a note                 | this file     |
 | A report                                   | Settles a structure no plan line records                                     | The Supervisor, a note                 | this file     |
