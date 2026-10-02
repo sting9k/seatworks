@@ -90,6 +90,18 @@ function apply(s: State, e: Event, at: string): State {
         e.carries,
         e.seq,
       );
+    case "edge_added":
+      return carry(
+        scope(s, e.scope, (x) => ({ ...x, [e.edge]: [...x[e.edge], e.target] })),
+        e.carries,
+        e.seq,
+      );
+    case "edge_removed":
+      return carry(
+        scope(s, e.scope, (x) => ({ ...x, [e.edge]: x[e.edge].filter((t) => t !== e.target) })),
+        e.carries,
+        e.seq,
+      );
     case "handed_over": {
       const moved = new Set(e.paths);
       const out = scope(s, e.from, (x) => ({ ...x, paths: x.paths.filter((p) => !moved.has(p)) }));

@@ -12,8 +12,8 @@ roles:
     prompt: roles/supervisor.md
     skills: [grilling, attention, pre-mortem, retrospective, architecture-premise-audit, appetite, lane-portfolio]
     models: [slp-supervisor]
-    tools: [status, record, diff, look, open_scope, amend_brief, set_plan, amend_plan, handover,
-            classify_finding, integrate, send_back, reseat, drop_scope, hold_scope, resume_scope, release,
+    tools: [status, record, diff, look, open_scope, amend_brief, set_plan, amend_plan, add_edge, remove_edge,
+            handover, classify_finding, integrate, send_back, reseat, drop_scope, hold_scope, resume_scope, release,
             send_message, answer, ask_human, answer_permission, mark_noise, acknowledge, set_checks, run_checks,
             publish]
 
@@ -24,8 +24,8 @@ roles:
     prompt: roles/lead.md
     skills: [steering, blind-design, planning-lanes, domain-docs, acceptance-walk, repo-refresh]
     models: [slp-lead]
-    tools: [status, record, diff, look, open_scope, amend_brief, set_plan, amend_plan, handover,
-            raise_finding, withdraw_finding, reopen_finding, classify_finding, integrate, send_back, reseat, drop_scope, hand_back,
+    tools: [status, record, diff, look, open_scope, amend_brief, set_plan, amend_plan, add_edge, remove_edge,
+            handover, raise_finding, withdraw_finding, reopen_finding, classify_finding, integrate, send_back, reseat, drop_scope, hand_back,
             hold_scope, resume_scope, release, report, send_message, answer, answer_permission, hold_machine,
             mark_noise, acknowledge, run_checks]
 

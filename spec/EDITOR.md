@@ -127,7 +127,7 @@ node, every tool ticked, and the author unticks what the role is not to be shown
 | Record      | `status`, `record`, `diff`                                                                               | Every role               |
 | Talk        | `send_message`, `answer`                                                                                 | A role that speaks to anyone |
 | Scopes      | `open_scope`, `amend_brief`, `handover`, `reseat`, `release`, `drop_scope`, `hold_scope`, `resume_scope` | `delegates`              |
-| Plan        | `set_plan`, `amend_plan`                                                                                 | `delegates`              |
+| Plan        | `set_plan`, `amend_plan`, `add_edge`, `remove_edge`                                                      | `delegates`              |
 | Acceptance  | `integrate`, `send_back`, `classify_finding`                                                             | `delegates`              |
 | Attention   | `acknowledge`, `mark_noise`, `answer_permission`, `look`                                                 | `delegates`; `look` alone, `watches` too |
 | Hand-back   | `hand_back`, `run_checks`, `report`                                                                      | `writes` or `delegates`  |

@@ -30,7 +30,7 @@ export const TOOL_GROUPS: readonly ToolGroup[] = [
     tools: ["open_scope", "amend_brief", "handover", "reseat", "release", "drop_scope", "hold_scope", "resume_scope"],
     follows: delegates,
   },
-  { id: "plan", name: "Plan", tools: ["set_plan", "amend_plan"], follows: delegates },
+  { id: "plan", name: "Plan", tools: ["set_plan", "amend_plan", "add_edge", "remove_edge"], follows: delegates },
   { id: "acceptance", name: "Acceptance", tools: ["integrate", "send_back", "classify_finding"], follows: delegates },
   {
     id: "attention",

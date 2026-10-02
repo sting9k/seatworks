@@ -45,6 +45,11 @@ const command = fc.oneof(
     type: fc.constant("handover"),
     args: fc.record({ from: scope, to: scope, paths: fc.array(path, { minLength: 1, maxLength: 1 }), reason: text }),
   }),
+  fc.record({
+    who: actor,
+    type: fc.constant("add_edge"),
+    args: fc.record({ scope, edge: fc.constant("after"), target: scope, reason: text }),
+  }),
   fc.record({ who: fc.constant("bridge"), type: fc.constant("record_gone"), args: fc.record({ actor, why: text }) }),
   fc.record({
     who: fc.constant("bridge"),

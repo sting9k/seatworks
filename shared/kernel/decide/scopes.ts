@@ -107,7 +107,11 @@ export function openChild(ctx: Of<"open_scope">): Refusal | undefined {
 export function amendBrief(ctx: Of<"amend_brief">): Refusal | undefined {
   const scope = openScope(ctx, ctx.body.scope);
   if (isRefusal(scope)) return scope;
-  const denied = asParentOwner(ctx, scope, "I5");
+  // Its parent's owner amends it, and so does the owner of a scope that owner gave leave to (`mayChange`).
+  const leave = [...ctx.state.scopes.values()].some(
+    (s) => s.status === "open" && s.owner === ctx.party && s.mayChange.includes(scope.id),
+  );
+  const denied = leave ? null : asParentOwner(ctx, scope, "I5");
   if (denied) return denied;
   if (!scope.brief) return refuse("state", `scope ${scope.id} has no brief to amend`);
   const carried = carriedFinding(ctx, ctx.body.carries);
@@ -194,6 +198,45 @@ export function amendPlan(ctx: Of<"amend_plan">): Refusal | undefined {
     ],
   };
   ctx.emit({ type: "plan_amended", scope: scope.id, plan, reason: body.reason, carries: body.carries });
+  return undefined;
+}
+
+/** An edge is set by whoever holds what it gives: a wait by who orders the siblings, leave to amend by who may amend. */
+export function edge(ctx: Of<"add_edge"> | Of<"remove_edge">): Refusal | undefined {
+  const { body } = ctx;
+  const adding = body.type === "add_edge";
+  const scope = openScope(ctx, body.scope);
+  if (isRefusal(scope)) return scope;
+  const target = ctx.state.scopes.get(body.target);
+  if (!target) return refuse("unknown", `no scope ${body.target}`);
+  if (target.id === scope.id) return refuse("state", "an edge joins two scopes");
+  if (body.edge === "after") {
+    const denied = asParentOwner(ctx, scope);
+    if (denied) return denied;
+    if (target.parent !== scope.parent) return refuse("I3", "a scope waits only for a sibling");
+    // A scope that has its copy and its agent runs whatever it is said to wait for.
+    const waiting =
+      scope.workspace === "pending" && scope.after.some((id) => ctx.state.scopes.get(id)?.status === "open");
+    if (adding && !waiting)
+      return refuse("state", `scope ${scope.id} has started: a wait is added before a scope starts`);
+  } else if (body.edge === "mayChange") {
+    const denied = asParentOwner(ctx, target);
+    if (denied) return denied;
+  } else if (scope.owner !== ctx.party && ownerOfParent(ctx.state, scope) !== ctx.party)
+    return refuse("authority", `only scope ${scope.id}'s owner, or its parent's, says whom it must tell`);
+  const has = scope[body.edge].includes(target.id);
+  if (adding && has) return refuse("state", `scope ${scope.id} already has that edge`);
+  if (!adding && !has) return refuse("state", `scope ${scope.id} has no such edge`);
+  const carried = carriedFinding(ctx, body.carries);
+  if (isRefusal(carried)) return carried;
+  ctx.emit({
+    type: adding ? "edge_added" : "edge_removed",
+    scope: scope.id,
+    edge: body.edge,
+    target: target.id,
+    reason: body.reason,
+    carries: body.carries,
+  });
   return undefined;
 }
 
@@ -336,6 +379,8 @@ function blankScope(id: string, parent: string | null, role: string, kind: Scope
     writer: null,
     paths: [],
     after: [],
+    mayChange: [],
+    mustTell: [],
     commit: null,
     over: [],
     brief: null,

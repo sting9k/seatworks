@@ -38,7 +38,7 @@ function delegatorsWriteNothing(state: State): Refusal | null {
   return null;
 }
 
-/** I3: open siblings whose paths overlap wait one for the other; a wait names siblings already open, so none cycles. */
+/** I3: open siblings whose paths overlap wait one for the other, and `after` makes no cycle. */
 function siblingsOrdered(state: State): Refusal | null {
   const open = [...state.scopes.values()].filter((s) => s.status === "open" && s.kind === "work");
   const byParent = new Map<string | null, Scope[]>();
@@ -54,6 +54,8 @@ function siblingsOrdered(state: State): Refusal | null {
     }
     return false;
   };
+  for (const s of open)
+    if (waits(s, s)) return { invariant: "I3", says: `scope ${s.id} would wait for itself through \`after\`` };
   for (const siblings of byParent.values())
     for (let i = 0; i < siblings.length; i++)
       for (let j = i + 1; j < siblings.length; j++) {

@@ -486,3 +486,90 @@ test("with no check set, a hand-back is given no evidence: a run of nothing is n
   assert.equal(git(c.repo, "rev-parse", "main"), head);
   for (const t of [chief, maker]) t.close();
 });
+
+test("the edge tools: a wait changed before a scope starts, a scope that must tell another of what changes in it, and one given leave to change another's brief", async () => {
+  const c = await started();
+  const chief = await c.tools(0);
+  await did(c, chief, "open_scope", { parent: "root", role: "keeper", paths: ["src/"], brief: brief("Lane") });
+  const keeper = await c.tools(1);
+  const task = (dir: string, more: Record<string, unknown> = {}) => ({
+    parent: "1",
+    role: "maker",
+    paths: [`src/${dir}/`],
+    brief: brief(dir),
+    ...more,
+  });
+  await did(c, keeper, "open_scope", task("a"));
+  await did(c, keeper, "open_scope", task("b"));
+  await did(c, keeper, "open_scope", task("c", { after: ["1.1"] }));
+  await did(c, keeper, "open_scope", task("d", { after: ["1.3"] }));
+  const makerA = await c.tools(2);
+  const makerB = await c.tools(3);
+  const agents = () => c.paseo.created.map((agent) => agent.title);
+  assert.deepEqual(agents().slice(2), ["1.1 · maker", "1.2 · maker"], "the two that wait have no agent");
+
+  const edge = (scope: string, kind: string, target: string, reason = "so") => ({ scope, edge: kind, target, reason });
+  await refused(
+    keeper,
+    "add_edge",
+    edge("1.2", "after", "1.1"),
+    /scope 1\.2 has started: a wait is added before a scope starts/,
+  );
+  await did(c, keeper, "add_edge", edge("1.3", "after", "1.2", "c reads what b writes"));
+  assert.match(await status(keeper, "1.3"), /^Waits for: 1\.1, 1\.2$/m);
+  await refused(keeper, "add_edge", edge("1.3", "after", "1.4"), /^Refused \(I3\): scope 1\.\d would wait for itself/);
+  await did(c, keeper, "remove_edge", edge("1.3", "after", "1.1"));
+  assert.equal(agents().length, 4, "it still waits for the other");
+  await did(c, keeper, "remove_edge", edge("1.3", "after", "1.2"));
+  assert.equal(agents().at(-1), "1.3 · maker", "with its last wait gone it starts: no other event would start it");
+
+  await did(c, keeper, "add_edge", edge("1.1", "mustTell", "1.2", "b builds on a's shape"));
+  assert.match(await status(keeper, "1.1"), /^Must tell: 1\.2$/m);
+  assert.match(await status(makerB), /^Is told of what changes in: 1\.1$/m);
+  await did(c, keeper, "amend_brief", {
+    scope: "1.1",
+    set: { constraints: [{ text: "Keep it int16" }] },
+    reason: "the wire is int16",
+  });
+  assert.match(
+    c.told(3).at(-1) ?? "",
+    /^Scope 1\.1 must tell scope 1\.2: its brief is now version 2 \(the wire is int16\)$/,
+  );
+  const copy = c.paseo.created[2]!.cwd;
+  mkdirSync(join(copy, "src/a"), { recursive: true });
+  writeFileSync(join(copy, "src/a/shape.txt"), "int16\n");
+  git(copy, "add", ".");
+  git(copy, "commit", "-q", "-m", "shape");
+  const head = git(copy, "rev-parse", "HEAD");
+  await did(c, makerA, "hand_back", { commit: head, text: "the shape is int16" });
+  assert.match(
+    c.told(3).at(-1) ?? "",
+    new RegExp(`^Scope 1\\.1 must tell scope 1\\.2: it handed back ${head}: the shape is int16$`),
+  );
+
+  const reword = { scope: "1.2", set: { choices: [{ text: "Read int16" }] }, reason: "the shape is int16" };
+  await refused(makerA, "amend_brief", reword, /^Refused \(I5\)/);
+  await refused(
+    makerA,
+    "add_edge",
+    edge("1.1", "mayChange", "1.2"),
+    /only the owner of scope 1\.2's parent \(a2\) may do this/,
+  );
+  await did(c, keeper, "add_edge", edge("1.1", "mayChange", "1.2", "a settles the shape b reads"));
+  assert.match(await status(makerA), /^May change the brief of: 1\.2$/m);
+  assert.match(await status(makerB), /^Its brief may also be amended by the owner of: 1\.1$/m);
+  await did(c, makerA, "amend_brief", reword);
+  assert.match(await status(makerB), /Brief v2 \(verification\)[^]*Chosen so far[^]*Read int16/);
+  assert.match(c.told(3).at(-1) ?? "", /^Your brief is now version 2/, "the agent whose brief it is reads it changed");
+  assert.match(
+    c.told(1).at(-1) ?? "",
+    /Scope 1\.2's brief is now version 2, amended by a3 from scope 1\.1, which may change it: the shape is int16$/,
+    "and so does the owner above it, who takes its work in",
+  );
+  await did(c, keeper, "remove_edge", edge("1.1", "mayChange", "1.2", "the shape is settled"));
+  await refused(makerA, "amend_brief", reword, /^Refused \(I5\)/);
+
+  await did(c, keeper, "drop_scope", { scope: "1.1", reason: "a is done another way" });
+  assert.match(c.told(3).at(-1) ?? "", /^Scope 1\.1 must tell scope 1\.2: it was dropped: a is done another way$/);
+  for (const t of [chief, keeper, makerA, makerB]) t.close();
+});

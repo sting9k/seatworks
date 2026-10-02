@@ -36,6 +36,11 @@ const agentProfile = z
   .nullable()
   .default(null)
   .describe("Which of the role's agent profiles to seat it on; its first when left out.");
+const edge = z
+  .enum(["after", "mayChange", "mustTell"])
+  .describe(
+    "after: the scope waits for the target, a sibling, and starts once it is closed; added before the scope starts, by the owner of their parent. mustTell: the target's owner is told when the scope's brief or plan changes, when it hands back and when it is closed; set by the scope's owner or its parent's. mayChange: the scope's owner may amend the target's brief; set by the owner of the target's parent.",
+  );
 
 /** One section of a report: lines, and no shape of a profile's choosing, so each keeps its origin (I9). */
 export const ReportLines = z.array(text).max(100);
@@ -128,7 +133,7 @@ export const COMMANDS = {
     model: agentProfile,
   }),
   amend_brief: z.object({
-    scope: id.describe("The child scope whose brief changes."),
+    scope: id.describe("The scope whose brief changes: a child of yours, or one a `mayChange` edge gives your scope."),
     // Not `BriefInput.partial()`: zod 4 still applies its defaults, so a section left out would be emptied.
     set: z
       .object({
@@ -171,6 +176,20 @@ export const COMMANDS = {
     reason: why,
     carries,
     cites,
+  }),
+  add_edge: z.object({
+    scope: id.describe("The scope the edge starts from."),
+    edge,
+    target: id.describe("The scope it points at."),
+    reason: why,
+    carries,
+  }),
+  remove_edge: z.object({
+    scope: id.describe("The scope the edge starts from."),
+    edge,
+    target: id.describe("The scope it points at."),
+    reason: why,
+    carries,
   }),
   handover: z.object({
     from: id.describe("The child scope that gives the paths up."),

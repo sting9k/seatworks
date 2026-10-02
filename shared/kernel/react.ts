@@ -17,6 +17,16 @@ export function react(e: Event, s: State): readonly Effect[] {
     const x = s.scopes.get(scope);
     return x ? ownerOfParent(s, x) : null;
   };
+  // A `mustTell` edge is a duty the kernel carries out: whoever it names is told what changed in the scope.
+  const mustTell = (scope: string, what: string) => {
+    for (const target of s.scopes.get(scope)?.mustTell ?? [])
+      tell(
+        s.scopes.get(target)?.owner ?? null,
+        `told:${target}`,
+        `Scope ${scope} must tell scope ${target}: ${what}`,
+        true,
+      );
+  };
 
   switch (e.type) {
     case "scope_opened":
@@ -47,9 +57,29 @@ export function react(e: Event, s: State): readonly Effect[] {
     case "actor_released":
       add("archive", { kind: "agent.archive", actor: e.actor, host: s.actors.get(e.actor)?.host ?? null });
       break;
-    case "brief_amended":
+    case "brief_amended": {
       tellBrief(s, e.scope, add);
+      const version = s.scopes.get(e.scope)?.brief?.version ?? 0;
+      mustTell(e.scope, `its brief is now version ${version} (${e.reason})`);
+      // Amended by leave, not by the owner above: that owner takes the scope's work in, and reads what changed.
+      const above = parentOwner(e.scope);
+      const from = s.actors.get(e.by)?.scope;
+      if (above !== e.by && from !== undefined)
+        tell(
+          above,
+          "amended",
+          `Scope ${e.scope}'s brief is now version ${version}, amended by ${e.by} from scope ${from}, which may change it: ${e.reason}`,
+          true,
+        );
       break;
+    }
+    case "edge_removed": {
+      // A scope that waited only for this sibling starts now: no other event would start it.
+      const x = s.scopes.get(e.scope);
+      if (e.edge === "after" && x?.status === "open" && x.workspace === "pending" && !waits(s, x.after))
+        add("workspace", { kind: "workspace.create", scope: x.id });
+      break;
+    }
     case "handed_over": {
       // Both writers work to the paths they hold: the one that gained some and the one that lost them.
       const text = `${e.paths.join(", ")} moved from scope ${e.from} to scope ${e.to}: ${e.reason}`;
@@ -132,6 +162,7 @@ export function react(e: Event, s: State): readonly Effect[] {
       break;
     case "claim_made":
       add("candidate", { kind: "workspace.candidate", scope: e.claim.scope, commit: e.claim.commit });
+      mustTell(e.claim.scope, `it handed back ${e.claim.commit}: ${e.claim.text}`);
       tell(
         parentOwner(e.claim.scope),
         "note",
@@ -209,6 +240,7 @@ export function react(e: Event, s: State): readonly Effect[] {
     }
     case "integrated":
     case "scope_dropped": {
+      mustTell(e.scope, e.type === "integrated" ? `it was integrated at ${e.sha}` : `it was dropped: ${e.reason}`);
       const scope = s.scopes.get(e.scope);
       const parent = scope?.parent == null ? undefined : s.scopes.get(scope.parent);
       add("remove", {
@@ -285,6 +317,7 @@ export function react(e: Event, s: State): readonly Effect[] {
     case "plan_set":
     case "plan_amended":
       if (e.scope === ROOT) add("docs", { kind: "docs.write" });
+      mustTell(e.scope, e.type === "plan_set" ? "its plan is set" : `its plan was amended (${e.reason})`);
       break;
     default:
       break;

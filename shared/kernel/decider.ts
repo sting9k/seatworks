@@ -28,6 +28,8 @@ const HANDLERS: Handlers = {
   amend_brief: scopes.amendBrief,
   set_plan: scopes.setPlan,
   amend_plan: scopes.amendPlan,
+  add_edge: scopes.edge,
+  remove_edge: scopes.edge,
   handover: scopes.handover,
   hold_scope: scopes.hold,
   resume_scope: scopes.hold,

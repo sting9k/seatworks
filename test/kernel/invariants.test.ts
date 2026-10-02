@@ -33,7 +33,7 @@ test("I2: a Lead's scope has no writer, so the Lead hands back its lane's head a
   assert.equal(refusedBy(ledger.as(lead, "hand_back", { commit: SHA(1), text: "done" })), null);
 });
 
-test("I3: open siblings that hold the same path are refused until one waits for the other", () => {
+test("I3: open siblings that hold the same path are refused until one waits for the other, and waiting never cycles", () => {
   const { ledger, lead } = team();
   const peer = (after: string[]) =>
     ledger.as(lead, "open_scope", {
@@ -45,6 +45,13 @@ test("I3: open siblings that hold the same path are refused until one waits for 
     });
   assert.equal(refusedBy(peer([])), "I3");
   ledger.must(peer(["1.1"]));
+  const third = { parent: "1", role: "peer", paths: ["src/net/other.ts"], after: ["1.2"], brief: brief("Other") };
+  ledger.must(ledger.as(lead, "open_scope", third));
+  assert.equal(
+    refusedBy(ledger.as(lead, "add_edge", { scope: "1.2", edge: "after", target: "1.3", reason: "try" })),
+    "I3",
+    "two that wait would each wait for the other",
+  );
 });
 
 test("I3: a child holds only paths inside its parent's", () => {

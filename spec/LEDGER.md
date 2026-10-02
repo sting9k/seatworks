@@ -92,6 +92,7 @@ type Scope = {
   writer: ActorId | null;                                // the owner when its role `writes`, else null
   paths: readonly string[];                              // repository-relative prefixes; "" is everything
   after: readonly ScopeId[];                             // dependsOn
+  mayChange: readonly ScopeId[]; mustTell: readonly ScopeId[];
 
   commit: string | null;                                 // a reading scope's commit
   over: readonly ScopeId[] | "all";                      // a watch scope's reach; [] otherwise
@@ -226,6 +227,7 @@ agent also settles any open attention about the actors or scopes it names that t
 | `amend_brief`      | `scope, set: { goal?, constraints?, choices?, context?, kind? }, reason, carries?, cites?`    | `brief_amended`                         |
 | `set_plan`         | `scope, plan`                                                                              | `plan_set`                              |
 | `amend_plan`       | `scope, remove: LineId[], add: { section, text, check?, term?, avoid?, via? }[], appetite?, reason, carries?, cites?`; a term added under a word the plan holds replaces it | `plan_amended` |
+| `add_edge`, `remove_edge` | `scope, edge: after \| mayChange \| mustTell, target, reason, carries?`             | `edge_added`, `edge_removed`            |
 | `handover`         | `from, to, paths, reason, carries?`                                                        | `handed_over`                           |
 | `raise_finding`    | `disputes?, about?, text, evidence, default`                                               | `finding_raised`, `obligation_opened`   |
 | `reopen_finding`   | `finding, evidence, text`                                                                  | `finding_reopened`, `obligation_opened` |
@@ -308,6 +310,7 @@ Every event, with its payload. `evolve` handles each; an unknown type stops the 
 | `brief_amended`       | `scope, brief, reason, carries`                                                              |
 | `plan_set`            | `scope, plan`                                                                                |
 | `plan_amended`        | `scope, plan, reason, carries, cites`                                                        |
+| `edge_added`, `edge_removed` | `scope, edge, target, reason, carries`                                                |
 | `handed_over`         | `from, to, paths, reason, carries`                                                           |
 | `finding_raised`      | `finding: Finding`                                                                           |
 | `finding_classified`  | `finding, verdict, reason`                                                                   |
@@ -420,9 +423,16 @@ Whoever a command changes something for is told, in the tool's own words and not
 | `evidence_recorded`, a verdict | The owner of the reading scope's parent, who seated the reader; with its id | Yes |
 | `finding_reopened`            | Whoever answers it: what is new, its new evidence, and what it first said | Yes |
 | `finding_withdrawn`           | Whoever was to answer it                                         | No    |
+| `brief_amended`, `plan_set`, `plan_amended`, `claim_made`, `integrated`, `scope_dropped` | The owner of each scope the scope `mustTell`: what changed | Yes |
+| `brief_amended` by leave of `mayChange` | The owner of the scope's parent: who amended it, from which scope, and why | Yes |
+
+A scope that waited for a sibling gets its copy and its agent when the sibling is integrated or dropped, or when the
+last `after` edge that made it wait is removed (`edge_removed`): no other event would start it.
 
 A tool's reply names what was recorded. An `attend` on a kind its reader marked noise for that agent and scope
-records the attending and opens no attention, and the reply says so, so whoever watches stops sending that kind. The reflex is not an effect: the watch reads committed events, and missing one costs a look, not a
+records the attending and opens no attention, and the reply says so, so whoever watches stops sending that kind.
+
+The reflex is not an effect: the watch reads committed events, and missing one costs a look, not a
 promise.
 
 ## 9. Views
@@ -430,8 +440,8 @@ promise.
 Views read the log in SQL, or fold events in memory for what is open. Nothing a view needs is kept in `State` only
 for it.
 
-- `status(scope)`: the brief, its children with their state, the siblings it waits for, what a watching scope watches
-  over, a hand-back with whether any check is set to run on it, open obligations on and to its owner, the
+- `status(scope)`: the brief, its children with their state, the siblings it waits for, each `mustTell` and
+  `mayChange` edge at both its ends while both are open, what a watching scope watches over, a hand-back with whether any check is set to run on it, open obligations on and to its owner, the
   latest claim and its evidence, spend of the scope and its descendants beside its appetite.
 - `record(scope)`: briefs with every version; what the owner above did to the scope (paths moved, held, resumed,
   reseated, dropped); each hand-back and what came of it (sent back, integrated); findings with their chains

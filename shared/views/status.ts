@@ -15,6 +15,17 @@ export function statusText(state: State, scopeId: ScopeId, reader: string | null
   if (scope.branch) out.push(`Branch: ${scope.branch}`);
   if (scope.commit) out.push(`Reads commit: ${scope.commit}`);
   if (scope.after.length > 0) out.push(`Waits for: ${scope.after.join(", ")}`);
+  // An edge says something only while both its ends are open, and is read at each end.
+  const open = (ids: readonly ScopeId[]) => ids.filter((id) => state.scopes.get(id)?.status === "open");
+  const from = (edge: "mustTell" | "mayChange") =>
+    [...state.scopes.values()].filter((s) => s.status === "open" && s[edge].includes(scope.id)).map((s) => s.id);
+  const edges: [string, readonly ScopeId[]][] = [
+    ["Must tell", open(scope.mustTell)],
+    ["Is told of what changes in", from("mustTell")],
+    ["May change the brief of", open(scope.mayChange)],
+    ["Its brief may also be amended by the owner of", from("mayChange")],
+  ];
+  for (const [says, ids] of edges) if (ids.length > 0) out.push(`${says}: ${ids.join(", ")}`);
   if (scope.kind === "watch") out.push(`Watches over: ${scope.over === "all" ? "every scope" : scope.over.join(", ")}`);
   if (scope.brief) out.push(briefText(scope.brief));
   if (scope.plan) out.push(planText(scope.plan));

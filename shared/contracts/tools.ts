@@ -45,6 +45,9 @@ export const DESCRIPTIONS: Record<CommandType | ReadName, string> = {
   amend_brief: `Amends a child scope's brief with a reason. ${LINES}`,
   set_plan: `Sets your scope's plan: goal, limits, unknowns with how each is checked, appetite, and the domain's terms as settled. ${LINES}`,
   amend_plan: `Amends your plan's lines with a reason. ${LINES}`,
+  add_edge:
+    "Joins two scopes by an edge, with a reason: a wait for a sibling, a duty to tell, or leave to change a brief.",
+  remove_edge: "Takes an edge away, with a reason.",
   handover: "Moves paths from one child scope to a sibling.",
   raise_finding:
     "Raises a finding: a premise, constraint or choice the evidence shows does not fit, with the evidence and what you do meanwhile. It is the channel for a check that cannot pass honestly, a premise the code contradicts, the same failure a third time, or a layer about to hide a contradiction.",
