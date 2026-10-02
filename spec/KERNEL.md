@@ -182,7 +182,8 @@ an answer, an intervention, a question to the Human, a hand-back waiting on its 
 - **Machine hold**: an actor measuring holds the machine; while held, the kernel defers the effects that would load it
   (evidence runs, workspace setup) and starts them when it is released. The hold is the machine's, not the project's:
   every project's kernel on the machine sees it and defers the same way, since another project's build spoils a
-  measurement as surely as this one's (CONCEPT-V2 §8.4, P13).
+  measurement as surely as this one's (CONCEPT-V2 §8.4, P13). It is let go by the actor that holds it, by the Human,
+  and when that actor leaves its seat, however it leaves: nobody measures then, and nothing else would let it go.
 
 ### 4.9 Observations
 

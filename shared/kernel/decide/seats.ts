@@ -38,6 +38,7 @@ export function releaseSeat(
   reason: string | null,
 ): void {
   if (reason !== null) ctx.emit({ type: "actor_released", actor, reason });
+  letMachineGo(ctx, actor);
   closeAskedPermissions(ctx, actor);
   const closed = new Set(ctx.events.flatMap((e) => (e.type === "obligation_closed" ? [e.obligation] : [])));
   for (const o of ctx.state.obligations.values()) {
@@ -52,6 +53,12 @@ export function releaseSeat(
   const gone = ctx.state.actors.get(actor);
   for (const t of ctx.state.attentions.values())
     if (t.to === actor && !closing.has(t.about.scope)) climb(ctx, t, gone ? ownerAbove(ctx.state, gone) : HUMAN);
+}
+
+/** A hold is its actor's measurement: one that leaves its seat measures nothing, and would hold every project's work. */
+export function letMachineGo(ctx: Context, actor: ActorId): void {
+  if (ctx.state.machineHeldBy === actor)
+    ctx.emit({ type: "machine_released", actor, why: "the agent that held it left its seat" });
 }
 
 /** What an actor asked leave for closes when it leaves its seat: the prompt that waited on the answer leaves with it. */

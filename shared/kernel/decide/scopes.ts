@@ -5,7 +5,7 @@ import { within } from "../paths.ts";
 import { descendants, ownerOfParent } from "../authority.ts";
 import { type Context, type Refusal, isRefusal, refuse } from "./context.ts";
 import { briefFrom, humanWordFor, lineFrom, planFrom } from "./lines.ts";
-import { carriedFinding, closeAskedPermissions, releaseSeat } from "./seats.ts";
+import { carriedFinding, closeAskedPermissions, letMachineGo, releaseSeat } from "./seats.ts";
 
 type Of<T extends CommandBody["type"]> = Context<Extract<CommandBody, { type: T }>>;
 
@@ -341,6 +341,7 @@ export function reseat(ctx: Of<"reseat">): Refusal | undefined {
     { type: "actor_seated", actor, role: scope.role, scope: scope.id, model },
   );
   if (old !== null) closeAskedPermissions(ctx, old);
+  if (old !== null) letMachineGo(ctx, old);
   for (const o of ctx.state.obligations.values())
     if (old !== null && o.owedBy === old) ctx.emit({ type: "obligation_moved", obligation: o.id, to: actor });
   for (const m of ctx.state.messages.values())

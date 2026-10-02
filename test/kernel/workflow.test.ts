@@ -592,3 +592,33 @@ test("a project that takes its profile's files anew is on the record with their 
     "def456",
   ]);
 });
+
+test("the machine is let go when the actor that holds it leaves its seat, however it leaves", () => {
+  const leaves: Record<string, (t: ReturnType<typeof team>) => void> = {
+    released: ({ ledger, lead, peer }) => ledger.must(ledger.as(lead, "release", { actor: peer, reason: "enough" })),
+    reseated: ({ ledger, lead, task }) => ledger.must(ledger.as(lead, "reseat", { scope: task, reason: "fresh" })),
+    gone: ({ ledger, peer }) => ledger.must(ledger.fact("record_gone", { actor: peer, why: "archived" })),
+    dropped: ({ ledger, lead, task }) => ledger.must(ledger.as(lead, "drop_scope", { scope: task, reason: "no" })),
+    integrated: ({ ledger, lead, peer, task }) => {
+      ledger.must(ledger.as(peer, "hand_back", { commit: SHA(1), text: "done" }));
+      const made = { candidate: SHA(1), parentHead: SHA(0) };
+      ledger.must(ledger.fact("record_candidate", { scope: task, commit: SHA(1), result: made }));
+      const run = { scope: task, commit: SHA(1), steps: [{ name: "t", run: ["true"] }] };
+      ledger.must(ledger.as(lead, "run_checks", run));
+      const passed = { scope: task, subject: SHA(1), ok: true, summary: "", steps: [], heldMachine: true };
+      ledger.must(ledger.fact("record_evidence", passed));
+      ledger.must(ledger.as(lead, "integrate", { scope: task, evidence: ["e1"] }));
+      ledger.must(ledger.fact("record_integration", { scope: task, result: { sha: SHA(1) } }));
+    },
+  };
+  for (const [how, leave] of Object.entries(leaves)) {
+    const t = team();
+    t.ledger.must(t.ledger.as(t.peer, "hold_machine", { hold: true, why: "measuring the encoder" }));
+    leave(t);
+    assert.equal(t.ledger.state.machineHeldBy, null, `${how}: nobody holds the machine`);
+    assert.ok(
+      t.ledger.effects.some((e) => e.body.kind === "machine.hold" && e.body.actor === t.peer && !e.body.hold),
+      `${how}: and what waited on it is let start`,
+    );
+  }
+});

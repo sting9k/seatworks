@@ -11,6 +11,10 @@ export function statusText(state: State, scopeId: ScopeId, reader: string | null
   out.push(
     `Scope ${scope.id} · ${scope.kind} · ${scope.status}${scope.held ? " · held" : ""} · ${owner ? `${owner.id} (${owner.role})` : "nobody seated"}`,
   );
+  if (state.machineHeldBy !== null)
+    out.push(
+      `The machine is held by ${state.machineHeldBy}, measuring: checks and new copies wait until it is let go.`,
+    );
   if (scope.paths.length > 0) out.push(`Paths: ${scope.paths.map((p) => p || "(the whole tree)").join(", ")}`);
   if (scope.branch) out.push(`Branch: ${scope.branch}`);
   if (scope.commit) out.push(`Reads commit: ${scope.commit}`);

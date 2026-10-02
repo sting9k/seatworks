@@ -246,7 +246,7 @@ agent also settles any open attention about the actors or scopes it names that t
 | `send_message`     | `to, text, asks, directs, replyTo?`                                                        | `message_sent` (and a copy, I7), `obligation_opened`\* |
 | `answer`           | `replyTo, text`                                                                            | `message_sent`, `obligation_closed`     |
 | `ask_human`        | `text, about?, options?, recommend?`                                                       | `question_asked`, `obligation_opened`, `finding_waiting`? |
-| `hold_machine`     | `hold, why`                                                                                | `machine_held` or `machine_released`    |
+| `hold_machine`     | `hold, why`; a holder that is released, reseated, gone, or whose scope is closed lets it go  | `machine_held` or `machine_released`    |
 | `answer_permission`| `permission, allow, reason`                                                                | `permission_answered`, `obligation_closed` |
 | `acknowledge`      | `attention`                                                                                | `acknowledged`                          |
 | `mark_noise`       | `attention`                                                                                | `noise_marked`                          |
@@ -440,7 +440,7 @@ promise.
 Views read the log in SQL, or fold events in memory for what is open. Nothing a view needs is kept in `State` only
 for it.
 
-- `status(scope)`: the brief, its children with their state, the siblings it waits for, each `mustTell` and
+- `status(scope)`: who holds the machine while it is held, the brief, its children with their state, the siblings it waits for, each `mustTell` and
   `mayChange` edge at both its ends while both are open, what a watching scope watches over, a hand-back with whether any check is set to run on it, open obligations on and to its owner, the
   latest claim and its evidence, spend of the scope and its descendants beside its appetite.
 - `record(scope)`: briefs with every version; what the owner above did to the scope (paths moved, held, resumed,

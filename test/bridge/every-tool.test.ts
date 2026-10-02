@@ -479,6 +479,21 @@ test("the attention tools: a watcher's attention reaches the owner above the age
   await refused(keeper, "hold_machine", { hold: true, why: "me too" }, /the machine is held by a3/);
   await refused(keeper, "hold_machine", { hold: false, why: "stop" }, /only it or the Human releases it/);
   await did(c, maker, "hold_machine", { hold: false, why: "done" });
+
+  await did(c, maker, "hold_machine", { hold: true, why: "measuring again" });
+  const base = git(c.repo, "rev-parse", "main");
+  await did(c, keeper, "run_checks", { scope: "1.1", commit: base, steps: [{ name: "t", run: ["true"] }] });
+  const held = await status(keeper, "1.1");
+  assert.match(held, /^The machine is held by a3, measuring: checks and new copies wait until it is let go\.$/m);
+  assert.doesNotMatch(held, /Evidence:/, "a check asked for while the machine is held waits");
+  await did(c, keeper, "release", { actor: "a3", reason: "its measuring is over" });
+  const freed = await status(keeper, "1.1");
+  assert.match(
+    freed,
+    /Evidence:\n- e1 check on/,
+    "a holder that leaves its seat lets the machine go, and the check runs",
+  );
+  assert.doesNotMatch(freed, /The machine is held/);
   for (const t of [chief, keeper, maker, guard]) t.close();
 });
 
