@@ -72,7 +72,7 @@ agent host stream ─► eye (code): items and facts
     ├─ reflex, on each item, each moment its role is watched for
     │     p ≥ tell ───────────────────────────────────────────────────────────► owner
     │     consider ≤ p < tell ─┐
-    ├─ facts that need judging ─┤  (a loop, a long turn, a full context, a test before its code)
+    ├─ facts that need judging ─┤  (a loop, a test's line changed where the brief asks nothing of tests)
     │                           ▼
     ├─ sweep, scopes with new work ──────────────────────► Watcher ─ attend ──► owner
     │                                                          └──── pass (recorded)
@@ -87,8 +87,14 @@ agent host stream ─► eye (code): items and facts
 - A **look** is taken at each turn's end, and every `item.everyItems` items inside a long turn, where drift hides.
   A noisy stream is coalesced so it does not make a call per line; a turn's end, a hand-back or a finding goes
   through at once.
-- **Facts** are counted in code: the same failing command again, a turn far longer than the agent's usual, a context
-  nearly full, a test file edited before the code it names exists.
+- **Facts** are counted in code: the same call failing the same way again, turns that spend and record nothing, a
+  finding left unclassified, spend past an appetite, an existing line of a test changed where the brief asks nothing
+  of tests (`STEERING.md`). Three things are not counted. A turn's length is a late and weak sign: failed runs are
+  longer on average, but length alone does not tell them from the rest, and the loop and the silence it would point
+  at are counted themselves. How full a context is, as a share of its window, measures neither of what a long context
+  does: work decays well before a window fills, and an agent cuts corners by how full it believes the window is; the
+  corners it cuts are asked about directly. A test written before its code is ordinary test-first, and the one that
+  matters is the test that mints an API, below.
 - After a reconnect the eye fills the gap from history (PASEO rule 5).
 
 ### The reflex
