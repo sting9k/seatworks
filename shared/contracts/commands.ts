@@ -178,14 +178,14 @@ export const COMMANDS = {
     cites,
   }),
   add_edge: z.object({
-    scope: id.describe("The scope the edge sits in: one you own."),
+    scope: id.describe("The scope the edge sits in: a child of yours for `after`, your own for the others."),
     edge,
     target: id.describe("The scope it points at."),
     reason: why,
     carries,
   }),
   remove_edge: z.object({
-    scope: id.describe("The scope the edge sits in: one you own."),
+    scope: id.describe("The scope the edge sits in: a child of yours for `after`, your own for the others."),
     edge,
     target: id.describe("The scope it points at."),
     reason: why,
@@ -200,7 +200,7 @@ export const COMMANDS = {
   }),
   raise_finding: z.object({
     disputes: id.nullable().default(null).describe("The line it disputes, by its id in a brief or a plan."),
-    about: id.nullable().default(null).describe("The scope it is about; the disputed line's own when left out."),
+    about: id.nullable().default(null).describe("The scope it is about, when not your own."),
     text: text.describe("What does not fit, and what the evidence shows."),
     evidence: z
       .array(id)

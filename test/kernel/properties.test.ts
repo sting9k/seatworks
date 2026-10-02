@@ -86,6 +86,11 @@ const command = fc.oneof(
   }),
   fc.record({
     who: actor,
+    type: fc.constant("run_checks"),
+    args: fc.record({ scope, commit: fc.constant(SHA(3)), steps: fc.constant([{ name: "unit", run: ["true"] }]) }),
+  }),
+  fc.record({
+    who: actor,
     type: fc.constant("integrate"),
     args: fc.record({ scope, evidence: fc.constantFrom(["e1"], ["e2"], ["e3"]), reason: text }),
   }),
@@ -105,7 +110,7 @@ const command = fc.oneof(
   }),
 );
 
-test("every invariant holds after every command, and the log folds again to the same state", () => {
+test("every invariant holds after every command, every effect has a key of its own, and the log folds again to the same state", () => {
   fc.assert(
     fc.property(fc.array(command, { maxLength: 40 }), (commands) => {
       const { ledger } = team();

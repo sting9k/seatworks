@@ -53,6 +53,12 @@ export class Ledger {
       folding = evolve(folding, event);
       effects.push(...react(event, folding));
     }
+    // The outbox keeps one row a key, so a key taken twice refuses the whole command where the log is kept.
+    const taken = new Set(this.effects.map((effect) => effect.key));
+    for (const effect of effects) {
+      if (taken.has(effect.key)) throw new Error(`${type}: two effects under the key ${effect.key}`);
+      taken.add(effect.key);
+    }
     this.state = foldCommand(this.state, events);
     this.log.push(...events);
     this.effects.push(...effects);

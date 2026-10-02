@@ -25,7 +25,11 @@ type Created = {
 const TAKES_SERVERS = new Set(["claude", "codex", "opencode"]);
 
 /** The part of Paseo's API the plugin uses, recording what it was asked; `gate` makes creates and reads fail. */
-export function fakePaseo(pluginDir: string, provider = "claude") {
+export function fakePaseo(
+  pluginDir: string,
+  provider = "claude",
+  profiles: readonly string[] = ["slp-supervisor", "slp-lead", "slp-peer", "slp-reviewer", "slp-watcher"],
+) {
   const created: Created[] = [];
   const sent: Sent[] = [];
   const archived: string[] = [];
@@ -98,14 +102,7 @@ export function fakePaseo(pluginDir: string, provider = "claude") {
           : Promise.resolve({
               config: {
                 plugins: { seatworks: { source: "directory", path: pluginDir } },
-                agentProfiles: ["slp-supervisor", "slp-lead", "slp-peer", "slp-reviewer", "slp-watcher"].map(
-                  (name) => ({
-                    id: name,
-                    name,
-                    provider,
-                    model: name,
-                  }),
-                ),
+                agentProfiles: profiles.map((name) => ({ id: name, name, provider, model: name })),
               },
             }),
     },

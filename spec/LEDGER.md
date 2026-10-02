@@ -409,7 +409,19 @@ An effect names ids, not copies (`shared/contracts/effects.ts`): the dispatcher 
 one, so what was delivered meanwhile is not sent again, and a delivery whose reader left is settled unsent. What moves
 to a new reader is asked for again, to that reader: `message_moved`, and the attentions a `reseated` moves.
 Facts and notes the kernel tells an actor (a hand-back, a finding, a failed turn, a report) are `deliver` effects with
-their text. The reflex is not an effect: the watch reads committed events, and missing one costs a look, not a
+their text. Each is keyed by its event and its reader, since one event may tell several: a check's result goes to
+whoever asked for it and to the owner above.
+
+Whoever a command changes something for is told, in the tool's own words and nothing advised:
+
+| Event                         | Told                                                             | Wakes |
+| ----------------------------- | ---------------------------------------------------------------- | ----- |
+| `handed_over`                 | The owners of both scopes: which paths moved, from where to where | Yes   |
+| `scope_held`, `scope_resumed` | The scope's owner, with the reason                               | Yes   |
+| `evidence_recorded`, a check  | Whoever asked, and the owner above; with the evidence's id, to cite | Whoever waited |
+| `evidence_recorded`, a verdict | The owner of the reading scope's parent, who seated the reader; with its id | Yes |
+| `finding_reopened`            | Whoever answers it: what is new, its new evidence, and what it first said | Yes |
+| `finding_withdrawn`           | Whoever was to answer it                                         | No    | The reflex is not an effect: the watch reads committed events, and missing one costs a look, not a
 promise.
 
 ## 9. Views
@@ -417,9 +429,11 @@ promise.
 Views read the log in SQL, or fold events in memory for what is open. Nothing a view needs is kept in `State` only
 for it.
 
-- `status(scope)`: the brief, its children with their state, edges, open obligations on and to its owner, the
+- `status(scope)`: the brief, its children with their state, its edges to scopes still open (`after`, `mayChange`,
+  `mustTell`), what a watching scope watches over, open obligations on and to its owner, the
   latest claim and its evidence, spend of the scope and its descendants beside its appetite.
-- `record(scope)`: briefs with every version, findings with their chains, reports, attentions with what came of them.
+- `record(scope)`: briefs with every version, findings with their chains (classified, reopened, carried, withdrawn),
+  reports, attentions with what came of them.
 - An agent's reads (`status`, `record`, `diff`) take its own scope when it names none. Their arguments are parsed at
   the boundary as a command's are, and one that does not fit is refused, saying which.
 - `obligations(actor)`, `whatTheHumanNeeds`, `sinceTheyLooked(at)`, `chainOfChange(finding)`, `signals(since)`.

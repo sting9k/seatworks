@@ -173,6 +173,8 @@ export function scopeRecordText(events: Iterable<Event>, scope: string): string 
       findings.set(e.finding.id, [`${e.finding.id} from ${e.finding.raisedBy}: ${e.finding.text}`]);
     if (e.type === "finding_classified") findings.get(e.finding)?.push(`  classified ${e.verdict}: ${e.reason}`);
     if (e.type === "finding_withdrawn") findings.get(e.finding)?.push(`  withdrawn: ${e.reason}`);
+    if (e.type === "finding_reopened")
+      findings.get(e.finding)?.push(`  reopened: ${e.text} (${e.evidence.join(", ")})`);
     if ("carries" in e && e.carries !== null)
       findings.get(e.carries)?.push(`  carried by ${e.type.replace(/_/g, " ")} (${e.by})`);
     if (e.type === "report_made" && e.scope === scope)

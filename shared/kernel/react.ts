@@ -8,9 +8,10 @@ import type { State } from "./state.ts";
 export function react(e: Event, s: State): readonly Effect[] {
   const out: Effect[] = [];
   const add = (name: string, body: EffectBody) => out.push({ key: `${e.seq}:${name}`, body });
+  // Keyed by its reader too: one event may tell several, and the outbox keeps one row a key.
   const tell = (to: Party | null, name: string, text: string, asks = false) => {
     if (to !== null && to !== HUMAN && s.actors.get(to)?.status === "seated")
-      add(name, { kind: "deliver", to, item: { kind: "note", text, asks } });
+      add(`${name}:${to}`, { kind: "deliver", to, item: { kind: "note", text, asks } });
   };
   const parentOwner = (scope: string) => {
     const x = s.scopes.get(scope);
@@ -49,6 +50,23 @@ export function react(e: Event, s: State): readonly Effect[] {
     case "brief_amended":
       tellBrief(s, e.scope, add);
       break;
+    case "handed_over": {
+      // Both writers work to the paths they hold: the one that gained some and the one that lost them.
+      const text = `${e.paths.join(", ")} moved from scope ${e.from} to scope ${e.to}: ${e.reason}`;
+      for (const scope of [e.from, e.to]) tell(s.scopes.get(scope)?.owner ?? null, "note", text, true);
+      break;
+    }
+    case "scope_held":
+    case "scope_resumed":
+      tell(
+        s.scopes.get(e.scope)?.owner ?? null,
+        "note",
+        e.type === "scope_held"
+          ? `Scope ${e.scope} is held: ${e.reason}. Nothing new is seated in it or integrated from it until it is resumed.`
+          : `Scope ${e.scope} is no longer held: ${e.reason}`,
+        true,
+      );
+      break;
     case "message_sent": {
       const m = e.message;
       if (m.queued && m.to !== HUMAN)
@@ -85,12 +103,22 @@ export function react(e: Event, s: State): readonly Effect[] {
     case "finding_raised":
     case "finding_reopened": {
       const f = s.findings.get(e.type === "finding_raised" ? e.finding.id : e.finding);
+      if (!f) break;
+      const said =
+        e.type === "finding_raised"
+          ? `Finding ${f.id} from ${f.raisedBy}: ${f.text}`
+          : `Finding ${f.id} from ${f.raisedBy} is reopened: ${e.text}\nNew evidence: ${e.evidence.join(", ")}\nIt said: ${f.text}`;
+      tell(s.scopes.get(f.answeredBy)?.owner ?? null, "note", `${said}\nMeanwhile: ${f.default}`, true);
+      break;
+    }
+    case "finding_withdrawn": {
+      // Whoever was woken to answer it owes it nothing now.
+      const f = s.findings.get(e.finding);
       if (f)
         tell(
           s.scopes.get(f.answeredBy)?.owner ?? null,
           "note",
-          `Finding ${f.id} from ${f.raisedBy}: ${f.text}\nMeanwhile: ${f.default}`,
-          true,
+          `Finding ${f.id} was withdrawn by ${f.raisedBy}: ${e.reason}`,
         );
       break;
     }
@@ -117,7 +145,7 @@ export function react(e: Event, s: State): readonly Effect[] {
     case "candidate_conflict": {
       const text = `Scope ${e.scope}'s ${e.commit} conflicts with its parent in: ${e.paths.join(", ")}. Merge the parent into your branch and hand back again.`;
       tell(s.scopes.get(e.scope)?.writer ?? null, "note", text, true);
-      tell(parentOwner(e.scope), "note-owner", `Scope ${e.scope} conflicts with its parent in: ${e.paths.join(", ")}.`);
+      tell(parentOwner(e.scope), "note", `Scope ${e.scope} conflicts with its parent in: ${e.paths.join(", ")}.`);
       break;
     }
     case "evidence_requested":
@@ -126,11 +154,19 @@ export function react(e: Event, s: State): readonly Effect[] {
     case "evidence_recorded": {
       const x = e.evidence;
       if (x.kind === "check") {
-        const text = `Checks on ${x.subject} for scope ${x.scope}: ${x.ok ? "passed" : "failed"}. ${x.summary}`;
+        const text = `Checks on ${x.subject} for scope ${x.scope}: ${x.ok ? "passed" : "failed"} (evidence ${x.id}). ${x.summary}`;
         for (const to of e.wake) tell(to, "note", text, true);
         const owner = parentOwner(x.scope);
         if (owner === null || !e.wake.includes(owner)) tell(owner, "note", text);
       }
+      // A verdict is returned to whoever seated its reader, who is the one to weigh it.
+      if (x.kind === "verdict")
+        tell(
+          parentOwner(x.scope),
+          "note",
+          `Verdict on ${x.subject} from scope ${x.scope}: ${x.ok ? "it stands" : "it does not stand"} (${x.id}). ${x.summary}`,
+          true,
+        );
       break;
     }
     case "report_made": {

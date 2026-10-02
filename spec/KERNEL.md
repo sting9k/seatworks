@@ -221,13 +221,13 @@ A command is called by an actor and checked against its role's properties and th
 | `amend_brief`      | owner of the parent                                 | New brief version, with a reason and the finding it carries if any       |
 | `set_plan`, `amend_plan` | owner of the scope                            | Sets or amends the plan's lines (I6 for goal and appetite)               |
 | `add_edge`, `remove_edge` | owner of the scope the edge sits in          | `dependsOn`, `mayChange`, `mustTell`, with a reason                      |
-| `handover`         | owner of the parent                                 | Moves paths from one child to another in one event; they are written by the receiving scope's writer |
+| `handover`         | owner of the parent                                 | Moves paths from one child to another in one event; they are written by the receiving scope's writer, and both owners are told |
 | `raise_finding`    | any seated actor                                    | Opens a finding                                                          |
 | `classify_finding` | whoever answers it (§4.4)                           | `changes` with change events, or `alternative` / `minor` with a reason   |
 | `withdraw_finding` | the raiser                                          |                                                                          |
 | `reopen_finding`   | the raiser                                          | Reopens a kept finding with new evidence                                 |
 | `hand_back`        | the writer, or the owner of a scope that delegates   | Records a claim at a commit; asks for evidence on it                     |
-| `record_verdict`   | the actor of a reading scope                        | Records its verdict as evidence on its commit                            |
+| `record_verdict`   | the actor of a reading scope                        | Records its verdict as evidence on its commit, and tells whoever seated it |
 | `record_evidence`  | the bridge, for a satellite's result                 | Records evidence                                                         |
 | `record_turn`, `record_workspace`, `record_agent`, `record_tools`, `record_gone`, `record_delivery`, `record_candidate`, `record_integration`, `record_profile`, `record_publish`, `record_permission`, `record_permission_settled`, `record_human_words`, `record_observation` | the bridge, for a fact | Records what a satellite or the agent host reported (`LEDGER.md` §5) |
 | `set_checks`       | owner of the root, or the Human                      | Sets the project's checks                                                |
@@ -236,7 +236,7 @@ A command is called by an actor and checked against its role's properties and th
 | `send_back`        | owner of the parent                                 | Does not integrate, and says why                                         |
 | `reseat`           | owner of the parent                                 | A new actor on the same scope, briefed from the record; obligations and undelivered messages move |
 | `drop_scope`       | owner of the parent                                 | Closes the scope unintegrated, with a reason                             |
-| `hold_scope`, `resume_scope` | owner of the parent, or the Human         |                                                                          |
+| `hold_scope`, `resume_scope` | owner of the parent, or the Human         | Nothing new is seated in it or integrated from it while held; its owner is told |
 | `report`           | owner of the scope                                  | Lines for its parent's owner, under the sections its profile names       |
 | `send_message`     | any actor, along `speaksTo`                         | Records the message; delivery carries it (I7)                            |
 | `answer`           | whoever an obligation is owed by                    | Answers a message or question                                            |
