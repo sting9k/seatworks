@@ -13,6 +13,13 @@ export function agentFact(ctx: Of<"record_agent">): Refusal | undefined {
   return undefined;
 }
 
+/** An agent's tool server said hello; recorded once, so a plugin started again knows without a second hello. */
+export function toolsFact(ctx: Of<"record_tools">): Refusal | undefined {
+  const actor = ctx.state.actors.get(ctx.body.actor);
+  if (actor?.status === "seated" && !actor.tools) ctx.emit({ type: "tools_reached", actor: actor.id });
+  return undefined;
+}
+
 /** A turn's end: what it spent and each attention left, which climbs; a failed turn's own words are sent once more. */
 export function turnFact(ctx: Of<"record_turn">): Refusal | undefined {
   const actor = ctx.state.actors.get(ctx.body.actor);

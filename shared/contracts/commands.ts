@@ -315,6 +315,7 @@ export const COMMANDS = {
     why: z.string().nullable().default(null),
   }),
   record_agent: z.object({ actor: id, host: z.string().min(1) }),
+  record_tools: z.object({ actor: id }),
   record_turn: z.object({
     actor: id,
     outcome: z.enum(["done", "failed", "cancelled"]),
@@ -390,6 +391,7 @@ export type CommandBody = { [T in CommandType]: { type: T } & Args<T> }[CommandT
 export const FACTS: ReadonlySet<CommandType> = new Set<CommandType>([
   "record_workspace",
   "record_agent",
+  "record_tools",
   "record_turn",
   "record_gone",
   "record_delivery",

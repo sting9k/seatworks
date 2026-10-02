@@ -42,6 +42,7 @@ function apply(s: State, e: Event, at: string): State {
         scope: e.scope,
         model: e.model,
         host: null,
+        tools: false,
         status: "seated",
         turns: 0,
         tokens: 0,
@@ -59,6 +60,8 @@ function apply(s: State, e: Event, at: string): State {
       return scope(s, e.scope, (x) => ({ ...x, workspace: "failed" }));
     case "agent_started":
       return actor(s, e.actor, (a) => ({ ...a, host: e.host }));
+    case "tools_reached":
+      return actor(s, e.actor, (a) => ({ ...a, tools: true }));
     case "brief_issued":
       return linesCounted(
         scope(s, e.scope, (x) => ({ ...x, brief: e.brief })),

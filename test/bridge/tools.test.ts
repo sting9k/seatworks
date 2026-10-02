@@ -100,6 +100,43 @@ test("each read answers from the record, the repository or Paseo: an agent's own
   for (const t of [supervisor, lead, peer]) t.close();
 });
 
+test("an agent that ends a turn with its tools never having reached the plugin is shown as stuck, until they do; and the record keeps that they did", async () => {
+  const repo = mkdtempSync(join(tmpdir(), "sw-unreached-"));
+  git(repo, "init", "-q", "-b", "main");
+  writeFileSync(join(repo, "a.txt"), "a\n");
+  git(repo, "add", ".");
+  git(repo, "commit", "-q", "-m", "start");
+  const root = stateRoot();
+  const plugin = new Plugin(root);
+  plugins.push(plugin);
+  const paseo = fakePaseo(pluginDir);
+  plugin.saw(paseo.api);
+  const { socketPath } = await plugin.whenReady();
+  const { project } = await plugin.openProject(repo, "main");
+  await plugin.idle();
+  const agent = paseo.created[0]!;
+  const unreached =
+    /^a1 is seated on scope root and has ended a turn, but its agent's tools have never reached the plugin/;
+  const stuck = async (of: Plugin) => (await of.view(project))!.stuck.filter((line) => unreached.test(line));
+
+  assert.deepEqual(await stuck(plugin), [], "an agent that has not ended a turn yet is not stuck");
+  await plugin.turnEnded(agent.host, { kind: "completed" }, []);
+  assert.equal((await stuck(plugin)).length, 1, "it ended a turn and its tool server never said hello");
+
+  const tools = await agentTools(socketPath, agent.env);
+  assert.equal(tools.welcome.type, "welcome");
+  await plugin.idle();
+  assert.deepEqual(await stuck(plugin), []);
+  tools.close();
+
+  await plugin.dispose();
+  const again = new Plugin(root);
+  plugins.push(again);
+  again.saw(paseo.api);
+  await again.whenReady();
+  assert.deepEqual(await stuck(again), [], "the plugin started again knows they reached it, with no new hello");
+});
+
 test("every argument an agent is shown says what it is; a line and what it comes from are said once, by each tool that takes them", () => {
   const undescribed: string[] = [];
   type Node = { properties?: Record<string, { description?: string }>; items?: unknown; anyOf?: unknown[] };

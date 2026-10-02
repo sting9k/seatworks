@@ -7,7 +7,7 @@ import type { State } from "../kernel/state.ts";
 type Pending = Effect & { readonly attempts: number };
 type Abandoned = Effect & { readonly why: string };
 
-/** What looks stuck, as facts for the Human: effects given up on, empty seats, unread words, a role gone. */
+/** What looks stuck, as facts for the Human: effects given up on, empty seats, unread words, a role gone, no tools. */
 export function stuckOf(
   state: State,
   pending: readonly Pending[],
@@ -19,6 +19,11 @@ export function stuckOf(
     if (actor.status === "seated" && !profile.roles.has(actor.role))
       lines.push(
         `${actor.id} is seated on scope ${actor.scope} in a role the project's profile no longer has; its tools are refused until the profile has the role again or the seat is released.`,
+      );
+  for (const actor of state.actors.values())
+    if (actor.status === "seated" && actor.host !== null && actor.turns > 0 && !actor.tools)
+      lines.push(
+        `${actor.id} is seated on scope ${actor.scope} and has ended a turn, but its agent's tools have never reached the plugin: it has none of the team's tools.`,
       );
   for (const e of abandoned) lines.push(`Effect ${e.key} (${e.body.kind}) was given up: ${e.why}`);
   for (const e of pending)

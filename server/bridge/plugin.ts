@@ -947,6 +947,12 @@ export class Plugin {
       get report() {
         return runtime.wiring.bundle.profile.report;
       },
+      reached: (actor) => {
+        if (runtime.project.view.actors.get(actor)?.tools !== false) return;
+        this.submitAs(runtime, { kind: "bridge" }, { type: "record_tools", actor }).catch((error: unknown) => {
+          daemonLog.error(`project ${id}: that ${actor}'s tools reached the plugin could not be recorded`, error);
+        });
+      },
       roleTools: (actor) => {
         const a = runtime.project.view.actors.get(actor);
         if (a?.status !== "seated") return null;

@@ -129,6 +129,7 @@ What the Human's surface shows as stuck: read from the log and the outbox, chang
 | An effect whose satellite keeps throwing                 | Shown with how many times it threw; once given up, with its last error |
 | An open scope whose seat was left empty                  | Shown, with its parent's owner                                      |
 | Words queued for a seated actor whose agent never started | Shown, with how many deliveries wait                               |
+| A seated actor that ends a turn while its agent's tool server never said hello; then the server says hello; then the plugin starts again | Shown, saying it has none of the team's tools; no longer shown; still not shown, with no new hello |
 | A project where nothing is stuck                         | Nothing shown                                                       |
 | A create Paseo refuses, such as a profile with no model            | The seat is gone with Paseo's reason, which its owner hears |
 | An agent reopened after a daemon restart                           | Its whole seat's environment again, the git shim first on its PATH |

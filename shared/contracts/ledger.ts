@@ -96,6 +96,8 @@ export type Actor = {
   readonly scope: ScopeId;
   readonly model: string;
   readonly host: string | null;
+  /** Whether its agent's tool server has reached the plugin: one that never does has none of the team's tools. */
+  readonly tools: boolean;
   readonly status: ActorStatus;
   readonly turns: number;
   readonly tokens: number;

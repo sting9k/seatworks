@@ -38,6 +38,7 @@ export type EventBody =
   | { type: "workspace_ready"; scope: ScopeId; branch: string | null; head: string | null }
   | { type: "workspace_failed"; scope: ScopeId; why: string }
   | { type: "agent_started"; actor: ActorId; host: string }
+  | { type: "tools_reached"; actor: ActorId }
   | { type: "brief_issued"; scope: ScopeId; brief: Brief }
   | { type: "brief_amended"; scope: ScopeId; brief: Brief; reason: string; carries: FindingId | null }
   | { type: "plan_set"; scope: ScopeId; plan: Plan }

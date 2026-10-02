@@ -131,6 +131,7 @@ a message the Human sent or a question the Human answered; the kernel checks it 
 ```ts
 type Actor = { id: ActorId; role: RoleName; scope: ScopeId; model: string;
                host: string | null;                      // the agent host's id, from `agent_started`
+               tools: boolean;                           // its tool server has reached the plugin
                status: "seated" | "released" | "gone";
                turns: number; tokens: number; usd: number;   // what it spent, summed turn by turn
                reported: { tokens: number; usd: number };   // its session's running totals at its last turn's end
@@ -276,6 +277,7 @@ the shell and never reaches `decide`.
 | ---------------------- | ----------------------------------------------------------------------- | ----------------------------------- |
 | `record_workspace`     | `scope, ok, branch?, head?, why?`                                              | `workspace_ready` or `workspace_failed` |
 | `record_agent`         | `actor, host`                                                           | `agent_started`                     |
+| `record_tools`         | `actor`: its tool server said hello; nothing the second time            | `tools_reached`                     |
 | `record_turn`          | `actor, outcome: done \| failed \| cancelled, why?, began?, tokensSoFar, usdSoFar, seen` | `turn_ended`, `attention_climbed`\* |
 | `record_gone`          | `actor, why`                                                            | `actor_gone`, `obligation_moved`\*, `obligation_closed`\* (its permissions) |
 | `record_delivery`      | `messages, attentions`                                                  | `message_delivered`\*, `attention_delivered`\* |
@@ -302,6 +304,7 @@ Every event, with its payload. `evolve` handles each; an unknown type stops the 
 | `workspace_ready`     | `scope, branch, head`                                                                              |
 | `workspace_failed`    | `scope, why`                                                                                 |
 | `agent_started`       | `actor, host`                                                                                |
+| `tools_reached`       | `actor`                                                                                      |
 | `brief_issued`        | `scope, brief`                                                                               |
 | `brief_amended`       | `scope, brief, reason, carries`                                                              |
 | `plan_set`            | `scope, plan`                                                                                |

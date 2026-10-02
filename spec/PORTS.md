@@ -137,7 +137,8 @@ upkeep: attach(repository, profile), profiles, presets, templateOffer(from), ins
 - It shows only what the kernel's views and the agents said. It writes no summary of its own.
 - `stuck` reads the state and the outbox: an effect its satellite keeps throwing on, with how many times, or gave up
   on after its last try, with the error; an open scope with nobody seated, with its parent's owner; words queued for
-  a seated actor whose agent never started. Facts only; it changes nothing and suggests nothing.
+  a seated actor whose agent never started; a seated actor that ended a turn while its agent's tool server never
+  reached the plugin, so it has none of the team's tools. Facts only; it changes nothing and suggests nothing.
 - A message the Human types here or straight into an agent's chat is the same message on the record.
 - Attaching opens a project for one of Paseo's projects with the profile named, asked for only when more than one is
   installed, and starts its root's agent. The plugin serves only attached
@@ -228,6 +229,8 @@ The line between the server and the bridge fails in words, never in silence:
   tries again. A plugin that stays away is said so, with whether anything was recorded. The plugin's own refusal is
   an answer, and is not tried again.
 - A call whose answer is lost with the connection is sent again under its id, and taken once.
+- A server's first hello is kept on the record (`tools_reached`). An agent that ends a turn with none kept is shown
+  to the Human as stuck: an agent with no tools looks like one that is thinking.
 - Nothing thrown while a server is answered leaves the socket: the server is refused, the reason goes to Paseo's
   log, and every other agent's tools go on working.
 

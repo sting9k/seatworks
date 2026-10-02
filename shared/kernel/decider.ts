@@ -60,6 +60,7 @@ const HANDLERS: Handlers = {
   pass: watch.pass,
   record_workspace: work.workspaceFact,
   record_agent: host.agentFact,
+  record_tools: host.toolsFact,
   record_turn: host.turnFact,
   record_gone: host.goneFact,
   record_delivery: talk.delivery,

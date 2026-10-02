@@ -82,6 +82,7 @@ export const DESCRIPTIONS: Record<CommandType | ReadName, string> = {
   publish: "Pushes the landed base branch to a remote, never forced.",
   record_workspace: "",
   record_agent: "",
+  record_tools: "",
   record_turn: "",
   record_gone: "",
   record_delivery: "",

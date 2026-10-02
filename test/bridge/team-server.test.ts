@@ -37,6 +37,7 @@ test("an agent's tool server lists its role's tools and carries a call to the ke
     report: ledger.profile.report,
     roleTools: (actor: string) => ledger.profile.roles.get(ledger.state.actors.get(actor)?.role ?? "")?.tools ?? null,
     roleGone: () => null,
+    reached: () => undefined,
     read: () => Promise.resolve("status text"),
   };
   const socket = new TeamSocket(join(root, "team.sock"), keys, (id) => (id === "p" ? port : undefined));
@@ -82,6 +83,7 @@ test("a tool server with a key that is not its agent's is refused", async () => 
     report: ledger.profile.report,
     roleTools: () => new Set(["status"]),
     roleGone: () => null,
+    reached: () => undefined,
     read: () => Promise.resolve(""),
   };
   const socket = new TeamSocket(join(root, "team.sock"), keys, () => port);
@@ -123,6 +125,7 @@ test("a call whose answer is lost with the connection is sent again and recorded
     report: profile.report,
     roleTools: (actor: string) => profile.roles.get(project.view.actors.get(actor)?.role ?? "")?.tools ?? null,
     roleGone: () => null,
+    reached: () => undefined,
     read: () => Promise.resolve(""),
   };
   const socket = new TeamSocket(join(root, "team.sock"), keys, (id) => (id === "p" ? port : undefined));
@@ -187,6 +190,7 @@ test("a tool server whose project cannot be opened is refused, saying so, and th
     report: ledger.profile.report,
     roleTools: () => new Set(["status"]),
     roleGone: () => null,
+    reached: () => undefined,
     read: () => Promise.resolve("status text"),
   };
   const socket = new TeamSocket(join(root, "team.sock"), keys, (id) => {
@@ -219,6 +223,7 @@ test("a tool server started before the plugin listens waits and connects once it
     report: ledger.profile.report,
     roleTools: () => new Set(["status"]),
     roleGone: () => null,
+    reached: () => undefined,
     read: () => Promise.resolve("status text"),
   };
   let hellos = 0;
@@ -261,6 +266,7 @@ test("a call made while the plugin is away says so in words, and one made once i
     report: ledger.profile.report,
     roleTools: () => new Set(["status"]),
     roleGone: () => null,
+    reached: () => undefined,
     read: () => Promise.resolve("status text"),
   };
   const restore = asAgent("p", peer, keys.keyOf("p", peer));

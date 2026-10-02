@@ -21,6 +21,8 @@ export type ProjectPort = {
   submit(command: Command): Promise<Submitted>;
   /** The sections a report has in the project's profile, as an agent is shown them. */
   readonly report: ReadonlyMap<string, string>;
+  /** An actor's tool server said hello: kept on the record the first time. */
+  reached(actor: string): void;
   /** The tools a seated actor's role names; none for a role the profile no longer has; null when it is not seated. */
   roleTools(actor: string): ReadonlySet<string> | null;
   /** A seated actor's role, when the project's profile no longer has it. */
@@ -121,6 +123,7 @@ export class TeamSocket {
             continue;
           }
           who = { project, actor };
+          project.reached(actor);
           const shown = toolsFor(new Set([...tools, ...Object.keys(READS)]), project.report);
           write({ type: "welcome", tools: shown satisfies ToolSpec[] });
         } else if (message.type === "call" && who) {
