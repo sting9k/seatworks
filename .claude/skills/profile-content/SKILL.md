@@ -54,7 +54,9 @@ Follow `spec/REFLEX.md`, Asking well. The checklist:
       classify, integrate or answer (I12).
 - [ ] New thresholds start at the file's defaults with the comment that they are earned only at a look back.
 
-A moment enters `active` only when a look back shows a lane needed it, or when it asks no model.
+Every question and moment is in `active` from the first lane (`spec/REFLEX.md`, Decided): what none of them has
+earned is its threshold, so an answer goes no further than the Watcher or the record. A look back takes out, together,
+those that never led to a change (`retrospective`, The watch's upkeep).
 
 ## Before committing
 

@@ -52,5 +52,5 @@ the Human.
 
 ## Looking back
 
-After a run, or each week, look back from the record (`retrospective`), and improve by taking something away, never
-by adding a role, a checklist or an approval.
+When the first lane lands, then after each run or each week, look back from the record (`retrospective`), and
+improve by taking something away, never by adding a role, a checklist or an approval.

@@ -1,13 +1,14 @@
 ---
 name: retrospective
-description: "Looks back over a run or a week from the record, and ends in at most one change, made by taking something away where possible. Use after a run, each week, or after an episode that cost a rework."
+description: "Looks back over a run or a week from the record, and ends in at most one change, made by taking something away where possible, and in the upkeep of the watch. Use when the first lane lands, then after a run, each week, or after an episode that cost a rework."
 ---
 
 # Retrospective
 
 One change per look back, with two dated episodes behind it. Improve by taking away: a step that changed nothing, a
 message round nobody needed, a responsibility on the wrong role. Never add a role, a checklist or an approval to keep
-the method as it is.
+the method as it is. The first look back comes when the first lane lands: the watch starts wide, and that lane is
+where its noise first shows.
 
 ## Read the record, not memory
 
@@ -17,9 +18,9 @@ the method as it is.
   answer changed a plan or a brief; verdicts and failing checks followed by a send-back or an amended brief;
   attentions left until they climbed; messages that asked for an answer and got none. A review that seldom comes
   before a change has to show why it is still asked for.
-- **The reflex and the watch.** For each question: its shape (decisive, weak, noisy) and how many answers past it
-  were acted on. Set or move a threshold only from these, for its wording and model. Remove a question that never
-  led to a change.
+- **The reflex and the watch.** For each question and moment, from the attentions in each scope's `record`: how many
+  it raised, and what came of each (acted on, acknowledged, its kind marked noise, left to climb). Set or move a
+  threshold only from these, for its wording and model.
 - **The project's rules.** Rules that never fire, and rules that fire on most edits.
 - **Premises reopened.** For each finding that reopened a brief or a plan: did its evidence come from the code (a
   repro, a contradiction, a measurement), or only from the work being hard? Reopening is a right to keep; two dated
@@ -48,8 +49,20 @@ improving the method).
 Weigh each mechanism by what it changed, not by how much it ran. Judge the system, never the agent: "the scope held
 one directory and the work needed two" is a finding, "the Peer was careless" is not.
 
+## The watch's upkeep
+
+Apart from the one change, as one list. Proposed for removal from the profile's `active`:
+
+- every question and moment that raised an attention and had none acted on, across two look backs;
+- every one that raised none across two look backs: it costs little, and it guards nothing;
+- every one whose readers marked it noise more often than they acted on it, unless narrowing its wording is the one
+  change.
+
+They leave together. Each is judged on its own record, so taking away what never led to a change cannot blur what
+the one change does, and a wide set that sheds one a look back stays wide for months.
+
 ## Ends in
 
 At most one proposed change, as the smallest edit to one file of the profile (a prompt line, a skill step, a question,
-a threshold), with its two dated episodes, its class, and what would show it made things worse. For the Human to
-approve.
+a threshold), with its two dated episodes, its class, and what would show it made things worse. Beside it, the
+watch's upkeep. Both for the Human to approve.

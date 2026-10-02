@@ -204,7 +204,8 @@ nothing so that "no" is easy, one question, no anti-pattern named, and nothing t
   late" (§10.3).
 - The Watcher's passes and attentions label the reflex's candidates, and the owners' acts label the Watcher's.
   Thresholds are set from those labels at the look back, never by code.
-- A moment that never leads to a change leaves the profile.
+- A moment that never leads to a change leaves the profile at a look back, with the others that did not
+  (`retrospective`, The watch's upkeep).
 
 ## While the Human is away
 

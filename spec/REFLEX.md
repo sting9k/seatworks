@@ -242,8 +242,11 @@ tokens: under four million tokens, about fifteen cents. Events and hand-backs ad
 - Later, the outcome labels say whether it separates: do subjects that were acted on score higher than those that
   were not? Many questions that read well separate nothing when measured, which is why a question earns `tell` only
   by a look back.
-- A question that never leads to a change is removed from the profile at the look back. A threshold is never tuned by
-  code: telemetry does not turn itself into a rule.
+- A question that never leads to a change is removed from the profile at a look back, together with every other
+  that did not: each is judged on its own record, so they are not the one change a look back makes, and a wide set
+  that shed one a week would stay wide for months (`retrospective`, The watch's upkeep). The first look back is held
+  when the first lane lands, where the wide set's noise first shows. A threshold is never tuned by code: telemetry
+  does not turn itself into a rule.
 - The model is pinned by version, never `jev-latest`, and the model that served each answer is recorded. The pin
   moves at a look back, and thresholds are set again from the answers the new version gives.
 
@@ -334,6 +337,11 @@ ask(state, questions, model) -> Result<{ model, answers, tokens }>
 - Whether OpenRouter's `/api/v1/systemone` honours `provider: { data_collection: deny }` as its `/api/alpha/decisions`
   did for V1; until it is shown to, Seatworks uses the route V1 used.
 - The rate OpenRouter allows Jev, which it does not publish.
+- No view gives a look back each question's answers and their labels: what an agent can read is the attentions in a
+  scope's `record` and what came of each. So a question's shape (decisive, weak, noisy) and how its answers separate
+  are not yet readable, and a threshold cannot be earned from them until a view is built. The five signals and a
+  finding's chain are given only by the plugin's `record` call, which no agent's tool reads and the Human's page
+  does not make.
 
 ## Decided
 
@@ -342,4 +350,5 @@ ask(state, questions, model) -> Result<{ model, answers, tokens }>
 - Every question and moment is asked from the first lane: the owner chose the full set on 29 September 2026. Start
   simple (CONCEPT-V2 A3.9¶11) still holds where it bears, on what reaches a role: a threshold not yet earned by a look
   back sends its answer no further than a candidate for the Watcher or the record, so the wide set costs the owners
-  nothing until a question proves itself. A question that never leads to a change is removed at a look back.
+  nothing until a question proves itself. A question that never leads to a change is removed at a look back, the
+  first held when the first lane lands, and those that go leave together.

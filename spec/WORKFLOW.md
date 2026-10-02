@@ -101,7 +101,9 @@ Nothing blocks it.
 ## 7. Look back: the Supervisor and the owner
 
 - Kernel: the chain of change of each finding, and the five signals as ratios, never turned into rules.
-- Prompt (retrospective skill): the diagnosis table. Fix by taking away: edit the profile, add no mechanism.
+- Prompt (retrospective skill): the diagnosis table. Fix by taking away: edit the profile, add no mechanism. One
+  change a look back; the questions and moments that never led to a change leave together, apart from it. The first
+  look back is held when the first lane lands.
 
 ## Always open
 
