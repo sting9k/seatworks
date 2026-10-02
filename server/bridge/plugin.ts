@@ -1030,7 +1030,10 @@ export class Plugin {
     }
     const ready = await this.whenReady();
     const target = view.actors.get(a.actor ?? "");
-    if (!target?.host) return `${a.actor ?? "?"} has no agent to look at.`;
+    // One that watches is looked at only from above it or by one that watches: the watched never learn of it.
+    const watches = target !== undefined && view.scopes.get(target.scope)?.kind === "watch";
+    if (!target?.host || (watches && !standsAbove(view, actor, target.scope)))
+      return `${a.actor ?? "?"} has no agent to look at.`;
     return ready.host.look(target.host, a.last ?? 40);
   }
 

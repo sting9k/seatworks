@@ -240,7 +240,11 @@ back the key its agent was bound to. It guards against mistakes, not intent, as 
 
 Each tool is one kernel command, shown to the roles whose `tools` name it, or a read: `status` (a scope's view),
 `record` (briefs, findings, reports, attentions), `look` (what an agent was last told, said, thought and ran, newest
-last, through the agent host; `last` counts those, not turns), `diff` (a scope's change at a commit). A read with no scope named is of the caller's own. A reply is the
+last, through the agent host; `last` counts those, not turns), `diff` (a scope's change at a commit). A read with no scope named is of the caller's own.
+Three reads are by who asks, read off the scope graph, so that the watched never learn of the watch (`WATCH.md`,
+Decided 6): the attentions in a scope's record, for an owner above it or one that watches; what a look back reads,
+for the root's owner; and a `look` at an agent that watches, for an owner above it or another that watches, with
+anyone else told what is said of an actor that has no agent. A reply is the
 command's result and the facts it produced, never advice on what to do next. Every argument an agent is shown says what it is, in a line of its own; a line and what it comes
 from (`via`) are the same in every tool, so each tool that takes lines says them once rather than on every line. A
 tool's description says what it is for, and `raise_finding`'s names the points of conflict it is

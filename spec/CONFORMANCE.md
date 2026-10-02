@@ -271,6 +271,7 @@ A call as an agent's tool server sends it, the answer read back.
 | A candidate, when its Watcher is told of it                 | It reads the moment, its answer and the agent; the item with two either side and no more; the facts the eye counted; the scope's brief; each earlier attention about that agent with what came of it |
 | A candidate passed before it was sent                       | Nothing is sent of it                                      |
 | An agent reads its own scope's record after an attention about it | Nothing of the attention is in it; an owner above the scope, and one that watches, read it there |
+| An agent looks at the one that watches                      | Told what is said of an actor with no agent; the owner above it looks as before |
 | The root's owner reads the root's record                    | It ends with the five signals and, for each question and moment, its answers and how they fall, those past its threshold, the candidates attended and passed, and its attentions with what came of each; any other reader of the root's record is shown none of it |
 | A restart with a candidate neither attended nor passed      | Given to the Watcher again                                 |
 | Jev's host unreachable                                      | Facts and sweeps reach the Watcher; nothing else changes   |

@@ -561,6 +561,17 @@ test("the attention tools: a watcher's attention reaches the owner above the age
     /signals|going-in-circles/,
     "nobody else is shown it",
   );
+  assert.equal(
+    (await maker.call("look", { actor: "a4" })).text,
+    "a4 has no agent to look at.",
+    "an agent that looks at the one that watches is told what it is told of an actor with no agent",
+  );
+  assert.equal((await keeper.call("look", { actor: "a4" })).text, "a4 has no agent to look at.");
+  assert.equal(
+    (await chief.call("look", { actor: "a4" })).text,
+    "Nothing in its timeline yet.",
+    "the owner above it looks as before",
+  );
   const before = c.told(1).length;
   assert.equal(
     await did(c, guard, "attend", { actor: "a3", moment: "going-in-circles", why: "a third time", urgency: "now" }),
