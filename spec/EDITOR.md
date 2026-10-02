@@ -169,7 +169,8 @@ A new role, skill, question or moment starts from a skeleton: the five parts of 
 leaves to be written is a line in italics, and one left standing draws a note. A new question or moment is written
 and not asked: it joins its file's `active` list when its author ticks it, in one line of that file.
 
-A question's or a moment's own words are changed in its file. A role's models are set in its panel.
+A question's or a moment's own words are changed in its file. A role's models are set in its panel. A role, a
+skill, a step, a question and a moment are each renamed in their panel, and everything that named them follows.
 
 ## Checks
 
@@ -187,6 +188,10 @@ of them in a panel of the rail. A note stops nothing, neither a change nor an ex
   that is not beside it.
 - A question or a moment that asks of a backticked field not in its `state`, or lacks the description of an outcome.
 - A prompt, a skill, a question or a moment that still holds a skeleton's words.
+- A question or a moment whose words changed since its threshold was earned: it is not yet earned again. A threshold
+  is earned for a hash of the wording (`REFLEX.md`). The plugin makes that hash with Node's own SHA-256, which a page
+  has only by waiting on it, so the page makes the same hash in plain code, held to Node's and to the plugin's by
+  tests. The panel of a question says which of the three holds: earned, reworded since, or not yet.
 
 A change `resolveProfile` would refuse (no root or more than one; a role that spawns but does not delegate; a role
 with two kinds; a `spawns` that names no role) is never there to note: it is not made (Decided 9).
@@ -204,12 +209,8 @@ A template is some five to thirty nodes, so drawing is never slow; what is felt 
 
 ## Not built
 
-- A question whose words changed is not yet shown as having lost what it earned. Its threshold is earned for a hash of
-  its wording (`REFLEX.md`), which the plugin makes with Node's own hashing; the page has no way to make the same
-  hash yet, and SLP's questions have earned none to lose.
 - A wire to an outside tool server: the profile has no place for one until `TEMPLATE.md`'s step 4.
 - The sections of a report as nodes: `TEMPLATE.md`'s last step.
-- Renaming a skill, a question or a moment.
 
 ## To check before building on it
 

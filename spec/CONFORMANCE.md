@@ -266,3 +266,8 @@ A template's files in, what a person sees out (`EDITOR.md`).
 | A skill wired to a role                                     | The role's always-on words rise by the words of the skill's description |
 | A question added, ticked as asked, then taken away          | Written and not asked; asked by one line of its file; taken away, the file is as it was to the byte |
 | A role's models set                                         | In its own line of the profile, no other line touched               |
+| Any text hashed by the page                                 | The hash Node's own SHA-256 gives                                   |
+| The wording of each question and moment of SLP, hashed by the page | The hash the plugin earns a threshold for                     |
+| A question reworded after its threshold was earned          | Shown as not yet earned, with a note; before the rewording, earned and no note |
+| A skill renamed                                             | Its folder's files, its name in its file and its place in every role that has it follow |
+| A question renamed                                          | Its key and its line in the list of those asked change, each in its place; nothing else |

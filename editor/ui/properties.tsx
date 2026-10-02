@@ -1,6 +1,6 @@
 import { type ReactNode, useState } from "react";
 import { TEMPLATES } from "../gallery/templates.ts";
-import { putFile, renameRole, setAsked, setModels, setStep } from "../template/edits.ts";
+import { putFile, renameAsked, renameRole, renameSkill, setAsked, setModels, setStep } from "../template/edits.ts";
 import { type GraphNode, graphOf } from "../template/graph.ts";
 import { readTemplate, type Template } from "../template/read-template.ts";
 import { useEditing, useNotes } from "./editing.ts";
@@ -16,6 +16,12 @@ const KIND: Readonly<Record<GraphNode["kind"], string>> = {
   moment: "Watch moment",
   step: "Step",
 };
+
+const EARNED = {
+  earned: "earned at a look back, for these words",
+  reworded: "earned for other words; reworded since, so not yet earned",
+  "not yet": "not yet earned: its answer goes no further than a candidate",
+} as const;
 
 /** The fewest and the most words a role of the shipped template reads every turn: the mark another's are set beside. */
 const MARK = (() => {
@@ -161,6 +167,13 @@ function About({
       const beside = [...template.files.keys()].filter((path) => path.startsWith(folder)).sort();
       return (
         <>
+          <Line
+            label="Name"
+            value={node.name}
+            onSet={(name) => {
+              change(renameSkill(node.name, name));
+            }}
+          />
           <p>{node.description}</p>
           <p className="section">In its folder</p>
           <ul className="rows mono">
@@ -202,7 +215,20 @@ function About({
       const counted = node.kind === "moment" && node.countedInCode;
       return (
         <>
+          <Line
+            label="Name"
+            value={node.name}
+            onSet={(name) => {
+              change(renameAsked(node.kind, node.name, name));
+            }}
+          />
           <p>{counted ? "Counted in code; no model is asked." : node.asks}</p>
+          {counted ? null : (
+            <dl>
+              <dt>Threshold</dt>
+              <dd>{EARNED[node.earned]}</dd>
+            </dl>
+          )}
           {node.kind === "question" ? (
             <dl>
               <dt>Asked on</dt>

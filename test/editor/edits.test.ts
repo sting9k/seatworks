@@ -8,7 +8,9 @@ import {
   type Edit,
   removeRole,
   removeSkill,
+  renameAsked,
   renameRole,
+  renameSkill,
   setProperty,
   setStep,
   setTool,
@@ -198,4 +200,34 @@ test("steps saved are a line each in `flow.md`, in order, each with its role and
   );
   assert.deepEqual(filesChanged(slp, after), ["flow.md", "template.json"]);
   assert.deepEqual(wires(graphOf(after), "then"), ["step:plan > step:work", "step:work > step:plan"]);
+});
+
+test("a skill renamed keeps its folder's files, its name in its file and its place in every role that has it", () => {
+  const after = changed(slp, renameSkill("domain-docs", "project-docs"));
+
+  assert.deepEqual(
+    wires(graphOf(after), "skill").filter((wire) => wire.startsWith("skill:project-docs")),
+    wires(graphOf(slp), "skill")
+      .filter((wire) => wire.startsWith("skill:domain-docs"))
+      .map((wire) => wire.replace("domain-docs", "project-docs")),
+  );
+  assert.match(after.files.get("skills/project-docs/SKILL.md")!, /^---\nname: project-docs\n/);
+  assert.ok([...after.files.keys()].every((path) => !path.startsWith("skills/domain-docs/")));
+  assert.equal(after.skills.get("project-docs")!.description, slp.skills.get("domain-docs")!.description);
+  assert.equal(linesChanged(slp, after, "profile.yaml").length, 2);
+});
+
+test("a question renamed keeps its place in its file and in the list of those asked", () => {
+  const after = changed(slp, renameAsked("question", "cause-as-fact", "states-a-cause"));
+  const before = slp.files.get("reflex.yaml")!.split("\n");
+  const lines = after.files.get("reflex.yaml")!.split("\n");
+
+  assert.deepEqual(filesChanged(slp, after), ["reflex.yaml"]);
+  assert.equal(lines.length, before.length);
+  assert.deepEqual(
+    lines.flatMap((line, index) => (line === before[index] ? [] : [`${before[index]!} > ${line}`])),
+    ["  - cause-as-fact >   - states-a-cause", "  cause-as-fact: >   states-a-cause:"],
+  );
+  const node = graphOf(after).nodes.find((candidate) => candidate.id === "question:states-a-cause");
+  assert.ok(node?.kind === "question" && node.active);
 });

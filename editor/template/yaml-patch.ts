@@ -63,6 +63,15 @@ export function withItem(text: string, path: readonly string[], item: string, on
   return splice(text, after, after, `${lead}${text.slice(start, last.range![0])}${scalar(item)}\n`);
 }
 
+/** The text with `from` in the list at `path` called `to`, in its place; a list without it is left as it is. */
+export function renameItem(text: string, path: readonly string[], from: string, to: string): string {
+  const list: unknown = parseDocument(text).getIn(path, true);
+  if (!isSeq(list)) throw new Error(`no list at ${path.join(".")}`);
+  const item = list.items.find((node) => isScalar(node) && node.value === from);
+  const range = rangeOf(item);
+  return range ? splice(text, range[0], range[1], scalar(to)) : text;
+}
+
 /** The text with the key at `path` called `to`, its value untouched. */
 export function renameKey(text: string, path: readonly string[], to: string): string {
   const { pair } = pairAt(text, path);

@@ -2,6 +2,7 @@ import type { Relation, Role } from "../../shared/contracts/profile.ts";
 import { alwaysOnWords } from "./checks.ts";
 import type { Asked, Template } from "./read-template.ts";
 import { TOOL_GROUPS } from "./tool-groups.ts";
+import { type Earned, earnedOf } from "./wording.ts";
 
 export const PROPERTIES = ["root", "delegates", "writes", "reading", "watches", "humanDoor"] as const;
 export type Property = (typeof PROPERTIES)[number];
@@ -43,6 +44,7 @@ export type GraphNode =
       readonly on: readonly string[];
       readonly tells: string | null;
       readonly active: boolean;
+      readonly earned: Earned;
       readonly file: string;
     }
   | {
@@ -51,6 +53,7 @@ export type GraphNode =
       readonly name: string;
       readonly asks: string;
       readonly countedInCode: boolean;
+      readonly earned: Earned;
       readonly active: boolean;
       readonly file: string;
     }
@@ -120,6 +123,7 @@ export function graphOf(template: Template): Graph {
       on: question.spec.on ?? [],
       tells: question.spec.tells ?? null,
       active: question.active,
+      earned: earnedOf(question.spec),
       file: template.file.reflex!,
     });
   for (const moment of template.moments) {
@@ -130,6 +134,7 @@ export function graphOf(template: Template): Graph {
       name: moment.name,
       asks: wordsOf(moment),
       countedInCode: moment.spec.by === "code",
+      earned: earnedOf(moment.spec),
       active: moment.active,
       file: template.file.watch!,
     });

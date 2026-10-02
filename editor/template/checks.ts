@@ -1,5 +1,6 @@
 import type { Asked, Template } from "./read-template.ts";
 import { TOOL_GROUPS } from "./tool-groups.ts";
+import { earnedOf } from "./wording.ts";
 
 /**
  * Something a machine saw in a template that a person should look at (EDITOR.md, Checks): the node it is about and
@@ -67,6 +68,8 @@ function askedNotes({ spec }: Asked): string[] {
     notes.push("it does not describe both a yes and a no");
   if (spec.choice !== undefined && spec.labels === undefined) notes.push("it does not describe its outcomes");
   if (SKELETON.test([spec.noul, spec.yes, spec.no].join("\n"))) notes.push("it still holds the skeleton's words");
+  if (earnedOf(spec) === "reworded")
+    notes.push("its words changed since its threshold was earned, so it is not yet earned");
   return notes;
 }
 

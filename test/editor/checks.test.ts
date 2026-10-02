@@ -17,6 +17,7 @@ import {
 } from "../../editor/template/edits.ts";
 import { graphOf } from "../../editor/template/graph.ts";
 import { readTemplate, type Template, type TemplateFiles } from "../../editor/template/read-template.ts";
+import { wordingOf } from "../../server/satellites/reflex/config.ts";
 import { slpFiles } from "./slp.ts";
 
 // Each case is a row of spec/CONFORMANCE.md, Editor: what a machine sees in a template, as a note on a node.
@@ -154,5 +155,36 @@ test("a role's models are set in its own line of the profile", () => {
       .split("\n")
       .filter((line) => !slp.files.get("profile.yaml")!.split("\n").includes(line)),
     ["    models: [fast, slp-peer]"],
+  );
+});
+
+test("a question reworded after its threshold was earned is shown as not yet earned", () => {
+  const spec = slp.questions.find((question) => question.name === "names-method")!.spec;
+  const earnedFor = `    tell: 0.9\n    for: { wording: "${wordingOf(spec)}", model: jev }\n`;
+  const earned = changed(
+    slp,
+    rewritten("reflex.yaml", (text) => text.replace("    tell: 0.9\n", earnedFor)),
+  );
+  const node = (template: Template) => graphOf(template).nodes.find((n) => n.id === "question:names-method");
+  const first = node(earned);
+  assert.ok(first?.kind === "question");
+  assert.equal(first.earned, "earned");
+  assert.deepEqual(notes(earned), notes(slp));
+
+  const reworded = changed(
+    earned,
+    putFile(
+      "reflex.yaml",
+      earned.files.get("reflex.yaml")!.replace("Does `goal` or a line", "Does `goal` or any line"),
+    ),
+  );
+
+  const second = node(reworded);
+  assert.ok(second?.kind === "question");
+  assert.equal(second.earned, "reworded");
+  assert.ok(
+    notes(reworded).includes(
+      "question:names-method: its words changed since its threshold was earned, so it is not yet earned",
+    ),
   );
 });

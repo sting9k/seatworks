@@ -5,7 +5,7 @@ import type { Property, Wire } from "./graph.ts";
 import { readTemplate, type Template, type TemplateFiles } from "./read-template.ts";
 import { momentSkeleton, promptSkeleton, questionSkeleton, skillSkeleton } from "./skeletons.ts";
 import { TOOL_GROUPS, toolsFollowing } from "./tool-groups.ts";
-import { deleteIn, renameKey, setIn, type Value, withItem } from "./yaml-patch.ts";
+import { deleteIn, renameItem, renameKey, setIn, type Value, withItem } from "./yaml-patch.ts";
 
 /**
  * A change to a template: its files in, its files out, or why it is not made. A change touches only the file it
@@ -264,6 +264,27 @@ export const addSkill =
     return new Map(template.files).set(`skills/${name}/SKILL.md`, skillSkeleton(name));
   };
 
+/** A skill under another name: its folder, the name in its file, and every role that has it follow. */
+export const renameSkill =
+  (from: string, to: string): Edit =>
+  (template) => {
+    if (!NAME.test(to)) return { refused: `a skill's name is lower-case letters, digits and dashes: ${to} is not` };
+    if (template.skills.has(to)) return { refused: `there is already a skill named ${to}` };
+    const files = new Map<string, string>();
+    for (const [path, text] of template.files)
+      files.set(
+        path.startsWith(`skills/${from}/`) ? `skills/${to}/${path.slice(`skills/${from}/`.length)}` : path,
+        text,
+      );
+    const own = `skills/${to}/SKILL.md`;
+    files.set(own, files.get(own)!.replace(new RegExp(`^name:\\s*"?${from}"?\\s*$`, "m"), `name: ${to}`));
+    let text = files.get(PROFILE)!;
+    for (const role of Object.keys(template.file.roles))
+      if (template.file.roles[role]!.skills?.includes(from))
+        text = renameItem(text, ["roles", role, "skills"], from, to);
+    return files.set(PROFILE, text);
+  };
+
 /** Takes a skill away: its folder, and its name out of every role that had it. */
 export const removeSkill =
   (name: string): Edit =>
@@ -320,6 +341,18 @@ export const addAsked =
     if (askedOf(template, kind).some((asked) => asked.name === name))
       return { refused: `there is already one named ${name}` };
     return withFile(template.files, path, (text) => setIn(text, [ASKED[kind].key, name], ASKED[kind].skeleton));
+  };
+
+/** A question or a moment under another name, in its place in its file and in the `active` list. */
+export const renameAsked =
+  (kind: AskedKind, from: string, to: string): Edit =>
+  (template) => {
+    if (!NAME.test(to)) return { refused: `its name is lower-case letters, digits and dashes: ${to} is not` };
+    if (askedOf(template, kind).some((asked) => asked.name === to))
+      return { refused: `there is already one named ${to}` };
+    return withFile(template.files, askedFile(template, kind)!, (text) =>
+      renameKey(renameItem(text, ["active"], from, to), [ASKED[kind].key, from], to),
+    );
   };
 
 export const removeAsked =
