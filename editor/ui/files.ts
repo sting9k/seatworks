@@ -1,3 +1,4 @@
+import { installName } from "../../shared/contracts/template.ts";
 import { packed } from "../template/pack.ts";
 import type { TemplateFiles } from "../template/read-template.ts";
 
@@ -16,7 +17,7 @@ export async function filesOfFolder(picked: FileList): Promise<TemplateFiles> {
 export function download(name: string, files: TemplateFiles): void {
   const link = document.createElement("a");
   link.href = URL.createObjectURL(new Blob([packed(files)], { type: "application/json" }));
-  link.download = `${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.template.json`;
+  link.download = `${installName(name)}.template.json`;
   link.click();
   URL.revokeObjectURL(link.href);
 }

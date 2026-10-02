@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, w
 import { dirname, join } from "node:path";
 import { variablesNamed } from "../../shared/contracts/profile.ts";
 import type { TemplateOffer } from "../../shared/contracts/rpc.ts";
-import { unpacked } from "../../shared/contracts/template.ts";
+import { installName, unpacked } from "../../shared/contracts/template.ts";
 import { loadReflex } from "../satellites/reflex/config.ts";
 import { type Bundle, loadBundle } from "./bundle.ts";
 import { profilesDir } from "./profiles.ts";
@@ -33,10 +33,7 @@ function staged(
   if (!read.ok) return read;
   const about = aboutOf(read.files.get("template.json"));
   if (about === null) return { ok: false, says: "its template.json does not say its name" };
-  const name = about.name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
+  const name = installName(about.name);
   if (name === "") return { ok: false, says: `its name, ${about.name}, has no letter or digit to install it under` };
 
   mkdirSync(join(stateRoot, "staging"), { recursive: true });

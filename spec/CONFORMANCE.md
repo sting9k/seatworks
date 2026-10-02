@@ -306,6 +306,6 @@ Template directories in, what a page lists out (`TEMPLATE.md`, The gallery).
 | Case                                                        | Expect                                                              |
 | ----------------------------------------------------------- | ------------------------------------------------------------------- |
 | A gallery built from two template directories               | An index naming each by its directory, with its name and tags, and each as the one file it is shared as; a page reads back the very files |
-| A template that does not load, or whose directory is not a name to install under | Left out of the gallery, and said with why           |
+| A template that does not load, or whose directory is not the name it would be installed under | Left out of the gallery, and said with why |
 | A page with no gallery beside it; with a wrong index; with a listed template whose file is gone or does not load | The page says why; the card of that template says why |
 | The build command on a directory of template directories    | The gallery written; with a template that does not load among them, it fails naming it and writes the rest |

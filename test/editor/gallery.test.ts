@@ -44,21 +44,21 @@ test("a gallery built from template directories lists each by its directory's na
   assert.deepEqual([...slp.files].sort(), [...slpFiles()].sort());
 });
 
-test("a template that does not load, or whose directory is not a name to install under, is left out of the gallery and said why", () => {
+test("a template that does not load, or whose directory is not the name it is installed under, is left out of the gallery and said why", () => {
   const built = galleryOf(
     new Map([
       ["slp", slpFiles()],
       ["broken", twoRoots()],
-      ["Night Crew", crew()],
+      ["crew", crew()],
     ]),
   );
 
   assert.deepEqual(
     built.refused.map(({ id }) => id),
-    ["broken", "Night Crew"],
+    ["broken", "crew"],
   );
   assert.match(built.refused[0]!.says, /exactly one role must be `root`/);
-  assert.match(built.refused[1]!.says, /lower-case letters, digits and dashes/);
+  assert.match(built.refused[1]!.says, /its name, Night Crew, installs it as night-crew/);
   assert.deepEqual([...built.files.keys()].sort(), ["index.json", "slp.template.json"]);
 });
 

@@ -9,6 +9,16 @@ const PackedSchema = z.object({ files: z.record(z.string().min(1), z.string()) }
 /** A path inside a template: names joined by `/`, none of them a way out of the template's own directory. */
 const PATH = /^(?!\.{1,2}(\/|$))[A-Za-z0-9._-]+(\/(?!\.{1,2}(\/|$))[A-Za-z0-9._-]+)*$/;
 
+/**
+ * The name a template is installed and attached under: its own name in lower case, with a dash for whatever is
+ * neither letter nor digit. Empty when the name has neither.
+ */
+export const installName = (name: string): string =>
+  name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+
 export function unpacked(
   text: string,
 ): { readonly ok: true; readonly files: ReadonlyMap<string, string> } | { readonly ok: false; readonly says: string } {

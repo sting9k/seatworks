@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { unpacked } from "../../shared/contracts/template.ts";
+import { installName, unpacked } from "../../shared/contracts/template.ts";
 import { packed } from "./pack.ts";
 import { readTemplate, type TemplateFiles } from "./read-template.ts";
 
@@ -9,8 +9,8 @@ import { readTemplate, type TemplateFiles } from "./read-template.ts";
  */
 const EntrySchema = z
   .object({
-    /** The name of its directory in the gallery's repository, which is also the name it is installed under. */
-    id: z.string().regex(/^[a-z][a-z0-9-]*$/),
+    /** The name it is installed under, which its directory in the gallery's repository carries too. */
+    id: z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/),
     name: z.string().min(1),
     description: z.string(),
     tags: z.array(z.string()),
@@ -25,8 +25,8 @@ const INDEX = "index.json";
 
 /**
  * The files of a gallery built from templates, each by the name of its directory: the index, and every template as
- * the one file it is shared as. A template that does not load is left out and said, with why: a gallery lists only
- * what would run.
+ * the one file it is shared as. A template that does not load, or whose directory is not the name it would be
+ * installed under, is left out and said, with why: a gallery lists only what would run, each under one name.
  */
 export function galleryOf(templates: ReadonlyMap<string, TemplateFiles>): {
   readonly files: ReadonlyMap<string, string>;
@@ -37,12 +37,16 @@ export function galleryOf(templates: ReadonlyMap<string, TemplateFiles>): {
   const refused: { id: string; says: string }[] = [];
   for (const [id, template] of [...templates].sort(([a], [b]) => a.localeCompare(b))) {
     const read = readTemplate(template);
-    const named = EntrySchema.shape.id.safeParse(id);
-    if (!read.ok) refused.push({ id, says: read.says });
-    else if (!named.success)
-      refused.push({ id, says: "its directory's name is not lower-case letters, digits and dashes" });
+    if (!read.ok) {
+      refused.push({ id, says: read.says });
+      continue;
+    }
+    const { name, description, tags } = read.template.about;
+    const installed = installName(name);
+    if (installed === "") refused.push({ id, says: `its name, ${name}, has no letter or digit to install it under` });
+    else if (installed !== id)
+      refused.push({ id, says: `its name, ${name}, installs it as ${installed}: its directory is to carry that name` });
     else {
-      const { name, description, tags } = read.template.about;
       const file = `${id}.template.json`;
       files.set(file, packed(template));
       entries.push({ id, name, description, tags, file });

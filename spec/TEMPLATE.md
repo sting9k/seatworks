@@ -149,7 +149,7 @@ record's text with nobody told.
 
 | Field         | Holds                                                                                                |
 | ------------- | ---------------------------------------------------------------------------------------------------- |
-| `name`        | The template's name, which is also the name of its directory once installed                           |
+| `name`        | The template's name; in lower case with dashes it is the name it is installed and attached under      |
 | `description` | A sentence or two for the gallery                                                                    |
 | `tags`        | Words the gallery filters by                                                                         |
 | `seatworks`   | The release of Seatworks it was made against                                                         |
@@ -250,10 +250,12 @@ server and no accounts. SLP is the only one at first.
   template as its one file. In a pull request a template is a directory, so what changed in it is read line by line;
   in the gallery it is the file a person opens, exports and installs.
 - **The build is the check a template passes to be published.** A template that does not load, or whose directory is
-  not a name to install it under, is left out and said with why, and the build fails. What a machine can note beyond
+  not the name it would be installed under, is left out and said with why, and the build fails. What a machine can note beyond
   that stops nothing (`EDITOR.md`, Checks); whether a template is worth listing is its reviewers' to say.
-- **A template's directory name is the name it is installed under.** One name, in the gallery, in the state root and
-  on a project's record.
+- **A template has one name to install it under**, made from the name in its `template.json`: lower case, with a
+  dash for whatever is neither letter nor digit, so `Night Crew` is `night-crew`. Its directory in the gallery carries
+  that name, the file it is shared as is `<that name>.template.json`, and so do the state root and a project's
+  record. A shared file holds no directory, which is why the name is made from what it does hold.
 - **The page reads the gallery built beside it**, `gallery/index.json` and the files it lists, from wherever the page
   is served. A page with no gallery beside it says so, and still opens a file or a folder of the person's own; a
   listed template whose file is gone or does not load says why on its own card.
