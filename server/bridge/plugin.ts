@@ -17,7 +17,7 @@ import { PROJECT_LABEL, ROOT } from "../../shared/contracts/ids.ts";
 import type { ReadName } from "../../shared/contracts/tools.ts";
 import { activityLine } from "../../shared/views/activity.ts";
 import { type Chain, type Signals, chainOf, scopeRecordText, signalsOf } from "../../shared/views/record.ts";
-import type { HumanView, Leftover } from "../../shared/contracts/rpc.ts";
+import type { HumanView, Leftover, TemplateOffer } from "../../shared/contracts/rpc.ts";
 import { humanView } from "../../shared/views/human.ts";
 import { statusText } from "../../shared/views/status.ts";
 import { stuckOf } from "../../shared/views/stuck.ts";
@@ -38,6 +38,7 @@ import { Jev } from "../satellites/reflex/jev.ts";
 import { git } from "../satellites/workspace/git.ts";
 import { Workspace } from "../satellites/workspace/workspace.ts";
 import { type Bundle, loadBundle } from "../profile/bundle.ts";
+import { install, offerOf } from "../profile/install.ts";
 import { listProfiles, type Listed as ListedProfile, profilePath, SHIPPED } from "../profile/profiles.ts";
 import { Dispatcher } from "./dispatcher.ts";
 import { type Wiring, branchesOf, handlersFor, scratchFor, seatEnv, withShim } from "./effects.ts";
@@ -189,6 +190,20 @@ export class Plugin {
   /** The profiles a project may be attached with: the one shipped, and each the Human installed. */
   async profiles(): Promise<ListedProfile[]> {
     return listProfiles((await this.whenReady()).dir, this.root);
+  }
+
+  /**
+   * What installing the shared template at a path on this machine would bring, or with `agreed`, the hash of the
+   * offer the Human read, the template installed under its name. The plugin reads the file where it is and fetches
+   * nothing (TEMPLATE.md, Installing).
+   */
+  async template(
+    path: string,
+    agreed: string | null,
+  ): Promise<{ ok: true; offer: TemplateOffer } | { ok: false; says: string }> {
+    const names = await (await this.whenReady()).host.agentProfiles();
+    if ("unavailable" in names) return { ok: false, says: "Paseo's API has not arrived; try again in a moment" };
+    return agreed === null ? offerOf(this.root, path, names) : install(this.root, path, agreed, names);
   }
 
   /**

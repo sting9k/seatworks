@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { graphOf } from "../template/graph.ts";
-import { unpacked } from "../template/pack.ts";
+import { unpacked } from "../../shared/contracts/template.ts";
 import { readTemplate, type TemplateFiles } from "../template/read-template.ts";
 import { Cover } from "./cover.tsx";
 import { filesOfFolder } from "./files.ts";

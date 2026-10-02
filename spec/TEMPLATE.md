@@ -5,8 +5,9 @@ touching the plugin. SLP is the one Seatworks ships. A template is to Seatworks 
 ComfyUI: picked from a gallery, opened as a graph, changed, and run. `EDITOR.md` says how one is opened and changed;
 this says what a template is, what the plugin reads of it, and how it reaches a machine.
 
-Built so far: the editor (`EDITOR.md`, steps 1 and 2 below), and of step 3 the flow, the list of docs, the hash and a
-profile for each project. Installing is not. The order it is built in is at the end. A change it asks of another spec file is listed under What this changes, and is made in the commit that
+Built so far: the editor (`EDITOR.md`, steps 1 and 2 below) and step 3, what the plugin reads of a template and how
+one reaches a machine. Outside tool servers, the gallery and the report's sections are not. The order it is built in
+is at the end. A change it asks of another spec file is listed under What this changes, and is made in the commit that
 builds it, so a spec and the code never disagree.
 
 ## Open, not neutral
@@ -221,15 +222,20 @@ server and no accounts. SLP is the only one at first.
 
 ## Installing
 
-A template is downloaded as the one file it is shared as and installed by a command of the plugin's. The command:
+A template is downloaded as the one file it is shared as and installed from the plugin's page in Paseo. The Human
+gives the path of the file on their machine, and the plugin:
 
-1. Loads it as the plugin would, with `resolveProfile`, and says what is wrong if it does not load.
-2. Lists what it asks of the machine: each outside server with its command or address, each environment variable
-   named, each Paseo agent profile a role names.
-3. Copies it into the state root under its name, once the Human agrees.
+1. Reads it where it is, unpacks it aside, and loads it as it would load any profile; a file that is not a packed
+   template, reaches outside its own directory, or does not load is refused, saying what is wrong.
+2. Says what it would bring: the name it would be installed and attached under, whether one of that name is installed
+   already, its roles, and each Paseo agent profile its roles name with whether the Human has it. With
+   `TEMPLATE.md`'s step 4 it also lists each outside server and each variable one reads.
+3. Installs it under its name once the Human agrees, in place of one of that name. What is installed is the file the
+   Human read: its hash is checked again, and a file changed since is not installed.
 
-The plugin fetches nothing from the net. A template steers agents that ask no leave for what they run, so the Human
-sees what one will run before it is theirs.
+Nothing unpacked to be read is left behind. The plugin fetches nothing from the net. A template steers agents that
+ask no leave for what they run, so the Human sees what one brings before it is theirs. A terminal command was the
+first plan; the page was chosen since it needs no knowing where the plugin lives.
 
 ## Later: the report's sections
 
@@ -252,7 +258,7 @@ Each is made in the commit that builds it.
 | File             | Change                                                                                             |
 | ---------------- | -------------------------------------------------------------------------------------------------- |
 | `KERNEL.md`      | Later, §4 and §6: `report`'s sections are the profile's                                            |
-| `PORTS.md`       | Agent host: `create` takes outside servers. Human surface: installing a template                   |
+| `PORTS.md`       | Agent host: `create` takes outside servers                                                         |
 | `HARNESS.md`     | Which agents take an outside server, and that the guards do not reach one                          |
 | `CONFORMANCE.md` | The cases below, and `EDITOR.md`'s                                                                 |
 
@@ -264,8 +270,7 @@ They join `CONFORMANCE.md` with the step that builds them.
 | ----------------------------------------------------------------------------- | ------------------------------------------------------------------- |
 | A role given an outside server, seated on an agent that takes one             | Created with the server, its named tools approved ahead; a role given none has only the team's |
 | A role given an outside server, seated on an agent that cannot take one       | Not seated; the reason names the server                              |
-| A shared file whose profile does not load                                     | Refused, saying what is wrong; nothing copied                        |
-| A shared file that declares servers and names agent profiles                  | Each listed before anything is copied                                |
+| A shared file that declares servers                                           | Each listed, with the variables it reads, before anything is installed |
 
 ## Order
 
@@ -293,6 +298,5 @@ a change to how a profile is loaded, made in the middle of that test, leaves a f
 
 ## To decide
 
-- The name of the command that installs a template.
 - Whether `profile/slp/reference/ANTIPATTERNS.md`, which no prompt, skill or code points at, goes into a skill or
   goes. It is SLP's content.

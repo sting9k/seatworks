@@ -69,6 +69,18 @@ export const UpdateCheckSchema = z.object({
 });
 export type UpdateCheck = z.infer<typeof UpdateCheckSchema>;
 
+/** What installing a shared template would bring to this machine (`server/profile/install.ts`). */
+const TemplateOfferSchema = z.object({
+  name: z.string(),
+  title: z.string(),
+  description: z.string(),
+  hash: z.string(),
+  replaces: z.boolean(),
+  roles: z.array(z.string()),
+  agentProfiles: z.array(z.object({ name: z.string(), there: z.boolean() })),
+});
+export type TemplateOffer = z.infer<typeof TemplateOfferSchema>;
+
 /** The Human's surface calls these (PORTS.md, Human surface); shaped as Paseo's plugin RPC contracts. */
 export const RPC = {
   openProject: {
@@ -136,6 +148,18 @@ export const RPC = {
     name: "seatworks.clean",
     input: z.object({ ids: z.array(z.string().min(1)).min(1).max(500) }),
     output: z.object({ results: z.array(z.object({ id: z.string(), ok: z.boolean(), text: z.string() })) }),
+  },
+  /** Reads a shared template from a file on this machine and says what it would bring; nothing is installed. */
+  templateOffer: {
+    name: "seatworks.template_offer",
+    input: z.object({ path: z.string().min(1) }),
+    output: z.object({ ok: z.boolean(), text: z.string(), offer: TemplateOfferSchema.nullable() }),
+  },
+  /** Installs the template the Human read the offer of: `hash` is that offer's, and no other file is installed. */
+  installTemplate: {
+    name: "seatworks.install_template",
+    input: z.object({ path: z.string().min(1), hash: z.string().min(1) }),
+    output: z.object({ ok: z.boolean(), text: z.string() }),
   },
   checkUpdate: {
     name: "seatworks.check_update",

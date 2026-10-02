@@ -127,7 +127,8 @@ Shows the Human the kernel's views and the agents' own words, and takes the Huma
 views: whatTheHumanNeeds, sinceTheyLooked, chainOfChange, openObligations, status, signals, stuck
 commands: answer_question, send_message, hold_scope, resume_scope, amend_plan (lines of theirs), answer_permission,
           set_checks, publish
-upkeep: attach(repository), leftovers, clean(picked), checkUpdate
+upkeep: attach(repository, profile), profiles, templateOffer(path), installTemplate(path, hash), leftovers,
+        clean(picked), checkUpdate
 ```
 
 - It shows only what the kernel's views and the agents said. It writes no summary of its own.
@@ -148,6 +149,8 @@ upkeep: attach(repository), leftovers, clean(picked), checkUpdate
   removed, and a project with one is not removed at all. Removing a project archives its agents and deletes its
   copies and branches; its record is set aside, since a look back reads the log after the team is gone (P14), and is
   listed as a leftover of its own until the Human deletes it. Attached again, the project starts from nothing.
+- A template is installed from a file on the Human's machine: read first for what it would bring, then installed
+  once they agree, the same file by its hash (`TEMPLATE.md`, Installing).
 - The update check reads Paseo's own and installs nothing.
 - The project's docs go with its repository and stay when the team is gone: `GLOSSARY.md`, whose block between the
   plugin's markers holds the words settled in the root's plan, and `docs/seatworks/MAP.md`, the map (destination,

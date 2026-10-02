@@ -89,6 +89,13 @@ export class PaseoHost {
     }
   }
 
+  /** The agent profiles the Human keeps in Paseo, by every name a role's model may call one by. */
+  async agentProfiles(): Promise<readonly string[] | Unavailable> {
+    const api = this.link.current;
+    if (!api) return UNAVAILABLE;
+    return ((await api.config.get()).config.agentProfiles ?? []).flatMap((profile) => [profile.id, profile.name]);
+  }
+
   /** The agent a create with these labels made, if one did. */
   private async made(
     api: PaseoApi,

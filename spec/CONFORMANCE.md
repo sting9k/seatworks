@@ -283,3 +283,6 @@ What the plugin reads of a profile that a template adds (`TEMPLATE.md`).
 | A project opened                                            | On the record with the profile it runs, by name and by the hash of its files then |
 | Two projects attached with different profiles, and the Human's rules kept for one of them | Each project's agents get their own profile's prompts; the rules reach only the agents of their profile; a profile nobody installed is not attached |
 | A role taken out of a profile while an agent sits in it     | The project runs on; a tool the agent calls is refused, saying its role is gone from the profile, and it still reads the record; `stuck` names its seat |
+| A shared template read from a file on the machine           | What it would bring is said: its name, its roles, each agent profile its roles name and whether Paseo has it; nothing is installed and nothing unpacked is left |
+| The template installed with the hash of what was read       | Under its name, listed to attach a project with; read again, it says it would replace the one there |
+| A shared file that does not load, names a path outside its own directory, is not a packed template or is not there; and one changed since it was read | Refused, saying which; nothing installed, nothing written outside the state root |

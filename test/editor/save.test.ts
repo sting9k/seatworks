@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { positioned } from "../../editor/template/about.ts";
-import { packed, unpacked } from "../../editor/template/pack.ts";
+import { packed } from "../../editor/template/pack.ts";
 import { readTemplate } from "../../editor/template/read-template.ts";
+import { unpacked } from "../../shared/contracts/template.ts";
 import { slpFiles } from "./slp.ts";
 
 // Each case is a row of spec/CONFORMANCE.md, Editor: a template in, the file a person takes away out.

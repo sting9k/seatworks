@@ -8,6 +8,7 @@ import { Button } from "../kit/button.tsx";
 import { PageHeader } from "../kit/header.tsx";
 import { FONT, SPACE } from "../kit/theme.ts";
 import { problemText } from "../state/problem-text.ts";
+import { TemplateInstall } from "./template-install.tsx";
 
 const KIND: Record<Leftover["kind"], string> = {
   copy: "Working copy",
@@ -112,6 +113,7 @@ export function PluginPage({
           ))}
         </SettingsCard>
       </SettingsSection>
+      <TemplateInstall theme={theme} />
       <SettingsSection
         title="Clean up"
         trailing={
