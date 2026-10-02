@@ -223,6 +223,7 @@ export function handlersFor(w: Wiring): Handlers {
         summary: ran.summary,
         steps: ran.steps,
         heldMachine: false,
+        asked: e.by,
       });
     },
 

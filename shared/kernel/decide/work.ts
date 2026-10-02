@@ -175,8 +175,7 @@ export function evidenceFact(ctx: Of<"record_evidence">): Refusal | undefined {
   const b = ctx.body;
   // A check result is an answer whoever asked for the run or owes the claim's decision is waiting on, so it wakes them.
   const wake = new Set<Party>();
-  const asker = ctx.state.checksAsked.get(`${b.scope}:${b.subject}`);
-  if (asker !== undefined) wake.add(asker);
+  if (b.asked !== null) wake.add(b.asked);
   for (const o of ctx.state.obligations.values())
     if (o.about.kind === "claim" && ctx.state.claims.get(o.about.id)?.scope === b.scope) wake.add(o.owedBy);
   addEvidence(
@@ -186,7 +185,7 @@ export function evidenceFact(ctx: Of<"record_evidence">): Refusal | undefined {
       kind: "check",
       subject: b.subject,
       ok: b.ok,
-      by: BRIDGE,
+      by: b.asked ?? BRIDGE,
       summary: b.summary,
       steps: b.steps,
       heldMachine: b.heldMachine,

@@ -63,8 +63,6 @@ export function prune(s: State): State {
   for (const e of s.evidence.values())
     if (!scopes.has(e.scope) && !citable.some((commit) => sameCommit(commit, e.subject))) evidence.delete(e.id);
   const noise = new Set([...s.noise].filter((key) => !gone.has(key.split("|")[2] ?? "")));
-  // A check asked on a scope that is gone is waited on by nobody: its result finds no scope to be recorded on.
-  const checksAsked = new Map([...s.checksAsked].filter(([key]) => !gone.has(key.slice(0, key.lastIndexOf(":")))));
 
-  return { ...s, scopes, findings, evidence, claims, messages, attentions, permissions, actors, noise, checksAsked };
+  return { ...s, scopes, findings, evidence, claims, messages, attentions, permissions, actors, noise };
 }

@@ -77,7 +77,6 @@ type State = {
   readonly attentions: ReadonlyMap<AttentionId, Attention>;    // open only
   readonly permissions: ReadonlyMap<PermissionId, Permission>; // open only
   readonly noise: ReadonlySet<string>;                   // `${moment}|${actor}|${scope}`
-  readonly checksAsked: ReadonlyMap<string, Party>;      // `${scope}:${subject}` → who ran `run_checks`, until it lands
   readonly machineHeldBy: ActorId | null;                // this project's hold; other projects' are the shell's
 };
 ```
@@ -296,7 +295,7 @@ the shell and never reaches `decide`.
 | `record_gone`          | `actor, why`                                                            | `actor_gone`, `obligation_moved`\*, `obligation_closed`\* (its permissions) |
 | `record_delivery`      | `to, messages, attentions`: the reader the batch was sent to; what has moved to another reader since is not delivered by it | `message_delivered`\*, `attention_delivered`\* |
 | `record_candidate`     | `scope, commit, result: { candidate, parentHead } \| { conflict: paths }` | `candidate_ready` or `candidate_conflict` |
-| `record_evidence`      | `scope, subject, ok, steps, heldMachine`                                | `evidence_recorded`                 |
+| `record_evidence`      | `scope, subject, ok, steps, heldMachine, asked`: `asked` is whoever asked for the run with `run_checks`, as its effect named them; none for the project's checks on a hand-back | `evidence_recorded`, by `asked` or by the bridge |
 | `record_integration`   | `scope, result: { sha } \| { moved } \| { failed: why }`                | `integrated` or `integration_refused` |
 | `record_profile`       | `profileHash`: the files the project now runs                                | `profile_taken`; nothing when it is the hash the record has |
 | `record_publish`       | `remote, branch, result: { sha } \| { refused: why, at? }`: the remote and branch it went to, since another may have been asked for meanwhile | `published` or `publish_refused` |
@@ -403,8 +402,8 @@ it was delivered, an attention not settled climbs: `attention_climbed` opens a c
 | `message_moved`                          | `deliver { to, item }` to its new reader                 | `<seq>:deliver:<message>`   |
 | `attention_opened`                       | `deliver { to, item }`                                   | `<seq>:deliver:<attention>` |
 | `claim_made`                             | `workspace.candidate { scope, commit, onto }`            | `<seq>:candidate`           |
-| `candidate_ready`, when a check is set   | `evidence.run { scope, subject: candidate, steps: checks }` | `<seq>:evidence`         |
-| `evidence_requested`                     | `evidence.run { scope, subject, steps }`                 | `<seq>:evidence`            |
+| `candidate_ready`, when a check is set   | `evidence.run { scope, subject: candidate, steps: checks, by: none }` | `<seq>:evidence` |
+| `evidence_requested`                     | `evidence.run { scope, subject, steps, by }`: in its asker's name, which the result gives back, so two runs on one commit are never taken one for the other | `<seq>:evidence` |
 | `integration_started`                    | `workspace.advance { branch, from: parentHead, to: candidate }` | `<seq>:advance`      |
 | `integration_refused` (moved)            | `workspace.candidate` again on the same commit: the candidate was stale, and the scope has none until it is made | `<seq>:candidate` |
 | `integrated`, `scope_dropped`            | `workspace.remove { scope }`, `agent.archive`; `workspace.create` of each open sibling that waited for it and waits for nothing else open | `<seq>:remove`, `<seq>:archive`, `<seq>:workspace:<scope>` |
@@ -432,7 +431,7 @@ Whoever a command changes something for is told, in the tool's own words and not
 | ----------------------------- | ---------------------------------------------------------------- | ----- |
 | `handed_over`                 | The owners of both scopes: which paths moved, from where to where | Yes   |
 | `scope_held`, `scope_resumed` | The scope's owner, with the reason                               | Yes   |
-| `evidence_recorded`, a check  | Whoever asked, and the owner above; with the checks that ran, by name, and the evidence's id, to cite | Whoever waited |
+| `evidence_recorded`, a check  | Whoever asked, and the owner above; whose checks they were (the project's own, or those someone asked for), the checks that ran by name, and the evidence's id, to cite | Whoever waited |
 | `integrated`                  | The owner of the scope's parent, who asked for it: the branch it went into and the commit it is at | Yes |
 | `evidence_recorded`, a verdict | The owner of the reading scope's parent, who seated the reader; with its id | Yes |
 | `finding_reopened`            | Whoever answers it: what is new, its new evidence, and what it first said | Yes |
@@ -501,8 +500,7 @@ A project runs for months. Everything below is bounded by open work, not by hist
   direction is owed: its id is the one its owner read, and cites or answers),
   answered questions and permissions, attentions about closed scopes, and released or gone actors that nothing points
   at. Nothing an open obligation, attention or message still points at is let go, so pruning never closes anything
-  (I11). A check asked for on a scope that has since been let go is waited on by nobody, and is
-  let go with it. The log keeps all of it for views, and replay prunes at the same command boundaries.
+  (I11). The log keeps all of it for views, and replay prunes at the same command boundaries.
 - A project with nothing open and no agent seated for a day is unloaded by the shell; the next command folds it from
   its latest snapshot.
 - Every map in the shell (per-project queues, per-agent subscriptions, delivery batches, the reflex's caches) has a

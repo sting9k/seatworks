@@ -27,6 +27,7 @@ test("one lane end to end: hand back, candidate, checks, integrate, land; then o
     scope: task,
     subject: SHA(2),
     steps: [{ name: "unit", run: ["npm", "test"] }],
+    by: null,
   });
 
   ledger.must(
@@ -40,8 +41,6 @@ test("one lane end to end: hand back, candidate, checks, integrate, land; then o
     }),
   );
   const evidence = [...ledger.state.evidence.values()].find((e) => e.subject === SHA(2))!.id;
-  const own = { scope: task, commit: SHA(1), steps: [{ name: "mine", run: ["npm", "run", "acceptance"] }] };
-  ledger.must(ledger.as(lead, "run_checks", own));
   ledger.must(ledger.as(lead, "integrate", { scope: task, evidence: [evidence] }));
   assert.ok(
     ledger.effects.some((e) => e.body.kind === "workspace.advance" && e.body.to === SHA(2) && e.body.from === SHA(3)),
@@ -77,7 +76,6 @@ test("one lane end to end: hand back, candidate, checks, integrate, land; then o
   assert.equal(ledger.state.obligations.size, 0);
   assert.equal(ledger.state.messages.size, 0);
   assert.equal(ledger.state.evidence.size, 0);
-  assert.equal(ledger.state.checksAsked.size, 0, "a check still running on a scope that closed is waited on by nobody");
 });
 
 test("a base that moved under an integration is taken in again, on the same commit", () => {
@@ -419,27 +417,31 @@ test("a check result wakes whoever waited on it: its asker, or the integrator we
           e.body.kind === "deliver" &&
           e.body.to === to &&
           e.body.item.kind === "note" &&
-          e.body.item.text.startsWith("Checks on"),
+          /checks.* on [0-9a-f]{40} for scope /i.test(e.body.item.text),
       )
       .at(-1);
-    return d?.body.kind === "deliver" && d.body.item.kind === "note" ? d.body.item.asks : undefined;
+    return d?.body.kind === "deliver" && d.body.item.kind === "note" ? d.body.item : undefined;
   };
 
-  ledger.must(
+  const asked = ledger.must(
     ledger.as(peer, "run_checks", { scope: task, commit: SHA(7), steps: [{ name: "unit", run: ["npm", "test"] }] }),
   );
-  ledger.must(
-    ledger.fact("record_evidence", {
-      scope: task,
-      subject: SHA(7),
-      ok: true,
-      summary: "green",
-      steps: [],
-      heldMachine: false,
-    }),
+  assert.deepEqual(
+    ledger.effects.find((e) => e.key === `${asked[0]!.seq}:evidence`)?.body,
+    { kind: "evidence.run", scope: task, subject: SHA(7), steps: [{ name: "unit", run: ["npm", "test"] }], by: peer },
+    "the run is asked for in its asker's name, which its result gives back",
   );
-  assert.equal(asks(peer), true, "the Peer asked for the run and waits on its answer");
-  assert.equal(asks(lead), false, "the owner above is told without waking");
+  const steps = [{ name: "unit", exit: 0, seconds: 1, cause: null }];
+  const own = { scope: task, subject: SHA(7), ok: true, summary: "green", steps, heldMachine: false, asked: peer };
+  ledger.must(ledger.fact("record_evidence", own));
+  assert.equal(asks(peer)?.asks, true, "the Peer asked for the run and waits on its answer");
+  assert.equal(asks(lead)?.asks, false, "the owner above is told without waking");
+  assert.equal(
+    asks(lead)?.text,
+    `Checks ${peer} asked for on ${SHA(7)} for scope ${task} (unit): passed (evidence e1). green`,
+    "and reads whose checks they were, and which ran",
+  );
+  assert.equal(ledger.state.evidence.get("e1")?.by, peer, "the evidence is by whoever asked for it");
 
   ledger.must(ledger.as(peer, "hand_back", { commit: SHA(8), text: "wired" }));
   ledger.must(
@@ -459,7 +461,13 @@ test("a check result wakes whoever waited on it: its asker, or the integrator we
       heldMachine: false,
     }),
   );
-  assert.equal(asks(lead), true, "the claim's checks are an answer the integrator was waiting on");
+  assert.equal(asks(lead)?.asks, true, "the claim's checks are an answer the integrator was waiting on");
+  assert.match(
+    asks(lead)?.text ?? "",
+    /^The project's checks on /,
+    "said to be the project's own, run at the hand-back",
+  );
+  assert.equal(ledger.state.evidence.get("e2")?.by, "bridge");
 });
 
 test("a finding left open when its scope is integrated stays in memory with its obligation, until it is answered", () => {

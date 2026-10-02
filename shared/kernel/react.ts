@@ -1,6 +1,6 @@
 import type { Effect, EffectBody } from "../contracts/effects.ts";
 import type { Event } from "../contracts/events.ts";
-import { HUMAN, type Party, ROOT } from "../contracts/ids.ts";
+import { BRIDGE, HUMAN, type Party, ROOT } from "../contracts/ids.ts";
 import { ownerAbove, ownerOfParent } from "./authority.ts";
 import type { State } from "./state.ts";
 
@@ -178,7 +178,7 @@ export function react(e: Event, s: State): readonly Effect[] {
       // With no check set nothing would run, and a run of nothing is not evidence to integrate on (I4).
       const checks = s.project?.checks ?? [];
       if (checks.length > 0)
-        add("evidence", { kind: "evidence.run", scope: e.scope, subject: e.candidate, steps: checks });
+        add("evidence", { kind: "evidence.run", scope: e.scope, subject: e.candidate, steps: checks, by: null });
       break;
     }
     case "candidate_conflict": {
@@ -188,14 +188,16 @@ export function react(e: Event, s: State): readonly Effect[] {
       break;
     }
     case "evidence_requested":
-      add("evidence", { kind: "evidence.run", scope: e.scope, subject: e.subject, steps: e.steps });
+      add("evidence", { kind: "evidence.run", scope: e.scope, subject: e.subject, steps: e.steps, by: e.by });
       break;
     case "evidence_recorded": {
       const x = e.evidence;
       if (x.kind === "check") {
         // Which checks ran is said by name: a writer's own, asked with `run_checks`, are not the project's.
         const ran = x.steps.length > 0 ? ` (${x.steps.map((step) => step.name).join(", ")})` : "";
-        const text = `Checks on ${x.subject} for scope ${x.scope}${ran}: ${x.ok ? "passed" : "failed"} (evidence ${x.id}). ${x.summary}`;
+        // Whose they were is said too: the project's own, run on a hand-back, or those someone asked for.
+        const whose = x.by === BRIDGE ? "The project's checks" : `Checks ${x.by} asked for`;
+        const text = `${whose} on ${x.subject} for scope ${x.scope}${ran}: ${x.ok ? "passed" : "failed"} (evidence ${x.id}). ${x.summary}`;
         for (const to of e.wake) tell(to, "note", text, true);
         const owner = parentOwner(x.scope);
         if (owner === null || !e.wake.includes(owner)) tell(owner, "note", text);

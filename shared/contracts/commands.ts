@@ -365,6 +365,8 @@ export const COMMANDS = {
       }),
     ),
     heldMachine: z.boolean(),
+    /** Whoever asked for the run with `run_checks`, as its effect named them; none for the project's own checks. */
+    asked: id.nullable().default(null),
   }),
   record_integration: z.object({ scope: id, result: z.union([z.object({ sha }), z.object({ refused: z.string() })]) }),
   record_profile: z.object({ profileHash: z.string().min(1).max(100) }),

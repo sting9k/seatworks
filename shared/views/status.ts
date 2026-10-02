@@ -1,4 +1,4 @@
-import type { ScopeId } from "../contracts/ids.ts";
+import { BRIDGE, type ScopeId } from "../contracts/ids.ts";
 import type { Brief, Line, Obligation, Plan, Scope } from "../contracts/ledger.ts";
 import type { State } from "../kernel/state.ts";
 
@@ -51,7 +51,7 @@ export function statusText(state: State, scopeId: ScopeId, reader: string | null
   const evidence = [...state.evidence.values()].filter((e) => e.scope === scope.id);
   if (evidence.length > 0)
     out.push(
-      `Evidence:\n${evidence.map((e) => `- ${e.id} ${e.kind} on ${e.subject}: ${e.ok ? "ok" : "failing"} · ${e.summary.split("\n")[0] ?? ""}`).join("\n")}`,
+      `Evidence:\n${evidence.map((e) => `- ${e.id} ${e.kind}${e.by === BRIDGE ? "" : ` by ${e.by}`} on ${e.subject}: ${e.ok ? "ok" : "failing"} · ${e.summary.split("\n")[0] ?? ""}`).join("\n")}`,
     );
   const findings = [...state.findings.values()].filter((f) => f.scope === scope.id || f.answeredBy === scope.id);
   if (findings.length > 0)

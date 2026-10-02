@@ -158,11 +158,11 @@ test("the work tools: checks a writer runs itself, a hand-back sent back and han
     await did(c, maker, "run_checks", { scope: "1", commit: half }),
     "Recorded: evidence requested, and you are told its result when it has run.",
   );
-  assert.match(await status(maker), new RegExp(`Evidence:\\n- e1 check on ${half}: failing · done failed`));
+  assert.match(await status(maker), new RegExp(`Evidence:\\n- e1 check by a2 on ${half}: failing · done failed`));
   assert.match(
     c.told(1).join("\n"),
-    new RegExp(`Checks on ${half} for scope 1 \\(done\\): failed \\(evidence e1\\)`),
-    "the writer that asked is told, with the checks that ran by name and the evidence it may cite",
+    new RegExp(`^Checks a2 asked for on ${half} for scope 1 \\(done\\): failed \\(evidence e1\\)`, "m"),
+    "the writer that asked is told: whose checks, which ran by name, and the evidence it may cite",
   );
 
   await did(c, maker, "hand_back", {
@@ -187,6 +187,11 @@ test("the work tools: checks a writer runs itself, a hand-back sent back and han
   await did(c, maker, "hand_back", { commit: head, text: "all of it" });
   const passing = new RegExp(`- (e\\d+) check on ${head}: ok`).exec(await status(chief, "1"))?.[1];
   assert.ok(passing, "the hand-back's own checks ran on the commit handed back");
+  assert.match(
+    c.told(0).join("\n"),
+    new RegExp(`^The project's checks on ${head} for scope 1 \\(done\\): passed \\(evidence ${passing}\\)`, "m"),
+    "and their result says they are the project's own, apart from those anyone asked for",
+  );
 
   await did(c, chief, "open_scope", { parent: "root", role: "reader", commit: head, brief: brief("Read it") });
   const reader = await c.tools(2);
@@ -550,7 +555,7 @@ test("the attention tools: a watcher's attention reaches the owner above the age
   const freed = await status(keeper, "1.1");
   assert.match(
     freed,
-    /Evidence:\n- e1 check on/,
+    /Evidence:\n- e1 check by a2 on/,
     "a holder that leaves its seat lets the machine go, and the check runs",
   );
   assert.doesNotMatch(freed, /The machine is held/);
@@ -628,7 +633,7 @@ test("with no check set, a hand-back is given no evidence: a run of nothing is n
     commit: head,
     steps: [{ name: "there", run: ["test", "-f", "src/a/done.txt"] }],
   });
-  const ran = new RegExp(`- (e\\d+) check on ${head}: ok · 1 check passed`).exec(await status(chief, "1"))?.[1];
+  const ran = new RegExp(`- (e\\d+) check by a1 on ${head}: ok · 1 check passed`).exec(await status(chief, "1"))?.[1];
   assert.ok(ran, "a check the owner above names is evidence");
   await did(c, chief, "integrate", { scope: "1", evidence: [ran] });
   assert.equal(git(c.repo, "rev-parse", "main"), head);

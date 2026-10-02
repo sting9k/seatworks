@@ -69,7 +69,7 @@ on an implementation without the rule before it is trusted.
 
 | Case                                                                                    | Expect                                                     |
 | --------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| Intake → open → plan → work → accept → integrate → land, no finding                     | Every step on the record; each line with its origin; once it has landed only the root is in memory, and no check asked on a scope since closed is waited on |
+| Intake → open → plan → work → accept → integrate → land, no finding                     | Every step on the record; each line with its origin; once it has landed only the root is in memory |
 | A finding mid-work, classified `changes`, brief amended, work integrated                 | The chain of change shows all six checkpoints              |
 | A finding touching the goal                                                             | Waits on a question; the raiser's default goes on; carried after the answer |
 | A small change: the Supervisor seats a Peer under the root and integrates it             | Works with no Lead                                         |
@@ -84,7 +84,7 @@ on an implementation without the rule before it is trusted.
 | The Human types into a Lead's chat, and two turns end, each hook carrying the whole history, the Lead's first prompt in it under the id Paseo was given for it | Its Supervisor has one copy of what the Human typed, and none of the plugin's own first words to the Lead |
 | The Human types again, and two turns end on each other's heels, the second hook arriving while the first is being taken | One copy still: an agent's turns are taken one at a time, each from where the one before left its history |
 | A hand-back in a project with checks set                                                | Those checks run on its commit, as evidence                |
-| The Lead runs its own acceptance test on a Peer's commit with `run_checks`              | Evidence on that commit, by the Lead                       |
+| The Lead runs its own acceptance test on a Peer's commit with `run_checks`              | Evidence on that commit, by the Lead; its result says the Lead asked for it and names the checks that ran, where the project's own on a hand-back says they are the project's |
 | The Human reseats the Supervisor, who had asked them a question, and then answers it    | Accepted: the Human stands as the root's parent; the answer is told to whoever holds the root's seat now |
 | `publish` when the remote moved since the landing                                       | Refused by the workspace; nothing forced                   |
 | `drop_scope` while the scope's merge is in flight                                       | Refused: the record cannot call it dropped once the integration is physical                |

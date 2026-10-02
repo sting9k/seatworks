@@ -8,7 +8,6 @@ import {
   type MessageId,
   NO_COUNTS,
   type ObligationId,
-  type Party,
   type PermissionId,
   type QuestionId,
   type ScopeId,
@@ -45,8 +44,6 @@ export type State = {
   readonly noise: ReadonlySet<string>;
   /** Messages the Human wrote and questions they answered: what a line may cite as theirs (I6, I9). Grows only with their words. */
   readonly humanWords: ReadonlySet<string>;
-  /** Check runs asked for with `run_checks` and not yet answered, `scope:subject` → the asker, who waits on the result. */
-  readonly checksAsked: ReadonlyMap<string, Party>;
   readonly machineHeldBy: ActorId | null;
 };
 
@@ -66,7 +63,6 @@ export const INITIAL: State = {
   permissions: new Map(),
   noise: new Set(),
   humanWords: new Set(),
-  checksAsked: new Map(),
   machineHeldBy: null,
 };
 

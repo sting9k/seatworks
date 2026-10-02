@@ -1,4 +1,4 @@
-import type { ActorId, AttentionId, MessageId, ScopeId } from "./ids.ts";
+import type { ActorId, AttentionId, MessageId, Party, ScopeId } from "./ids.ts";
 import type { Check } from "./ledger.ts";
 
 /** What an event asks the world to do; it names ids, not copies, so what was delivered meanwhile is not sent twice. */
@@ -8,7 +8,8 @@ export type EffectBody =
   | { kind: "workspace.advance"; scope: ScopeId; from: string; to: string }
   | { kind: "workspace.remove"; scope: ScopeId; branch: string | null; mergedInto: string | null }
   | { kind: "workspace.publish"; remote: string; branch: string; expectedSha: string }
-  | { kind: "evidence.run"; scope: ScopeId; subject: string; steps: readonly Check[] }
+  /** `by` is whoever asked for the run with `run_checks`; none for the project's checks on a hand-back. */
+  | { kind: "evidence.run"; scope: ScopeId; subject: string; steps: readonly Check[]; by: Party | null }
   | { kind: "agent.create"; actor: ActorId }
   | { kind: "agent.archive"; actor: ActorId; host: string | null }
   | { kind: "agent.permission"; actor: ActorId; host: string | null; request: string; allow: boolean; reason: string }

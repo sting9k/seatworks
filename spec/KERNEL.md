@@ -150,7 +150,8 @@ A premise, constraint or choice that the evidence shows does not fit (CONCEPT-V2
 - **Checks**: the project's own commands that prove a commit, `[{ name, run }]`, set for the project with `set_checks`
   and run by the evidence runner on each hand-back. `run_checks` runs them, or commands named for one scope, on any
   commit, so a Lead can prove acceptance with tests the writer did not write.
-- **Evidence**: `{ id, kind, subject, result, by, at, conditions }`. `kind` is `check` (a command run), `verdict` (a
+- **Evidence**: `{ id, kind, subject, result, by, at, conditions }`. A check is by whoever asked for it with
+  `run_checks`, or by the bridge when it is the project's own, run on a hand-back. `kind` is `check` (a command run), `verdict` (a
   reading scope's answer), `measurement`, `judgement` (the reflex's answer on a commit, `REFLEX.md`), or `human` (their
   word on the record). `subject` is the commit it is about. `conditions` says, for a measurement, whether the machine
   was held.
