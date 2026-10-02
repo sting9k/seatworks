@@ -186,6 +186,8 @@ A call as an agent's tool server sends it, the answer read back.
 | A check's command ends while a process it started still runs | The step ends at once with the command's exit code, and that process is ended |
 | A runner is stopped while a step runs; and while it still makes the copy | The step and what it started are ended, no further step starts, the run fails saying it was stopped; no step starts at all |
 | The plugin stops while a check runs                         | The check is ended and nothing is recorded of it; started again, the plugin runs it anew |
+| The process that asked for a check is killed outright while the check runs | The check is ended                       |
+| A run of checks answers                                     | No process it started is left, its steps' guards included |
 | The plugin stops while two projects each have work in flight, the first held up by Paseo | The second's check is ended without waiting for the first |
 | An evidence run asked while the machine is held             | Starts when the hold is released         |
 | Another project on the machine asks for an evidence run during a hold | Deferred the same way          |

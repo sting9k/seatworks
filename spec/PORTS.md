@@ -99,6 +99,10 @@ stop()
   started that still runs is ended with it. A step that runs past the timeout is killed the same way.
 - `stop` ends every step now running and starts no other: a check left running would outlive whoever asked for it,
   with no timeout left to end it. A run that was stopped fails, saying so, and is never a pass.
+- Each step has a guard: a small process beside it whose input is a pipe from the one that runs the checks. When
+  that pipe ends, the guard ends the step's process group; so a step is ended when the process that asked for it
+  is gone, however it went, killed outright included. A step is over once its guard is gone too: a run that has
+  answered has left no process behind.
 - It never runs while the machine is held: the kernel does not ask it to.
 - A failed step's `cause` is `environment` or `code` when the log matches a known shape, from data, and is left for
   the reflex otherwise (`REFLEX.md`). It never turns a failure into a pass.

@@ -501,7 +501,9 @@ A project runs for months. Everything below is bounded by open work, not by hist
 - Each step of a check runs in a process group of its own, ended whole when its command ends, at its timeout, when
   its project is unloaded and when the plugin stops. The plugin records nothing of a run it stopped: the effect stays
   pending and runs again when the plugin is back.
-- A plugin whose process is killed outright ends nothing: a check then running goes on until it ends by itself.
+- A plugin whose process is killed outright ends nothing itself. Each step of a check has a guard beside it for
+  that: a process on a pipe from the plugin, which ends the step's group when the pipe ends, as it does when the
+  plugin's process is gone. The copy the check ran in is left, and removed the next time that check is run.
 
 **Reported, never removed silently.** A kept worktree, a failed removal, a branch that could not be deleted: each is a
 fact on the root's status.

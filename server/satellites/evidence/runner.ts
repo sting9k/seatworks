@@ -9,6 +9,43 @@ export type Ran = { ok: boolean; steps: Step[]; summary: string };
 /** Output kept per step: its tail, where a failure says why; a long build log never sits whole in memory. */
 const TAIL_BYTES = 8 * 1024;
 
+/** What a guard runs: when its input ends, it ends the process group it was started for. */
+const GUARD = `
+process.stdin.on("end", () => {
+  const group = Number(process.argv[1]);
+  try {
+    process.kill(process.platform === "win32" ? group : -group, "SIGKILL");
+  } catch {}
+});
+process.stdin.resume();
+`;
+
+/** A process beside a step, on a pipe from this one: once this process is gone, however it went, it ends the step. */
+function guard(group: number): { end(): Promise<void> } {
+  const child = spawn(process.execPath, ["-e", GUARD, String(group)], {
+    detached: true,
+    stdio: ["pipe", "ignore", "ignore"],
+    // This process may run as an Electron binary, which is Node only when told so.
+    env: { ...process.env, ELECTRON_RUN_AS_NODE: "1" },
+  });
+  // A guard that could not start guards nothing: the step runs all the same, and `stop` still ends it.
+  const gone = new Promise<void>((resolve) => {
+    child.on("error", () => {
+      resolve();
+    });
+    child.on("close", () => {
+      resolve();
+    });
+  });
+  child.stdin.on("error", () => undefined);
+  return {
+    end: () => {
+      child.stdin.end();
+      return gone;
+    },
+  };
+}
+
 /** Runs the project's checks on one commit in a throwaway copy; it never turns a failure into a pass. */
 export class EvidenceRunner {
   private readonly repo: string;
@@ -97,6 +134,7 @@ function runStep(
       env: { ...process.env, CI: "1" },
     });
     const group = child.pid;
+    const guarded = group === undefined ? null : guard(group);
     if (group !== undefined) running.add(group);
     let tail = Buffer.alloc(0);
     const keep = (chunk: Buffer) => {
@@ -113,7 +151,11 @@ function runStep(
     const done = (exit: number, extra = "") => {
       clearTimeout(timer);
       if (group !== undefined) running.delete(group);
-      resolve({ exit, seconds: (Date.now() - started) / 1000, tail: tail.toString("utf8") + extra });
+      const ran = { exit, seconds: (Date.now() - started) / 1000, tail: tail.toString("utf8") + extra };
+      // The step is over once its guard is gone too, so a run that has answered has left no process behind.
+      void (guarded?.end() ?? Promise.resolve()).then(() => {
+        resolve(ran);
+      });
     };
     child.on("error", (error) => {
       done(127, `\n${error.message}`);

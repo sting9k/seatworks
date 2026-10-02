@@ -76,7 +76,8 @@ from Paseo 0.10.1: the plugin SDK, `@getpaseo/client`, `@getpaseo/protocol`, the
 - Stopping a plugin, the daemon sends its worker `shutdown`; the worker awaits the cleanup the contribution returned,
   then disconnects. Two seconds after the `shutdown` the daemon sends SIGTERM, and two after that SIGKILL
   (`plugins/runtime.ts`, `SOFT_SHUTDOWN_TIMEOUT_MS`, 0.10.2). So the plugin's cleanup returns its promise, and ends
-  every running check before it waits on anything: what it has not ended in two seconds outlives it.
+  every running check before it waits on anything; a plugin killed before it could is covered by the guard beside
+  each step of a check (`PORTS.md`, Evidence).
 - In the app, `agents.subscribe` hears only what a listing made with `subscribe: {}` streams: the daemon sends no
   `agent_update` otherwise. The listing's `subscription` gives its snapshot again after each reconnect and is released
   with the plugin.

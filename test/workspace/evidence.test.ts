@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
-import { existsSync, mkdtempSync, readdirSync, writeFileSync } from "node:fs";
+import { execFileSync, spawn } from "node:child_process";
+import { once } from "node:events";
+import { createReadStream, existsSync, mkdtempSync, readdirSync, writeFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -9,6 +10,18 @@ import { EvidenceRunner } from "../../server/satellites/evidence/runner.ts";
 
 const run = (cwd: string, ...args: string[]) =>
   execFileSync("git", ["-c", "user.name=t", "-c", "user.email=t@t", ...args], { cwd, encoding: "utf8" }).trim();
+
+/** The processes this one has started that still run. */
+function children(): string[] {
+  try {
+    return execFileSync("pgrep", ["-P", String(process.pid)], { encoding: "utf8" })
+      .split("\n")
+      .filter(Boolean);
+  } catch {
+    // pgrep exits with 1 when it finds none.
+    return [];
+  }
+}
 
 const ENVIRONMENT = ["ECONNREFUSED", "Cannot find module"];
 
@@ -33,6 +46,7 @@ test("checks run on the very commit in a copy that is gone afterwards", async ()
   assert.equal(ran.ok, true);
   assert.equal(ran.steps[0]?.exit, 0);
   assert.deepEqual(existsSync(scratch) ? readdirSync(scratch) : [], []);
+  assert.deepEqual(children(), [], "and no process it started is left");
 });
 
 test("a failing step stops the run, keeps its output's tail, and a known shape is named environment", async () => {
@@ -106,3 +120,35 @@ test("a runner stopped while it makes the copy starts no step", async () => {
   assert.deepEqual(await running, { ok: false, steps: [], summary: "the run was stopped before its checks ended" });
   assert.equal(existsSync(ran), false);
 });
+
+test(
+  "a check still running when the process that asked for it is killed outright is ended",
+  { timeout: 60_000 },
+  async () => {
+    const { head, root, scratch } = repo("true\n");
+    const pipes = mkdtempSync(join(tmpdir(), "sw-gate-"));
+    const [gate, held] = [join(pipes, "gate"), join(pipes, "held")];
+    execFileSync("mkfifo", [gate, held]);
+    // The check says that it runs, then holds a pipe open for as long as it lives.
+    const check = ["sh", "-c", `echo started > ${gate}; exec sleep 600 > ${held}`];
+    const asking = spawn(
+      process.execPath,
+      [
+        "--experimental-strip-types",
+        "--no-warnings",
+        join(import.meta.dirname, "run-check.ts"),
+        root,
+        scratch,
+        head,
+        ...check,
+      ],
+      { stdio: "ignore" },
+    );
+    assert.equal(await readFile(gate, "utf8"), "started\n");
+    const alive = createReadStream(held);
+    await once(alive, "open");
+    asking.kill("SIGKILL");
+    alive.resume();
+    await once(alive, "end");
+  },
+);
