@@ -58,6 +58,7 @@ on an implementation without the rule before it is trusted.
 | -------------------------------------------------------------------------- | ----------------------------- |
 | The whole suite run on the SLP profile with every role renamed             | Same results                  |
 | A search of the kernel and satellites for any role name in the profile     | None found                    |
+| A search of the Human's surface for any role name in the profile           | None found: the agent the Human works with is shown by the name its profile gives the root's role |
 | A profile with no `humanDoor` role                                         | Loads; `ask_human` is shown to no one |
 | A profile that gives a role a tool the team does not have: one misspelt, or one only the Human sends | Does not load, saying which role and which tool |
 

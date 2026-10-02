@@ -70,7 +70,7 @@ export function ProjectPage({
         }
       : undefined;
   };
-  const toSupervisor = openAgent(human?.supervisor ?? null);
+  const toRoot = openAgent(human?.root?.owner ?? null);
   const waiting = waitingOf(human);
   const tabs: Tab<TabId>[] = [
     { id: "needs", label: waiting > 0 ? `Needs you · ${waiting}` : "Needs you" },
@@ -89,8 +89,8 @@ export function ProjectPage({
         theme={theme}
         onBack={onBack}
         action={
-          toSupervisor ? (
-            <Button label="Supervisor's chat" icon="MessageSquare" theme={theme} onPress={toSupervisor} />
+          human?.root && toRoot ? (
+            <Button label={`${titled(human.root.role)}'s chat`} icon="MessageSquare" theme={theme} onPress={toRoot} />
           ) : undefined
         }
       />
@@ -133,8 +133,14 @@ export function ProjectPage({
               </SettingsCard>
             </SettingsSection>
           ) : null}
-          {human.supervisor ? (
-            <MessageBox project={project} to={human.supervisor} theme={theme} onSent={refresh} />
+          {human.root?.owner ? (
+            <MessageBox
+              project={project}
+              to={human.root.owner}
+              role={titled(human.root.role)}
+              theme={theme}
+              onSent={refresh}
+            />
           ) : null}
         </>
       ) : null}
@@ -244,12 +250,27 @@ function Spend({ human, theme }: { human: HumanView; theme: Theme }) {
   );
 }
 
-/** Words to the Supervisor, recorded as the Human's message whether typed here or in its chat. */
-function MessageBox({ project, to, theme, onSent }: { project: string; to: string; theme: Theme; onSent: () => void }) {
+/** A role as a person reads it: the profile's own name for it, which the surface never writes for itself. */
+const titled = (role: string) => role.charAt(0).toUpperCase() + role.slice(1).replaceAll("-", " ");
+
+/** Words to the root's agent, recorded as the Human's message whether typed here or in its chat. */
+function MessageBox({
+  project,
+  to,
+  role,
+  theme,
+  onSent,
+}: {
+  project: string;
+  to: string;
+  role: string;
+  theme: Theme;
+  onSent: () => void;
+}) {
   const [text, setText] = useState("");
   const { busy, said, send } = useHumanCommand(project);
   return (
-    <SettingsSection title="To the Supervisor">
+    <SettingsSection title={`To the ${role}`}>
       <Card theme={theme}>
         <View style={{ padding: SPACE.md, gap: SPACE.sm }}>
           <TextInput
@@ -271,7 +292,7 @@ function MessageBox({ project, to, theme, onSent }: { project: string; to: strin
           />
           <View style={{ flexDirection: "row", alignItems: "center", gap: SPACE.md }}>
             <Text style={{ flex: 1, fontSize: FONT.small, color: theme.colors.foregroundMuted }}>
-              {said ? said.text : "It reaches the Supervisor when its turn ends."}
+              {said ? said.text : `It reaches the ${role} when its turn ends.`}
             </Text>
             <Button
               label="Send"

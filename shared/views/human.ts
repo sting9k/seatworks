@@ -78,6 +78,6 @@ export function humanView(state: State): HumanView {
       tokens: root?.spent.tokens ?? 0,
       appetiteUsd: root?.plan?.appetite.usd ?? null,
     },
-    supervisor: root?.owner ?? null,
+    root: root ? { role: root.role, owner: root.owner } : null,
   };
 }

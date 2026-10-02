@@ -28,7 +28,7 @@ test("the Human sees what waits on them, what agents decided for them, and their
     ["use protobuf"],
     "the Human's own words, not an id",
   );
-  assert.equal(view.supervisor, supervisor);
+  assert.deepEqual(view.root, { role: "supervisor", owner: supervisor });
 
   ledger.must(ledger.human("answer_question", { question: view.questions[0]!.id, text: "Fairness" }));
   assert.equal(humanView(ledger.state).questions.length, 0);

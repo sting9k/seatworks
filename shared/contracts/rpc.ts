@@ -44,7 +44,8 @@ export const HumanViewSchema = z.object({
     }),
   ),
   spent: z.object({ usd: z.number(), tokens: z.number(), appetiteUsd: z.number().nullable() }),
-  supervisor: z.string().nullable(),
+  /** The agent the Human works with: the root's role as the profile names it, and whoever is seated in it. */
+  root: z.object({ role: z.string(), owner: z.string().nullable() }).nullable(),
 });
 export type HumanView = z.infer<typeof HumanViewSchema>;
 

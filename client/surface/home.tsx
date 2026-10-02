@@ -37,7 +37,7 @@ export function Home({ listed, problem, attaching, theme, onProject, onAttach, o
   const [choosing, setChoosing] = useState<string | null>(null);
   return (
     <>
-      <PageHeader title="Seatworks" subtitle="Attach a project, then work with its Supervisor." theme={theme} />
+      <PageHeader title="Seatworks" subtitle="Attach a project, then work with its team." theme={theme} />
       {problem ? (
         <SettingsCard>
           <SettingsAction label="Seatworks did not answer" error={problem} actionLabel="Try again" onPress={onRetry} />
@@ -108,8 +108,7 @@ export function Home({ listed, problem, attaching, theme, onProject, onAttach, o
           />
         ) : (
           <Text style={muted}>
-            Every git project Paseo has is attached. Open another in Paseo to attach it here; attaching starts its
-            Supervisor.
+            Every git project Paseo has is attached. Open another in Paseo to attach it here; attaching starts its team.
           </Text>
         )}
       </SettingsSection>

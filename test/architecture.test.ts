@@ -33,6 +33,19 @@ test("no role of the profile is named in the plugin's code, even in what it says
   assert.deepEqual(named, []);
 });
 
+test("the Human's surface writes no role's name of its own: it shows the names the project's profile gives", () => {
+  const roles = Object.keys(
+    (parse(readFileSync(join(root, "profile/slp/profile.yaml"), "utf8")) as { roles: Record<string, unknown> }).roles,
+  );
+  const named = [...files("client"), "index.client.tsx"].flatMap((file) => {
+    const text = readFileSync(join(root, file), "utf8")
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/(^|[^:])\/\/.*$/gm, "$1");
+    return roles.filter((role) => new RegExp(`\\b${role}s?\\b`, "i").test(text)).map((role) => `${file}: ${role}`);
+  });
+  assert.deepEqual(named, []);
+});
+
 /**
  * What Paseo 0.10.1's plugin compiler lets a bundle import without the plugin installing it (`compiler.js`,
  * `plugin-sdk-specifiers.js`): the SDK, zod, React and Node's own modules. Every other package, even one imported

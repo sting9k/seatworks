@@ -44,7 +44,7 @@ export function TeamPanel({ workspaceId, theme, layout, navigation }: PluginWork
       : undefined;
   };
   const waiting = waitingOf(human);
-  const toSupervisor = openAgent(human?.supervisor ?? null);
+  const toRoot = openAgent(human?.root?.owner ?? null);
 
   return (
     <ScrollView contentContainerStyle={{ padding: layout.compact ? SPACE.lg : SPACE.md, gap: SPACE.md }}>
@@ -60,11 +60,11 @@ export function TeamPanel({ workspaceId, theme, layout, navigation }: PluginWork
         <>
           <Pressable
             accessibilityRole="button"
-            disabled={!toSupervisor}
-            onPress={toSupervisor}
+            disabled={!toRoot}
+            onPress={toRoot}
             style={({ pressed }) => [
               { flexDirection: "row", alignItems: "center", gap: SPACE.sm, paddingHorizontal: SPACE.xs },
-              pressState(false, pressed && Boolean(toSupervisor)),
+              pressState(false, pressed && Boolean(toRoot)),
             ]}
           >
             <Dot tone={waiting > 0 ? "you" : "work"} theme={theme} />
