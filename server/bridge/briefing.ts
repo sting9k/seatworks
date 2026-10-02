@@ -19,9 +19,10 @@ export function firstPrompt(state: State, actor: Actor, reseated: boolean, docs:
   const lead = reseated
     ? "You take over this scope from an agent that left it. What it owed and what was sent to it are yours now; its commits are on your branch."
     : "You are seated on this scope.";
+  // The plugin's own commits on the base are said, so nobody meets one at a publish and takes it for a stranger's.
   const read =
     docs.length > 0
-      ? `\n\nThe project's docs in your copy: ${docs.map((d) => `\`${d}\``).join(", ")}. One that is not there holds nothing yet.`
+      ? `\n\nThe project's docs in your copy: ${docs.map((d) => `\`${d}\``).join(", ")}. One that is not there holds nothing yet. The ledger commits what it keeps of them on the base itself, and its note to every agent there: those commits are its own, and a publish carries them.`
       : "";
   return `${lead} You are ${actor.id}.${read}\n\n${status}`;
 }

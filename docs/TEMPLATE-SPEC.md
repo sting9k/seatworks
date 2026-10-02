@@ -261,7 +261,7 @@ What the tools do by themselves, so that a prompt says none of it and counts on 
   parent's head taken in. The project's checks run on it when any is set, and their result wakes the owner above
   with the evidence's id. `integrate` cites evidence on that candidate; `status` shows which commit it is. A commit
   may be named by an abbreviation.
-- **An integration that was not made is said.** When the parent moved under the candidate, as it does each time
+- **An integration that was not made is said too.** When the parent moved under the candidate, as it does each time
   something else lands, the owner above is woken, another candidate is made, and evidence is wanted on that one.
   Refused for another reason, such as a base checked out with uncommitted changes, the candidate stands and the same
   `integrate` works once the reason is gone.
@@ -269,7 +269,12 @@ What the tools do by themselves, so that a prompt says none of it and counts on 
   its predecessor left unanswered, and gets a copy made again if the scope's copy had failed.
 - **A hold ends with its holder.** The machine is let go when the agent that holds it leaves its seat. `status`
   says who holds it meanwhile, which is why a check has not come back.
-- **A refused publish wakes the root's owner**, with why. A publish that worked is told with its next message.
+- **What only starts says so, and its outcome is told.** `run_checks`, `integrate` and `publish` answer at once
+  that their caller is told the outcome; it comes as a note that wakes it: the check's result with the checks that
+  ran by name, the scope integrated and where its parent's branch is, the branch pushed or why it was refused. No
+  agent needs to look in git, or call `status` in a loop, to learn whether one of them happened.
+- **The ledger's own commits are on the base.** Its note in the project's instruction file, the glossary and the
+  map are committed by the plugin itself and go with a publish. Every agent's first words say so.
 - **Saying nothing is refused.** A report with no line, and an amendment of a brief or a plan that changes nothing,
   are refused where their arguments are read.
 

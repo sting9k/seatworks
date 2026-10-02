@@ -154,12 +154,15 @@ test("the work tools: checks a writer runs itself, a hand-back sent back and han
   git(copy, "commit", "-q", "-m", "half");
   const half = git(copy, "rev-parse", "HEAD");
 
-  await did(c, maker, "run_checks", { scope: "1", commit: half });
+  assert.equal(
+    await did(c, maker, "run_checks", { scope: "1", commit: half }),
+    "Recorded: evidence requested, and you are told its result when it has run.",
+  );
   assert.match(await status(maker), new RegExp(`Evidence:\\n- e1 check on ${half}: failing · done failed`));
   assert.match(
     c.told(1).join("\n"),
-    new RegExp(`Checks on ${half} for scope 1: failed \\(evidence e1\\)`),
-    "the writer that asked is told, with the evidence it may cite",
+    new RegExp(`Checks on ${half} for scope 1 \\(done\\): failed \\(evidence e1\\)`),
+    "the writer that asked is told, with the checks that ran by name and the evidence it may cite",
   );
 
   await did(c, maker, "hand_back", {
@@ -204,8 +207,13 @@ test("the work tools: checks a writer runs itself, a hand-back sent back and han
     commit: head,
     steps: [{ name: "mine", run: ["sh", "-c", "exit 0"] }],
   });
-  await did(c, chief, "integrate", { scope: "1", evidence: [passing, verdict], reason: "one word is what was asked" });
+  const taken = { scope: "1", evidence: [passing, verdict], reason: "one word is what was asked" };
+  assert.equal(
+    await did(c, chief, "integrate", taken),
+    "Recorded: integration started, and you are told when it is made or refused.",
+  );
   assert.equal(git(c.repo, "rev-parse", "main"), head, "the base holds the commit");
+  assert.equal(c.told(0).at(-1), `Scope 1 is integrated: main is at ${head}.`, "whoever asked for it is told it is in");
   assert.ok(c.paseo.archived.includes(c.paseo.created[1]!.host), "and its writer's agent is let go");
   await refused(chief, "send_back", { scope: "1", reason: "too late" }, /no scope 1/);
   assert.match(
@@ -217,8 +225,12 @@ test("the work tools: checks a writer runs itself, a hand-back sent back and han
     "a scope's record keeps each hand-back and what came of it, after the scope is closed too",
   );
 
-  await did(c, chief, "publish", { remote: "origin" });
+  assert.equal(
+    await did(c, chief, "publish", { remote: "origin" }),
+    "Recorded: publish requested, and you are told when it is pushed or refused.",
+  );
   assert.equal(git(c.remote, "rev-parse", "main"), head);
+  assert.equal(c.told(0).at(-1), `Published main to origin at ${head}.`, "and that it is on the remote");
   assert.match((await c.plugin.view(c.project))!.activity.at(-1) ?? "", /published main to origin$/);
   for (const t of [chief, maker, reader]) t.close();
 });

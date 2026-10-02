@@ -201,10 +201,17 @@ function recorded(events: readonly Event[]): string {
     if (e.type === "attended" && e.attention === null)
       return "attended, and nobody was told: this kind is marked noise for that agent and scope";
     const id = made(e);
-    return `${e.type.replace(/_/g, " ")}${id === null ? "" : ` (${id})`}`;
+    return `${e.type.replace(/_/g, " ")}${id === null ? "" : ` (${id})`}${LATER[e.type] ?? ""}`;
   };
   return `Recorded: ${events.map(said).join("; ")}.`;
 }
+
+/** What comes of a command that only starts something, said with its reply: its caller is told the outcome later. */
+const LATER: Partial<Record<Event["type"], string>> = {
+  evidence_requested: ", and you are told its result when it has run",
+  integration_started: ", and you are told when it is made or refused",
+  publish_requested: ", and you are told when it is pushed or refused",
+};
 
 /** The id of what an event made, where its caller names it by that id from then on; a second call would only read it. */
 function made(e: Event): string | null {

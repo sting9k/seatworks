@@ -193,7 +193,9 @@ export function react(e: Event, s: State): readonly Effect[] {
     case "evidence_recorded": {
       const x = e.evidence;
       if (x.kind === "check") {
-        const text = `Checks on ${x.subject} for scope ${x.scope}: ${x.ok ? "passed" : "failed"} (evidence ${x.id}). ${x.summary}`;
+        // Which checks ran is said by name: a writer's own, asked with `run_checks`, are not the project's.
+        const ran = x.steps.length > 0 ? ` (${x.steps.map((step) => step.name).join(", ")})` : "";
+        const text = `Checks on ${x.subject} for scope ${x.scope}${ran}: ${x.ok ? "passed" : "failed"} (evidence ${x.id}). ${x.summary}`;
         for (const to of e.wake) tell(to, "note", text, true);
         const owner = parentOwner(x.scope);
         if (owner === null || !e.wake.includes(owner)) tell(owner, "note", text);
@@ -222,14 +224,14 @@ export function react(e: Event, s: State): readonly Effect[] {
       );
       break;
     case "published":
-      tell(s.scopes.get(ROOT)?.owner ?? null, "note", `Published ${e.branch} to ${e.remote} at ${e.sha}.`);
-      break;
     case "publish_refused":
-      // A landing that did not reach the remote is the root's owner's to know now, whoever asked for the publish.
+      // Whether a landing reached the remote is the root's owner's to know now: a publish answers only that it was asked.
       tell(
         s.scopes.get(ROOT)?.owner ?? null,
         "note",
-        `Publishing ${e.branch} to ${e.remote} was refused: ${e.why}`,
+        e.type === "published"
+          ? `Published ${e.branch} to ${e.remote} at ${e.sha}.`
+          : `Publishing ${e.branch} to ${e.remote} was refused: ${e.why}`,
         true,
       );
       break;
@@ -253,6 +255,14 @@ export function react(e: Event, s: State): readonly Effect[] {
       mustTell(e.scope, e.type === "integrated" ? `it was integrated at ${e.sha}` : `it was dropped: ${e.reason}`);
       const scope = s.scopes.get(e.scope);
       const parent = scope?.parent == null ? undefined : s.scopes.get(scope.parent);
+      // Whoever asked for the integration waits on it: `integrate` answered only that it had started.
+      if (e.type === "integrated")
+        tell(
+          parentOwner(e.scope),
+          "note",
+          `Scope ${e.scope} is integrated: ${parent?.branch ?? "its parent"} is at ${e.sha}.`,
+          true,
+        );
       add("remove", {
         kind: "workspace.remove",
         scope: e.scope,

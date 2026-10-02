@@ -432,14 +432,14 @@ Whoever a command changes something for is told, in the tool's own words and not
 | ----------------------------- | ---------------------------------------------------------------- | ----- |
 | `handed_over`                 | The owners of both scopes: which paths moved, from where to where | Yes   |
 | `scope_held`, `scope_resumed` | The scope's owner, with the reason                               | Yes   |
-| `evidence_recorded`, a check  | Whoever asked, and the owner above; with the evidence's id, to cite | Whoever waited |
+| `evidence_recorded`, a check  | Whoever asked, and the owner above; with the checks that ran, by name, and the evidence's id, to cite | Whoever waited |
+| `integrated`                  | The owner of the scope's parent, who asked for it: the branch it went into and the commit it is at | Yes |
 | `evidence_recorded`, a verdict | The owner of the reading scope's parent, who seated the reader; with its id | Yes |
 | `finding_reopened`            | Whoever answers it: what is new, its new evidence, and what it first said | Yes |
 | `finding_withdrawn`           | Whoever was to answer it                                         | No    |
 | `brief_amended`, `plan_set`, `plan_amended`, `claim_made`, `integrated`, `scope_dropped` | The owner of each scope the scope `mustTell`: what changed | Yes |
 | `brief_amended` by leave of `mayChange` | The owner of the scope's parent: who amended it, from which scope, and why | Yes |
-| `published`                   | The root's owner: the branch, the remote and the commit          | No    |
-| `publish_refused`             | The root's owner, with why: a landing that did not reach the remote is theirs to know, whoever asked | Yes |
+| `published`, `publish_refused` | The root's owner: the branch, the remote and the commit, or why it was refused. Whether a landing reached the remote is theirs to know, whoever asked | Yes |
 | `integration_refused`         | The owner of the scope's parent, who asked: over a parent that moved, that another candidate is being made; for any other reason, the reason and that the candidate stands | Yes |
 
 An integration the workspace refuses for anything but a parent that moved (a base checked out with uncommitted
@@ -452,6 +452,10 @@ A scope that waited for a sibling gets its copy and its agent when the sibling i
 last `after` edge that made it wait is removed (`edge_removed`): no other event would start it. A scope whose copy
 could not be made (`workspace_failed`) has no agent, and `status` says so; a reseat asks for the copy again, and the
 actor it seats gets its agent once the copy is there. Without that a reseat would seat an actor nothing ever starts.
+
+A command that only starts something says so in its reply: `run_checks`, `integrate` and `publish` each answer that
+their caller is told the outcome, which arrives as a note that wakes it. A live Supervisor took "integration started"
+and "publish requested" for the whole answer, and went to git to see whether either had happened.
 
 A tool's reply names what was recorded, and what it made by the id it is called by from then on: the scope and the
 actor an `open_scope` made, a finding, a claim, a message with its reader, a question, an attention. Without the id

@@ -52,7 +52,7 @@ test("one lane end to end: a Supervisor, a Lead and a Peer land a change on main
   assert.match(supervisorAgent.prompt, /Scope root/);
   assert.match(
     supervisorAgent.prompt,
-    /The project's docs in your copy: `GLOSSARY\.md`, `docs\/adr`, `docs\/seatworks\/MAP\.md`\./,
+    /The project's docs in your copy: `GLOSSARY\.md`, `docs\/adr`, `docs\/seatworks\/MAP\.md`\. One that is not there holds nothing yet\. The ledger commits what it keeps of them on the base itself, and its note to every agent there: those commits are its own, and a publish carries them\./,
     "its brief points at the docs",
   );
 
