@@ -10,17 +10,6 @@ export type Candidate = { candidate: string; parentHead: string } | { conflict: 
 export type Moved = { sha: string } | { refused: string };
 
 const DIFF_CAP = 60_000;
-/** Test paths, left out when asking whether code already has a name. */
-const NOT_TESTS = [
-  ":(exclude,glob)**/test/**",
-  ":(exclude,glob)**/tests/**",
-  ":(exclude,glob)**/spec/**",
-  ":(exclude,glob)**/__tests__/**",
-  ":(exclude,glob)**/*.test.*",
-  ":(exclude,glob)**/*.spec.*",
-  ":(exclude,glob)**/test_*",
-];
-
 /** A key made safe for a path: `[A-Za-z0-9._-]`, with a stable hash when that changed it (Symphony's rule). */
 export function safeKey(key: string): string {
   const clean = key.replace(/[^A-Za-z0-9._-]/g, "_");
@@ -259,28 +248,29 @@ export class Workspace {
     return `${stat.stdout.trim()}\n\n${body}`;
   }
 
-  /** Which of `names` appear as whole words in code outside test paths, at a revision or in a working tree. */
-  async namesIn(cwd: string, rev: string | null, names: readonly string[]): Promise<Set<string>> {
+  /** Which of `names` appear as whole words in code that is not a test, at a revision or in a working tree. */
+  async namesIn(cwd: string, rev: string | null, names: readonly string[], tests: RegExp): Promise<Set<string>> {
     if (names.length === 0) return new Set();
-    // In a working tree, files the agent has not committed yet count too.
+    // In a working tree, files the agent has not committed yet count too. Each match is a line `path<NUL>name`.
     const args = [
       "grep",
       ...(rev ? [] : ["--untracked"]),
       "-w",
       "-o",
-      "-h",
+      "-z",
       "-I",
       ...names.flatMap((n) => ["-e", n]),
       ...(rev ? [rev] : []),
       "--",
       ".",
-      ...NOT_TESTS,
     ];
     const run = await git(cwd, args, 60_000);
     const found = new Set<string>();
     for (const line of run.stdout.split("\n")) {
-      const name = (line.includes(":") ? line.slice(line.lastIndexOf(":") + 1) : line).trim();
-      if (names.includes(name)) found.add(name);
+      const [file, name] = line.split("\0");
+      if (file === undefined || name === undefined || !names.includes(name)) continue;
+      const path = rev && file.startsWith(`${rev}:`) ? file.slice(rev.length + 1) : file;
+      if (!tests.test(path)) found.add(name);
     }
     return found;
   }

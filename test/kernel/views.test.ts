@@ -69,7 +69,7 @@ test("a finding's chain of change and the signals are read from the log", () => 
 
 test("a lane's owes counts what waits on its owner: obligations and open attentions", () => {
   const { ledger, supervisor, lead, lane, peer } = team();
-  const owes = () => humanView(ledger.state).lanes.find((l) => l.scope === lane)?.owes;
+  const owes = () => humanView(ledger.state).scopes.find((l) => l.scope === lane)?.owes;
   assert.equal(owes(), 0);
   ledger.must(ledger.as(supervisor, "send_message", { to: lead, text: "how is the wire?", asks: true }));
   assert.equal(owes(), 1);

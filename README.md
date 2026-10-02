@@ -12,8 +12,9 @@ each owns a piece of the work, writes in a copy of its own, and what it hands ba
 
 The plugin does not decide how the team works. It keeps the record of who owns what and why, refuses the few things
 that would break that record, carries what agents say to each other, and runs git, checks and agents for them. How
-the team is arranged, and every word its agents read, is a **template**: plain files you install, change or replace
-without touching the plugin. **SLP** is the template that comes with it.
+the team is arranged and what each role is told (its prompt, its skills, the questions asked of its work) is a
+**template**: plain files you install, change or replace without touching the plugin. The tools every team is given,
+and what they say, are the plugin's. **SLP** is the template that comes with it.
 
 > **Status: in testing.** Nothing has shipped. The tests run against a stand-in for Paseo; Claude Code and Pi have
 > been run as real agents, Codex and OpenCode have settings shipped and have not. Read
@@ -107,9 +108,10 @@ give one answer.
 
 - **Attach a project.** On Seatworks' page, attach one of your Paseo projects, or run "Open a Seatworks team here"
   from the command center in a workspace. That seats the template's first agent; talk to it in its chat.
-- **A project's page** has four tabs: **Needs you** (questions and permissions waiting on you), **Lanes** (each
-  lane's state and what is still owed in it), **Decided** (what agents decided for you) and **Activity**.
-- **The Team panel** beside a workspace shows the same lanes, and a pill in each agent's chat counts what waits on
+- **A project's page** has four tabs: **Needs you** (questions and permissions waiting on you), **Scopes** (the
+  state of each piece of work opened under the first agent, SLP's lanes, and what is still owed in it), **Decided**
+  (what agents decided for you) and **Activity**.
+- **The Team panel** beside a workspace shows the same scopes, and a pill in each agent's chat counts what waits on
   you.
 - **Permissions** an agent asks for reach you on Needs you. Answering one in the agent's own prompt works too.
 - **The Plugin page** installs and removes templates, matches agent profiles, checks for a newer release (updating
@@ -122,14 +124,14 @@ give one answer.
 - **A note in `AGENTS.md`**, between the plugin's markers, committed on your base branch as a commit of that file
   alone, so every agent in the repository, the team's or your own, knows the team is there. It never writes over a
   file you are editing; the note waits until you commit.
-- **Branches** under `sw/<project>/`, one per lane and task, in worktrees under the plugin's state directory, never
+- **Branches** under `sw/<project>/`, one per piece of work a writer is given, in worktrees under the plugin's state directory, never
   in your checkout. Only the plugin makes, merges and deletes them; a git guard on every agent refuses push, pull,
   checkout and the like.
 - **What the template's agents keep.** For SLP: `GLOSSARY.md`, the words the project is spoken of in, and
   `docs/adr/`, each written by the agent whose work settled it, in the commit it explains. While the team runs, the
   plugin commits nothing more than the note: your base moves only when work lands.
 - **A map, when you remove the project.** For SLP `docs/seatworks/MAP.md`: where the project was going, what had to
-  hold and what was chosen, the words settled, and each landed lane with what its owner reported. It is written once,
+  hold and what was chosen, the words settled, and each piece of work that landed with what its owner reported. It is written once,
   from the record, so that what the team knew stays with the repository.
 
 Removing a project leaves the map, takes the note out, archives its agents, deletes its copies and branches, and

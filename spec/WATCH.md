@@ -81,8 +81,12 @@ agent host stream ─► eye (code): items and facts
     │                           ▼
     ├─ sweep, scopes with new work ──────────────────────► Watcher ─ attend ──► owner
     │                                                          └──── pass (recorded)
-    └─ alarms (a refused destructive command, two measurements at once, a flaky test) ─► Supervisor, the Human's view
+    └─ an alarm (the classifier cannot be asked: no key, a key refused, a question it cannot take) ─► the Human, on the project's page
 ```
+
+A refused destructive command, two measurements at once and a flaky test were named as alarms here and never built:
+the git shim's refusal reaches the agent that ran the command, the machine's hold keeps two measurements apart, and
+nothing runs a check twice. Each is built when a look back shows a team needed it, as any moment is.
 
 ### The eye
 
@@ -94,7 +98,11 @@ agent host stream ─► eye (code): items and facts
   ends. A hand-back or a finding is read with the event that records it.
 - **Facts** are counted in code: the same call failing the same way again, turns that spend and record nothing, a
   finding left unclassified, spend past an appetite, an existing line of a test changed where the brief asks nothing
-  of tests (`STEERING.md`). Three things are not counted. A turn's length is a late and weak sign: failed runs are
+  of tests (`STEERING.md`). Code does the counting; what it counts by is the profile's, under `facts` in its watch
+  file: how many times and turns (`repeats`, `repeatsTold`, `silentTurns`, `waitingTurns`), which paths are tests
+  (`testPath`), what in a brief's words asks for work on tests (`asksOfTests`) and what a line that asserts looks
+  like (`assertion`). No number and no pattern of these is in the plugin, so a team that writes Go, or briefs in
+  another language, sets its own. A profile with no watch file has nothing counted. Three things are not counted. A turn's length is a late and weak sign: failed runs are
   longer on average, but length alone does not tell them from the rest, and the loop and the silence it would point
   at are counted themselves. How full a context is, as a share of its window, measures neither of what a long context
   does: work decays well before a window fills, and an agent cuts corners by how full it believes the window is; the
@@ -122,9 +130,10 @@ It needs nothing Seatworks does not already run: git, the record and the reflex.
 1. On an edit to a test path, code takes from the added lines the names they give the code: after a dot, before a
    call, a key in an object literal, after `new`. The patterns are data and deliberately crude; the reflex and the
    Watcher filter what they catch.
-2. A name is **settled** when it is in the scope's brief, its parent's plan or a line of the Human's; in the base at
-   the scope's start (`git grep`); or in code the Peer already wrote outside test paths in its copy, since a test of a
-   shape the Peer chose in code checks that shape rather than inventing it.
+2. A name is **settled** when it is in the scope's brief or its parent's plan; in the base at the scope's start
+   (`git grep`); or in code the Peer already wrote in its copy, since a test of a shape the Peer chose in code checks
+   that shape rather than inventing it. Code means a path that is not a test by the profile's own `testPath`. Where
+   a name is looked for is the plugin's, the same for every template.
 3. No unsettled name: nothing is asked. Otherwise the reflex gets the hunk and the unsettled names, and asks two
    questions: whether the test uses one of them as part of the code under test, and whether it builds a fake, stub or
    adapter that gives the code under test one of them.
@@ -220,7 +229,7 @@ since they last looked:
 - The decisions made for them.
 - The disagreements still open.
 - The attentions, who they went to, and what each owner did.
-- The alarms.
+- The alarm, when the classifier cannot be asked.
 
 The view is built from the record, one line an item. What the Supervisor says about it is its own words. Reading it
 aloud is a matter for the surface.
@@ -232,7 +241,7 @@ aloud is a matter for the surface.
 | All                        | As above                                                               |
 | The classifier's host unreachable, or its key missing or for another host | Facts and sweeps go to the Watcher, and a standing alarm on the project's page tells the Human |
 | No classifier in the template, or switched off by the Human | The same, and nothing is said: it is a choice |
-| No Watcher role            | Only the reflex's `tell` answers, the facts that need no judging, and the alarms reach the owners |
+| No Watcher role            | Only the reflex's `tell` answers and the facts that need no judging reach the owners |
 
 Every other part of Seatworks works the same in each case.
 

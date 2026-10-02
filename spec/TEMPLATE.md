@@ -142,8 +142,10 @@ answered it, so a question reworded in a template has not earned its `tell` and 
 that names neither asks nothing and watches for nothing.
 
 What either file may name of the plugin's is in `shared/contracts/reflex.ts`, and nothing else is: the kernel's
-events a question is asked `on`, the places of the record its `state` reads (`STATE_PATHS`), whom its answer is for
-(`TELLS`), and the moments counted in code (`CODE_MOMENTS`), each switched on by the name the plugin gives it. Every
+events a question is asked `on`, the conditions its `when` may set (`WHEN`), the places of the record its `state`
+reads (`STATE_PATHS`), whom its answer is for (`TELLS`), what a moment `reads` of a turn (`ITEM_READS`), and the
+moments counted in code (`CODE_MOMENTS`), each switched on by the name the plugin gives it. What code counts those
+by, every number and pattern, is the profile's under `facts` (`WATCH.md`). Every
 other name in them is the profile's own, and no code names it: a test reads every role, question and moment SLP
 names and finds none in the plugin's code.
 

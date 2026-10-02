@@ -183,7 +183,7 @@ upkeep: attach(repository, profile), profiles, presets, templateOffer(from), ins
   writers on one file.
 - When a project is removed, what the record holds is left in the file the profile names as `map`, between the
   plugin's markers, as a commit of that file alone, before the note is taken out: the destination, what must hold
-  apart from what was chosen, what is not yet known, the words settled, each lane landed with what its owner reported
+  apart from what was chosen, what is not yet known, the words settled, each scope that landed with what its owner reported
   under each section and how each finding in it was weighed, and what is still in dispute. A file of the Human's in
   its place stops the removal, as an edit to the instruction file does. A project with no plan leaves nothing.
 - The docs a team keeps by hand, such as a glossary and the ADRs in `docs/adr/`, are written by the agent whose

@@ -10,9 +10,9 @@ import { FONT, SPACE, pressState } from "../kit/theme.ts";
 import { problemText } from "../state/problem-text.ts";
 import { useProjectView } from "../state/project-view.ts";
 import { useSeatAgents } from "../state/seat-agents.ts";
-import { laneState, laneTone, waitingOf } from "../surface/project-page.tsx";
+import { scopeState, scopeTone, waitingOf } from "../surface/project-page.tsx";
 
-/** Seatworks' tab beside Files and Changes: the team at a glance, a line a lane, each opening to its seat's chat. */
+/** Seatworks' tab beside Files and Changes: the team at a glance, a line a scope under the root, each opening to its seat's chat. */
 export function TeamPanel({ workspaceId, theme, layout, navigation }: PluginWorkspacePanelProps) {
   const root = useWorkspace(workspaceId, (w) => w.projectRootPath);
   const find = useRpc(RPC.projectAt);
@@ -75,22 +75,22 @@ export function TeamPanel({ workspaceId, theme, layout, navigation }: PluginWork
               ${human.spent.usd.toFixed(2)}
             </Text>
           </Pressable>
-          {human.lanes.length > 0 ? (
+          {human.scopes.length > 0 ? (
             <DisclosureList
               theme={theme}
               compact
               open={open}
               onOpen={setOpen}
-              items={human.lanes.map((lane) => {
-                const tone = laneTone(lane);
-                const toOwner = openAgent(lane.owner);
+              items={human.scopes.map((scope) => {
+                const tone = scopeTone(scope);
+                const toOwner = openAgent(scope.owner);
                 return {
-                  id: lane.scope,
-                  title: `${lane.scope} ${lane.goal ?? ""}`.trim(),
+                  id: scope.scope,
+                  title: `${scope.scope} ${scope.goal ?? ""}`.trim(),
                   dimmed: tone === "off",
                   leading: <Dot tone={tone} theme={theme} />,
                   trailing: (
-                    <Text style={{ fontSize: FONT.small, color: toneColor(theme, tone) }}>{laneState(lane)}</Text>
+                    <Text style={{ fontSize: FONT.small, color: toneColor(theme, tone) }}>{scopeState(scope)}</Text>
                   ),
                   body: (
                     <Pressable
@@ -100,7 +100,7 @@ export function TeamPanel({ workspaceId, theme, layout, navigation }: PluginWork
                       style={({ pressed }) => pressState(false, pressed && Boolean(toOwner))}
                     >
                       <Text style={{ fontSize: FONT.small, color: theme.colors.foregroundMuted }}>
-                        {lane.role} · {lane.owner ?? "nobody seated"}
+                        {scope.role} · {scope.owner ?? "nobody seated"}
                         {toOwner ? " · open its chat" : ""}
                       </Text>
                     </Pressable>
@@ -110,7 +110,7 @@ export function TeamPanel({ workspaceId, theme, layout, navigation }: PluginWork
             />
           ) : (
             <View style={{ paddingHorizontal: SPACE.xs }}>
-              <Text style={muted}>No lane is open.</Text>
+              <Text style={muted}>No scope is open under the root.</Text>
             </View>
           )}
         </>

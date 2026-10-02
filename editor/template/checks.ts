@@ -1,5 +1,5 @@
 import { type Role, settingsOf } from "../../shared/contracts/profile.ts";
-import { ASKED_ON, CODE_MOMENTS, STATE_PATHS, TELLS } from "../../shared/contracts/reflex.ts";
+import { ASKED_ON, CODE_MOMENTS, ITEM_READS, STATE_PATHS, TELLS, WHEN } from "../../shared/contracts/reflex.ts";
 import { SECRETS } from "../../shared/contracts/secrets.ts";
 import { READS } from "../../shared/contracts/tools.ts";
 import type { Asked, Template } from "./read-template.ts";
@@ -135,6 +135,11 @@ function questionNotes({ spec }: Asked): string[] {
     .map((event) => `it is asked on \`${event}\`, which is not an event a question is asked on`);
   if (spec.tells !== undefined && !known(TELLS, spec.tells))
     notes.push(`it tells \`${spec.tells}\`, which is not one of ${TELLS.join(", ")}`);
+  for (const set of Object.keys(spec.when ?? {}))
+    if (!known(WHEN, set))
+      notes.push(
+        `its \`when\` sets \`${set}\`, which the plugin does not read (${WHEN.join(", ")} are), so it holds for every event`,
+      );
   return [...notes, ...stateNotes(spec)];
 }
 
@@ -144,6 +149,11 @@ function momentNotes({ name, spec }: Asked, template: Template): string[] {
     .map((role) => `it watches ${role}, which is not a role of the template`);
   if (spec.by === "code" && !known(CODE_MOMENTS, name))
     notes.push(`it is counted in code, and no moment of this name is: ${CODE_MOMENTS.join(", ")} are`);
+  if (spec.when !== undefined)
+    notes.push("it sets a `when`, which is read of a question's event and never of a moment");
+  for (const read of spec.reads ?? [])
+    if (!known(ITEM_READS, read))
+      notes.push(`it reads \`${read}\`, which is not a thing a moment reads: ${ITEM_READS.join(", ")} are`);
   return [...notes, ...stateNotes(spec)];
 }
 

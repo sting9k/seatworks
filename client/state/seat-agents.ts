@@ -2,7 +2,7 @@ import { usePaseo } from "@getpaseo/plugin/client";
 import { useEffect, useState } from "react";
 import { ACTOR_LABEL, PROJECT_LABEL } from "../../shared/contracts/ids.ts";
 
-/** How often a project's agents are listed again: seats come and go as lanes open and land. */
+/** How often a project's agents are listed again: seats come and go as scopes open and land. */
 const EVERY_MS = 10_000;
 
 /** Each seat's agent in Paseo, found by the labels the plugin gave it, so a line can open that agent's chat. */

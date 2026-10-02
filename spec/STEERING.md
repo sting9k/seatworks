@@ -44,7 +44,7 @@ only it can decide. The watched agent still never learns it is watched: a Lead's
 | check-made-to-pass              | Code: an existing line of a test changed in a scope whose brief asks nothing of tests, told at once when it is an assertion's; the reflex at hand-back | The Lead | Ask; a Reviewer; held-out tests |
 | silent-without-progress         | Code: turns with tokens spent and no commit, finding or message since the last hand-back or brief | The Lead | Ask where it stands; reseat |
 | big-decision, a framing that pre-solves, a plan kept without answering its evidence | The reflex and the Watcher | The Supervisor | An open question to the Lead |
-| a Lead ignoring its Peers' findings | Code: a finding still unclassified when the Lead's second turn since it ends        | The Supervisor | Ask; a hold; the Human                       |
+| a Lead ignoring its Peers' findings | Code: a finding still unclassified when the Lead's turn number `waitingTurns` since it ends (two, in SLP) | The Supervisor | Ask; a hold; the Human                       |
 | past-appetite                   | Code: what a lane and its children spent passes the amount its appetite names             | The Supervisor | The Human, if the work should go on          |
 | a turn failed, an agent gone    | The agent host                                                                            | The owner above | Reseat, or release                          |
 

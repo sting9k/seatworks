@@ -38,7 +38,6 @@ export const questionSkeleton = {
 
 export const momentSkeleton = {
   reads: ["thought", "said"],
-  phase: "item",
   state: { text: "item" },
   noul: "_Does `text` show one thing? One condition, of one named field._",
   yes: "_What a yes covers, with an example._",

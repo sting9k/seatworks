@@ -48,7 +48,7 @@ Follow `spec/REFLEX.md`, Asking well. The checklist:
 - [ ] Mutually exclusive outcomes are one `choice` with a fixed label order and `other` when the list may not cover
       everything; never a question beside its own negation.
 - [ ] Agents' words in their own field, apart from the record's; a question about code reads code, never the claim.
-- [ ] A phase (`item`, `edit`, `turn`, `handback`) when the answer exists.
+- [ ] Asked where the answer exists: `on` an event, `reads` an item of a turn, or `hunks` of a hand-back.
 - [ ] English.
 - [ ] `tells` names a relation (`root`, `parent`, `evidence`, `answerer`, `self`), never a role; nothing it tells may
       classify, integrate or answer (I12).

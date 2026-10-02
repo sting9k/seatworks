@@ -34,6 +34,8 @@ test("a profile's questions are read from the file it names; one that names none
   const named = loadReflex(dir, { reflex: "asks/questions.yaml", watch: null });
   assert.deepEqual([...named!.questions.keys()], ["vague-goal"]);
   assert.equal(loadReflex(dir, { reflex: null, watch: null }), null);
+  assert.equal(named!.facts, null, "with no watch file nothing is counted: no number of the plugin's own stands in");
+  assert.equal(named!.itemChars, Number.POSITIVE_INFINITY, "and nothing is clipped to a size the profile did not name");
 });
 
 test("what is masked before text leaves is the plugin's: a profile that names a mask of its own changes none of it", () => {

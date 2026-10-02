@@ -168,8 +168,13 @@ export class Plugin {
     });
   }
 
-  /** Names already settled for an agent: in its brief, its parent's plan, the base, or its own code. */
-  private async settledNames(project: string, actorId: string, names: readonly string[]): Promise<ReadonlySet<string>> {
+  /** Names already settled for an agent: in its brief, its parent's plan, or code of the base or its own that is no test. */
+  private async settledNames(
+    project: string,
+    actorId: string,
+    names: readonly string[],
+    tests: RegExp,
+  ): Promise<ReadonlySet<string>> {
     const runtime = this.runtimes.get(project);
     const view = runtime?.project.view;
     const actor = view?.actors.get(actorId);
@@ -185,10 +190,10 @@ export class Plugin {
     const words = new Set(lines.join(" ").split(/[^A-Za-z0-9_]+/));
     const settled = new Set(names.filter((n) => words.has(n)));
     const rest = names.filter((n) => !settled.has(n));
-    for (const n of await runtime.workspace.namesIn(runtime.workspace.repo, parent?.branch ?? "HEAD", rest))
+    for (const n of await runtime.workspace.namesIn(runtime.workspace.repo, parent?.branch ?? "HEAD", rest, tests))
       settled.add(n);
     const own = runtime.workspace.pathOf(scope.id);
-    if (existsSync(own)) for (const n of await runtime.workspace.namesIn(own, null, rest)) settled.add(n);
+    if (existsSync(own)) for (const n of await runtime.workspace.namesIn(own, null, rest, tests)) settled.add(n);
     return settled;
   }
 
@@ -970,7 +975,7 @@ export class Plugin {
         else this.alarms.set(project, text);
       },
       {
-        settled: (project, actor, names) => this.settledNames(project, actor, names),
+        settled: (project, actor, names, tests) => this.settledNames(project, actor, names, tests),
         diffs: async (project, scope, commit) => {
           const runtime = this.runtimes.get(project);
           const s = runtime?.project.view.scopes.get(scope);

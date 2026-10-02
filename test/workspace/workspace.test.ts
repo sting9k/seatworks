@@ -176,9 +176,15 @@ test("a name counts as settled when code outside the tests has it, at a revision
   writeFileSync(join(root, "test", "points.test.ts"), "user.points = 1;\n");
   run(root, "add", ".");
   run(root, "commit", "-q", "-m", "points");
-  assert.deepEqual([...(await ws.namesIn(root, "main", ["addPoints", "points", "missing"]))], ["addPoints"]);
+  const tests = /(^|\/)test\/|\.test\.[a-z]+$/;
+  assert.deepEqual([...(await ws.namesIn(root, "main", ["addPoints", "points", "missing"], tests))], ["addPoints"]);
   const copy = await ws.create("1", { kind: "writer", branch: "sw/p/1", from: "main" });
   assert.ok(copy.ok);
   writeFileSync(join(copy.path, "user.ts"), "export type User = { points: number };\n");
-  assert.deepEqual([...(await ws.namesIn(copy.path, null, ["points", "missing"]))], ["points"]);
+  assert.deepEqual([...(await ws.namesIn(copy.path, null, ["points", "missing"], tests))], ["points"]);
+
+  // Which paths are tests is the caller's to say: a profile that names them another way is read that way.
+  writeFileSync(join(copy.path, "points_check.go"), "func checkBonus() {}\n");
+  assert.deepEqual([...(await ws.namesIn(copy.path, null, ["checkBonus"], tests))], ["checkBonus"]);
+  assert.deepEqual([...(await ws.namesIn(copy.path, null, ["checkBonus", "points"], /_check\.go$/))], ["points"]);
 });

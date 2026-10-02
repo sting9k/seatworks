@@ -211,9 +211,10 @@ of them in a panel of the rail. A note stops nothing, neither a change nor an ex
   that is not beside it.
 - A question or a moment that asks of a backticked field not in its `state`, or lacks the description of an outcome.
 - **A question or a moment that would never be asked, or never reach anyone.** A question asked `on` what is not an
-  event a question is asked on; a `state` that reads what the record does not have; a `tells` the plugin does not
-  know; a moment that watches a role the template does not have; a moment `by: code` under a name the plugin counts
-  nothing for. The lists these are held against are the plugin's own (`shared/contracts/reflex.ts`), which the code
+  event a question is asked on; a `when` that sets what the plugin does not read, which would hold for every event;
+  a `state` that reads what the record does not have; a `tells` the plugin does not know; a moment that watches a
+  role the template does not have, sets a `when`, which is read only of a question's event, or `reads` what a turn
+  does not hold; a moment `by: code` under a name the plugin counts nothing for. The lists these are held against are the plugin's own (`shared/contracts/reflex.ts`), which the code
   that asks is typed by.
 - A prompt, a skill, a question, a moment, a server, a route of the classifier or a section that still holds a
   skeleton's words.

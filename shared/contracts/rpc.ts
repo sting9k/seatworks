@@ -31,7 +31,7 @@ export const HumanViewSchema = z.object({
   ),
   decisions: z.array(z.object({ scope: z.string(), line: z.string(), text: z.string(), by: z.string() })),
   directions: z.array(z.object({ message: z.string(), text: z.string(), to: z.string(), owedBy: z.string() })),
-  lanes: z.array(
+  scopes: z.array(
     z.object({
       scope: z.string(),
       owner: z.string().nullable(),
@@ -39,7 +39,7 @@ export const HumanViewSchema = z.object({
       goal: z.string().nullable(),
       status: z.string(),
       held: z.boolean(),
-      /** What the lane's owner still owes: findings to weigh, questions, permissions, attentions. */
+      /** What the scope's owner still owes: findings to weigh, questions, permissions, attentions. */
       owes: z.number(),
     }),
   ),

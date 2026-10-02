@@ -19,8 +19,8 @@ export function humanView(state: State): HumanView {
       root.plan.appetite.line,
       ...root.plan.terms.map((t) => t.line),
     ]);
-  const lanes = [...state.scopes.values()].filter((s) => s.parent === ROOT);
-  for (const lane of lanes) if (lane.brief) agentLines(lane.id, lane.brief.choices);
+  const under = [...state.scopes.values()].filter((s) => s.parent === ROOT);
+  for (const scope of under) if (scope.brief) agentLines(scope.id, scope.brief.choices);
   return {
     questions: [...state.questions.values()].map((q) => ({
       id: q.id,
@@ -62,7 +62,7 @@ export function humanView(state: State): HumanView {
         const m = state.messages.get(o.about.id);
         return { message: o.about.id, text: m?.text ?? "", to: m?.to ?? "", owedBy: o.owedBy };
       }),
-    lanes: lanes.map((s) => ({
+    scopes: under.map((s) => ({
       scope: s.id,
       owner: s.owner,
       role: s.role,

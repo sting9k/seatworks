@@ -108,7 +108,7 @@ export function mapText(events: Iterable<Event>, state: State): string | null {
       : ["Nothing open."]),
     "",
     ...(plan.terms.length > 0 ? ["## Words settled", "", ...words(plan)] : []),
-    "## Lanes landed",
+    "## Landed",
     "",
     ...(landed.length > 0
       ? landed.flatMap((l) => [
@@ -131,7 +131,7 @@ export function mapText(events: Iterable<Event>, state: State): string | null {
             : []),
           "",
         ])
-      : ["No lane has landed yet.", ""]),
+      : ["Nothing has landed yet.", ""]),
     "## Still in dispute",
     "",
     ...(disputed.length > 0

@@ -574,6 +574,67 @@ test("turns that spend and record nothing, a finding left unclassified, and a ch
   ]);
 });
 
+test("what the eye counts is counted as the watch file says: what makes a brief ask of tests, what an assertion looks like, and how long a finding may wait", async () => {
+  const facts = {
+    ...slp.facts!,
+    asksOfTests: /\bbenchmarks?\b/i,
+    assertion: /\bt\.(Errorf|Fatalf)\b/,
+    waitingTurns: 3,
+  };
+  const { ledger, reflex, supervisor, lead, peer } = wired(0.1, { ...slp, testPath: /_test\.go$/, facts });
+  const changed = (path: string, removed: string): TurnItem => ({
+    kind: "edit",
+    text: `--- a/${path}\n+++ b/${path}\n-${removed}\n+  // gone`,
+    failed: null,
+    signature: null,
+    path,
+  });
+  const told = () => [...ledger.state.attentions.values()].map((t) => `${t.moment} → ${t.to}`).sort();
+  const turn = (actor: string) => {
+    reflex.onEvents(
+      "p",
+      ledger.must(ledger.fact("record_turn", { actor, outcome: "done", tokensSoFar: 10, usdSoFar: 1, seen: 0 })),
+      ledger.state,
+    );
+  };
+
+  reflex.onTurn("p", peer, [changed("net/encode.test.ts", "  expect(dir).toBe(16);")], ledger.state);
+  await settle();
+  assert.deepEqual(told(), [], "a path the profile does not call a test is not one");
+  reflex.onTurn("p", peer, [changed("net/encode_test.go", '  t.Errorf("dir")')], ledger.state);
+  await settle();
+  assert.deepEqual(told(), [`check-made-to-pass → ${lead}`], "an assertion as the profile writes one is told at once");
+
+  reflex.onEvents(
+    "p",
+    ledger.must(ledger.as(peer, "raise_finding", { text: "the brief contradicts the codec", default: "follow it" })),
+    ledger.state,
+  );
+  turn(lead);
+  turn(lead);
+  assert.ok(!told().some((t) => t.startsWith("findings-waiting")), "two turns are not yet the three the profile names");
+  turn(lead);
+  await settle();
+  assert.ok(told().includes(`findings-waiting → ${supervisor}`));
+});
+
+test("a brief that asks of tests, as the watch file says one does, makes a changed test line ordinary", async () => {
+  const facts = { ...slp.facts!, asksOfTests: /\bbenchmarks?\b/i };
+  const { ledger, reflex, lead, peer } = wired(0.1, { ...slp, facts });
+  const edit: TurnItem = {
+    kind: "edit",
+    text: "--- a/src/net/encode.test.ts\n+++ b/src/net/encode.test.ts\n-  expect(dir).toBe(16);\n+  expect(dir).toBe(8);",
+    failed: null,
+    signature: null,
+    path: "src/net/encode.test.ts",
+  };
+  const goal = { text: "Rewrite the encoder's benchmarks" };
+  ledger.must(ledger.as(lead, "amend_brief", { scope: "1.1", set: { goal }, reason: "new goal" }));
+  reflex.onTurn("p", peer, [edit], ledger.state);
+  await settle();
+  assert.equal(ledger.state.attentions.size, 0);
+});
+
 test("a Watcher is woken by a sweep once its agents' new work passes the size the profile names, never by a clock", async () => {
   const { ledger, reflex, supervisor, peer } = wired(0.1);
   ledger.must(ledger.as(supervisor, "open_scope", { parent: "root", role: "watcher", over: "all" }));

@@ -197,6 +197,23 @@ test("where a template leaves a role, a question or a moment with no way on, a n
       "moment:trades-the-goal: it watches builder, which is not a role of the template",
     ],
     [
+      "a question whose `when` sets what the plugin does not read",
+      rewritten("reflex.yaml", (text) => text.replace("when: { from: human }", "when: { sender: human }")),
+      "question:human-words: its `when` sets `sender`, which the plugin does not read (kind, verdict, result, cause, from are), so it holds for every event",
+    ],
+    [
+      "a moment that sets a `when`, which is read of an event and never of a turn's item",
+      rewritten("watch.yaml", (text) =>
+        text.replace("    reads: [edit]\n", "    reads: [edit]\n    when: { path: testPath }\n"),
+      ),
+      "moment:mints-an-api: it sets a `when`, which is read of a question's event and never of a moment",
+    ],
+    [
+      "a moment that reads what a turn does not hold",
+      rewritten("watch.yaml", (text) => text.replace("reads: [edit]", "reads: [edit, command]")),
+      "moment:mints-an-api: it reads `command`, which is not a thing a moment reads: thought, said, edit are",
+    ],
+    [
       "a moment counted in code under a name the plugin does not count",
       rewritten(
         "watch.yaml",

@@ -25,7 +25,7 @@ type Props = {
   readonly onOpen: (id: string | null) => void;
 };
 
-/** A long list kept to one line an item, opening one at a time, so many lanes stay one screen tall. */
+/** A long list kept to one line an item, opening one at a time, so many scopes stay one screen tall. */
 export function DisclosureList({ items, open, theme, compact, onOpen }: Props) {
   const styles = useStyles(
     theme,

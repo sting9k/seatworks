@@ -47,6 +47,13 @@ export type StatePath = (typeof STATE_PATHS)[number];
 /** Whom a question's answer is for, as its `tells` names them; with none, it is an attention for the owner above. */
 export const TELLS = ["root", "parent", "self", "answerer", "evidence"] as const;
 
+/** What a moment reads of a turn: its agent's thinking, its words, or the hunk of an edit. */
+export const ITEM_READS = ["thought", "said", "edit"] as const;
+export type ItemRead = (typeof ITEM_READS)[number];
+
+/** The conditions a question's `when` may set on its event; one the plugin does not know holds for every event. */
+export const WHEN = ["kind", "verdict", "result", "cause", "from"] as const;
+
 /** The moments counted in code, by the names a profile switches each on with; they ask no model. */
 export const CODE_MOMENTS = [
   "going-in-circles",
@@ -126,7 +133,13 @@ export const WatchFileSchema = z
         repeats: z.number().int().positive(),
         repeatsTold: z.number().int().positive(),
         silentTurns: z.number().int().positive(),
+        /** The turns of its answerer's a finding may stand unclassified before the owner above is told. */
+        waitingTurns: z.number().int().positive(),
         testPath: z.string().optional(),
+        /** What in a brief's words makes a changed test line ordinary; with none, no brief does. */
+        asksOfTests: z.string().optional(),
+        /** What a line that asserts looks like; one changed is told at once, any other test line is a candidate. */
+        assertion: z.string().optional(),
       })
       .loose(),
     moments: z.record(z.string(), QuestionSchema).default({}),

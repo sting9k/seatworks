@@ -6,6 +6,7 @@ import {
   ASKED_ON,
   type AskedOn,
   type CodeMoment,
+  type ItemRead,
   type QuestionSpec,
   STATE_PATHS,
   type StatePath,
@@ -16,7 +17,7 @@ import { resultText } from "../../shared/views/status.ts";
 import { KeyedQueue } from "../core/keyed-queue.ts";
 import { daemonLog } from "../core/logger.ts";
 import type { TurnItem } from "../satellites/agent-host/items.ts";
-import { type ReflexConfig, wordingOf } from "../satellites/reflex/config.ts";
+import { type Facts, type ReflexConfig, wordingOf } from "../satellites/reflex/config.ts";
 import type { Answer, Asker } from "../satellites/reflex/classifier.ts";
 
 type Observation = Extract<CommandBody, { type: "record_observation" }>;
@@ -121,7 +122,12 @@ export class Reflex {
     }
     this.wordsOnly(project, actorId, actor.scope, items, state);
     this.gather(project, actorId, items, state);
-    const kinds = { thought: "thought", said: "said", edit: "edit", ran: null } as const;
+    const kinds: Record<TurnItem["kind"], ItemRead | null> = {
+      thought: "thought",
+      said: "said",
+      edit: "edit",
+      ran: null,
+    };
     for (const [i, item] of items.entries()) {
       const reads = kinds[item.kind];
       if (reads === null) continue;
@@ -328,7 +334,7 @@ export class Reflex {
     const names = namesIn(item.text, spec);
     if (names.length === 0) return;
     this.enqueue(project, async () => {
-      const known = await this.code.settled(project, actor, names);
+      const known = await this.code.settled(project, actor, names, test);
       const unsettled = names.filter((n) => !known.has(n));
       if (unsettled.length === 0) return;
       const questions = Object.fromEntries(
@@ -365,7 +371,7 @@ export class Reflex {
       for (const file of await this.code.diffs(project, scope, commit)) {
         const side = test.test(file.path) ? "test" : "product";
         if (side === "test")
-          for (const used of mints) await this.mintsIn(project, scope, actor, commit, file.text, used);
+          for (const used of mints) await this.mintsIn(project, scope, actor, commit, file.text, used, test);
         const asks = Object.fromEntries(byHunk.filter(([, q]) => q.hunks === side));
         for (const hunk of hunksOf(file.text)) {
           const ctx = { event: null, state, item: hunk.slice(0, this.config.itemChars * 2), actor, scope };
@@ -383,9 +389,10 @@ export class Reflex {
     commit: string,
     diff: string,
     used: { moment: string; spec: QuestionSpec; tells: string | undefined },
+    tests: RegExp,
   ): Promise<void> {
     const names = namesIn(diff, used.spec);
-    const known = await this.code.settled(project, actor, names);
+    const known = await this.code.settled(project, actor, names, tests);
     const unsettled = names.filter((n) => !known.has(n));
     if (unsettled.length === 0) return;
     const questions = Object.fromEntries(
@@ -411,18 +418,19 @@ export class Reflex {
     around: Around,
     state: State,
   ): void {
-    const spec = this.counted("check-made-to-pass");
+    const counted = this.counted("check-made-to-pass");
     const test = this.config.testPath;
-    if (!spec?.watches?.includes(role) || !test || item.path === null || !test.test(item.path)) return;
+    if (!counted?.spec.watches?.includes(role) || !test || item.path === null || !test.test(item.path)) return;
     const brief = state.scopes.get(scope)?.brief;
     const briefText = brief ? [brief.goal, ...brief.constraints].map((l) => l.text).join("\n") : "";
-    if (/\btests?\b|\bspecs?\b|\bassert/i.test(briefText)) return;
+    if (counted.facts.asksOfTests?.test(briefText)) return;
     const removed = item.text.split("\n").filter((l) => l.startsWith("-") && !l.startsWith("---"));
     if (removed.length === 0) return;
     const key = `${project}:${actor}:${item.path}`;
     if (this.bent.has(key)) return;
     this.bent.add(key);
-    const assertion = removed.some((l) => /\b(expect|assert|should|toBe|toEqual)\b/.test(l));
+    const asserts = counted.facts.assertion;
+    const assertion = asserts !== null && removed.some((l) => asserts.test(l));
     this.record(project, {
       type: "record_observation",
       question: "check-made-to-pass",
@@ -448,16 +456,16 @@ export class Reflex {
   private silence(project: string, e: Extract<Event, { type: "turn_ended" }>, state: State): void {
     const key = `${project}:${e.actor}`;
     const acted = this.acted.delete(key);
-    const spec = this.counted("silent-without-progress");
+    const counted = this.counted("silent-without-progress");
     const actor = state.actors.get(e.actor);
-    if (!spec || !actor || !spec.watches?.includes(actor.role)) return;
+    if (!counted || !actor || !counted.spec.watches?.includes(actor.role)) return;
     if (acted || (e.tokens === 0 && e.usd === 0)) {
       this.silent.delete(key);
       return;
     }
     const n = (this.silent.get(key) ?? 0) + 1;
     this.silent.set(key, n);
-    if (n !== this.config.silentTurns) return;
+    if (n !== counted.facts.silentTurns) return;
     this.record(project, {
       type: "record_observation",
       question: "silent-without-progress",
@@ -480,8 +488,8 @@ export class Reflex {
   /** Findings waiting: one its answerer has let stand past the end of its next turn, told once to the owner above it. */
   private findingsWaiting(project: string, actorId: string, state: State): void {
     const actor = state.actors.get(actorId);
-    const spec = this.counted("findings-waiting");
-    if (!spec || !actor || !spec.watches?.includes(actor.role)) return;
+    const counted = this.counted("findings-waiting");
+    if (!counted || !actor || !counted.spec.watches?.includes(actor.role)) return;
     // A finding gone from the record with its scope is counted no more.
     for (const key of this.unanswered.keys())
       if (key.startsWith(`${project}:`) && !state.findings.has(key.slice(project.length + 1)))
@@ -491,8 +499,8 @@ export class Reflex {
       const key = `${project}:${f.id}`;
       const n = (this.unanswered.get(key) ?? 0) + 1;
       this.unanswered.set(key, n);
-      // The turn it arrived in, then the next: past that, it waits on the answerer.
-      if (n !== 2) continue;
+      // Told once, as its answerer's turns since it was raised reach what the profile lets a finding wait.
+      if (n !== counted.facts.waitingTurns) continue;
       this.record(project, {
         type: "record_observation",
         question: "findings-waiting",
@@ -515,7 +523,8 @@ export class Reflex {
 
   /** Going in circles: the same failing call again and again, counted with no model asked. */
   private circles(project: string, actor: string, scope: string, items: readonly TurnItem[]): void {
-    if (!this.counted("going-in-circles")) return;
+    const facts = this.counted("going-in-circles")?.facts;
+    if (!facts) return;
     const key = `${project}:${actor}`;
     const seen = this.loops.get(key) ?? new Map<string, number>();
     this.loops.set(key, seen);
@@ -525,7 +534,7 @@ export class Reflex {
       seen.delete(item.signature);
       seen.set(item.signature, n);
       if (seen.size > MAX_SIGNATURES) seen.delete(seen.keys().next().value ?? "");
-      if (n !== this.config.repeats && n !== this.config.repeatsTold) continue;
+      if (n !== facts.repeats && n !== facts.repeatsTold) continue;
       this.record(project, {
         type: "record_observation",
         question: "going-in-circles",
@@ -534,7 +543,7 @@ export class Reflex {
         source: "code",
         model: null,
         answer: `${n} times`,
-        level: n === this.config.repeatsTold ? "tell" : "consider",
+        level: n === facts.repeatsTold ? "tell" : "consider",
         route: {
           kind: "attention",
           why: this.masked(`the same call failed the same way ${n} times: ${item.text.slice(0, 200)}`),
@@ -575,9 +584,10 @@ export class Reflex {
     }
   }
 
-  /** A moment counted in code, when the profile watches for it. */
-  private counted(name: CodeMoment): QuestionSpec | undefined {
-    return this.config.moments.get(name);
+  /** A moment counted in code, when the profile watches for it, with what its watch file counts by. */
+  private counted(name: CodeMoment): { spec: QuestionSpec; facts: Facts } | null {
+    const spec = this.config.moments.get(name);
+    return spec && this.config.facts ? { spec, facts: this.config.facts } : null;
   }
 
   private subjectOf(e: Subject, state: State): { scope: string; actor: string | null; commit: string | null } | null {
@@ -613,7 +623,7 @@ export class Reflex {
 /** What the reflex reads of code, through the workspace: never a satellite call of its own. */
 export type Code = {
   /** What is already settled of these names for one agent: in its brief and plans, the base, or its own code. */
-  settled(project: string, actor: string, names: readonly string[]): Promise<ReadonlySet<string>>;
+  settled(project: string, actor: string, names: readonly string[], tests: RegExp): Promise<ReadonlySet<string>>;
   /** The files a handed-back commit changed against its parent's branch, each with its diff. */
   diffs(project: string, scope: string, commit: string): Promise<{ path: string; text: string }[]>;
 };

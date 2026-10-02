@@ -106,7 +106,7 @@ test("one lane end to end: a Supervisor, a Lead and a Peer land a change on main
   assert.ok(raised.ok, raised.text);
   const finding = (await plugin.view(opened.project))?.human.disagreements[0]?.id;
   assert.ok(finding, "the finding is open on the record");
-  const owing = async () => (await plugin.view(opened.project))?.human.lanes.find((l) => l.scope === "1")?.owes;
+  const owing = async () => (await plugin.view(opened.project))?.human.scopes.find((l) => l.scope === "1")?.owes;
   assert.equal(await owing(), 1, "the Human sees what the lane's Lead owes");
   assert.ok((await lead.call("classify_finding", { finding, verdict: "minor", reason: "no client sends more" })).ok);
   assert.equal(await owing(), 0, "and that it is paid");

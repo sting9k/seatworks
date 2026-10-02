@@ -308,6 +308,9 @@ A call as an agent's tool server sends it, the answer read back.
 | A lane's spend passes the amount its appetite names         | An attention to the Supervisor, now, with no model asked   |
 | A Peer's turns spend and record nothing, `silentTurns` in a row | An attention to its Lead, once                        |
 | A finding still unclassified when its Lead's second turn since it ends | An attention to the Supervisor, once           |
+| A watch file that names its own test paths, what a brief's words ask of tests, what an assertion looks like and how many turns a finding may wait | A changed test line is told by those alone: a path the profile does not call a test is none, an assertion as it writes one is told at once, a brief that asks of tests as it says makes the change ordinary, and the finding is told at the turn it names |
+| A name asked of the code, with the caller's own pattern of what a test is | Settled when a path that is no test by that pattern has it, at a revision or in a working tree |
+| A profile that names a reflex file and no watch file         | Nothing is counted and nothing is clipped: no number of the plugin's stands in for one the profile did not give |
 | A Peer changes an existing assertion where its brief asks nothing of tests | An attention to its Lead; another test line, a candidate |
 
 ## Editor
@@ -348,6 +351,7 @@ A template's files in, what a person sees out (`EDITOR.md`).
 | A skill renamed                                             | Its folder's files, its name in its file and its place in every role that has it follow |
 | A question renamed                                          | Its key and its line in the list of those asked change, each in its place; nothing else |
 | In the editor, the classifier taken away, put back by a route, the route said where it is served, a second added and taken away; a route named wrongly or twice, served over plain http elsewhere, or the last taken alone | No node and no `classifier` in the profile; a node again with that route; its host and model on the node; the files as they were; each refused, saying why |
+| In the editor's checks, a question whose `when` sets what the plugin does not read; a moment that sets a `when`, or reads what a turn does not hold | A note on each, saying what the plugin does read |
 | A template with no classifier, in the editor's checks; one with a route still its skeleton; one nothing is asked of | A note on each question and each moment a model would answer, and none on what code counts; a note on the classifier naming the route; a note that nothing is asked of it |
 
 ## Templates

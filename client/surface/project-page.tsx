@@ -21,30 +21,36 @@ import { useProjectView } from "../state/project-view.ts";
 import { useSeatAgents } from "../state/seat-agents.ts";
 import { nameOf } from "./home.tsx";
 
-type TabId = "needs" | "lanes" | "decided" | "activity";
-type Lane = HumanView["lanes"][number];
+type TabId = "needs" | "scopes" | "decided" | "activity";
+type Under = HumanView["scopes"][number];
 type Theme = PluginSurfaceProps["theme"];
 type Navigation = PluginSurfaceProps["navigation"];
 
-/** A lane's tone: held or handed back waits on its owner above, landed is done, dropped is out of the way. */
-export function laneTone(lane: Lane): Tone {
-  if (lane.status === "integrated") return "done";
-  if (lane.status === "dropped") return "off";
-  return lane.held || lane.status === "handed back" ? "wait" : "work";
+/** A scope's tone: held or handed back waits on its owner above, landed is done, dropped is out of the way. */
+export function scopeTone(scope: Under): Tone {
+  if (scope.status === "integrated") return "done";
+  if (scope.status === "dropped") return "off";
+  return scope.held || scope.status === "handed back" ? "wait" : "work";
 }
 
-/** A lane's state, and how much its owner owes when anything is, so an owner that holds up its lane shows early. */
-export function laneState(lane: Lane): string {
+/** A scope's state, and how much its owner owes when anything is, so an owner that holds up its scope shows early. */
+export function scopeState(scope: Under): string {
   const state =
-    lane.status === "open" ? (lane.held ? "held" : "at work") : lane.status === "integrated" ? "landed" : lane.status;
-  return lane.owes > 0 && lane.status !== "dropped" ? `${state} · owes ${lane.owes}` : state;
+    scope.status === "open"
+      ? scope.held
+        ? "held"
+        : "at work"
+      : scope.status === "integrated"
+        ? "landed"
+        : scope.status;
+  return scope.owes > 0 && scope.status !== "dropped" ? `${state} · owes ${scope.owes}` : state;
 }
 
 /** How many things wait on the Human in a project: what the pill counts and the first tab shows. */
 export const waitingOf = (human: HumanView | null) =>
   human ? human.questions.length + human.permissions.length + human.attentions.length + human.claims.length : 0;
 
-/** One attached project: what waits on the Human, its lanes, what agents decided, and what happened. */
+/** One attached project: what waits on the Human, the scopes under its root, what agents decided, and what happened. */
 export function ProjectPage({
   project,
   repo,
@@ -75,7 +81,7 @@ export function ProjectPage({
   const waiting = waitingOf(human);
   const tabs: Tab<TabId>[] = [
     { id: "needs", label: waiting > 0 ? `Needs you · ${waiting}` : "Needs you" },
-    { id: "lanes", label: human ? `Lanes · ${human.lanes.length}` : "Lanes" },
+    { id: "scopes", label: human ? `Scopes · ${human.scopes.length}` : "Scopes" },
     { id: "decided", label: "Decided" },
     { id: "activity", label: "Activity" },
   ];
@@ -146,27 +152,27 @@ export function ProjectPage({
           ) : null}
         </>
       ) : null}
-      {human && tab === "lanes" ? (
-        human.lanes.length > 0 ? (
+      {human && tab === "scopes" ? (
+        human.scopes.length > 0 ? (
           <DisclosureList
             theme={theme}
             open={open}
             onOpen={setOpen}
-            items={human.lanes.map((lane) => {
-              const tone = laneTone(lane);
-              const toOwner = openAgent(lane.owner);
+            items={human.scopes.map((scope) => {
+              const tone = scopeTone(scope);
+              const toOwner = openAgent(scope.owner);
               return {
-                id: lane.scope,
-                title: `${lane.scope} ${lane.goal ?? ""}`.trim(),
+                id: scope.scope,
+                title: `${scope.scope} ${scope.goal ?? ""}`.trim(),
                 dimmed: tone === "off",
                 leading: <Dot tone={tone} theme={theme} />,
                 trailing: (
-                  <Text style={{ fontSize: FONT.small, color: toneColor(theme, tone) }}>{laneState(lane)}</Text>
+                  <Text style={{ fontSize: FONT.small, color: toneColor(theme, tone) }}>{scopeState(scope)}</Text>
                 ),
                 body: (
                   <View style={{ gap: SPACE.sm }}>
                     <Text style={muted}>
-                      {lane.role} · {lane.owner ?? "nobody seated"}
+                      {scope.role} · {scope.owner ?? "nobody seated"}
                     </Text>
                     {toOwner ? (
                       <Button label="Open its chat" icon="MessageSquare" theme={theme} onPress={toOwner} />
@@ -177,7 +183,7 @@ export function ProjectPage({
             })}
           />
         ) : (
-          <Text style={muted}>No lane is open.</Text>
+          <Text style={muted}>No scope is open under the root.</Text>
         )
       ) : null}
       {human && tab === "decided" ? (

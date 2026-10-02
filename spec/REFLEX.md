@@ -129,9 +129,10 @@ conversation around it, so the two-hundredth edit is judged like the first.
 **Show each outcome.** A description that carries an example, a line of code that is a yes and one that is a no,
 answers better than one that only names the condition.
 
-**Ask when the answer exists.** Each question has a phase: `item` (one piece of a turn), `edit` (one hunk), `turn`
-(the whole turn's diff) or `handback`. "Did this add more than was asked" has no answer after the first edit of
-twelve.
+**Ask when the answer exists.** A question says where it is asked by the key that asks it: `on` an event of the
+record, `reads` for one item of a turn, `hunks` for each hunk of a hand-back's diff, `on: [turn_ended]` for a turn's
+last words. "Did this add more than was asked" has no answer after the first edit of twelve, so it is asked of the
+hand-back and never of an edit. Nothing is asked of a whole turn's diff: no question has needed it.
 
 **The subject whole, its context fitted.** What is judged, the item or the hunk, is never cut. What surrounds it (the
 items before, the brief) is fitted to the budget in stages: tool arguments shortened, long texts kept head and tail,
@@ -160,7 +161,6 @@ questions:
     no: >-
       Every line states an outcome to reach or a limit to respect, and the approach is left open. Naming a file or
       module only as where the work happens is not a method.
-    phase: item
     tell: 0.9
     because: <what the look back measured, such as how many answers past it were acted on>
     for: { wording: <hash of the question and its descriptions>, model: jev-1.13.0 }
@@ -168,6 +168,11 @@ questions:
 ```
 
 - `state` maps each field the question names to where the record keeps it. It never holds more.
+- `when` narrows the events a question is asked on: `kind` for a brief's, `verdict` for a finding's, `result` and
+  `cause` for a check's, `from` for a message's. The list is the plugin's (`WHEN`); a condition it does not read
+  would hold for every event, so the editor notes one.
+- `hunks` asks a question of each hunk of a hand-back's diff, of the test files or of the rest, told apart by the
+  watch file's `facts.testPath`: a profile with no watch file has no such question asked.
 - `names` are patterns whose first group is a name the added lines of a test give the code, less those listed under
   `ignore`. Code looks each up among what is settled, and only when one is left are the questions under `ask` put,
   with it in `unsettled`. A moment that holds `names` is read this way whatever the profile calls it, and a question
@@ -283,8 +288,8 @@ it is the project's written rule, read back like a failing lint, and the writer 
 still small. It is not the watch; nothing in it judges the agent.
 
 - **Compiled once.** When the instruction files change, by hash, the Supervisor is told, and compiles them with
-  `compile-rules` into the project's `rules.yaml`: each rule with its source line, the paths it covers, its phase
-  and its question with an example of each outcome. A rule a linter can check goes to the linter instead.
+  `compile-rules` into the project's `rules.yaml`: each rule with its source line, the paths it covers, whether it is asked of
+  an edit or of a hand-back, and its question with an example of each outcome. A rule a linter can check goes to the linter instead.
 - **Checked against history.** A new rule is asked of recent hunks from the project's own history, and its answers'
   shape says whether it works before any agent meets it. A weak or noisy rule goes back to the Supervisor to
   rewrite.
