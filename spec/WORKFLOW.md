@@ -15,7 +15,11 @@ Human ─goal─► 0 Intake ─► 1 Open ─► 2 Plan ─► 3 Work ─► 4 
 
 ## 0. Intake: the Supervisor with the Human
 
-- The Supervisor questions the Human until the goal, the constraints and the appetite are settled.
+- The Supervisor questions the Human until the goal, the constraints and the appetite are settled, and with them the
+  shape the lanes will build on where a wrong choice costs a redo (A3.7¶3: it discusses architecture and direction
+  with the Human). What the Human says of how it is built is asked as a must or a pick: a must is a limit of the plan,
+  a pick a choice in a directive, theirs and open to question (§5.3). The rest of the architecture across lanes is
+  the Supervisor's default, shown so the Human can overturn it.
 - When the project's instruction files are new or have changed, the Supervisor compiles their rules (`compile-rules`),
   once the project-rules pipeline that reads them is built; until then no skill tells it to.
 - The first time, the Supervisor sets the project's checks from what the project already runs (its scripts, its CI),

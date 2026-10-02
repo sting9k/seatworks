@@ -1,24 +1,31 @@
 ---
 name: grilling
-description: "Settles with the Human what new work should do before any lane opens: rounds of questions, each with a recommended answer, until nothing they care about is assumed. Use when the Human brings new work or a change the plan does not answer; not for a small change, a question the plan settles, or work already settled."
+description: "Settles with the Human what new work should do, and the shape that is costly to change, before any lane opens: rounds of questions, each with a recommended answer, until nothing they care about is assumed. Use when the Human brings new work or a change the plan does not answer; not for a small change, a question the plan settles, or work already settled."
 ---
 
 # Grilling
 
-Facts are yours to find; what the project does is the Human's to say; no lane opens until the Human agrees you have
-understood.
+Facts are yours to find; what the project does, and the shape that is costly to change, are the Human's to say; no
+lane opens until the Human agrees you have understood.
 
 ## What goes to the Human
 
-- Only what changes what the project does or how it behaves: who it is for, what happens in the cases that matter,
-  the rules its logic follows, what it will not do, the words it is spoken of in, and what it may cost.
-- Stack and architecture across lanes are yours to choose, as defaults a Lead may argue with. List them under
+- What changes what the project does or how it behaves: who it is for, what happens in the cases that matter, the
+  rules its logic follows, what it will not do, the words it is spoken of in, and what it may cost.
+- The shape the lanes will build on, where a wrong choice costs a redo: where a boundary falls, which part owns a
+  piece of state, a data shape that will hold real data, a protocol, a dependency hard to leave. It is a question
+  when it is hard to reverse, would surprise a later reader without its reason, and has more than one sound answer.
+  Say what each answer makes easy and what it makes costly later.
+- Stay at the level of parts and how they meet. Files, helpers and the order of calls belong to whoever reads the
+  code, and a plan that writes them leaves nobody room to find the better way.
+- The rest of stack and architecture is yours to choose, as defaults a Lead may argue with. List them under
   **Assumed**, one line each, so the Human can overturn one. How a lane is built is its Lead's.
-- **Assumed** holds only what no user or caller would notice. A line that changes what a caller sends or gets back,
-  how long something lasts, or what a repeat does is behaviour, so it is a question.
+- **Assumed** holds only what no user or caller would notice and what is cheap to change. A line that changes what a
+  caller sends or gets back, how long something lasts, or what a repeat does is behaviour, so it is a question.
 - A fact the repository or a tool can give you is never a question.
 - Ask early for what leaves no trace in the repository: a budget or deadline, a stack or service it must use, the
-  scale it must bear, who uses it, a contract others already depend on, the shape of data that already exists.
+  scale it must bear, who uses it, a contract others already depend on, the shape of data that already exists, and
+  what they have already decided, ruled out, read or tried about how to build it.
 
 ## Contracts callers meet
 
@@ -40,30 +47,42 @@ Map the request as a tree of decisions. A round asks every decision whose prereq
 Assumed: <what you decided yourself, one line each>
 ```
 
+A question about the shape says what each answer costs later:
+
+```text
+❓ Q4 - Where a player's connection lives: in the cell that simulates them, or in an edge layer in front of the cells?
+➡️ An edge layer: moving a player between cells then moves no socket, at the price of one more hop for every packet.
+   Hard to undo once the cells are written to it.
+```
+
 - Sharpen vague words: "account" means the customer or the user? Propose the term to keep, and the words it
   replaces.
 - Test a rule with a scenario at its edge.
 - Say when their words disagree with the plan or the code, and ask which is right.
+- Of an answer about how it is built, ask whether it must hold or is their pick for now. A choice read as a
+  requirement is one nobody may question later, and they did not ask for that.
 
 ## Too foggy to split
 
 When the rounds cannot yet give lanes because the answers rest on facts nobody has: name the destination in their
 words, then the decisions that block the plan. Settle each the cheapest way: a fact by a discovery Peer before any lane
-builds on it, behaviour by a round here, a design with several sound answers by a lane that designs it blind. Each
-answer becomes a line of the plan; what is still unknown stays among its unknowns with how it will be checked. Open a
-lane only once the decisions it rests on are settled.
+builds on it, behaviour by a round here, a design with several sound answers by a lane that designs it blind, whose
+designs go to the Human when the choice is one of theirs. Each answer becomes a line of the plan; what is still unknown
+stays among its unknowns with how it will be checked. Open a lane only once the decisions it rests on are settled.
 
 ## Writing it down
 
 Each settled answer becomes a line of the plan with `set_plan` or `amend_plan`, citing the answer it came from, so
-its origin is the Human's. One that changes an earlier answer amends that line. A settled word is a term of the plan:
+its origin is the Human's. One that changes an earlier answer amends that line. Of how it is built, a must is a limit
+of the plan; a pick goes into the directive of each lane it reaches as a choice citing their answer, so it stays
+theirs and stays open to a Lead's evidence. A settled word is a term of the plan:
 its definition in one or two sentences of what it is, and the words it replaces under `avoid`. The project's glossary
 is written from them, so every lane after this one speaks the Human's words.
 
 ## Read-back
 
-Before the first lane opens, one screen: the lanes with their goals, the contracts they meet on and the lane that
-builds those first, what you assumed, the defaults you will take when a question comes up while they are away, and
+Before the first lane opens, one screen: the lanes with their goals, the shape they settled, the contracts the lanes
+meet on and the lane that builds those first, what you assumed, the defaults you will take when a question comes up while they are away, and
 what will bring them back (a change to the goal or the cost, an act that cannot be undone).
 
 ## Ends in

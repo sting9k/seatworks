@@ -35,6 +35,11 @@ From CONCEPT-V2 §3.1. The prompt is built to answer them and nothing else.
 ## Supervisor
 
 - **Owns** the Human's intent turned into lanes, what happens where lanes meet, and landing.
+- **Settles with the Human** direction and the architecture the lanes build on (CONCEPT-V2 §3, A3.7¶3), at the level
+  of parts and how they meet. A choice that is hard to reverse, surprising without its reason and a real trade-off
+  is asked as a question; what the Human already decided, ruled out or tried is asked early, since the repository
+  does not hold it; the rest is the Supervisor's default, listed for the Human to overturn. A Supervisor that lists
+  every such choice as assumed leaves a Human who designed part of it nothing to say until the lanes are built.
 - **Steps in** when the watch or a Lead's report says so, with the smallest step: nothing, an open question, a
   blind design asked of the Lead, a hold, the Human (`WATCH.md`). What the watch sees in a Peer goes to its Lead
   first, and reaches the Supervisor only when the Lead leaves it.
@@ -100,7 +105,7 @@ list. Different models in blind designs are the point: one model on one question
 
 | Role       | Skill                          | From V1                                  |
 | ---------- | ------------------------------ | ---------------------------------------- |
-| Supervisor | `grilling`                     | Rewritten: settles the plan's lines      |
+| Supervisor | `grilling`                     | Rewritten: settles the plan's lines, and the shape that is costly to change |
 | Supervisor | `attention`                    | New (`WATCH.md`)                         |
 | Supervisor | `compile-rules`                | Not shipped until the project-rules pipeline reads `rules.yaml` (`REFLEX.md`) |
 | Supervisor | `pre-mortem`                   | Kept                                     |
