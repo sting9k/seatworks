@@ -56,8 +56,8 @@ How the kernel and the shell around it are built, from what the systems that alr
 ### Authority is read off the graph
 
 The state keeps the relations as tuples, the way Zanzibar keeps permissions: `owns(actor, scope)`,
-`parent(scope, scope)`, `writer(actor, scope)`, `watches(actor, scope)`, and the edges `dependsOn`, `mayChange` and
-`mustTell`. "May this actor amend that brief" is a walk: is the actor the owner of the scope's parent? The profile's
+`parent(scope, scope)`, `writer(actor, scope)`, `watches(actor, scope)`, and `dependsOn`, a scope's `after`. "May
+this actor amend that brief" is a walk: is the actor the owner of the scope's parent? The profile's
 properties say which walks a role may make; the walks are the same for every profile. The same tuples answer the
 Human's question of where a line's authority came from, which is P8.
 

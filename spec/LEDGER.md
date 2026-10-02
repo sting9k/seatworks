@@ -92,7 +92,7 @@ type Scope = {
   writer: ActorId | null;                                // the owner when its role `writes`, else null
   paths: readonly string[];                              // repository-relative prefixes; "" is everything
   after: readonly ScopeId[];                             // dependsOn
-  mayChange: readonly ScopeId[]; mustTell: readonly ScopeId[];
+
   commit: string | null;                                 // a reading scope's commit
   over: readonly ScopeId[] | "all";                      // a watch scope's reach; [] otherwise
   brief: Brief | null;                                   // the current version; older ones are in the log
@@ -226,7 +226,6 @@ agent also settles any open attention about the actors or scopes it names that t
 | `amend_brief`      | `scope, set: { goal?, constraints?, choices?, context?, kind? }, reason, carries?, cites?`    | `brief_amended`                         |
 | `set_plan`         | `scope, plan`                                                                              | `plan_set`                              |
 | `amend_plan`       | `scope, remove: LineId[], add: { section, text, check?, term?, avoid?, via? }[], appetite?, reason, carries?, cites?`; a term added under a word the plan holds replaces it | `plan_amended` |
-| `add_edge`, `remove_edge` | `scope, edge: after \| mayChange \| mustTell, target, reason, carries?`             | `edge_added`, `edge_removed`            |
 | `handover`         | `from, to, paths, reason, carries?`                                                        | `handed_over`                           |
 | `raise_finding`    | `disputes?, about?, text, evidence, default`                                               | `finding_raised`, `obligation_opened`   |
 | `reopen_finding`   | `finding, evidence, text`                                                                  | `finding_reopened`, `obligation_opened` |
@@ -309,7 +308,6 @@ Every event, with its payload. `evolve` handles each; an unknown type stops the 
 | `brief_amended`       | `scope, brief, reason, carries`                                                              |
 | `plan_set`            | `scope, plan`                                                                                |
 | `plan_amended`        | `scope, plan, reason, carries, cites`                                                        |
-| `edge_added`, `edge_removed` | `scope, edge, target, reason, carries`                                                |
 | `handed_over`         | `from, to, paths, reason, carries`                                                           |
 | `finding_raised`      | `finding: Finding`                                                                           |
 | `finding_classified`  | `finding, verdict, reason`                                                                   |
@@ -389,7 +387,7 @@ it was delivered, an attention not settled climbs: `attention_climbed` opens a c
 | `message_moved`                          | `deliver { to, item }` to its new reader                 | `<seq>:deliver:<message>`   |
 | `attention_opened`                       | `deliver { to, item }`                                   | `<seq>:deliver:<attention>` |
 | `claim_made`                             | `workspace.candidate { scope, commit, onto }`            | `<seq>:candidate`           |
-| `candidate_ready`                        | `evidence.run { scope, subject: candidate, steps: checks }` | `<seq>:evidence`         |
+| `candidate_ready`, when a check is set   | `evidence.run { scope, subject: candidate, steps: checks }` | `<seq>:evidence`         |
 | `evidence_requested`                     | `evidence.run { scope, subject, steps }`                 | `<seq>:evidence`            |
 | `integration_started`                    | `workspace.advance { branch, from: parentHead, to: candidate }` | `<seq>:advance`      |
 | `integration_refused` (moved)            | `workspace.candidate` again on the same commit           | `<seq>:candidate`           |
@@ -423,9 +421,6 @@ Whoever a command changes something for is told, in the tool's own words and not
 | `finding_reopened`            | Whoever answers it: what is new, its new evidence, and what it first said | Yes |
 | `finding_withdrawn`           | Whoever was to answer it                                         | No    |
 
-A scope that waited for a sibling gets its copy and its agent when the sibling is integrated or dropped, or when the
-`after` edge that made it wait is removed (`edge_removed`): no other event would start it.
-
 A tool's reply names what was recorded. An `attend` on a kind its reader marked noise for that agent and scope
 records the attending and opens no attention, and the reply says so, so whoever watches stops sending that kind. The reflex is not an effect: the watch reads committed events, and missing one costs a look, not a
 promise.
@@ -435,8 +430,8 @@ promise.
 Views read the log in SQL, or fold events in memory for what is open. Nothing a view needs is kept in `State` only
 for it.
 
-- `status(scope)`: the brief, its children with their state, its edges to scopes still open (`after`, `mayChange`,
-  `mustTell`), what a watching scope watches over, open obligations on and to its owner, the
+- `status(scope)`: the brief, its children with their state, the siblings it waits for, what a watching scope watches
+  over, a hand-back with whether any check is set to run on it, open obligations on and to its owner, the
   latest claim and its evidence, spend of the scope and its descendants beside its appetite.
 - `record(scope)`: briefs with every version; what the owner above did to the scope (paths moved, held, resumed,
   reseated, dropped); each hand-back and what came of it (sent back, integrated); findings with their chains

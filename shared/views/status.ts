@@ -15,11 +15,6 @@ export function statusText(state: State, scopeId: ScopeId, reader: string | null
   if (scope.branch) out.push(`Branch: ${scope.branch}`);
   if (scope.commit) out.push(`Reads commit: ${scope.commit}`);
   if (scope.after.length > 0) out.push(`Waits for: ${scope.after.join(", ")}`);
-  // An edge to a scope that is closed says nothing any more.
-  const open = (targets: readonly ScopeId[]) => targets.filter((t) => state.scopes.get(t)?.status === "open");
-  const [mayChange, mustTell] = [open(scope.mayChange), open(scope.mustTell)];
-  if (mayChange.length > 0) out.push(`May change a decision of: ${mayChange.join(", ")}`);
-  if (mustTell.length > 0) out.push(`Must tell: ${mustTell.join(", ")}`);
   if (scope.kind === "watch") out.push(`Watches over: ${scope.over === "all" ? "every scope" : scope.over.join(", ")}`);
   if (scope.brief) out.push(briefText(scope.brief));
   if (scope.plan) out.push(planText(scope.plan));
@@ -33,7 +28,9 @@ export function statusText(state: State, scopeId: ScopeId, reader: string | null
   const claim = scope.claim ? state.claims.get(scope.claim) : undefined;
   if (claim)
     out.push(
-      `Handed back: ${claim.commit} · ${claim.text}${scope.candidate ? ` · candidate ${scope.candidate.candidate}` : ""}`,
+      `Handed back: ${claim.commit} · ${claim.text}${scope.candidate ? ` · candidate ${scope.candidate.candidate}` : ""}${
+        (state.project?.checks ?? []).length === 0 ? "\nNo check is set for the project: nothing was run on it." : ""
+      }`,
     );
   const evidence = [...state.evidence.values()].filter((e) => e.scope === scope.id);
   if (evidence.length > 0)

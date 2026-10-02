@@ -54,7 +54,6 @@ export type Plan = {
 
 export type ScopeKind = "work" | "reading" | "watch";
 export type ScopeStatus = "open" | "integrated" | "dropped";
-export type Edge = "after" | "mayChange" | "mustTell";
 
 export type Candidate = { readonly commit: string; readonly candidate: string; readonly parentHead: string };
 
@@ -67,9 +66,8 @@ export type Scope = {
   readonly writes: boolean;
   readonly writer: ActorId | null;
   readonly paths: readonly string[];
+  /** The siblings it waits for, named when it is opened: it gets its copy and its agent once each is closed. */
   readonly after: readonly ScopeId[];
-  readonly mayChange: readonly ScopeId[];
-  readonly mustTell: readonly ScopeId[];
   readonly commit: string | null;
   readonly over: readonly ScopeId[] | "all";
   readonly brief: Brief | null;

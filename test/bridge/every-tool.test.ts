@@ -39,7 +39,7 @@ const brief = (goal: string, more: Record<string, unknown> = {}) => ({
 });
 const status = async (who: Tools, scope?: string) => (await who.call("status", scope ? { scope } : {})).text;
 
-test("the scope tools: open, amend a brief, edges, handover, hold and resume, reseat, release, drop; each shows where it is read and reaches whom it changes something for", async () => {
+test("the scope tools: open, amend a brief, handover, hold and resume, reseat, release, drop; each shows where it is read and reaches whom it changes something for", async () => {
   const c = await started();
   const chief = await c.tools(0);
   await did(c, chief, "open_scope", { parent: "root", role: "keeper", paths: ["src/"], brief: brief("Lane") });
@@ -60,31 +60,6 @@ test("the scope tools: open, amend a brief, edges, handover, hold and resume, re
     "open_scope",
     { parent: "1", role: "maker", paths: ["docs/"], brief: brief("C") },
     /^Refused \(I3\): docs\/ is outside scope 1's paths/,
-  );
-
-  await did(c, keeper, "add_edge", { scope: "1.2", edge: "after", target: "1.1", reason: "B builds on A" });
-  assert.match(await status(keeper, "1.2"), /^Waits for: 1\.1$/m);
-  await did(c, keeper, "remove_edge", { scope: "1.2", edge: "after", target: "1.1", reason: "not after all" });
-  assert.doesNotMatch(await status(keeper, "1.2"), /Waits for/);
-  await did(c, keeper, "add_edge", {
-    scope: "1",
-    edge: "mustTell",
-    target: "1.1",
-    reason: "A reads what the lane decides",
-  });
-  await did(c, keeper, "add_edge", {
-    scope: "1",
-    edge: "mayChange",
-    target: "1.2",
-    reason: "the lane settles B's shape",
-  });
-  assert.match(await status(keeper), /^May change a decision of: 1\.2$/m, "an edge is read where its scope is");
-  assert.match(await status(keeper), /^Must tell: 1\.1$/m);
-  await refused(
-    keeper,
-    "add_edge",
-    { scope: "1.1", edge: "mayChange", target: "1.2", reason: "x" },
-    /only scope 1\.1's owner changes its mayChange/,
   );
 
   await did(c, keeper, "handover", { from: "1.2", to: "1.1", paths: ["src/c/"], reason: "A needs c" });
@@ -137,13 +112,14 @@ test("the scope tools: open, amend a brief, edges, handover, hold and resume, re
     after: ["1.1"],
     brief: brief("D"),
   });
-  assert.equal(c.paseo.created.length, made, "a scope that waits for a sibling has no agent yet");
-  await did(c, keeper, "remove_edge", { scope: "1.3", edge: "after", target: "1.1", reason: "D need not wait" });
+  assert.match(await status(keeper, "1.3"), /^Waits for: 1\.1$/m);
   assert.equal(
-    c.paseo.created.at(-1)?.title,
-    "1.3 · maker",
-    "with its last wait gone it starts: nothing else would start it",
+    c.paseo.created.length,
+    made,
+    "a scope that waits for a sibling has no agent until that sibling is closed",
   );
+  await did(c, keeper, "drop_scope", { scope: "1.1", reason: "D goes first after all" });
+  assert.equal(c.paseo.created.at(-1)?.title, "1.3 · maker", "and starts once it is");
   for (const t of [chief, keeper]) t.close();
 });
 
@@ -470,4 +446,43 @@ test("the attention tools: a watcher's attention reaches the owner above the age
   await refused(keeper, "hold_machine", { hold: false, why: "stop" }, /only it or the Human releases it/);
   await did(c, maker, "hold_machine", { hold: false, why: "done" });
   for (const t of [chief, keeper, maker, guard]) t.close();
+});
+
+test("with no check set, a hand-back is given no evidence: a run of nothing is nothing to integrate on", async () => {
+  const c = await started();
+  const chief = await c.tools(0);
+  await did(c, chief, "open_scope", { parent: "root", role: "maker", paths: ["src/"], brief: brief("Make a") });
+  const maker = await c.tools(1);
+  const copy = c.paseo.created[1]!.cwd;
+  mkdirSync(join(copy, "src/a"), { recursive: true });
+  writeFileSync(join(copy, "src/a/done.txt"), "done\n");
+  git(copy, "add", ".");
+  git(copy, "commit", "-q", "-m", "done");
+  const head = git(copy, "rev-parse", "HEAD");
+
+  await did(c, maker, "hand_back", { commit: head, text: "all of it" });
+  const handed = await status(chief, "1");
+  assert.match(
+    handed,
+    /^Handed back: .* · candidate [0-9a-f]{40}\nNo check is set for the project: nothing was run on it\.$/m,
+  );
+  assert.doesNotMatch(handed, /Evidence:/, "nothing ran, so nothing is evidence");
+  await refused(chief, "integrate", { scope: "1", evidence: ["e1"] }, /no evidence e1/);
+  await refused(
+    chief,
+    "run_checks",
+    { scope: "1", commit: head },
+    /the project has no checks set, and none were named/,
+  );
+
+  await did(c, chief, "run_checks", {
+    scope: "1",
+    commit: head,
+    steps: [{ name: "there", run: ["test", "-f", "src/a/done.txt"] }],
+  });
+  const ran = new RegExp(`- (e\\d+) check on ${head}: ok · 1 check passed`).exec(await status(chief, "1"))?.[1];
+  assert.ok(ran, "a check the owner above names is evidence");
+  await did(c, chief, "integrate", { scope: "1", evidence: [ran] });
+  assert.equal(git(c.repo, "rev-parse", "main"), head);
+  for (const t of [chief, maker]) t.close();
 });

@@ -29,7 +29,7 @@ Human ─goal─► 0 Intake ─► 1 Open ─► 2 Plan ─► 3 Work ─► 4 
 ## 1. Open a scope: the Supervisor
 
 - The Supervisor opens a lane and seats its Lead.
-- Kernel: a scope owned by the Lead, its edges (spawned by, owns, must tell), a workspace. Refuses a lane whose write
+- Kernel: a scope owned by the Lead, the siblings it waits for, a workspace. Refuses a lane whose write
   set meets an open lane's, unless it waits for that lane.
 - Prompt: the directive states the goal, not a solution.
 

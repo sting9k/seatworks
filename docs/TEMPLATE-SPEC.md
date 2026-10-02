@@ -221,8 +221,6 @@ attends, only the owner of a scope's parent amends its brief or integrates it.
 | `resume_scope`      | Lifts a hold                                                                               | Roles that delegate           |
 | `set_plan`          | Sets its scope's plan                                                                      | Roles that delegate           |
 | `amend_plan`        | Amends the plan's lines, with a reason                                                     | Roles that delegate           |
-| `add_edge`          | Adds `after`, `mayChange` or `mustTell` to a scope, with a reason                          | Roles that delegate           |
-| `remove_edge`       | Removes an edge, with a reason                                                             | Roles that delegate           |
 | `integrate`         | Integrates a child's handed-back commit, citing evidence on that commit                    | Roles that delegate           |
 | `send_back`         | Sends a hand-back back, saying why                                                         | Roles that delegate           |
 | `classify_finding`  | Answers a finding: `changes`, `alternative` or `minor`, with a reason                      | Roles that delegate           |

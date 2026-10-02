@@ -36,11 +36,6 @@ const agentProfile = z
   .nullable()
   .default(null)
   .describe("Which of the role's agent profiles to seat it on; its first when left out.");
-const edge = z
-  .enum(["after", "mayChange", "mustTell"])
-  .describe(
-    "after: it waits for the target, a sibling. mayChange: it may change a decision of the target's. mustTell: it must tell the target of what it changes.",
-  );
 
 /** One section of a report: lines, and no shape of a profile's choosing, so each keeps its origin (I9). */
 export const ReportLines = z.array(text).max(100);
@@ -176,20 +171,6 @@ export const COMMANDS = {
     reason: why,
     carries,
     cites,
-  }),
-  add_edge: z.object({
-    scope: id.describe("The scope the edge sits in: a child of yours for `after`, your own for the others."),
-    edge,
-    target: id.describe("The scope it points at."),
-    reason: why,
-    carries,
-  }),
-  remove_edge: z.object({
-    scope: id.describe("The scope the edge sits in: a child of yours for `after`, your own for the others."),
-    edge,
-    target: id.describe("The scope it points at."),
-    reason: why,
-    carries,
   }),
   handover: z.object({
     from: id.describe("The child scope that gives the paths up."),

@@ -15,7 +15,6 @@ import type {
   Brief,
   Check,
   Claim,
-  Edge,
   Evidence,
   Finding,
   Line,
@@ -43,14 +42,6 @@ export type EventBody =
   | { type: "brief_amended"; scope: ScopeId; brief: Brief; reason: string; carries: FindingId | null }
   | { type: "plan_set"; scope: ScopeId; plan: Plan }
   | { type: "plan_amended"; scope: ScopeId; plan: Plan; reason: string; carries: FindingId | null }
-  | {
-      type: "edge_added" | "edge_removed";
-      scope: ScopeId;
-      edge: Edge;
-      target: ScopeId;
-      reason: string;
-      carries: FindingId | null;
-    }
   | {
       type: "handed_over";
       from: ScopeId;

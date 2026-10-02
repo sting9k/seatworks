@@ -78,9 +78,12 @@ A Supervisor that seats a Peer straight under the root is the path for a small c
   - A child's `paths` lie within its parent's. A `reading` scope has none.
   - A scope whose actor `watches` names the scopes it is `over`; the root's watcher is over every scope.
   - A scope whose owner `writes` has itself as writer. A scope whose owner `delegates` has no writer.
-- **Edges.** The five relations of CONCEPT-V2 §2.2, as data: `spawned` and `owns` follow from scopes; `dependsOn`
-  from `after`; `mayChange` and `mustTell` are kept as edges that the owner of the scope they sit in may add or
-  remove, with a reason. Every edge change is an event.
+- **Edges.** Of the five relations of CONCEPT-V2 §2.2, three are data: `spawned` and `owns` follow from scopes, and
+  `dependsOn` is `after`, named when a scope is opened. A scope that waits has no copy, no agent and nothing done, so
+  a wait is changed by dropping the scope and opening it again. Who may change a decision is read off the graph (the
+  owner of the parent), and who must be told is whom each command tells (`LEDGER.md` §8). `mayChange` and `mustTell`
+  were kept as edges an owner could add and remove, and were taken out on 2 October 2026 with the two tools that set
+  them: nothing in the kernel, the shell or any view acted on one, so a tool that set them did nothing for a team.
 
 ## 4. What the kernel keeps
 
@@ -199,8 +202,8 @@ The kernel MUST refuse a command that would break one of these, and MUST NOT ref
 | --- | -------------------------------------------------------------------------------------------------------------------- | ---------- |
 | I1  | A scope has at most one writer; paths move between sibling scopes only through a handover event, so a path is never written from two scopes at once. | §4.2       |
 | I2  | An actor that delegated a scope does not write the paths its open children hold.                                    | §4.2       |
-| I3  | Open sibling scopes whose paths overlap are ordered by `after`, so two never write the same path at once; `after` makes no cycle, since a cycle would leave each waiting for ever. | §4.2 |
-| I4  | Integrating a scope cites evidence whose subject is the commit being integrated. A failing result is integrated only with a reason. | §8.3, N1 |
+| I3  | Open sibling scopes whose paths overlap are ordered by `after`, so two never write the same path at once. A wait names siblings already open, so none can cycle. | §4.2 |
+| I4  | Integrating a scope cites evidence whose subject is the commit being integrated. A failing result is integrated only with a reason. A run of no checks is no evidence: with none set, none is asked for. | §8.3, N1 |
 | I5  | Only a scope's writer changes its paths, only its parent's owner its brief, only its owner its plan.                  | §4.2, §4.3 |
 | I6  | A change to the goal or appetite, or to a line whose origin is the Human, cites the Human's answer.                   | §7.3, §9   |
 | I7  | A message to an actor from outside its own scope and its parent's owner (the Human counts as the root's) gives that owner a copy; one that `directs` also opens an obligation on the owner, closed when it is carried in or declined with a reason. | §7.2, §9.4 |
@@ -220,7 +223,6 @@ A command is called by an actor and checked against its role's properties and th
 | `open_scope`       | owner of the parent, whose role `spawns` the role    | Opens a child scope with its brief, seats an actor of that role          |
 | `amend_brief`      | owner of the parent                                 | New brief version, with a reason and the finding it carries if any       |
 | `set_plan`, `amend_plan` | owner of the scope                            | Sets or amends the plan's lines (I6 for goal and appetite)               |
-| `add_edge`, `remove_edge` | owner of the scope the edge sits in          | `dependsOn`, `mayChange`, `mustTell`, with a reason                      |
 | `handover`         | owner of the parent                                 | Moves paths from one child to another in one event; they are written by the receiving scope's writer, and both owners are told |
 | `raise_finding`    | any seated actor                                    | Opens a finding                                                          |
 | `classify_finding` | whoever answers it (§4.4)                           | `changes` with change events, or `alternative` / `minor` with a reason   |

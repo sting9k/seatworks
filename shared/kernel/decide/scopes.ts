@@ -197,35 +197,6 @@ export function amendPlan(ctx: Of<"amend_plan">): Refusal | undefined {
   return undefined;
 }
 
-export function edge(ctx: Of<"add_edge"> | Of<"remove_edge">): Refusal | undefined {
-  const { body } = ctx;
-  const scope = openScope(ctx, body.scope);
-  if (isRefusal(scope)) return scope;
-  const target = ctx.state.scopes.get(body.target);
-  if (!target) return refuse("unknown", `no scope ${body.target}`);
-  if (body.edge === "after") {
-    const denied = asParentOwner(ctx, scope);
-    if (denied) return denied;
-    if (target.parent !== scope.parent || target.id === scope.id)
-      return refuse("I3", "a scope waits only for a sibling");
-  } else if (scope.owner !== ctx.party)
-    return refuse("authority", `only scope ${scope.id}'s owner changes its ${body.edge}`);
-  const has = scope[body.edge].includes(target.id);
-  if (body.type === "add_edge" && has) return refuse("state", `scope ${scope.id} already has that edge`);
-  if (body.type === "remove_edge" && !has) return refuse("state", `scope ${scope.id} has no such edge`);
-  const carried = carriedFinding(ctx, body.carries);
-  if (isRefusal(carried)) return carried;
-  ctx.emit({
-    type: body.type === "add_edge" ? "edge_added" : "edge_removed",
-    scope: scope.id,
-    edge: body.edge,
-    target: target.id,
-    reason: body.reason,
-    carries: body.carries,
-  });
-  return undefined;
-}
-
 export function handover(ctx: Of<"handover">): Refusal | undefined {
   const { body } = ctx;
   const from = openScope(ctx, body.from);
@@ -365,8 +336,6 @@ function blankScope(id: string, parent: string | null, role: string, kind: Scope
     writer: null,
     paths: [],
     after: [],
-    mayChange: [],
-    mustTell: [],
     commit: null,
     over: [],
     brief: null,

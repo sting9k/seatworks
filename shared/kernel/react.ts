@@ -50,13 +50,6 @@ export function react(e: Event, s: State): readonly Effect[] {
     case "brief_amended":
       tellBrief(s, e.scope, add);
       break;
-    case "edge_removed": {
-      // A scope that waited only for this sibling starts now: no other event would start it.
-      const x = s.scopes.get(e.scope);
-      if (e.edge === "after" && x?.status === "open" && x.workspace === "pending" && !waits(s, x.after))
-        add("workspace", { kind: "workspace.create", scope: x.id });
-      break;
-    }
     case "handed_over": {
       // Both writers work to the paths they hold: the one that gained some and the one that lost them.
       const text = `${e.paths.join(", ")} moved from scope ${e.from} to scope ${e.to}: ${e.reason}`;
@@ -146,9 +139,13 @@ export function react(e: Event, s: State): readonly Effect[] {
         true,
       );
       break;
-    case "candidate_ready":
-      add("evidence", { kind: "evidence.run", scope: e.scope, subject: e.candidate, steps: s.project?.checks ?? [] });
+    case "candidate_ready": {
+      // With no check set nothing would run, and a run of nothing is not evidence to integrate on (I4).
+      const checks = s.project?.checks ?? [];
+      if (checks.length > 0)
+        add("evidence", { kind: "evidence.run", scope: e.scope, subject: e.candidate, steps: checks });
       break;
+    }
     case "candidate_conflict": {
       const text = `Scope ${e.scope}'s ${e.commit} conflicts with its parent in: ${e.paths.join(", ")}. Merge the parent into your branch and hand back again.`;
       tell(s.scopes.get(e.scope)?.writer ?? null, "note", text, true);
