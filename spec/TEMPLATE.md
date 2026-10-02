@@ -305,8 +305,15 @@ server and no accounts. SLP is the only one at first.
 - **This repository builds a gallery of its own from `templates/`**, which holds SLP, each time the editor is
   served or built (`npm run gallery`). So SLP is in the gallery from the one place it is kept, and never copied.
 
-The gallery's own repository, and where its page is served from, are the owner's to set up: both are made outside
-this repository.
+The gallery's repository builds its page with this one, and keeps no copy of it. Its build checks Seatworks out
+beside itself, builds the gallery from Seatworks' `templates/` and from its own (`npm run gallery -- <its
+templates>`), builds the editor beside that, and publishes the result from its `main` as the repository's own page.
+On a pull request the same build runs and publishes nothing: that is the check a template passes. So a template is
+only ever text in the gallery's repository, and the page a person opens is this repository's editor at the branch
+the gallery names.
+
+The repository and its page are made outside this one, and putting them on a host is the owner's: nothing here
+depends on where they are.
 
 ## Checking one without the editor
 
