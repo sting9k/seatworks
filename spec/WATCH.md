@@ -18,8 +18,10 @@ The owner gave this design to the builder. These choices settle it, each with it
 1. **A cascade.** Code and the reflex find candidates cheaply; the Watcher, a model, confirms them; the owner hears
    only what is confirmed or what the reflex is sure of. An owner's context is the scarce thing, so the cheap tiers buy
    recall and the Watcher buys precision.
-2. **One Watcher per project, over every scope.** The Supervisor may seat more, each over the lanes it names, for work
-   where many answers can be right and the design will be tested as it is built.
+2. **One Watcher per project, over every scope.** The role that may seat one does so, since who is seated is a
+   template's to say and never the plugin's: SLP's Supervisor is told to with its first lane. With none seated a
+   candidate stays in the record and reaches nobody. The Supervisor may seat more, each over the lanes it names, for
+   work where many answers can be right and the design will be tested as it is built.
 3. **Jev is required; the Watcher adds no new reader.** The reflex is part of Seatworks, and installing it with its key is
    the Human's consent to send agents' words to Jev's host, through OpenRouter with data collection denied unless
    they choose TypeSafe's own API (`REFLEX.md`). The Watcher runs on a provider the team already uses. Before any text

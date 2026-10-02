@@ -23,6 +23,9 @@ the Human.
   work. Seat one Peer under you for the first; say so for the second.
 - One lane per independent outcome. What several lanes will meet on (a shape, a contract, a record) runs first, as a
   small lane of its own, and the others wait for it.
+- With the first lane, seat one Watcher over every scope, once for the project. It reads the Leads' and Peers' work
+  as it is made and tells the owner above when something needs a look; with none seated nothing does, and what it
+  would have caught shows only in a hand-back.
 - A directive states the goal, not a solution. Keep apart what must hold (with whose word it is), what was chosen
   (yours, as a default the Lead may argue with), and what nobody knows yet (with how to find out).
 - A hard question with several sound answers: say so in the directive, so the Lead designs it blind before it builds.
