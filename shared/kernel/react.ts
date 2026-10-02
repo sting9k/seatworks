@@ -164,21 +164,25 @@ export function react(e: Event, s: State): readonly Effect[] {
     case "question_answered":
       tell(e.asker, "note", `The Human answered question ${e.question}: ${e.text}`, true);
       break;
-    case "claim_made":
+    case "claim_made": {
       add("candidate", { kind: "workspace.candidate", scope: e.claim.scope, commit: e.claim.commit });
       mustTell(e.claim.scope, `it handed back ${e.claim.commit}: ${e.claim.text}`);
-      // Whether a result is on its way is said, or whoever takes it in runs the same checks again while they run.
+      // What will keep it from being taken in is said with it: a scope still open under it, and whether a result is on
+      // its way, or whoever takes it in is refused, or runs the same checks again while they run.
+      const open = [...s.scopes.values()].filter((c) => c.parent === e.claim.scope && c.status === "open");
+      const under = open.length > 0 ? `\nStill open under it: ${open.map((c) => c.id).join(", ")}.` : "";
+      const checks =
+        (s.project?.checks ?? []).length > 0
+          ? "The project's checks run on its candidate now, and you are told their result."
+          : "No check is set for the project: nothing is run on it.";
       tell(
         parentOwner(e.claim.scope),
         "note",
-        `Scope ${e.claim.scope} handed back ${e.claim.commit}: ${e.claim.text}\n${
-          (s.project?.checks ?? []).length > 0
-            ? "The project's checks run on its candidate now, and you are told their result."
-            : "No check is set for the project: nothing is run on it."
-        }`,
+        `Scope ${e.claim.scope} handed back ${e.claim.commit}: ${e.claim.text}${under}\n${checks}`,
         true,
       );
       break;
+    }
     case "candidate_ready": {
       // With no check set nothing would run, and a run of nothing is not evidence to integrate on (I4).
       const checks = s.project?.checks ?? [];

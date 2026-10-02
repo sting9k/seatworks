@@ -338,11 +338,22 @@ test("the finding tools: raised on a line, kept, reopened on new evidence, carri
     carries: "f3",
   });
   await did(c, keeper, "classify_finding", { finding: "f3", verdict: "changes", reason: "the plan has it now" });
+  const laneHead = git(c.repo, "rev-parse", "main");
+  assert.equal(
+    await did(c, keeper, "hand_back", { commit: laneHead, text: "the lane, for a first look" }),
+    "Recorded: claim made (c1), though scope 1.1 is still open under it and a scope is taken in only once none under it is; obligation opened.",
+    "a hand-back of a scope with work still open under it is taken, and says what will keep it from being taken in",
+  );
+  assert.match(
+    c.told(0).at(-1) ?? "",
+    /^Scope 1 handed back [0-9a-f]{40}: the lane, for a first look\nStill open under it: 1\.1\.\nNo check is set/,
+    "and whoever is to take it in reads the same",
+  );
   const chain =
     "f3 from a3: the lane's plan names no cache\n  carried by plan amended (a2)\n  classified changes: the plan has it now";
   const lane = (await keeper.call("record", { scope: "1" })).text;
   assert.ok(lane.endsWith(chain), "a finding about another scope is read in that scope's record, with what came of it");
-  assert.doesNotMatch(lane, /f1|f2/, "and no other scope's findings are");
+  assert.doesNotMatch(lane, /\bf[12]\b/, "and no other scope's findings are");
   assert.ok(
     (await maker.call("record", {})).text.endsWith(
       `f2 from a3: the tests are slow\n  withdrawn: my machine was busy\n${chain}`,

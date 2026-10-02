@@ -189,21 +189,30 @@ export class TeamSocket {
       body: parsed.body,
     });
     return outcome.ok
-      ? { ok: true, text: recorded(outcome.events) }
+      ? { ok: true, text: recorded(outcome.events, who.project.view) }
       : { ok: false, text: refusedText(outcome.refused, outcome.standing) };
   }
 }
 
-function recorded(events: readonly Event[]): string {
+function recorded(events: readonly Event[], state: State): string {
   if (events.length === 0) return "Nothing changed.";
   const said = (e: Event) => {
     // An attention its reader marked noise opens nothing, and whoever watches would otherwise go on sending its kind.
     if (e.type === "attended" && e.attention === null)
       return "attended, and nobody was told: this kind is marked noise for that agent and scope";
     const id = made(e);
-    return `${e.type.replace(/_/g, " ")}${id === null ? "" : ` (${id})`}${LATER[e.type] ?? ""}`;
+    return `${e.type.replace(/_/g, " ")}${id === null ? "" : ` (${id})`}${LATER[e.type] ?? ""}${stillOpen(e, state)}`;
   };
   return `Recorded: ${events.map(said).join("; ")}.`;
+}
+
+/** What a hand-back's own reply says of scopes still open under it: its taking in is refused while one is. */
+function stillOpen(e: Event, state: State): string {
+  if (e.type !== "claim_made") return "";
+  const open = [...state.scopes.values()].filter((c) => c.parent === e.claim.scope && c.status === "open");
+  if (open.length === 0) return "";
+  const which = open.map((c) => c.id).join(", ");
+  return `, though scope ${which} is still open under it and a scope is taken in only once none under it is`;
 }
 
 /** What comes of a command that only starts something, said with its reply: its caller is told the outcome later. */
