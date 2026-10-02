@@ -149,11 +149,9 @@ node, every tool ticked, and the author unticks what the role is not to be shown
 ## Steps and the flow
 
 The steps are kept in `template.json`. On each change to them the editor writes `flow.md` again: one line a step, in
-the order they were set down, with the role that does it and the steps that follow. `flow.md` is not edited by hand
-in a template that has steps, and goes when the last step does.
-
-The editor does not yet write the `flow` key into `profile.yaml`: today's plugin refuses a key it does not know, and
-gives no flow to its agents until `TEMPLATE.md`'s step 3 is built.
+the order they were set down, with the role that does it and the steps that follow, and names it under `flow` in
+`profile.yaml`, which is how every role is given it. `flow.md` is not edited by hand in a template that has steps;
+when the last step goes, the file goes and the profile names none.
 
 ## Files
 

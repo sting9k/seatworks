@@ -152,8 +152,9 @@ upkeep: attach(repository), leftovers, clean(picked), checkUpdate
   plugin's markers holds the words settled in the root's plan, and `docs/seatworks/MAP.md`, the map (destination,
   what must hold, what is not yet known, each lane landed with what it decided, assumed and left open, and what is
   still in dispute). Both are written from the log on `docs.write`, whole each time, as a commit of that file alone,
-  so one left behind is written the next time. ADRs in `docs/adr/` are written by hand, by the agent whose commit they
-  explain. The paths are the profile's.
+  so one left behind is written the next time. The docs a team keeps by hand, such as the ADRs in `docs/adr/`, are written by
+  the agent whose commit they explain; the plugin only points every agent at them. The paths are the profile's:
+  `glossary`, `map`, and the list `docs`.
 - It sits in Paseo's own places: a page in the sidebar (the projects, each project's tabs, the plugin), a Team tab beside
   Files and Changes for the project a workspace belongs to, and a pill on the chat of each agent the plugin started,
   counting what waits on the Human in its project and answering it in place.

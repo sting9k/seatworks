@@ -387,7 +387,10 @@ export const removeStep =
 
 const withSteps = (template: Template, change: (steps: readonly Step[]) => Step[]) => stepsIn(template.files, change);
 
-/** The steps changed, and `flow.md` written from them again; with no step left there is no flow to give. */
+/**
+ * The steps changed, `flow.md` written from them again and named in the profile, which is how every role is given it;
+ * with no step left there is no flow to give, and the profile names none.
+ */
 function stepsIn(files: TemplateFiles, change: (steps: readonly Step[]) => Step[]): Map<string, string> {
   let steps: Step[] = [];
   const next = new Map(
@@ -396,7 +399,11 @@ function stepsIn(files: TemplateFiles, change: (steps: readonly Step[]) => Step[
       return { ...editor, steps };
     }),
   );
-  if (steps.length > 0) next.set(FLOW, flowText(steps));
-  else next.delete(FLOW);
+  const profile = next.get(PROFILE)!;
+  if (steps.length > 0) next.set(FLOW, flowText(steps)).set(PROFILE, setIn(profile, ["flow"], FLOW));
+  else {
+    next.delete(FLOW);
+    next.set(PROFILE, deleteIn(profile, ["flow"]));
+  }
   return next;
 }

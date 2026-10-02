@@ -4,14 +4,15 @@ import { statusText } from "../../shared/views/status.ts";
 import type { Bundle } from "../profile/bundle.ts";
 
 /**
- * An agent's standing instructions: its role's prompt, its skills named with where to read each, and the rules the
- * Human keeps for its role outside the profile.
+ * An agent's standing instructions: its role's prompt, the team's flow, its skills named with where to read each, and
+ * the rules the Human keeps for its role outside the profile.
  */
 export function systemPromptFor(bundle: Bundle, actor: Actor, rules: string | null): string {
   const prompt = (bundle.prompts.get(actor.role) ?? "").trimEnd();
   const skills = bundle.skills.get(actor.role) ?? [];
   const list = skills.map((s) => `- \`${s.name}\`: ${s.description} Read ${s.path} when it applies.`).join("\n");
-  const parts = [prompt, list && `## Skills\n\n${list}`, rules && `## The Human's rules\n\n${rules}`];
+  const flow = bundle.flow?.trimEnd();
+  const parts = [prompt, flow, list && `## Skills\n\n${list}`, rules && `## The Human's rules\n\n${rules}`];
   return `${parts.filter(Boolean).join("\n\n")}\n`;
 }
 

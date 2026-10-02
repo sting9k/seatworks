@@ -117,7 +117,7 @@ export function handlersFor(w: Wiring): Handlers {
           state,
           actor,
           [...state.actors.values()].some((a) => a.scope === actor.scope && a.id !== actor.id),
-          [w.bundle.project?.glossary, w.bundle.project?.adr, w.bundle.project?.map].filter(
+          [w.bundle.project?.glossary, ...(w.bundle.project?.docs ?? []), w.bundle.project?.map].filter(
             (d): d is string => typeof d === "string",
           ),
         ),

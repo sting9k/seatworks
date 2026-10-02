@@ -5,8 +5,8 @@ touching the plugin. SLP is the one Seatworks ships. A template is to Seatworks 
 ComfyUI: picked from a gallery, opened as a graph, changed, and run. `EDITOR.md` says how one is opened and changed;
 this says what a template is, what the plugin reads of it, and how it reaches a machine.
 
-Of this, the editor is built (`EDITOR.md`, steps 1 and 2 below); the plugin behaves as it did. The order it is built in is at
-the end. A change it asks of another spec file is listed under What this changes, and is made in the commit that
+Built so far: the editor (`EDITOR.md`, steps 1 and 2 below), and of step 3 the flow, the list of docs and the hash.
+A profile for each project and installing are not. The order it is built in is at the end. A change it asks of another spec file is listed under What this changes, and is made in the commit that
 builds it, so a spec and the code never disagree.
 
 ## Open, not neutral
@@ -202,9 +202,9 @@ roles:
 
 ## The hash
 
-A bundle's hash covers every file of the template the plugin reads, in the order of their paths. Today it covers
-`profile.yaml`, the prompts and the project's note, so two profiles that differ in a skill or a question have one
-hash.
+A bundle's hash covers every file of the profile's directory, each by its path, in the order of the paths: a skill,
+a file beside a skill, a question and a moment change what agents do as a prompt does. `template.json` and
+`NOTICE.md` are left out, since the plugin reads neither.
 
 ## The gallery
 
@@ -244,9 +244,9 @@ Each is made in the commit that builds it.
 | File             | Change                                                                                             |
 | ---------------- | -------------------------------------------------------------------------------------------------- |
 | `KERNEL.md` §2   | A profile is chosen for each project; the four rules above. Later, §4 and §6: `report`'s sections are the profile's |
-| `PORTS.md`       | Agent host: `create` takes outside servers. Human surface: attaching names a profile; the docs pointed at are a list |
+| `PORTS.md`       | Agent host: `create` takes outside servers. Human surface: attaching names a profile               |
 | `HARNESS.md`     | Which agents take an outside server, and that the guards do not reach one                          |
-| `ROLES.md`       | What goes where: the Human's rules by profile; the team's flow                                     |
+| `ROLES.md`       | What goes where: the Human's rules by profile                                                      |
 | `CONFORMANCE.md` | The cases below, and `EDITOR.md`'s                                                                 |
 
 ## Cases
@@ -257,15 +257,11 @@ They join `CONFORMANCE.md` with the step that builds them.
 | ----------------------------------------------------------------------------- | ------------------------------------------------------------------- |
 | Two projects attached, each naming a different profile                        | Each project's agents get their own profile's prompts and tools      |
 | A profile edited so that the role of a seated agent is gone                   | Said to the Human, naming the seat and the role                      |
-| Two profiles that differ only in the body of one skill                        | Different hashes                                                     |
 | The Human keeps `rules/<profile>/lead.md` for one of two profiles             | A Lead of that profile gets it; a Lead of the other does not         |
-| A profile with `flow`                                                         | Every role's standing instructions carry it after the role's prompt  |
-| A profile that lists two docs under `project.docs`                            | An agent's first words point at both                                 |
 | A role given an outside server, seated on an agent that takes one             | Created with the server, its named tools approved ahead; a role given none has only the team's |
 | A role given an outside server, seated on an agent that cannot take one       | Not seated; the reason names the server                              |
 | A shared file whose profile does not load                                     | Refused, saying what is wrong; nothing copied                        |
 | A shared file that declares servers and names agent profiles                  | Each listed before anything is copied                                |
-| The SLP profile, with none of the new keys                                    | Loads and behaves as before                                          |
 
 ## Order
 

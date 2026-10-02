@@ -27,10 +27,12 @@ export const ProfileFileSchema = z
     roles: z.record(z.string().regex(/^[a-z][a-z0-9-]*$/), RoleSchema),
     reflex: z.string().optional(),
     watch: z.string().optional(),
+    /** The team's flow, a passage every role is given after its own prompt (TEMPLATE.md). */
+    flow: z.string().min(1).optional(),
     /**
      * What every agent in an attached project reads: `note` kept between the plugin's markers in `file`, and the docs
-     * written from the record into the repository, `glossary` and `map`, which stay with it; `adr` is where decisions
-     * are written by hand, which the plugin only points at.
+     * written from the record into the repository, `glossary` and `map`, which stay with it; `docs` are the lasting
+     * docs the team keeps by hand, which the plugin only points at.
      */
     project: z
       .object({
@@ -38,7 +40,7 @@ export const ProfileFileSchema = z
         note: z.string().min(1),
         glossary: z.string().min(1).optional(),
         map: z.string().min(1).optional(),
-        adr: z.string().min(1).optional(),
+        docs: z.array(z.string().min(1)).default([]),
       })
       .strict()
       .optional(),

@@ -8,6 +8,7 @@ import {
   type Edit,
   removeRole,
   removeSkill,
+  removeStep,
   renameAsked,
   renameRole,
   renameSkill,
@@ -198,8 +199,12 @@ test("steps saved are a line each in `flow.md`, in order, each with its role and
       "",
     ].join("\n"),
   );
-  assert.deepEqual(filesChanged(slp, after), ["flow.md", "template.json"]);
+  assert.deepEqual(filesChanged(slp, after), ["flow.md", "profile.yaml", "template.json"]);
+  assert.deepEqual(linesChanged(slp, after, "profile.yaml"), ["flow: flow.md"]);
   assert.deepEqual(wires(graphOf(after), "then"), ["step:plan > step:work", "step:work > step:plan"]);
+
+  const none = changed(after, together(removeStep("plan"), removeStep("work")));
+  assert.deepEqual(filesChanged(slp, none), ["template.json"]);
 });
 
 test("a skill renamed keeps its folder's files, its name in its file and its place in every role that has it", () => {

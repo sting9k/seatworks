@@ -259,7 +259,7 @@ A template's files in, what a person sees out (`EDITOR.md`).
 | A role taken away                                           | Nothing names it, and its prompt is gone                            |
 | A role added, then taken away                               | Every file as it was, to the byte                                   |
 | A skill added, and another taken away                       | The new one is a node before any role has it; the other's folder is gone and no role has it |
-| Steps set down, given roles and joined                      | `flow.md` holds a line a step in order, each with its role and what follows; only it and `template.json` change |
+| Steps set down, given roles and joined; then taken away      | `flow.md` holds a line a step in order, each with its role and what follows, and `profile.yaml` gains the one line that names it; with the last step gone, the file and that line are gone |
 | The SLP profile as shipped                                  | One note: its watcher's prompt names a tool that only others are shown |
 | A prompt naming a tool its role is not shown; a prompt naming a role the template lost; a watched role's prompt naming the watch; a prompt, skill or question still holding its skeleton; a skill named otherwise than its folder, not saying when to use it, or pointing at a file not beside it; a question asking of a field not in its state, or with one outcome described | Each a note on the node it is about |
 | A file put beside a skill that points at it                 | Kept in the skill's folder; no note                                 |
@@ -271,3 +271,12 @@ A template's files in, what a person sees out (`EDITOR.md`).
 | A question reworded after its threshold was earned          | Shown as not yet earned, with a note; before the rewording, earned and no note |
 | A skill renamed                                             | Its folder's files, its name in its file and its place in every role that has it follow |
 | A question renamed                                          | Its key and its line in the list of those asked change, each in its place; nothing else |
+
+## Templates
+
+What the plugin reads of a profile that a template adds (`TEMPLATE.md`).
+
+| Case                                                        | Expect                                                              |
+| ----------------------------------------------------------- | ------------------------------------------------------------------- |
+| Two profiles that differ in a skill, a file beside a skill, a question, a moment or a prompt | Different hashes; two that differ only in `template.json` or `NOTICE.md`, the same |
+| A profile that names a flow and lists two docs of its own   | Every agent's standing instructions carry the flow after its role's prompt and before its skills; its first words point at the glossary, both docs and the map |

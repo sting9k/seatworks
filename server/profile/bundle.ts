@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parse } from "yaml";
 import {
@@ -15,6 +15,8 @@ export type Bundle = {
   readonly profile: Profile;
   readonly hash: string;
   readonly prompts: ReadonlyMap<string, string>;
+  /** The team's flow, given to every role after its prompt; none when the profile names none. */
+  readonly flow: string | null;
   readonly skills: ReadonlyMap<string, readonly { name: string; description: string; path: string }[]>;
   readonly environment: readonly string[];
   /** The note an attached project's instruction file carries, with `{branches}` and `{base}` to fill. */
@@ -23,7 +25,8 @@ export type Bundle = {
     readonly note: string;
     readonly glossary: string | null;
     readonly map: string | null;
-    readonly adr: string | null;
+    /** The lasting docs the team keeps by hand: agents are pointed at them, and nothing writes them. */
+    readonly docs: readonly string[];
   } | null;
 };
 
@@ -59,19 +62,36 @@ export function loadBundle(dir: string): Bundle {
         note: readFileSync(join(dir, file.project.note), "utf8"),
         glossary: file.project.glossary ?? null,
         map: file.project.map ?? null,
-        adr: file.project.adr ?? null,
+        docs: file.project.docs,
       }
     : null;
-  const hash = createHash("sha256").update(text);
-  for (const prompt of prompts.values()) hash.update(prompt);
-  if (project) hash.update(project.note);
   return {
     dir,
     profile: resolved.profile,
-    hash: hash.digest("hex").slice(0, 16),
+    hash: hashOf(dir),
     prompts,
+    flow: file.flow ? readFileSync(join(dir, file.flow), "utf8") : null,
     skills,
     environment,
     project,
   };
+}
+
+/** What the gallery and the editor keep of a template, which the plugin does not read and so does not hash. */
+const UNREAD = new Set(["template.json", "NOTICE.md"]);
+
+/** One hash of everything a profile's directory makes agents do: every file by its path, in the order of the paths. */
+function hashOf(dir: string): string {
+  const hash = createHash("sha256");
+  const walk = (within: string): void => {
+    for (const entry of readdirSync(join(dir, within), { withFileTypes: true }).sort((a, b) =>
+      a.name < b.name ? -1 : 1,
+    )) {
+      const path = within === "" ? entry.name : `${within}/${entry.name}`;
+      if (entry.isDirectory()) walk(path);
+      else if (!UNREAD.has(path)) hash.update(`${path}\0`).update(readFileSync(join(dir, path))).update("\0");
+    }
+  };
+  walk("");
+  return hash.digest("hex").slice(0, 16);
 }
