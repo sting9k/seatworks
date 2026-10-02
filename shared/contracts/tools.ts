@@ -85,7 +85,8 @@ export const DESCRIPTIONS: Record<CommandType | ReadName, string> = {
   mark_noise: "Stops one kind of attention for one agent and scope.",
   attend: "Sends an attention about an agent to the owner above its work, quoting the words that decided it.",
   pass: "Passes a candidate, with a reason.",
-  set_checks: "Sets the project's checks: named commands as argv.",
+  set_checks:
+    "Sets the project's checks: named commands as argv, each run in a fresh copy of a commit, where only what git holds is there.",
   publish: "Pushes the landed base branch to a remote, never forced.",
   record_workspace: "",
   record_agent: "",
