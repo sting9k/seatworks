@@ -96,7 +96,7 @@ export default function contribute(server: PluginServerContext) {
   });
   server.handle(RPC.installTemplate, async (input, { paseo }) => {
     plugin.saw(paseo);
-    const made = await plugin.template(input.path, input.hash);
+    const made = await plugin.template(input.path, { hash: input.hash, agents: input.agents });
     return made.ok
       ? { ok: true, text: `${made.offer.title} is installed as ${made.offer.name}. Attach a project to run it.` }
       : { ok: false, text: `Not installed: ${made.says}.` };

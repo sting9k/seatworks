@@ -131,8 +131,9 @@ beside SLP with no change to the plugin's code. Roles are data; nothing in the c
   [`docs/EDITOR-GUIDE.md`](docs/EDITOR-GUIDE.md) walks through it.
 
 Either way you get one file, `<name>.template.json`. In Paseo, open Seatworks, then Plugin, and under Templates give
-its path: you are shown what it brings (its roles, the agent profiles it needs, any outside tool server it starts)
-before it is installed. Attaching a project then asks which template it runs.
+its path: you are shown what it brings (its roles, the agent profiles it names, any outside tool server it starts)
+and match each agent profile it names to one you already have, before it is installed. Attaching a project then asks
+which template it runs.
 
 Rules of your own that should hold whatever the template says, such as how you want code written, go in
 `rules/<template>/` under the plugin's state directory (`~/.local/share/seatworks/rules/slp/` for SLP on Linux and

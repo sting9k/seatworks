@@ -7,6 +7,7 @@ import type { State } from "../../shared/kernel/state.ts";
 import { glossaryText, mapText } from "../../shared/views/docs.ts";
 import type { Keys } from "../core/keys.ts";
 import { humanRules } from "../core/rules.ts";
+import { matchingOf, runsOn } from "../profile/agents.ts";
 import type { PaseoHost } from "../satellites/agent-host/host.ts";
 import { renderBatch } from "../satellites/delivery/render.ts";
 import type { EvidenceRunner } from "../satellites/evidence/runner.ts";
@@ -37,6 +38,8 @@ export type Wiring = {
   readonly scratch: string;
   /** Where the Human keeps their own rules by role. */
   readonly rules: string;
+  /** The file of the Human's matching: which of their agent profiles each name the profile gives runs on. */
+  readonly agents: string;
   readonly checkTimeoutMs: number;
   /** The project's log from its start, which the docs are written from. */
   readonly log: () => Iterable<Event>;
@@ -117,7 +120,7 @@ export function handlersFor(w: Wiring): Handlers {
         // Paseo keeps a keyed create for the whole daemon, and every project's log counts from 1.
         key: `${w.project}:${key}`,
         title: `${actor.scope} · ${actor.role}`,
-        profile: actor.model,
+        profile: runsOn(matchingOf(w.agents), actor.model),
         cwd,
         systemPrompt: systemPromptFor(w.bundle, actor, humanRules(w.rules, actor.role)),
         prompt: firstPrompt(

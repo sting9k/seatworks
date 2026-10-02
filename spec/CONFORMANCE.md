@@ -299,6 +299,8 @@ What the plugin reads of a profile that a template adds (`TEMPLATE.md`).
 | A profile whose reflex file names a route of its own, or masks nothing | The reflex has no route but the plugin's, one for each the settings offer; what looks like a secret is still masked |
 | A shared template read from a file on the machine           | What it would bring is said: its name, its roles, each agent profile its roles name and whether Paseo has it; nothing is installed and nothing unpacked is left |
 | The template installed with the hash of what was read       | Under its name, listed to attach a project with; read again, it says it would replace the one there |
+| A template installed with an agent profile it names matched to one the Human has | The offer said the name is not in Paseo and listed the profiles that are; an agent of the role is made from the matched profile; read again, the offer says what the name runs on; installed again with no matching, it runs on nothing but its own name |
+| A matching to an agent profile Paseo does not have, or of a name the template does not give | Refused, saying which; nothing installed, no matching kept |
 | A shared file that does not load, names a path outside its own directory, is not a packed template or is not there; and one changed since it was read | Refused, saying which; nothing installed, nothing written outside the state root |
 | A role given an outside server, on an agent that takes one  | Made with the server beside the team's, its named tools approved ahead, each variable it names filled in; the team's server marked always loaded; a role given none has only the team's |
 | A role whose server reads a variable that is not set        | Not seated; the reason names the server and the variable            |

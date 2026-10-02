@@ -14,8 +14,9 @@ be said in the files below, it is out of a template's reach; say so to whoever a
 1. Copy `profile/slp/` to a directory of your own, outside this repository. Its name does not matter yet.
 2. In `template.json`, set `name` and `description`. The name decides what it is installed as: `Night Crew` installs
    as `night-crew`.
-3. In `profile.yaml`, set each role's `models` to the Paseo agent profiles the team will run on. These are names the
-   person creates in Paseo's settings, each picking an agent and a model.
+3. In `profile.yaml`, set each role's `models` to names of your own for what each role runs on, such as
+   `night-crew-lead`. When the person installs the template they match each name to an agent profile they have in
+   Paseo, which picks the agent and the model.
 4. Change what you came to change: a prompt in `roles/`, a skill in `skills/`, a role's tools, a role added or
    removed. A role you rename or remove is also named in `watch.yaml` under `watches`, in other roles' `spawns`, in
    prompts, in `project.md` and in `flow.md` if there is one.
@@ -243,11 +244,13 @@ A good start for a role: every tool whose last column fits it. Then take away wh
 
 ### Agent profiles
 
-`models` names Paseo agent profiles, not models. Each is made by the person in Paseo's settings and picks an agent
-(Claude Code and Pi have settings shipped for them) and a model. Name them for your template, such as
-`night-crew-lead`, and list every name in what you hand over. A role with no `models` is seated only when whoever
-seats it names a profile, and a root with none cannot start. Installing shows which names the person's Paseo already
-has.
+`models` names Paseo agent profiles, not models. An agent profile is made by the person in Paseo's settings and picks
+an agent (Claude Code and Pi have settings shipped for them) and a model. Name yours for your template, such as
+`night-crew-lead`, one name for each kind of model your roles need. When the person installs the template, each name
+is matched to an agent profile they already have, or runs on the profile of that very name if they have one. So give
+names that say what the role needs (`night-crew-reviewer`, not `profile-3`), and say in what you hand over what kind
+of model suits each. A role with no `models` is seated only when whoever seats it names a profile, and a root with
+none cannot start.
 
 ## A role's prompt
 
@@ -535,12 +538,13 @@ team that would stall:
 
 `pack` runs the same check and writes the one file a template is shared as: JSON holding each file's text by its
 path. That file is what the person gives the Seatworks page in Paseo. They are shown what it brings (its roles, the
-agent profiles it needs and which are missing, each server and what it runs, each variable and whether it is set)
-before they agree to install it. A project then runs the template it was attached with.
+agent profiles it names and which they lack, each server and what it runs, each variable and whether it is set),
+match each agent profile it names to one of their own, and agree to install it. A project then runs the template it
+was attached with.
 
 ## What to hand over with the file
 
-- The agent profiles to create in Paseo, one for each name under `models`, with what kind of model suits each.
+- Each name under `models`, with what kind of model suits it, so the person can match it to an agent profile of theirs.
 - The environment variables its servers read.
 - What changed from SLP, if it started there, in a few lines.
 

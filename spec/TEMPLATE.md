@@ -303,8 +303,25 @@ gives the path of the file on their machine, and the plugin:
 2. Says what it would bring: the name it would be installed and attached under, whether one of that name is installed
    already, its roles, each Paseo agent profile its roles name with whether the Human has it, each outside server
    with the command it runs or the address it calls, and each variable a server reads with whether it is set.
-3. Installs it under its name once the Human agrees, in place of one of that name. What is installed is the file the
+3. Takes the Human's matching: for any agent profile the template names, one of their own that it is to run on.
+4. Installs it under its name once the Human agrees, in place of one of that name. What is installed is the file the
    Human read: its hash is checked again, and a file changed since is not installed.
+
+**Matching agent profiles.** A template names its agent profiles its own way, and a Human who had to make one in
+Paseo's settings for every name of every template they try would not try many. So a name is matched, when the
+template is installed, to an agent profile the Human already has.
+
+- The matching is the Human's and their machine's, so it is kept beside the profiles, in `agents/<name>.json` under
+  the state root, and never in the template: its files stay as they were shared, with the hash the gallery's copy
+  has.
+- It is read when an agent is made, as the Human's rules are. A role's agent is made from the profile its name is
+  matched to, or from the Paseo profile of that very name when it is matched to nothing. The record keeps the name
+  the template gives, so a log reads the same on every machine.
+- A name left unmatched that Paseo has no profile for stops nothing at install: the agent is not seated, saying which
+  profile is missing, when a role that names it is.
+- A matching to a profile Paseo does not have, or of a name the template does not give, is refused, and nothing is
+  installed.
+- Installing the template again offers what each name was matched to, and keeps the matching it is then given.
 
 Nothing unpacked to be read is left behind. The plugin fetches nothing from the net. A template steers agents that
 ask no leave for what they run, so the Human sees what one brings before it is theirs. A terminal command was the

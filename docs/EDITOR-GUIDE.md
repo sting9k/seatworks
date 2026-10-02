@@ -153,15 +153,19 @@ To keep working on it another day, open that file again with **Open a file**.
 
 1. In Paseo, open **Seatworks**, then under **This machine** open **Plugin**.
 2. Under **Templates**, give the path of the file you exported, and press **Read**.
-3. Read what it brings: the name it installs as, its roles, the agent profiles its roles name and which you are
-   missing, each outside server and what it runs, each variable it reads and whether it is set.
-4. Press **Install**. A template of the same name is replaced.
-5. Attach a project. With more than one template installed, attaching asks which.
+3. Read what it brings: the name it installs as, its roles, the agent profiles its roles name, each outside server
+   and what it runs, each variable it reads and whether it is set.
+4. **Match its agent profiles to yours.** Each name the template gives is listed. Open one and pick the agent profile
+   of yours it should run on. A name you match to nothing runs on the profile of that very name, if Paseo has one;
+   the card says which names have neither.
+5. Press **Install**. A template of the same name is replaced; what you matched before is offered again.
+6. Attach a project. With more than one template installed, attaching asks which.
 
 Before the team can run:
 
-- In Paseo's settings, make an agent profile for each name the template's roles list under Models.
-- Set each environment variable its servers read, where Paseo's daemon runs.
+- Every name the template's roles list under Models is matched to an agent profile of yours, or has one of its own
+  name in Paseo's settings.
+- Each environment variable its servers read is set where Paseo's daemon runs.
 
 A project keeps the template it was attached with. A template you install again, in place of the one a project runs,
 reaches that project's agents when it is next opened.
@@ -172,6 +176,6 @@ reaches that project's agents when it is next opened.
 | ------------------------------------------ | ------------------------------------------------------------------------------ |
 | A file will not open                       | The page says why. It is not a template file, or it names a file it lacks      |
 | A change is not made                       | The line at the top says why; the template would not run with it               |
-| A role's agent is not seated               | Its agent profile is missing in Paseo, or a variable its server reads is unset |
+| A role's agent is not seated               | Its agent profile is neither matched nor in Paseo, or a variable its server reads is unset |
 | A team that stalls                         | Read the Notes panel: most stalls are a role that cannot hand back or be seated |
 | You want to check a folder without the page | `npm run template -- check <folder>` prints the same notes                    |

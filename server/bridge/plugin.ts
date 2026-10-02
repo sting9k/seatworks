@@ -38,6 +38,7 @@ import { loadReflex, loadRoutes } from "../satellites/reflex/config.ts";
 import { Jev } from "../satellites/reflex/jev.ts";
 import { git } from "../satellites/workspace/git.ts";
 import { Workspace } from "../satellites/workspace/workspace.ts";
+import { type Matching, matchingFile } from "../profile/agents.ts";
 import { type Bundle, loadBundle } from "../profile/bundle.ts";
 import { install, offerOf } from "../profile/install.ts";
 import { listProfiles, type Listed as ListedProfile, profilePath, SHIPPED } from "../profile/profiles.ts";
@@ -203,18 +204,18 @@ export class Plugin {
 
   /**
    * What installing the shared template at a path on this machine would bring, or with `agreed`, the hash of the
-   * offer the Human read, the template installed under its name. The plugin reads the file where it is and fetches
-   * nothing (TEMPLATE.md, Installing).
+   * offer the Human read and their matching of its agent profiles, the template installed under its name. The plugin
+   * reads the file where it is and fetches nothing (TEMPLATE.md, Installing).
    */
   async template(
     path: string,
-    agreed: string | null,
+    agreed: { readonly hash: string; readonly agents: Matching } | null,
   ): Promise<{ ok: true; offer: TemplateOffer } | { ok: false; says: string }> {
-    const names = await (await this.whenReady()).host.agentProfiles();
-    if ("unavailable" in names) return { ok: false, says: "Paseo's API has not arrived; try again in a moment" };
+    const has = await (await this.whenReady()).host.agentProfiles();
+    if ("unavailable" in has) return { ok: false, says: "Paseo's API has not arrived; try again in a moment" };
     return agreed === null
-      ? offerOf(this.root, path, names, process.env)
-      : install(this.root, path, agreed, names, process.env);
+      ? offerOf(this.root, path, has, process.env)
+      : install(this.root, path, agreed.hash, agreed.agents, has, process.env);
   }
 
   /**
@@ -742,6 +743,7 @@ export class Plugin {
       },
       scratch,
       rules: rulesDir(this.root, profile),
+      agents: matchingFile(this.root, profile),
       checkTimeoutMs: CHECK_TIMEOUT_MS,
       log: () => store.read(0),
       marker: PLUGIN_ID,

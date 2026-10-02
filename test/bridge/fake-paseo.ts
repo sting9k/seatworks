@@ -8,6 +8,8 @@ type Created = {
   prompt: string;
   env: Record<string, string>;
   systemPrompt: string;
+  /** The provider and model of the agent profile it was made from. */
+  provider: string;
   tools: string[];
   /** The environment the team's tool server would be spawned with. */
   teamEnv: Record<string, string> | undefined;
@@ -93,7 +95,7 @@ export function fakePaseo(pluginDir: string, provider = "claude") {
                     id: name,
                     name,
                     provider,
-                    model: "test",
+                    model: name,
                   }),
                 ),
               },
@@ -127,6 +129,7 @@ export function fakePaseo(pluginDir: string, provider = "claude") {
         env: Record<string, string>;
         labels: Record<string, string>;
         config: {
+          provider: string;
           systemPrompt: string;
           toolPolicy: { preapproved: { server: string; tool: string }[] };
           mcpServers?: Record<string, { env?: Record<string, string> } & Record<string, unknown>>;
@@ -148,6 +151,7 @@ export function fakePaseo(pluginDir: string, provider = "claude") {
           prompt: o.prompt,
           env: o.env,
           systemPrompt: o.config.systemPrompt,
+          provider: o.config.provider,
           tools: o.config.toolPolicy.preapproved.filter((p) => p.server === "team").map((p) => p.tool),
           teamEnv: o.config.mcpServers?.team?.env,
           servers: o.config.mcpServers ?? {},
