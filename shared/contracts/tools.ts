@@ -2,11 +2,15 @@ import { z } from "zod";
 import { COMMANDS, type CommandType, FACTS, HUMAN_ONLY, ReportLines } from "./commands.ts";
 
 /** The reads every agent may be shown besides the commands its role names; a scope left out is the caller's own. */
+const scope = z.string().optional().describe("A scope's id; yours when left out.");
 export const READS = {
-  status: z.object({ scope: z.string().optional() }),
-  record: z.object({ scope: z.string().optional() }),
-  diff: z.object({ scope: z.string().optional(), commit: z.string().optional() }),
-  look: z.object({ actor: z.string(), last: z.number().int().positive().max(200).default(40) }),
+  status: z.object({ scope }),
+  record: z.object({ scope }),
+  diff: z.object({ scope, commit: z.string().optional().describe("A commit of that scope, in place of its head.") }),
+  look: z.object({
+    actor: z.string().describe("The agent, by its actor id."),
+    last: z.number().int().positive().max(200).default(40).describe("How many of its latest turns."),
+  }),
 } as const;
 export type ReadName = keyof typeof READS;
 /** A read's arguments once parsed, whichever read it is. */
@@ -24,6 +28,10 @@ export const ROLE_TOOLS: ReadonlySet<string> = new Set([
   ...(Object.keys(COMMANDS) as CommandType[]).filter((type) => !FACTS.has(type) && !HUMAN_ONLY.has(type)),
 ]);
 
+/** What a line is, said once in each tool that takes lines rather than on every line of its arguments. */
+const LINES =
+  "A line is `{ text }`; add `via: { kind, id }` when it comes from the Human's message or answer, which makes it theirs, or from a finding or question.";
+
 /** What each tool is for, in the words an agent reads; a description names no role, so any profile uses them. */
 export const DESCRIPTIONS: Record<CommandType | ReadName, string> = {
   status:
@@ -33,12 +41,10 @@ export const DESCRIPTIONS: Record<CommandType | ReadName, string> = {
   diff: "A scope's change against its parent branch, at its branch head or a named commit. Yours, unless you pass `scope`.",
   look: "An agent's recent turns: what it said, thought and ran, newest last.",
   open_project: "Opens the project.",
-  open_scope:
-    "Opens a child scope under one you own, with its paths, its brief (goal, constraints, choices, context, kind) and an agent of the role you name.",
-  amend_brief: "Amends a child scope's brief with a reason; `carries` names the finding it answers.",
-  set_plan:
-    "Sets your scope's plan: goal, limits, unknowns with how each is checked, appetite, and the domain's terms as settled.",
-  amend_plan: "Amends your plan's lines with a reason.",
+  open_scope: `Opens a child scope under one you own, with its paths, its brief and an agent of the role you name. ${LINES}`,
+  amend_brief: `Amends a child scope's brief with a reason. ${LINES}`,
+  set_plan: `Sets your scope's plan: goal, limits, unknowns with how each is checked, appetite, and the domain's terms as settled. ${LINES}`,
+  amend_plan: `Amends your plan's lines with a reason. ${LINES}`,
   add_edge: "Adds `after` (a sibling waits for another), `mayChange` or `mustTell` to a scope, with a reason.",
   remove_edge: "Removes an edge, with a reason.",
   handover: "Moves paths from one child scope to a sibling.",

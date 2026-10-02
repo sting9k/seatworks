@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, test } from "node:test";
 import { Plugin } from "../../server/bridge/plugin.ts";
+import { ROLE_TOOLS, toolsFor } from "../../shared/contracts/tools.ts";
 import { agentTools } from "./agent-tools.ts";
 import { fakePaseo } from "./fake-paseo.ts";
 import { stateRoot } from "./state-root.ts";
@@ -97,4 +98,30 @@ test("each read answers from the record, the repository or Paseo: an agent's own
   assert.equal(misnamed.ok, false);
   assert.match(misnamed.text, /^The arguments do not fit status: [^]*scope/);
   for (const t of [supervisor, lead, peer]) t.close();
+});
+
+test("every argument an agent is shown says what it is; a line and what it comes from are said once, by each tool that takes them", () => {
+  const undescribed: string[] = [];
+  type Node = { properties?: Record<string, { description?: string }>; items?: unknown; anyOf?: unknown[] };
+  /** Notes each argument with no words of its own, and says whether a line was met on the way. */
+  const takesLines = (at: string, schema: unknown): boolean => {
+    if (schema === null || typeof schema !== "object") return false;
+    const node = schema as Node;
+    const names = Object.keys(node.properties ?? {}).join(",");
+    // A line and a reference are the same wherever they stand: their own fields are said by the tool, not each time.
+    if (names === "text,via" || names === "kind,id") return names === "text,via";
+    const inside = Object.entries(node.properties ?? {}).map(([name, property]) => {
+      if (!property.description) undescribed.push(`${at}.${name}`);
+      return takesLines(`${at}.${name}`, property);
+    });
+    return [...inside, takesLines(at, node.items), ...(node.anyOf ?? []).map((one) => takesLines(at, one))].some(
+      Boolean,
+    );
+  };
+  const report = new Map([["decided", "Each decision a reader could question."]]);
+  const silent = toolsFor(ROLE_TOOLS, report)
+    .filter((tool) => takesLines(tool.name, tool.inputSchema) && !tool.description.includes("`via: { kind, id }`"))
+    .map((tool) => tool.name);
+  assert.deepEqual(undescribed, []);
+  assert.deepEqual(silent, [], "each tool that takes lines says what a line is and what it may come from");
 });

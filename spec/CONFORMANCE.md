@@ -156,6 +156,7 @@ A call as an agent's tool server sends it, the answer read back.
 | `status`, `record` and `diff` called with no scope named, then with another scope's name | The caller's own scope as the record has it, its history, and its change against its parent's branch; then the other's |
 | `look` at an agent, and at its last two turns               | What it was told, thought and said, newest last; no more turns than asked for, and the newest of them |
 | A read whose arguments do not fit: `look` with no actor, or asking for more turns than it gives; a scope that is no name | Refused, saying which argument; nothing is read |
+| Every tool an agent may be shown                            | Each of its arguments says what it is, at every depth; a line's own fields are said once, by each tool that takes lines |
 | A tool server that says hello for a project the plugin cannot open | Refused, saying so, with the reason in Paseo's log; every other agent's tools go on working |
 | A tool server started before the plugin listens             | It waits, and has its tools once the plugin is there       |
 | A tool server the plugin refuses                            | Not tried again: the refusal is the plugin's answer        |

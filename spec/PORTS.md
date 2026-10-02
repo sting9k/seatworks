@@ -214,7 +214,9 @@ back the key its agent was bound to. It guards against mistakes, not intent, as 
 Each tool is one kernel command, shown to the roles whose `tools` name it, or a read: `status` (a scope's view),
 `record` (briefs, findings, reports, attentions), `look` (an agent's last turns, newest last, through the agent
 host), `diff` (a scope's change at a commit). A read with no scope named is of the caller's own. A reply is the
-command's result and the facts it produced, never advice on what to do next. A tool's description says what it is for, and `raise_finding`'s names the points of conflict it is
+command's result and the facts it produced, never advice on what to do next. Every argument an agent is shown says what it is, in a line of its own; a line and what it comes
+from (`via`) are the same in every tool, so each tool that takes lines says them once rather than on every line. A
+tool's description says what it is for, and `raise_finding`'s names the points of conflict it is
 the channel for: a check that cannot pass honestly, a premise the code contradicts, the same failure a third time, a
 layer about to hide a contradiction (`STEERING.md`).
 
