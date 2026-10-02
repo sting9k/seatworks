@@ -1,19 +1,30 @@
+/* The look follows ComfyUI's (EDITOR.md, The look): one dark ground, neutral nodes, colour kept for the wires. */
+
 :root {
   color-scheme: dark;
-  --ground: #121214;
-  --panel: #1b1b1f;
-  --raised: #25252b;
-  --line: #34343c;
-  --text: #e7e7ea;
-  --quiet: #9a9aa5;
-  --accent: #e8f34a;
-  --wire-spawns: #f0a94a;
-  --wire-human: #ef6fa3;
-  --wire-skill: #4fd1b5;
-  --wire-tools: #6ea8fe;
-  --wire-watches: #b58cf5;
+  --ground: #211927;
+  --canvas: #1b1a1e;
+  --panel: #18171b;
+  --node: #2a292f;
+  --node-top: #323138;
+  --well: #1c1b20;
+  --line: rgb(255 255 255 / 9%);
+  --line-strong: rgb(255 255 255 / 16%);
+  --text: #c2bfb9;
+  --strong: #f0efed;
+  --quiet: #85828c;
+  --accent: #f2ff59;
+  --on-accent: #211927;
+  --wire-spawns: #f2a54a;
+  --wire-human: #f0719f;
+  --wire-skill: #5fd6b4;
+  --wire-tools: #74a9ff;
+  --wire-watches: #b592f7;
+  --wire-none: #8d8a94;
   font:
-    13px/1.45 system-ui,
+    13px/1.45 Inter,
+    system-ui,
+    -apple-system,
     sans-serif;
 }
 
@@ -27,19 +38,37 @@ body {
   color: var(--text);
 }
 
-button {
+button,
+input {
   font: inherit;
   color: inherit;
+}
+
+button {
   cursor: pointer;
 }
 
-.chip {
-  display: inline-block;
-  padding: 0 7px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
+h1,
+h2 {
+  color: var(--strong);
+  font-weight: 500;
+}
+
+.eyebrow {
+  margin: 0 0 4px;
   color: var(--quiet);
   font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.chip,
+.pill {
+  display: inline-block;
+  padding: 3px 14px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 5%);
+  font-size: 12px;
   white-space: nowrap;
 }
 
@@ -49,29 +78,65 @@ button {
   font-size: 12px;
 }
 
+.mono {
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+}
+
+.dot {
+  display: inline-block;
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: var(--wire-none);
+}
+
+.kind-role {
+  background: var(--wire-spawns);
+}
+.kind-human {
+  background: var(--wire-human);
+}
+.kind-skill {
+  background: var(--wire-skill);
+}
+.kind-tools {
+  background: var(--wire-tools);
+}
+.kind-moment {
+  background: var(--wire-watches);
+}
+
 /* Gallery */
 
 .gallery {
-  max-width: 1100px;
+  max-width: 1320px;
   margin: 0 auto;
-  padding: 48px 24px;
+  padding: 56px 32px 80px;
+}
+
+.gallery > header {
+  margin-bottom: 40px;
+  text-align: center;
 }
 
 .gallery h1 {
   margin: 0;
-  font-size: 28px;
+  font-size: 32px;
 }
 
 .lede {
-  margin: 6px 0 28px;
+  margin: 6px 0 0;
   color: var(--quiet);
   font-size: 15px;
 }
 
 .cards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 24px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -80,63 +145,134 @@ button {
 .card {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 22px;
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  background: var(--panel);
+  gap: 14px;
+  padding: 8px 8px 24px;
+  border-radius: 32px;
+  background: rgb(255 255 255 / 4%);
 }
 
-.card h2 {
-  margin: 0;
-  font-size: 20px;
-}
-
-.card p {
-  margin: 0;
+.card > :not(.picture) {
+  margin: 0 16px;
 }
 
 .card.broken {
-  border-color: #a3484a;
+  padding: 24px 8px;
+  outline: 1px solid #a3484a;
 }
 
-.card footer {
+.picture {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  border-radius: 24px;
+  background: radial-gradient(120% 90% at 30% 20%, #2c2636 0%, #17131c 70%);
+}
+
+.picture h2 {
+  position: absolute;
+  inset: auto 20px 16px;
+  margin: 0;
+  font-size: 22px;
+  text-shadow: 0 1px 12px #000;
+}
+
+.picture::after {
+  content: "";
+  position: absolute;
+  inset: 55% 0 0;
+  background: linear-gradient(transparent, rgb(12 9 15 / 85%));
+  pointer-events: none;
+}
+
+.picture h2 {
+  z-index: 1;
+}
+
+.cover {
+  width: 100%;
+  height: 100%;
+  padding: 18px;
+}
+
+.cover line {
+  stroke-width: 1.4;
+  opacity: 0.45;
+}
+
+.cover rect {
+  fill: #6e6b78;
+}
+
+.cover .fill-role {
+  fill: var(--wire-spawns);
+}
+.cover .fill-human {
+  fill: var(--wire-human);
+}
+.cover .fill-skill {
+  fill: var(--wire-skill);
+}
+.cover .fill-tools {
+  fill: var(--wire-tools);
+}
+.cover .fill-moment {
+  fill: var(--wire-watches);
+}
+.cover .stroke-spawns {
+  stroke: var(--wire-spawns);
+}
+.cover .stroke-human {
+  stroke: var(--wire-human);
+}
+.cover .stroke-skill {
+  stroke: var(--wire-skill);
+}
+.cover .stroke-tools {
+  stroke: var(--wire-tools);
+}
+.cover .stroke-watches {
+  stroke: var(--wire-watches);
+}
+
+.card .row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-top: auto;
-  padding-top: 8px;
 }
 
-.card footer .chip {
-  margin-right: 6px;
-}
-
-.card button {
-  padding: 8px 20px;
+.cta {
+  padding: 9px 26px;
   border: 0;
-  border-radius: 999px;
+  border-radius: 16px;
   background: var(--accent);
-  color: #16160a;
+  color: var(--on-accent);
   font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 /* One template */
 
 .editor {
   display: grid;
-  grid-template: "bar bar bar" 44px "library canvas files" minmax(0, 1fr) / 220px minmax(0, 1fr) 400px;
+  grid-template: "bar bar bar" 48px "library canvas side" minmax(0, 1fr) / 260px minmax(0, 1fr) 380px;
   /* Three panes need the width; a narrower window scrolls sideways before the canvas is squeezed out. */
-  min-width: 1000px;
+  min-width: 1040px;
   height: 100vh;
+  background: var(--canvas);
 }
 
 .bar {
   grid-area: bar;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
   padding: 0 14px;
   border-bottom: 1px solid var(--line);
   background: var(--panel);
@@ -144,96 +280,102 @@ button {
 
 .bar h1 {
   margin: 0;
-  font-size: 15px;
+  font-size: 14px;
 }
 
-.bar button,
-.library button,
-.tree button {
+.back {
+  padding: 6px 12px;
   border: 0;
-  background: none;
-}
-
-.bar button {
-  padding: 5px 12px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 10px;
+  background: rgb(255 255 255 / 6%);
 }
 
 .library,
-.files {
+.side {
   overflow: auto;
   background: var(--panel);
 }
 
 .library {
   grid-area: library;
-  padding: 12px;
+  padding: 16px 12px;
   border-right: 1px solid var(--line);
 }
 
-.library h2,
-.files h2 {
-  margin: 0 0 10px;
-  font-size: 15px;
+.library h2 {
+  margin: 0 4px 12px;
+  font-size: 18px;
 }
 
-.library summary {
+.library input {
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 10px;
+  outline: 0;
+  background: rgb(255 255 255 / 7%);
+}
+
+.library input:focus {
+  box-shadow: 0 0 0 1px var(--line-strong);
+}
+
+.library summary,
+.tree summary {
   display: flex;
-  justify-content: space-between;
-  padding: 6px 4px;
+  align-items: center;
+  padding: 7px 6px;
   cursor: pointer;
-  font-weight: 600;
+  color: var(--strong);
+  list-style: none;
+}
+
+.library summary::before,
+.tree summary::before {
+  content: "›";
+  width: 14px;
+  color: var(--quiet);
+  transition: rotate 0.12s;
+}
+
+details[open] > summary::before {
+  rotate: 90deg;
+}
+
+.library summary .count,
+.tree summary .count {
+  margin-left: auto;
 }
 
 .library ul,
-.tree {
-  margin: 0;
+.tree ul {
+  margin: 0 0 6px;
   padding: 0;
   list-style: none;
 }
 
-.library button,
-.tree button {
+.library li button,
+.tree li button {
+  display: flex;
+  align-items: center;
   width: 100%;
-  padding: 4px 8px;
-  border-radius: 6px;
+  padding: 5px 8px 5px 20px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
   text-align: left;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.library button:hover,
-.tree button:hover,
-.tree button.open {
-  background: var(--raised);
-}
-
-.library button::before {
-  content: "";
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  margin-right: 8px;
-  border-radius: 50%;
-  background: var(--quiet);
-}
-
-.library .kind-role::before {
-  background: var(--wire-spawns);
-}
-.library .kind-human::before {
-  background: var(--wire-human);
-}
-.library .kind-skill::before {
-  background: var(--wire-skill);
-}
-.library .kind-tools::before {
-  background: var(--wire-tools);
-}
-.library .kind-moment::before {
-  background: var(--wire-watches);
+.library li button:hover,
+.tree li button:hover,
+.library li button.open,
+.tree li button.open {
+  background: rgb(255 255 255 / 7%);
+  color: var(--strong);
 }
 
 .canvas {
@@ -246,218 +388,278 @@ button {
   visibility: hidden;
 }
 
-.files {
-  grid-area: files;
+.react-flow.dark {
+  --xy-background-color: var(--canvas);
+  --xy-background-pattern-color: rgb(255 255 255 / 9%);
+  --xy-minimap-background-color: var(--panel);
+  --xy-minimap-mask-background-color: rgb(24 23 27 / 70%);
+  --xy-controls-button-background-color: var(--node);
+  --xy-controls-button-background-color-hover: var(--node-top);
+  --xy-controls-button-border-color: var(--line);
+  --xy-edge-stroke: var(--wire-none);
+  --xy-node-background-color: transparent;
+  --xy-node-border: 0;
+  --xy-node-boxshadow-selected: none;
+}
+
+.react-flow__minimap,
+.react-flow__controls {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.side {
+  grid-area: side;
   display: flex;
   flex-direction: column;
-  padding: 12px;
+  gap: 18px;
+  padding: 18px 16px;
   border-left: 1px solid var(--line);
 }
 
-.tree {
-  flex: none;
-  max-height: 32%;
-  overflow: auto;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--line);
-  font-family: ui-monospace, monospace;
-  font-size: 12px;
+.side h2 {
+  margin: 0 0 8px;
+  font-size: 18px;
 }
 
-.files h3 {
-  margin: 12px 0 6px;
-  font:
-    600 12px ui-monospace,
-    monospace;
+.side p {
+  margin: 0 0 8px;
 }
 
-.files pre {
-  flex: 1;
+.side dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 14px;
   margin: 0;
-  overflow: auto;
-  white-space: pre-wrap;
+}
+
+.side dt {
+  color: var(--quiet);
+}
+
+.side dd {
+  margin: 0;
   overflow-wrap: anywhere;
-  font:
-    12px/1.5 ui-monospace,
-    monospace;
-  color: #d4d4da;
 }
 
 .hint {
   color: var(--quiet);
 }
 
-/* Nodes */
+.file {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 160px;
+}
 
-.node {
-  width: 250px;
-  border: 1px solid var(--line);
+.file pre {
+  flex: 1;
+  margin: 0;
+  overflow: auto;
+  padding: 12px;
   border-radius: 10px;
-  background: var(--raised);
+  background: var(--well);
+  color: #cfccd6;
+  font:
+    12px/1.55 ui-monospace,
+    monospace;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.tree {
+  flex: none;
+  border-top: 1px solid var(--line);
+  padding-top: 6px;
+}
+
+.tree ul {
+  max-height: 220px;
+  overflow: auto;
+  font-family: ui-monospace, monospace;
   font-size: 12px;
 }
 
-.node-role {
-  width: 300px;
+/* Nodes */
+
+.node {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--node);
+  box-shadow: 0 4px 14px rgb(0 0 0 / 28%);
+  font-size: 12px;
 }
 
-.react-flow__node.selected .node {
-  border-color: var(--accent);
-}
-
-.node.inactive {
-  opacity: 0.55;
+.react-flow__node.selected > .node {
+  border-color: var(--strong);
 }
 
 .node header {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
   padding: 7px 12px;
-  border-bottom: 1px solid var(--line);
-  border-radius: 10px 10px 0 0;
-  background: #2e2e36;
+  color: var(--strong);
+  white-space: nowrap;
 }
 
-.node header strong {
-  margin-right: auto;
-  font-size: 13px;
+.node-role {
+  width: 290px;
+  padding-bottom: 8px;
 }
 
 .node-role header {
-  background: #4a3a22;
-}
-.node-human header {
-  background: #4a2636;
-}
-.node-skill header {
-  background: #1f4039;
-}
-.node-tools header {
-  background: #24375a;
-}
-.node-moment header {
-  background: #3a2c57;
+  border-bottom: 1px solid var(--line);
+  border-radius: 10px 10px 0 0;
+  background: var(--node-top);
+  font-size: 13px;
 }
 
-.node p,
-.node dl,
-.node > ul {
-  margin: 0;
-  padding: 8px 12px;
+.compact header {
+  padding: 6px 14px 6px 12px;
 }
 
-.node > ul,
-.group ul {
-  list-style: none;
-  font-family: ui-monospace, monospace;
+.node.inactive {
+  opacity: 0.5;
+}
+
+.quiet {
+  margin-left: 10px;
+  color: var(--quiet);
   font-size: 11px;
 }
 
-.clamped {
-  display: -webkit-box;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-  line-clamp: 3;
-  color: #c9c9d0;
-}
-
-.node dl {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 2px 10px;
-}
-
-.node dt {
-  color: var(--quiet);
-}
-
-.node dd {
-  margin: 0;
-  overflow-wrap: anywhere;
-}
-
 .sockets {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  row-gap: 4px;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--line);
-  color: var(--quiet);
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0 6px;
 }
 
 .socket {
   position: relative;
-  padding: 0 14px;
+  padding: 2px 14px;
 }
 
-.socket-right {
+.socket-out {
+  color: var(--quiet);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  line-height: 18px;
   text-align: right;
 }
 
-.group {
-  border-top: 1px solid var(--line);
+.switches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 2px 10px 6px;
+}
+
+.switch {
+  padding: 1px 9px;
+  border-radius: 999px;
+  background: var(--well);
+  color: var(--quiet);
+  font-size: 11px;
+}
+
+.switch.on {
+  color: var(--strong);
+}
+
+.field {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 3px 10px;
+  padding: 3px 10px;
+  border-radius: 8px;
+  background: var(--well);
+  color: var(--quiet);
+}
+
+.field .value {
+  overflow: hidden;
+  color: var(--text);
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .group summary {
-  display: flex;
-  justify-content: space-between;
-  padding: 5px 12px;
   cursor: pointer;
+  list-style: none;
 }
 
 .group ul {
-  margin: 0;
-  padding: 0 12px 8px;
+  margin: 0 10px 4px;
+  padding: 4px 12px 6px;
+  list-style: none;
+  font:
+    11px/1.6 ui-monospace,
+    monospace;
 }
 
 .ticked::before {
-  content: "✓ ";
+  content: "✓  ";
   color: var(--wire-skill);
 }
 
-.hidden-tool {
+.unticked {
   color: var(--quiet);
-  text-decoration: line-through;
 }
 
-.hidden-tool::before {
-  content: "– ";
+.unticked::before {
+  content: "–  ";
+}
+
+.frame {
+  width: 100%;
+  height: 100%;
+  border: 1px solid rgb(116 169 255 / 35%);
+  border-radius: 12px;
+  background: rgb(116 169 255 / 7%);
+}
+
+.frame header {
+  padding: 8px 14px;
+  color: #9dc1ff;
+  font-size: 15px;
 }
 
 /* Wires: a kind, a colour */
 
-.react-flow .handle {
-  width: 10px;
-  height: 10px;
-  border: 2px solid var(--raised);
+.react-flow .plug {
+  width: 9px;
+  height: 9px;
+  border: 0;
 }
 
-.handle.wire-spawns {
+.plug.wire-spawns {
   background: var(--wire-spawns);
 }
-.handle.wire-human {
+.plug.wire-human {
   background: var(--wire-human);
 }
-.handle.wire-skill {
+.plug.wire-skill {
   background: var(--wire-skill);
 }
-.handle.wire-tools {
+.plug.wire-tools {
   background: var(--wire-tools);
 }
-.handle.wire-watches {
+.plug.wire-watches {
   background: var(--wire-watches);
 }
 
 .react-flow__edge .react-flow__edge-path {
-  stroke-width: 1.6;
+  stroke-width: 1.5;
+  opacity: 0.85;
 }
 
 .react-flow__edge.wire-spawns .react-flow__edge-path {
   stroke: var(--wire-spawns);
-  stroke-width: 2.4;
+  stroke-width: 2.2;
 }
 .react-flow__edge.wire-human .react-flow__edge-path {
   stroke: var(--wire-human);
@@ -480,4 +682,7 @@ button {
 }
 .react-flow__minimap .mini-moment {
   fill: var(--wire-watches);
+}
+.react-flow__minimap .mini-frame {
+  fill: rgb(116 169 255 / 12%);
 }

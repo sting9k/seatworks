@@ -6,26 +6,37 @@ type Of<Kind extends GraphNode["kind"]> = Extract<GraphNode, { kind: Kind }>;
 export type FlowNode<Kind extends GraphNode["kind"] = GraphNode["kind"]> = {
   [K in Kind]: Node<{ readonly node: Of<K> }, K>;
 }[Kind];
+/** A titled box behind the nodes of a family that no wire places. */
+export type FrameNode = Node<{ readonly title: string }, "frame">;
 
 /** A socket takes only its own kind of wire (EDITOR.md, Wires); the kind is its colour and its handle's id. */
-function Plug({ kind, end, side }: { kind: Wire["kind"]; end: "in" | "out"; side: "left" | "right" }) {
+function Plug({ kind, end }: { kind: Wire["kind"]; end: "in" | "out" }) {
   return (
     <Handle
       id={`${kind}-${end}`}
       type={end === "in" ? "target" : "source"}
-      position={side === "left" ? Position.Left : Position.Right}
-      className={`handle wire-${kind}`}
+      position={end === "in" ? Position.Left : Position.Right}
+      className={`plug wire-${kind}`}
       isConnectable={false}
     />
   );
 }
 
-/** A labelled socket in a node that has several, on the row its label is on. */
-function Socket({ label, ...plug }: { kind: Wire["kind"]; end: "in" | "out"; side: "left" | "right"; label: string }) {
+/** What comes in is named on the left; what goes out is named by its kind on the right, as ComfyUI names a type. */
+function Socket({ kind, end, label }: { kind: Wire["kind"]; end: "in" | "out"; label: string }) {
   return (
-    <div className={`socket socket-${plug.side}`}>
-      <Plug {...plug} />
+    <div className={`socket socket-${end}`}>
+      <Plug kind={kind} end={end} />
       {label}
+    </div>
+  );
+}
+
+function Field({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="field">
+      <span>{label}</span>
+      <span className="value">{value}</span>
     </div>
   );
 }
@@ -34,40 +45,42 @@ function Role({ data: { node } }: NodeProps<FlowNode<"role">>) {
   return (
     <div className="node node-role">
       <header>
-        <strong>{node.name}</strong>
+        <i className="dot kind-role" />
+        {node.name}
+      </header>
+      <div className="sockets">
+        <div>
+          <Socket kind="spawns" end="in" label="seated by" />
+          <Socket kind="skill" end="in" label="skills" />
+          <Socket kind="tools" end="in" label="more tools" />
+          <Socket kind="watches" end="in" label="moments" />
+        </div>
+        <div>
+          <Socket kind="spawns" end="out" label="SEATS" />
+          <Socket kind="human" end="out" label="HUMAN" />
+        </div>
+      </div>
+      <div className="switches">
         {node.properties.map((property) => (
-          <span key={property} className="chip">
+          <span key={property} className="switch on">
             {property}
           </span>
         ))}
-      </header>
-      <div className="sockets">
-        <Socket kind="spawns" end="in" side="left" label="seated by" />
-        <Socket kind="spawns" end="out" side="right" label="seats" />
-        <Socket kind="skill" end="in" side="left" label="skills" />
-        <Socket kind="human" end="out" side="right" label="the Human" />
-        <Socket kind="tools" end="in" side="left" label="more tools" />
-        <Socket kind="watches" end="in" side="right" label="watched for" />
       </div>
-      <dl>
-        <dt>Speaks to</dt>
-        <dd>{node.speaks.length > 0 ? node.speaks.join(", ") : "nobody"}</dd>
-        <dt>Models</dt>
-        <dd>{node.models.length > 0 ? node.models.join(", ") : "none named"}</dd>
-        <dt>Prompt</dt>
-        <dd>{node.file ?? "none"}</dd>
-      </dl>
+      <Field label="speaks to" value={node.speaks.length > 0 ? node.speaks.join(", ") : "nobody"} />
+      <Field label="models" value={node.models.length > 0 ? node.models.join(", ") : "none named"} />
+      <Field label="prompt" value={node.file ?? "none"} />
       {node.groups.map((group) => (
         <details key={group.id} className="group nodrag">
-          <summary>
-            {group.name}
-            <span className="count">
-              {group.tools.filter((tool) => tool.ticked).length}/{group.tools.length}
+          <summary className="field">
+            <span>{group.name}</span>
+            <span className="value">
+              {group.tools.filter((tool) => tool.ticked).length} / {group.tools.length}
             </span>
           </summary>
           <ul>
             {group.tools.map((tool) => (
-              <li key={tool.name} className={tool.ticked ? "ticked" : "hidden-tool"}>
+              <li key={tool.name} className={tool.ticked ? "ticked" : "unticked"}>
                 {tool.name}
               </li>
             ))}
@@ -78,78 +91,49 @@ function Role({ data: { node } }: NodeProps<FlowNode<"role">>) {
   );
 }
 
-function Human() {
+/** A node with one socket and no settings is its title alone, as a collapsed node is; the side panel says the rest. */
+function Compact({
+  kind,
+  title,
+  plug,
+  quiet,
+}: {
+  kind: GraphNode["kind"];
+  title: string;
+  plug?: Wire["kind"];
+  quiet?: string;
+}) {
   return (
-    <div className="node node-human">
-      <Plug kind="human" end="in" side="left" />
+    <div className={`node compact${quiet ? " inactive" : ""}`}>
+      {plug ? <Plug kind={plug} end={kind === "human" ? "in" : "out"} /> : null}
       <header>
-        <strong>The Human</strong>
+        <i className={`dot kind-${kind}`} />
+        {title}
+        {quiet ? <span className="quiet">{quiet}</span> : null}
       </header>
-      <p>Asked and told by the roles wired here.</p>
     </div>
   );
 }
 
-function Skill({ data: { node } }: NodeProps<FlowNode<"skill">>) {
-  return (
-    <div className="node node-skill">
-      <Plug kind="skill" end="out" side="right" />
-      <header>
-        <strong>{node.name}</strong>
-      </header>
-      <p className="clamped">{node.description}</p>
-    </div>
-  );
-}
+const Human = () => <Compact kind="human" title="The Human" plug="human" />;
+const Skill = ({ data: { node } }: NodeProps<FlowNode<"skill">>) => (
+  <Compact kind="skill" title={node.name} plug="skill" />
+);
+const Tools = ({ data: { node } }: NodeProps<FlowNode<"tools">>) => (
+  <Compact kind="tools" title={`${node.name} · ${node.tools.length}`} plug="tools" />
+);
+const Question = ({ data: { node } }: NodeProps<FlowNode<"question">>) => (
+  <Compact kind="question" title={node.name} {...(node.active ? {} : { quiet: "not asked" })} />
+);
+const Moment = ({ data: { node } }: NodeProps<FlowNode<"moment">>) => (
+  <Compact kind="moment" title={node.name} plug="watches" {...(node.active ? {} : { quiet: "not watched" })} />
+);
 
-function Tools({ data: { node } }: NodeProps<FlowNode<"tools">>) {
-  return (
-    <div className="node node-tools">
-      <Plug kind="tools" end="out" side="right" />
-      <header>
-        <strong>{node.name}</strong>
-      </header>
-      <ul>
-        {node.tools.map((tool) => (
-          <li key={tool} className="ticked">
-            {tool}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function Question({ data: { node } }: NodeProps<FlowNode<"question">>) {
-  return (
-    <div className={`node node-question${node.active ? "" : " inactive"}`}>
-      <header>
-        <strong>{node.name}</strong>
-        {node.active ? null : <span className="chip">not asked</span>}
-      </header>
-      <p className="clamped">{node.asks}</p>
-      <dl>
-        <dt>On</dt>
-        <dd>{node.on.join(", ")}</dd>
-        <dt>Tells</dt>
-        <dd>{node.tells ?? "the record only"}</dd>
-      </dl>
-    </div>
-  );
-}
-
-function Moment({ data: { node } }: NodeProps<FlowNode<"moment">>) {
-  return (
-    <div className={`node node-moment${node.active ? "" : " inactive"}`}>
-      <Plug kind="watches" end="out" side="left" />
-      <header>
-        <strong>{node.name}</strong>
-        {node.active ? null : <span className="chip">not watched</span>}
-      </header>
-      <p className="clamped">{node.countedInCode ? "Counted in code; no model is asked." : node.asks}</p>
-    </div>
-  );
-}
+const Frame = ({ data }: NodeProps<FrameNode>) => (
+  <div className="frame">
+    <header>{data.title}</header>
+  </div>
+);
 
 export const NODE_TYPES = {
   role: Role,
@@ -158,4 +142,5 @@ export const NODE_TYPES = {
   tools: Tools,
   question: Question,
   moment: Moment,
+  frame: Frame,
 } satisfies NodeTypes;

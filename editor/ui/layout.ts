@@ -4,20 +4,19 @@ import type { Graph } from "../template/graph.ts";
 type Size = { readonly width: number; readonly height: number };
 type Point = { readonly x: number; readonly y: number };
 
-const GAP = 40;
+const GAP = 12;
 
 /**
- * Where each node sits when the template keeps no positions: equipment left of the roles it goes to, moments right of
- * the roles they watch, and what no wire touches in rows underneath.
+ * Where each node sits when the template keeps no positions: what goes into a role on its left, what it seats on its
+ * right, and what no wire touches in rows underneath.
  */
 export function laidOut(graph: Graph, sizes: ReadonlyMap<string, Size>): Map<string, Point> {
   const wired = new graphlib.Graph();
-  wired.setGraph({ rankdir: "LR", nodesep: 18, ranksep: 110 });
+  wired.setGraph({ rankdir: "LR", nodesep: 10, ranksep: 140 });
   wired.setDefaultEdgeLabel(() => ({}));
   for (const wire of graph.wires) {
     for (const id of [wire.from, wire.to]) wired.setNode(id, { ...sizes.get(id)! });
-    if (wire.kind === "watches") wired.setEdge(wire.to, wire.from);
-    else wired.setEdge(wire.from, wire.to);
+    wired.setEdge(wire.from, wire.to);
   }
   layout(wired);
 
@@ -32,7 +31,7 @@ export function laidOut(graph: Graph, sizes: ReadonlyMap<string, Size>): Map<str
   }
 
   let x = 0;
-  let y = bottom + GAP * 2;
+  let y = bottom + 120;
   let rowHeight = 0;
   for (const node of graph.nodes) {
     if (placed.has(node.id)) continue;

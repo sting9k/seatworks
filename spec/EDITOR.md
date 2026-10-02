@@ -4,7 +4,7 @@ Where a template is opened as a graph, changed and saved: a web page, after Comf
 says what a template is; this says how a person makes and changes one. The order it is built in is in `TEMPLATE.md`.
 
 Built so far: a template is picked from the gallery and read. Its graph is drawn and laid out, its files are shown as
-text, and the node library lists the nodes it has. Nothing is changed or saved yet.
+text, and the node library lists the nodes it has and finds one by name. Nothing is changed or saved yet.
 
 ## Decided
 
@@ -31,9 +31,24 @@ text, and the node library lists the nodes it has. Nothing is changed or saved y
 
 | Screen       | Shows                                                                                            |
 | ------------ | ------------------------------------------------------------------------------------------------ |
-| Gallery      | The templates, each with its name, description, tags and cover                                   |
+| Gallery      | The templates, each with its name, description, tags and its graph as a cover                    |
 | Graph        | One template: its nodes wired, a panel of its files, its faults on the nodes they concern        |
 | Node library | Every kind of node, in families, to drag onto the graph                                          |
+
+## The look
+
+After ComfyUI's, so a person who knows one finds their way in the other.
+
+- One dark ground. Nodes are neutral; colour is kept for the wires, their sockets and the dot before a node's name,
+  one colour to a kind of wire.
+- What comes into a node is on its left, named in lower case. What goes out is on its right, named by its kind in
+  capitals, as ComfyUI names a type.
+- A setting is a row: its name on the left, its value on the right.
+- A node with one socket and nothing to set is its title alone, as a collapsed node is. The side panel says the rest
+  of the node that is picked, and shows the file it is kept in.
+- A family no wire places sits in a titled frame that carries its nodes when it is moved: the reflex questions.
+- A card in the gallery is covered by the template's own graph, drawn small, with its name over it. No picture is
+  kept beside a template, so a cover is never out of step with what it covers.
 
 ## Nodes
 

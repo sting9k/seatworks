@@ -133,7 +133,6 @@ answered it, so a question reworded in a template has not earned its `tell` and 
 | `name`        | The template's name, which is also the name of its directory once installed                           |
 | `description` | A sentence or two for the gallery                                                                    |
 | `tags`        | Words the gallery filters by                                                                         |
-| `cover`       | An image beside it, for the gallery                                                                  |
 | `seatworks`   | The release of Seatworks it was made against                                                         |
 | `editor`      | The editor's own: where each node sits, and the steps the flow is written from                       |
 
