@@ -313,8 +313,11 @@ only ever text in the gallery's repository, and the page a person opens is this 
 the gallery names.
 
 The repository is `sting9k/seatworks-gallery`, and its page that repository's own on GitHub Pages,
-https://sting9k.github.io/seatworks-gallery/. The branch of Seatworks it builds from is its variable `SEATWORKS_REF`:
-the page shows what is pushed there, as of the last time its build ran. Nothing in this repository depends on where
+https://sting9k.github.io/seatworks-gallery/. The branch of Seatworks it builds from is its variable `SEATWORKS_REF`.
+The page keeps the commit it was built from (`built-from`, beside the page), and the gallery's repository looks every
+quarter of an hour: when that branch has moved past it, the page is built again from where the branch is, once for a
+commit, so a build that fails is not started over and over. So what is pushed here reaches the page with nobody
+running anything, and nothing in this repository tells the gallery of a push. Nothing in this repository depends on where
 the gallery is.
 
 ## Checking one without the editor

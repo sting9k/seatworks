@@ -112,11 +112,11 @@ docs/             for whoever makes a template: the spec an agent writes one fro
 - **The editor and a template's check run from a checkout**: `npm run editor` serves the editor with a gallery built
   from `templates/`, and `npm run template -- check <dir>` loads a template as the editor and the plugin do.
 - **The gallery is a repository of its own**, `sting9k/seatworks-gallery`: templates as directories, published by
-  pull request, and no copy of the editor. Its one workflow checks this repository out at the branch its
+  pull request, and no copy of the editor. Its build checks this repository out at the branch its
   `SEATWORKS_REF` variable names, runs `npm run gallery -- <its templates>` and `vite build editor`, and publishes
   the result as its GitHub Pages, https://sting9k.github.io/seatworks-gallery/; on a pull request the same build is
-  the check a template passes. It builds what is pushed, so a change here reaches the page when that branch is pushed
-  and the workflow run again. So the `gallery`
+  the check a template passes. It builds what is pushed: a second workflow there looks every quarter of an hour, and
+  builds the page again when that branch has moved past the commit the page was built from. So the `gallery`
   script, `bin/gallery.ts` and the editor's build are called from outside: change one and that workflow together.
 - **Spec files are the docs the owner asked for**, with the two in `docs/` for whoever makes a template. No other
   markdown and no decision records; a change that needs explaining is explained in its commit message.
