@@ -241,7 +241,7 @@ export function react(e: Event, s: State): readonly Effect[] {
         s.scopes.get(ROOT)?.owner ?? null,
         "note",
         e.type === "published"
-          ? `Published ${e.branch} to ${e.remote} at ${e.sha}.`
+          ? `Published ${e.branch} to ${e.remote} at ${e.sha}${e.asked === e.sha ? "" : `: ${e.asked} with the ledger's own commits over it`}.`
           : `Publishing ${e.branch} to ${e.remote} was refused: ${e.why}`,
         true,
       );

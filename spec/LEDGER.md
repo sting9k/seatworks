@@ -360,7 +360,7 @@ Every event, with its payload. `evolve` handles each; an unknown type stops the 
 | `turn_ended`          | `actor, outcome, why, again, tokens, usd` (this turn's share), `tokensSoFar, usdSoFar, seen`; `again` is the text sent again for a failed turn the plugin's words `began`, none when its last turn was already one |
 | `checks_set`          | `checks`                                                                                     |
 | `publish_requested`   | `remote, branch, sha`                                                                        |
-| `published`           | `remote, branch, sha`                                                                        |
+| `published`           | `remote, branch, sha, asked`: the head pushed, and the head the publish was asked at, which differ by the ledger's own commits |
 | `publish_refused`     | `remote, branch, why, found`                                                                        |
 | `permission_asked`    | `permission: Permission`                                                                     |
 | `permission_answered` | `permission, actor, request, allow, reason`                                                  |
@@ -442,7 +442,7 @@ Whoever a command changes something for is told, in the tool's own words and not
 | `brief_amended`, `plan_set`, `plan_amended`, `claim_made`, `integrated`, `scope_dropped` | The owner of each scope the scope `mustTell`: what changed | Yes |
 | `claim_made`                  | The owner of the scope's parent: the commit and the claim, each scope still open under it, and whether the project's checks run on it now or none is set. Its own reply says the same of scopes still open: a scope is taken in only once none under it is, and a hand-back that will be refused for that should not read as done | Yes |
 | `brief_amended` by leave of `mayChange` | The owner of the scope's parent: who amended it, from which scope, and why | Yes |
-| `published`, `publish_refused` | The root's owner: the branch, the remote and the commit, or why it was refused. Whether a landing reached the remote is theirs to know, whoever asked | Yes |
+| `published`, `publish_refused` | The root's owner: the branch, the remote and the commit, with the head it asked at when the ledger's own commits are over it, or why it was refused. Whether a landing reached the remote is theirs to know, whoever asked | Yes |
 | `integration_refused`         | The owner of the scope's parent, who asked: over a parent that moved, that another candidate is being made; for any other reason, the reason and that the candidate stands | Yes |
 
 An integration the workspace refuses for anything but a parent that moved (a base checked out with uncommitted

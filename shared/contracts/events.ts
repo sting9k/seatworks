@@ -116,7 +116,8 @@ export type EventBody =
     }
   | { type: "checks_set"; checks: readonly Check[] }
   | { type: "publish_requested"; remote: string; branch: string; sha: string }
-  | { type: "published"; remote: string; branch: string; sha: string }
+  /** `asked` is the head the publish was asked at: the head pushed is that one, or it with the ledger's own commits over it. */
+  | { type: "published"; remote: string; branch: string; sha: string; asked: string }
   | { type: "publish_refused"; remote: string; branch: string; why: string; found: string | null }
   | { type: "permission_asked"; permission: Permission }
   | {

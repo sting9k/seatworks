@@ -203,7 +203,7 @@ A call as an agent's tool server sends it, the answer read back.
 | `git fetch . HEAD:<branch>`, `git branch -Df`, `git --attr-source HEAD checkout` | Refused     |
 | A merge with conflicts                                      | Undone; the conflicting paths reported   |
 | A publish dispatched after the base moved                    | Refused; the tip it found is recorded, so asking again works |
-| A publish asked for at a head the plugin's own commit has since moved: its note at attaching, or the block it keeps in a file; then with a commit of the Human's among them | Pushed, the plugin's commit with it; refused as moved once anyone else's is there |
+| A publish asked for at a head the plugin's own commit has since moved: its note at attaching, or the block it keeps in a file; then with a commit of the Human's among them | Pushed, the plugin's commit with it, and whoever asked is told both the head pushed and the head it asked at; refused as moved once anyone else's is there |
 | A commit named to the workspace by an abbreviation            | The candidate it gives back is the commit by its whole name |
 | A hook or a smudge filter planted in the repository's own config, then a copy made | Neither runs          |
 | The copy moves while a check runs                           | The run fails                            |

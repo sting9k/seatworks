@@ -404,10 +404,12 @@ test("a publish asked for after the plugin's own commit moved the base is made: 
   const supervisor = await agentTools(socketPath, paseo.created[0]!.env);
   assert.ok((await supervisor.call("publish", { remote: "origin" })).ok);
   await plugin.idle();
+  const tip = git(repo, "rev-parse", "main");
+  assert.equal(git(remote, "rev-parse", "main"), tip, "the first publish lands, note and all");
   assert.equal(
-    git(remote, "rev-parse", "main"),
-    git(repo, "rev-parse", "main"),
-    "the first publish lands, note and all",
+    paseo.sent.filter((s) => s.host === paseo.created[0]!.host).at(-1)?.text,
+    `Published main to origin at ${tip}: ${git(repo, "rev-parse", "main~1")} with the ledger's own commits over it.`,
+    "whoever asked reads that the head pushed is the one it asked at with the ledger's commits over it",
   );
   supervisor.close();
 });
