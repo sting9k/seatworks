@@ -7,8 +7,8 @@ this says what a template is, what the plugin reads of it, and how it reaches a 
 
 Built: the editor (`EDITOR.md`), what the plugin reads of a template and how one reaches a machine, outside tool
 servers, the gallery's build and the page that reads one, and the check a template written without the editor is put
-through, the report's sections as the profile's, and the gallery's own repository. Its page is published once the
-branch that holds the editor is on GitHub. The order is at the end.
+through, the report's sections as the profile's, and the gallery's own repository with its page. The order is at
+the end.
 
 **Two files are written for whoever makes a template**, in `docs/`, apart from these spec files, which are for
 whoever builds Seatworks:
@@ -312,9 +312,10 @@ On a pull request the same build runs and publishes nothing: that is the check a
 only ever text in the gallery's repository, and the page a person opens is this repository's editor at the branch
 the gallery names.
 
-The repository is `sting9k/seatworks-gallery`, and its page that repository's own on GitHub Pages. The branch of
-Seatworks it builds from is its variable `SEATWORKS_REF`, so the page is built only once that branch is on GitHub.
-Nothing in this repository depends on where the gallery is.
+The repository is `sting9k/seatworks-gallery`, and its page that repository's own on GitHub Pages,
+https://sting9k.github.io/seatworks-gallery/. The branch of Seatworks it builds from is its variable `SEATWORKS_REF`:
+the page shows what is pushed there, as of the last time its build ran. Nothing in this repository depends on where
+the gallery is.
 
 ## Checking one without the editor
 

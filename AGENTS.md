@@ -90,8 +90,7 @@ docs/             for whoever makes a template: the spec an agent writes one fro
 4. The reflex and the watch (`spec/REFLEX.md`, `spec/WATCH.md`), starting with their `active` sets. Done.
 5. Open templates (`spec/TEMPLATE.md`, `spec/EDITOR.md`): the editor, installing and removing a template, outside
    tool servers, matching agent profiles, a project's own copy and Sync, the gallery's build, a report's sections as
-   the profile's, the two files in `docs/`, the gallery's own repository. Done. The gallery's page is published once
-   the branch that holds the editor is on GitHub, which is the owner's to push.
+   the profile's, the two files in `docs/`, the gallery's own repository and its page. Done.
 6. **Now: testing on a real Paseo, by the owner.** What only a live daemon can show is in `spec/PASEO.md` and
    `spec/HARNESS.md`, To check. Anything the spec marks "to check" is checked against Paseo's published types or source
    before it is built on, never by an agent running the daemon. The surface is type-checked and nothing more: what
@@ -115,7 +114,9 @@ docs/             for whoever makes a template: the spec an agent writes one fro
 - **The gallery is a repository of its own**, `sting9k/seatworks-gallery`: templates as directories, published by
   pull request, and no copy of the editor. Its one workflow checks this repository out at the branch its
   `SEATWORKS_REF` variable names, runs `npm run gallery -- <its templates>` and `vite build editor`, and publishes
-  the result as its GitHub Pages; on a pull request the same build is the check a template passes. So the `gallery`
+  the result as its GitHub Pages, https://sting9k.github.io/seatworks-gallery/; on a pull request the same build is
+  the check a template passes. It builds what is pushed, so a change here reaches the page when that branch is pushed
+  and the workflow run again. So the `gallery`
   script, `bin/gallery.ts` and the editor's build are called from outside: change one and that workflow together.
 - **Spec files are the docs the owner asked for**, with the two in `docs/` for whoever makes a template. No other
   markdown and no decision records; a change that needs explaining is explained in its commit message.
