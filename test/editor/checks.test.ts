@@ -234,7 +234,7 @@ test("a file put beside a skill is kept, and a skill that points at it draws no 
   assert.deepEqual(notes(after), notes(slp));
 });
 
-test("a role's always-on words are its prompt's and its skills' descriptions'", () => {
+test("a role's always-on words are its prompt's, its skills' descriptions' and the flow's, in whatever file the profile names", () => {
   const words = (template: Template, role: string) => {
     const node = graphOf(template).nodes.find((candidate) => candidate.id === `role:${role}`);
     assert.ok(node?.kind === "role");
@@ -247,6 +247,15 @@ test("a role's always-on words are its prompt's and its skills' descriptions'", 
 
   assert.equal(words(after, "reviewer") - words(slp, "reviewer"), count(description));
   assert.ok(words(slp, "reviewer") > count(slp.files.get("roles/reviewer.md")!));
+
+  // The flow is the file the profile names, wherever a template keeps it.
+  const pair = pairFiles();
+  const moved = new Map(pair);
+  moved.delete("flow.md");
+  moved.set("how/we-work.md", pair.get("flow.md")!);
+  moved.set("profile.yaml", pair.get("profile.yaml")!.replace("flow: flow.md", "flow: how/we-work.md"));
+  assert.equal(words(opened(moved), "driver"), words(opened(pair), "driver"));
+  assert.ok(words(opened(pair), "driver") > count(pair.get("roles/driver.md")!) + count(pair.get("flow.md")!) - 1);
 });
 
 test("a question starts written and not asked, is asked by one line of its file, and taken away leaves the file as it was", () => {

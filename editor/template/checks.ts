@@ -175,5 +175,6 @@ export function alwaysOnWords(template: Template, role: string): number {
   const spec = template.file.roles[role];
   const skills = (spec?.skills ?? []).reduce((sum, skill) => sum + wordsIn(template.skills.get(skill)?.description), 0);
   const prompt = spec?.prompt === undefined ? 0 : wordsIn(template.files.get(spec.prompt));
-  return prompt + skills + wordsIn(template.files.get("flow.md"));
+  const flow = template.file.flow === undefined ? undefined : template.files.get(template.file.flow);
+  return prompt + skills + wordsIn(flow);
 }
