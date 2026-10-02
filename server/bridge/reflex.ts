@@ -79,6 +79,7 @@ export class Reflex {
         this.findingsWaiting(project, e.actor, state);
       }
       if (e.type === "actor_released" || e.type === "actor_gone") this.forgetActor(`${project}:${e.actor}`);
+      if (e.type === "reseated" && e.from !== null) this.forgetActor(`${project}:${e.from}`);
       if (e.type === "finding_classified" || e.type === "finding_withdrawn")
         this.unanswered.delete(`${project}:${e.finding}`);
       if (e.type === "claim_made") this.handBack(project, e.claim.scope, e.claim.by, e.claim.commit, state);
@@ -410,6 +411,10 @@ export class Reflex {
     const actor = state.actors.get(actorId);
     const spec = this.counted("findings-waiting");
     if (!spec || !actor || !spec.watches?.includes(actor.role)) return;
+    // A finding gone from the record with its scope is counted no more.
+    for (const key of this.unanswered.keys())
+      if (key.startsWith(`${project}:`) && !state.findings.has(key.slice(project.length + 1)))
+        this.unanswered.delete(key);
     for (const f of state.findings.values()) {
       if (f.status !== "raised" || state.scopes.get(f.answeredBy)?.owner !== actorId) continue;
       const key = `${project}:${f.id}`;
