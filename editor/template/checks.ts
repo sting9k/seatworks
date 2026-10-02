@@ -75,6 +75,9 @@ export function notesOf(template: Template, opened: Template): Note[] {
     if (!Object.values(template.file.roles).some((role) => role.servers?.[name])) say("no role is given it");
   }
 
+  for (const [name, holds] of template.profile.report)
+    if (SKELETON.test(holds)) notes.push({ node: `section:${name}`, says: "it still holds the skeleton's words" });
+
   for (const [kind, asked] of [
     ["question", template.questions],
     ["moment", template.moments],

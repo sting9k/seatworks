@@ -8,7 +8,7 @@ this says what a template is, what the plugin reads of it, and how it reaches a 
 Built: the editor (`EDITOR.md`), what the plugin reads of a template and how one reaches a machine, outside tool
 servers, the gallery's build and the page that reads one, and the check a template written without the editor is put
 through, and the report's sections as the profile's. Not built: the gallery's own repository, which is the owner's to
-make, and the sections as nodes of the editor. The order is at the end.
+make. The order is at the end.
 
 **Two files are written for whoever makes a template**, in `docs/`, apart from these spec files, which are for
 whoever builds Seatworks:
@@ -405,7 +405,7 @@ Each is made in the commit that builds it.
 | 4     | Outside tool servers                                                                   | Yes         | Yes   |
 | 5     | The gallery's build and its page; the gallery's own repository                         | None        | The build and the page |
 | 6     | The check from a terminal, the spec for whoever writes a template, the editor's guide  | Yes         | Yes   |
-| 7     | The report's sections                                                                  | Yes         | The plugin; not yet as nodes |
+| 7     | The report's sections                                                                  | Yes         | Yes   |
 
 Its cases are in `CONFORMANCE.md`: Editor, Templates and Gallery.
 

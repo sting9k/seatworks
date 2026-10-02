@@ -59,6 +59,14 @@ export type GraphNode =
     }
   | { readonly kind: "step"; readonly id: string; readonly name: string; readonly text: string }
   | {
+      /** A section of the team's reports, with what a line under it should be. */
+      readonly kind: "section";
+      readonly id: string;
+      readonly name: string;
+      readonly holds: string;
+      readonly file: string;
+    }
+  | {
       readonly kind: "server";
       readonly id: string;
       readonly name: string;
@@ -172,6 +180,8 @@ export function graphOf(template: Template): Graph {
     for (const watched of moment.spec.watches ?? [])
       if (template.profile.roles.has(watched)) wires.push({ kind: "watches", from: id, to: roleId(watched) });
   }
+  for (const [name, holds] of template.profile.report)
+    nodes.push({ kind: "section", id: `section:${name}`, name, holds, file: "profile.yaml" });
   return { nodes, wires };
 }
 

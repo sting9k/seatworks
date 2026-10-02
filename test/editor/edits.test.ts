@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   addRole,
+  addSection,
   addServer,
   addSkill,
   addStep,
@@ -11,12 +12,15 @@ import {
   setServer,
   type Edit,
   removeRole,
+  removeSection,
   removeSkill,
   removeStep,
   renameAsked,
   renameRole,
+  renameSection,
   renameSkill,
   setProperty,
+  setSection,
   setStep,
   setTool,
   together,
@@ -274,4 +278,36 @@ test("an outside server is declared, said how to reach, given to a role with the
 
   const gone = changed(fewer, removeServer("tickets"));
   assert.deepEqual(filesChanged(slp, gone), []);
+});
+
+test("a report section is added, said what it holds, renamed and taken away leaving every file as it was; the last one gone, the profile names no report", () => {
+  const sections = (template: Template) =>
+    graphOf(template).nodes.flatMap((node) => (node.kind === "section" ? [node.name] : []));
+  const added = changed(slp, addSection("risks"));
+  assert.deepEqual(sections(added), ["decided", "assumed", "open", "risks"]);
+  assert.deepEqual(filesChanged(slp, added), ["profile.yaml"]);
+
+  const said = changed(added, setSection("risks", "Each risk nobody owns yet."));
+  assert.deepEqual(linesChanged(added, said, "profile.yaml"), ['  risks: "Each risk nobody owns yet."']);
+  const renamed = changed(said, renameSection("risks", "unowned_risks"));
+  assert.deepEqual(linesChanged(said, renamed, "profile.yaml"), ['  unowned_risks: "Each risk nobody owns yet."']);
+  assert.deepEqual(filesChanged(slp, changed(renamed, removeSection("unowned_risks"))), []);
+
+  for (const [edit, why] of [
+    [addSection("Risks"), /a section's name is lower-case letters, digits and underscores: Risks is not/],
+    [addSection("open"), /there is already a section named open/],
+    [renameSection("open", "decided"), /there is already a section named decided/],
+    [renameSection("open", "still-open"), /still-open is not/],
+  ] as const) {
+    const made = applied(slp, edit);
+    assert.ok(!made.ok);
+    assert.match(made.says, why);
+  }
+
+  const none = changed(slp, together(removeSection("decided"), removeSection("assumed"), removeSection("open")));
+  assert.deepEqual(sections(none), []);
+  assert.doesNotMatch(none.files.get("profile.yaml")!, /^report:/m);
+  const first = changed(none, addSection("landed"));
+  assert.deepEqual(sections(first), ["landed"]);
+  assert.match(first.files.get("profile.yaml")!, /^report:\n {2}landed: /m);
 });

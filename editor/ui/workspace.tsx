@@ -17,6 +17,7 @@ import { notesOf } from "../template/checks.ts";
 import {
   addAsked,
   addRole,
+  addSection,
   addServer,
   addSkill,
   addStep,
@@ -26,6 +27,7 @@ import {
   giveServer,
   removeAsked,
   removeRole,
+  removeSection,
   removeServer,
   removeSkill,
   removeStep,
@@ -57,7 +59,11 @@ type Asking =
   /** A server being given to a role, which is done with the tools of it the role may call. */
   | { readonly make: "give"; readonly server: string; readonly role: string };
 
-const QUESTIONS = "frame:questions";
+/** The families no wire places, each in a titled frame that carries its nodes when it is moved. */
+const FRAMES = [
+  { id: "frame:questions", kind: "question", title: "Reflex questions" },
+  { id: "frame:sections", kind: "section", title: "Report sections" },
+] as const;
 const FRAME = { pad: 14, title: 34 };
 const UNMEASURED: Size = { width: 180, height: 32 };
 /** The kind of node at each end of a kind of wire (EDITOR.md, Wires). */
@@ -78,6 +84,7 @@ const ASKS: Readonly<Record<Makeable, { readonly title: string; readonly hint: s
   step: { title: "Name the new step", hint: "what the step is called" },
   question: { title: "Name the new question", hint: "lower-case letters, digits and dashes" },
   moment: { title: "Name the new moment", hint: "lower-case letters, digits and dashes" },
+  section: { title: "Name the new section", hint: "lower-case letters, digits and underscores" },
 };
 
 const fileOf = (node: GraphNode) => ("file" in node ? node.file : null);
@@ -222,16 +229,7 @@ function Opened({
   };
   const make = (kind: Makeable, name: string, at: Point, wire?: Pulled) => {
     const id = kind === "step" ? `step:${stepIdFor(template.steps, name)}` : `${kind}:${name}`;
-    const add =
-      kind === "role"
-        ? addRole(name)
-        : kind === "skill"
-          ? addSkill(name)
-          : kind === "server"
-            ? addServer(name)
-            : kind === "step"
-              ? addStep(name)
-              : addAsked(kind, name);
+    const add = adding(kind, name);
     // A server's wire is drawn afterwards, with the tools it gives: there is none to name before the server is.
     const joined =
       wire && wire.kind !== "server"
@@ -576,6 +574,25 @@ function Opened({
   );
 }
 
+/** The edit that adds a node of a kind under a name, from its skeleton. */
+function adding(kind: Makeable, name: string): Edit {
+  switch (kind) {
+    case "role":
+      return addRole(name);
+    case "skill":
+      return addSkill(name);
+    case "server":
+      return addServer(name);
+    case "step":
+      return addStep(name);
+    case "section":
+      return addSection(name);
+    case "question":
+    case "moment":
+      return addAsked(kind, name);
+  }
+}
+
 /** The edit that takes a node away, for the kinds a person may take away. */
 function removal(node: GraphNode): Edit | null {
   switch (node.kind) {
@@ -587,6 +604,8 @@ function removal(node: GraphNode): Edit | null {
       return removeStep(node.id.slice("step:".length));
     case "server":
       return removeServer(node.name);
+    case "section":
+      return removeSection(node.name);
     case "question":
     case "moment":
       return removeAsked(node.kind, node.name);
@@ -683,7 +702,7 @@ function synced(graph: Graph, drawn: readonly Drawn[], kept: ReadonlyMap<string,
   return framed(next, places, sizesOf(drawn));
 }
 
-/** The nodes at their places, the questions in a frame that carries them, since no wire says they belong together. */
+/** The nodes at their places, each family no wire places in a frame that carries it, since nothing else joins it. */
 function framed(
   drawn: readonly Drawn[],
   placed: ReadonlyMap<string, Point>,
@@ -694,28 +713,36 @@ function framed(
     const { parentId: _, ...loose } = node;
     return [{ ...loose, position: placed.get(node.id)! }];
   });
-  const inside = at.filter((node) => node.type === "question");
-  if (inside.length === 0) return at;
   const size = (id: string) => sizes.get(id) ?? UNMEASURED;
-  const left = Math.min(...inside.map((node) => node.position.x)) - FRAME.pad;
-  const top = Math.min(...inside.map((node) => node.position.y)) - FRAME.pad - FRAME.title;
-  const right = Math.max(...inside.map((node) => node.position.x + size(node.id).width)) + FRAME.pad;
-  const bottom = Math.max(...inside.map((node) => node.position.y + size(node.id).height)) + FRAME.pad;
-  const frame: FrameNode = {
-    id: QUESTIONS,
-    type: "frame",
-    position: { x: left, y: top },
-    style: { width: right - left, height: bottom - top },
-    data: { title: "Reflex questions" },
-    selectable: false,
-  };
+  const frames = new Map<string, FrameNode>();
+  for (const { id, kind, title } of FRAMES) {
+    const inside = at.filter((node) => node.type === kind);
+    if (inside.length === 0) continue;
+    const left = Math.min(...inside.map((node) => node.position.x)) - FRAME.pad;
+    const top = Math.min(...inside.map((node) => node.position.y)) - FRAME.pad - FRAME.title;
+    const right = Math.max(...inside.map((node) => node.position.x + size(node.id).width)) + FRAME.pad;
+    const bottom = Math.max(...inside.map((node) => node.position.y + size(node.id).height)) + FRAME.pad;
+    frames.set(kind, {
+      id,
+      type: "frame",
+      position: { x: left, y: top },
+      style: { width: right - left, height: bottom - top },
+      data: { title },
+      selectable: false,
+    });
+  }
   return [
-    frame,
-    ...at.map((node) =>
-      node.type === "question"
-        ? { ...node, parentId: QUESTIONS, position: { x: node.position.x - left, y: node.position.y - top } }
-        : node,
-    ),
+    ...frames.values(),
+    ...at.map((node) => {
+      const frame = frames.get(node.type);
+      return frame
+        ? {
+            ...node,
+            parentId: frame.id,
+            position: { x: node.position.x - frame.position.x, y: node.position.y - frame.position.y },
+          }
+        : node;
+    }),
   ];
 }
 

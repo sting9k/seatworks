@@ -4,10 +4,10 @@ Where a template is opened as a graph, changed and saved: a web page, after Comf
 says what a template is; this says how a person makes and changes one. The order it is built in is in `TEMPLATE.md`.
 
 Built: all of this file. A template is picked from the gallery built beside the page (`TEMPLATE.md`, The gallery), or
-opened from a file or a folder of the person's own, and opens in a tab. Its graph is drawn and laid out. Roles, skills, steps, questions and moments are added from a
-skeleton, changed and taken away; wires are drawn and cut; a file is written in place and read as Markdown; what a
-machine can see is noted on the node it is about; every change can be undone; and the template is exported as one
-file. What is left is listed under Not built.
+opened from a file or a folder of the person's own, and opens in a tab. Its graph is drawn and laid out. Roles,
+skills, steps, questions, moments and the sections of a report are added from a skeleton, changed and taken away;
+wires are drawn and cut; a file is written in place and read as Markdown; what a machine can see is noted on the node
+it is about; every change can be undone; and the template is exported as one file.
 
 ## Decided
 
@@ -68,7 +68,8 @@ After ComfyUI's own page, so a person who knows one finds their way in the other
   capitals, as ComfyUI names a type.
 - A setting is a row: its name on the left, its value on the right.
 - A node with one socket and nothing to set is its title alone, as a collapsed node is.
-- A family no wire places sits in a titled frame that carries its nodes when it is moved: the reflex questions.
+- A family no wire places sits in a titled frame that carries its nodes when it is moved: the reflex questions, and
+  the sections of a report. Laid out, each such family has rows of its own, so no frame holds another's node.
 - A card in the gallery is covered by the template's own graph, drawn small, with its name over it. No picture is
   kept beside a template, so a cover is never out of step with what it covers.
 
@@ -84,8 +85,10 @@ After ComfyUI's own page, so a person who knows one finds their way in the other
 | Attention | Reflex question     | The events it is asked on, its question, each outcome, its thresholds, whom it tells | None                   |
 | Attention | Watch moment        | Its question, what it reads, its thresholds                              | `watches`, to each role watched    |
 | Flow      | Step                | Its name and a line on what happens in it                                | `then`, to the next; from the role that does it |
+| Report    | Section             | Its name, and what a line under it should be: the words an agent is shown when it reports | None           |
 
-The sections of a report join as a family of their own when `TEMPLATE.md`'s last step is built.
+No wire joins a section to a role: every role shown `report` is given every section, and none is required of it
+(`TEMPLATE.md`, The report's sections). A section is `report.<name>` in `profile.yaml`, in the order a report is read.
 
 ## Wires
 
@@ -164,14 +167,17 @@ never run: a template may come from anyone.
 
 A skill's panel lists what is in its folder and takes a file dropped on it, kept beside `SKILL.md`.
 
-A new role, skill, question or moment starts from a skeleton: the five parts of a prompt and the form of a skill
-(`TEMPLATE.md`, Each kind of file); for a question or a moment, the fields `REFLEX.md` asks for. What a skeleton
+A new role, skill, question, moment or section starts from a skeleton: the five parts of a prompt and the form of a
+skill (`TEMPLATE.md`, Each kind of file); for a question or a moment, the fields `REFLEX.md` asks for; for a section,
+a line to say what it holds. What a skeleton
 leaves to be written is a line in italics, and one left standing draws a note. A new question or moment is written
 and not asked: it joins its file's `active` list when its author ticks it, in one line of that file.
 
 A question's or a moment's own words are changed in its file. A role's models are set in its panel, and so is how an
-outside server is started or reached: its kind, its command or address, and its environment or headers. A role, a
-skill, a step, a question and a moment are each renamed in their panel, and everything that named them follows.
+outside server is started or reached: its kind, its command or address, and its environment or headers. What a
+section holds is set in its panel. A role, a skill, a step, a question, a moment and a section are each renamed in
+their panel, and everything that named them follows. A section added is read after the others; the first gives the
+profile its `report`, and the last taken away takes it out.
 
 ## Checks
 
@@ -201,7 +207,7 @@ of them in a panel of the rail. A note stops nothing, neither a change nor an ex
   know; a moment that watches a role the template does not have; a moment `by: code` under a name the plugin counts
   nothing for. The lists these are held against are the plugin's own (`shared/contracts/reflex.ts`), which the code
   that asks is typed by.
-- A prompt, a skill, a question, a moment or a server that still holds a skeleton's words.
+- A prompt, a skill, a question, a moment, a server or a section that still holds a skeleton's words.
 - An outside server no role is given; and one whose settings hold what looks like a secret, by the patterns the
   plugin masks before text leaves a machine. A secret is named as a variable, never written.
 - A question or a moment whose words changed since its threshold was earned: it is not yet earned again. A threshold
@@ -227,10 +233,6 @@ A template is some five to thirty nodes, so drawing is never slow; what is felt 
 - While a wire is dragged, the sockets it cannot go to are dimmed.
 - Undo and redo by the keys a person expects; copy and paste make a second role of the picked one; delete by key
   takes away the picked wire, role, skill or step; and the menu tidies the layout.
-
-## Not built
-
-- The sections of a report as nodes: `TEMPLATE.md`'s last step.
 
 ## To check before building on it
 

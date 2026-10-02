@@ -4,6 +4,7 @@ import { notesOf } from "../../editor/template/checks.ts";
 import {
   addAsked,
   addRole,
+  addSection,
   addServer,
   giveServer,
   setServer,
@@ -14,6 +15,7 @@ import {
   renameRole,
   setAsked,
   setModels,
+  setSection,
   setTool,
   together,
   wired,
@@ -326,4 +328,11 @@ test("an outside server draws a note while it is its skeleton, while no role is 
   assert.deepEqual(about(written), [
     "server:tickets: its settings hold what looks like a secret: name a variable as $NAME, and keep the secret on the machine",
   ]);
+});
+
+test("a report section draws a note while it is its skeleton, and none once it says what it holds", () => {
+  const about = (template: Template) => notes(template).filter((note) => note.startsWith("section:"));
+  const added = changed(slp, addSection("risks"));
+  assert.deepEqual(about(added), ["section:risks: it still holds the skeleton's words"]);
+  assert.deepEqual(about(changed(added, setSection("risks", "Each risk nobody owns yet."))), []);
 });

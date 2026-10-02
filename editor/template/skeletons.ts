@@ -47,6 +47,9 @@ export const momentSkeleton = {
   consider: 0.5,
 } as const;
 
+/** A section of a report starts as one a person must still say what it holds. */
+export const sectionSkeleton = "_What a line under it should be._";
+
 /** An outside server starts as one a person must still say how to start. */
 export const serverSkeleton = { type: "stdio", command: "_the-command-that-starts-it_" } as const;
 

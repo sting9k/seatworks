@@ -5,6 +5,8 @@ type Size = { readonly width: number; readonly height: number };
 type Point = { readonly x: number; readonly y: number };
 
 const GAP = 12;
+/** Between two families no wire places: room for the frame each may sit in. */
+const APART = 80;
 
 /** Where each node sits when a template keeps no positions: inputs left of a role, what it seats right of it. */
 export function laidOut(graph: Graph, sizes: ReadonlyMap<string, Size>): Map<string, Point> {
@@ -30,14 +32,17 @@ export function laidOut(graph: Graph, sizes: ReadonlyMap<string, Size>): Map<str
   let x = 0;
   let y = bottom + 120;
   let rowHeight = 0;
+  let family: string | null = null;
   for (const node of graph.nodes) {
     if (placed.has(node.id)) continue;
     const size = sizes.get(node.id)!;
-    if (x > 0 && x + size.width > right) {
+    const another = family !== null && node.kind !== family;
+    if (x > 0 && (another || x + size.width > right)) {
       x = 0;
-      y += rowHeight + GAP;
+      y += rowHeight + (another ? APART : GAP);
       rowHeight = 0;
     }
+    family = node.kind;
     placed.set(node.id, { x, y });
     x += size.width + GAP;
     rowHeight = Math.max(rowHeight, size.height);

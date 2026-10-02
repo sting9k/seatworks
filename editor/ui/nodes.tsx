@@ -256,6 +256,7 @@ const Question = ({ data: { node } }: NodeProps<FlowNode<"question">>) => (
 const Moment = ({ data: { node } }: NodeProps<FlowNode<"moment">>) => (
   <Compact node={node} title={node.name} plug="watches" {...(node.active ? {} : { quiet: "not watched" })} />
 );
+const Section = ({ data: { node } }: NodeProps<FlowNode<"section">>) => <Compact node={node} title={node.name} />;
 
 const Frame = ({ data }: NodeProps<FrameNode>) => (
   <div className="frame">
@@ -272,5 +273,6 @@ export const NODE_TYPES = {
   question: Question,
   moment: Moment,
   step: Step,
+  section: Section,
   frame: Frame,
 } satisfies NodeTypes;

@@ -3,7 +3,14 @@ import { type Step, withAbout, withEditor } from "./about.ts";
 import { flowText } from "./flow.ts";
 import type { Property, Wire } from "./graph.ts";
 import { readTemplate, type Template, type TemplateFiles } from "./read-template.ts";
-import { momentSkeleton, promptSkeleton, questionSkeleton, serverSkeleton, skillSkeleton } from "./skeletons.ts";
+import {
+  momentSkeleton,
+  promptSkeleton,
+  questionSkeleton,
+  sectionSkeleton,
+  serverSkeleton,
+  skillSkeleton,
+} from "./skeletons.ts";
 import { TOOL_GROUPS, toolsFollowing } from "./tool-groups.ts";
 import { deleteIn, renameItem, renameKey, setIn, type Value, withItem } from "./yaml-patch.ts";
 
@@ -336,13 +343,56 @@ function written(server: Server): Value {
   return Object.fromEntries(Object.entries(kept).filter(([, value]) => value !== undefined)) as Value;
 }
 
-/** A server set down under `servers`, which the profile gains with its first one. */
-function declared(template: Template, text: string, name: string, server: Value): string {
-  const others = Object.keys(template.file.servers).filter((other) => other !== name);
-  return others.length > 0
-    ? setIn(text, ["servers", name], server)
-    : setIn(deleteIn(text, ["servers"]), ["servers"], { [name]: server });
-}
+/** A server set down under `servers`, beside the others the profile declares. */
+const declared = (template: Template, text: string, name: string, server: Value) =>
+  entered(
+    text,
+    "servers",
+    Object.keys(template.file.servers).some((other) => other !== name),
+    name,
+    server,
+  );
+
+/** An entry set down under a key of the profile, which the profile gains with its first one. */
+const entered = (text: string, key: string, others: boolean, name: string, value: Value) =>
+  others ? setIn(text, [key, name], value) : setIn(deleteIn(text, [key]), [key], { [name]: value });
+
+const SECTION = /^[a-z][a-z0-9_]*$/;
+/** Why a section may not take a name: it is an argument an agent writes, and a report has each once. */
+const notASection = (template: Template, name: string) =>
+  !SECTION.test(name)
+    ? { refused: `a section's name is lower-case letters, digits and underscores: ${name} is not` }
+    : template.profile.report.has(name)
+      ? { refused: `there is already a section named ${name}` }
+      : null;
+
+/** A section of the team's reports from its skeleton, read after the others. */
+export const addSection =
+  (name: string): Edit =>
+  (template) =>
+    notASection(template, name) ??
+    withFile(template.files, PROFILE, (text) =>
+      entered(text, "report", template.profile.report.size > 0, name, sectionSkeleton),
+    );
+
+/** What a section holds, in the words an agent is shown when it reports. */
+export const setSection =
+  (name: string, holds: string): Edit =>
+  (template) =>
+    withFile(template.files, PROFILE, (text) => setIn(text, ["report", name], holds));
+
+export const renameSection =
+  (from: string, to: string): Edit =>
+  (template) =>
+    notASection(template, to) ?? withFile(template.files, PROFILE, (text) => renameKey(text, ["report", from], to));
+
+/** Takes a section away; with the last one gone the profile names no `report`. */
+export const removeSection =
+  (name: string): Edit =>
+  (template) =>
+    withFile(template.files, PROFILE, (text) =>
+      deleteIn(text, template.profile.report.size === 1 ? ["report"] : ["report", name]),
+    );
 
 /** Gives a role a server with the tools of it the role may call, or takes it away when none is named. */
 export const giveServer =

@@ -250,7 +250,7 @@ A template's files in, what a person sees out (`EDITOR.md`).
 | The SLP profile opened                                      | Each role's ticked tools are exactly its `tools` in `profile.yaml`, in its node's groups or on a wire to it |
 | Every tool a profile may give a role                        | In one of the editor's groups, and in one only                      |
 | A template that names a skill, or a note for the project, it does not carry | Not opened, saying which                             |
-| A template that keeps no positions opened                   | Every node placed, no two on top of each other                      |
+| A template that keeps no positions opened                   | Every node placed, no two on top of each other; the nodes of a family no wire places share no row with another's, so each frame holds its own |
 | The SLP profile packed with nothing changed, and opened again | Every file as it was, to the byte                                  |
 | A template whose nodes were put somewhere, then saved       | The places are in `template.json` and in no other file; opened again, each node is where it was put |
 | A file that is not a packed template                        | Not opened, saying so                                               |
@@ -325,6 +325,8 @@ What the plugin reads of a profile that a template adds (`TEMPLATE.md`).
 | A shared template that declares an outside server           | What it runs is said, and each variable it reads with whether it is set, before anything is installed |
 | In the editor, an outside server declared, said how to reach, given to a role with two tools, one tool taken back, then the server taken away | A node, then a wire carrying the tools; a wire with no tool named is not drawn; taking a tool back changes one line; with the server gone every file is as it was to the byte |
 | In the editor, an outside server fresh from its skeleton and given to no role; then one with a secret written in it | A note for each of the first two; a note that a secret belongs in a variable for the last |
+| In the editor, a report section added, said what it holds, renamed, then taken away; a name that is not one, or is taken; the last section of a template taken away, and one added to it | A node after the others, in the order a report is read; saying what it holds and renaming it change its one line; taken away, every file is as it was to the byte; the two names are refused; with the last gone the profile names no `report`, and gains it again with the first |
+| In the editor, a report section fresh from its skeleton     | A note on the section, gone once it says what it holds              |
 
 ## Gallery
 

@@ -53,6 +53,7 @@ Start from SLP and change it. Starting from nothing is more work and no safer.
 | Step            | A step of the team's flow, and what comes after it                            |
 | Reflex question | One condition asked of an event of the record, by a small model               |
 | Watch moment    | One condition asked of what a watched role says and does                      |
+| Report section  | A heading the team's reports are written and read under                       |
 
 What comes into a node is on its left, named in lower case. What goes out is on its right, in capitals. A wire goes
 from an output to an input of its own kind, and while you drag one, the sockets it cannot go to are dimmed.
@@ -116,6 +117,12 @@ done out of order.
 **Add a question or a moment.** Drag **Reflex question** or **Watch moment**, then write its words in its file. It is
 written and not asked until you tick **Asked** (or **Watched**) in its panel. Wire a moment to the roles it is
 watched in.
+
+**Say what a report holds.** A role with the `report` tool tells the owner above what came of its work, as lines
+under sections. Drag **Report section** for each, name it in lower case with underscores (`still_open`), and write in
+its panel, under **Holds**, what a line there should be: the agent reads those words when it reports. Sections are
+read in the order you add them, none is required of a report, and no wire joins one to a role: every role with the
+tool is given them all.
 
 **Rename anything.** Pick it; **Name** in its panel. Everything that named it follows.
 

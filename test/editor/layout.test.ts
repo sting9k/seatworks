@@ -24,4 +24,14 @@ test("a template that keeps no positions is laid out: every node placed, no two 
       .map(([b]) => `${a} on ${b}`),
   );
   assert.deepEqual(overlapping, []);
+
+  const rows = (kind: string) =>
+    new Set(graph.nodes.flatMap((node) => (node.kind === kind ? [placed.get(node.id)!.y] : [])));
+  const questionRows = rows("question");
+  assert.ok(rows("section").size > 0 && questionRows.size > 0);
+  assert.deepEqual(
+    [...rows("section")].filter((y) => questionRows.has(y)),
+    [],
+    "the report's sections share no row with the questions, so each frame holds its own family",
+  );
 });

@@ -89,9 +89,8 @@ docs/             for whoever makes a template: the spec an agent writes one fro
    installing, attaching, cleaning up and the update check. Done.
 4. The reflex and the watch (`spec/REFLEX.md`, `spec/WATCH.md`), starting with their `active` sets. Done.
 5. Open templates (`spec/TEMPLATE.md`, `spec/EDITOR.md`): the editor, installing and removing a template, outside
-   tool servers, matching agent profiles, a project's own copy and Sync, the gallery's build, the two files in
-   `docs/`. Done, but for the gallery's own repository, which is the owner's to make, and the report's sections as
-   profile data.
+   tool servers, matching agent profiles, a project's own copy and Sync, the gallery's build, a report's sections as
+   the profile's, the two files in `docs/`. Done, but for the gallery's own repository, which is the owner's to make.
 6. **Now: testing on a real Paseo, by the owner.** What only a live daemon can show is in `spec/PASEO.md` and
    `spec/HARNESS.md`, To check. Anything the spec marks "to check" is checked against Paseo's published types or source
    before it is built on, never by an agent running the daemon. The surface is type-checked and nothing more: what

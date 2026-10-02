@@ -5,9 +5,11 @@ import {
   putFile,
   renameAsked,
   renameRole,
+  renameSection,
   renameSkill,
   setAsked,
   setModels,
+  setSection,
   setServer,
   setStep,
 } from "../template/edits.ts";
@@ -26,6 +28,7 @@ const KIND: Readonly<Record<GraphNode["kind"], string>> = {
   moment: "Watch moment",
   step: "Step",
   server: "Outside server",
+  section: "Report section",
 };
 
 const EARNED = {
@@ -263,6 +266,29 @@ function About({
     }
     case "step":
       return <StepFields node={node} />;
+    case "section":
+      return (
+        <>
+          <Line
+            label="Name"
+            value={node.name}
+            onSet={(name) => {
+              change(renameSection(node.name, name));
+            }}
+          />
+          <Line
+            label="Holds"
+            value={node.holds}
+            onSet={(holds) => {
+              change(setSection(node.name, holds));
+            }}
+          />
+          <p className="hint">
+            Every role shown the report tool is given this section with these words, and its lines are read under the
+            section&apos;s name. No section is required of a report.
+          </p>
+        </>
+      );
     case "server": {
       const server = template.file.servers[node.name]!;
       const given = Object.entries(template.file.roles).flatMap(([role, spec]) =>

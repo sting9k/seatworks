@@ -10,6 +10,7 @@ const FAMILIES: readonly { readonly name: string; readonly kinds: readonly Graph
   { name: "Equipment", kinds: ["skill", "tools", "server"] },
   { name: "Attention", kinds: ["moment", "question"] },
   { name: "Flow", kinds: ["step"] },
+  { name: "Report", kinds: ["section"] },
 ];
 const MAKES: Readonly<Record<Makeable, { readonly label: string; readonly says: string }>> = {
   role: { label: "Role", says: "A seat in the team: what it may do and what it reads" },
@@ -18,6 +19,7 @@ const MAKES: Readonly<Record<Makeable, { readonly label: string; readonly says: 
   step: { label: "Step", says: "A step of the team's flow, and what comes after it" },
   question: { label: "Reflex question", says: "One condition asked of an event of the record" },
   moment: { label: "Watch moment", says: "One condition asked of what a watched role says and does" },
+  section: { label: "Report section", says: "A heading the team's reports are written and read under" },
 };
 /** What a dragged node carries its kind under, for the canvas it is dropped on. */
 export const DRAGGED = "application/x-seatworks-node";
