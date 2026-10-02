@@ -231,10 +231,7 @@ export class Plugin {
     return { ok: true, profiles: agentsByProfile(ready.dir, this.root, has), available: has.map((p) => p.name) };
   }
 
-  /**
-   * Opens a project for a repository with the profile named, or the one already open for it, and starts its root's
-   * agent. A project keeps the profile it was attached with: naming another for one already attached changes nothing.
-   */
+  /** Opens a project with the profile named and starts its root's agent; one already attached keeps its profile. */
   async openProject(
     repo: string,
     base: string | undefined,

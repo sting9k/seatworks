@@ -184,10 +184,7 @@ function Opened({
     return flow.screenToFlowPosition({ x: box.x + box.width / 2, y: box.y + box.height / 2 });
   };
 
-  /**
-   * Makes a change and keeps every node's place with it. A node the change brings sits where it was put; one that
-   * takes another's place, as a renamed role does, sits where that one was; any other, in the middle of the view.
-   */
+  /** Makes a change and keeps every node's place: a new node where it was put, a renamed one where it was. */
   const change = (edit: Edit, placing: ReadonlyMap<string, Point> = new Map()) => {
     const made = applied(template, edit);
     if (!made.ok) {
@@ -599,10 +596,7 @@ function removal(node: GraphNode): Edit | null {
   }
 }
 
-/**
- * Marks the canvas with the kind of wire being pulled, so the sockets it cannot go to step back. It is a part of
- * its own because a wire being pulled draws it again on every move, and the canvas it marks must not be.
- */
+/** Marks the canvas with the wire being pulled; a part of its own, since a pulled wire redraws it on every move. */
 function Wiring({ canvas }: { canvas: RefObject<HTMLDivElement | null> }) {
   const connection = useConnection();
   const kind = connection.inProgress ? kindOfSocket(connection.fromHandle.id) : null;
@@ -689,10 +683,7 @@ function synced(graph: Graph, drawn: readonly Drawn[], kept: ReadonlyMap<string,
   return framed(next, places, sizesOf(drawn));
 }
 
-/**
- * The nodes at their places, the questions inside a frame of their own that carries them when it is moved: no wire
- * reaches a question, so nothing else says they belong together.
- */
+/** The nodes at their places, the questions in a frame that carries them, since no wire says they belong together. */
 function framed(
   drawn: readonly Drawn[],
   placed: ReadonlyMap<string, Point>,
@@ -728,10 +719,7 @@ function framed(
   ];
 }
 
-/**
- * A wire that gives a role only part of a group says how much of it, since the group's node lists it whole; a
- * server's wire says the tools it gives, since nothing else on the graph does.
- */
+/** A wire that gives a role part of a group, or a server's tools, says so: nothing else on the graph does. */
 function edgesOf(graph: Graph): WireEdge[] {
   const groupSize = new Map(
     graph.nodes.flatMap((node) => (node.kind === "tools" ? [[node.id, node.tools.length]] : [])),

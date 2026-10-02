@@ -1,9 +1,6 @@
 import { isMap, isScalar, isSeq, type Pair, parseDocument, type Range, type YAMLMap } from "yaml";
 
-/**
- * Changes to a YAML file made in its source, at the place of the node they change (EDITOR.md, Decided 7): the file
- * is never written whole from what was parsed, so every comment and every line a change does not touch stays as it is.
- */
+/** Changes to a YAML file made in its source at the node they change, so comments and untouched lines stay. */
 
 export type Value = boolean | number | string | readonly string[] | { readonly [key: string]: Value };
 
@@ -40,10 +37,7 @@ export function deleteIn(text: string, path: readonly string[]): string {
   return to === text.length ? splice(text, from - 1, to, "") : splice(text, from, to, "");
 }
 
-/**
- * The text with `item` in the list at `path`, or out of it. A list written a line an item keeps its lines: the item
- * is added as a line after the last, or its own line taken out.
- */
+/** The text with `item` in the list at `path`, or out of it; a list written a line an item keeps its lines. */
 export function withItem(text: string, path: readonly string[], item: string, on: boolean): string {
   const list: unknown = parseDocument(text).getIn(path, true);
   if (!isSeq(list)) throw new Error(`no list at ${path.join(".")}`);

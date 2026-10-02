@@ -1,11 +1,6 @@
 import type { QuestionSpec } from "../../shared/contracts/reflex.ts";
 
-/**
- * The hash a question's threshold is earned for (REFLEX.md): of its words and every outcome's description, as the
- * plugin makes it in `server/satellites/reflex/config.ts`. The plugin hashes with Node's own SHA-256, which a page
- * does not have at hand without waiting on it, so the same hash is made here in plain code and held to the plugin's
- * by a test.
- */
+/** The hash a threshold is earned for, made in plain code since a page has no SHA-256 at hand without waiting. */
 export function wordingOf(question: QuestionSpec): string {
   const words = [
     question.noul ?? question.choice ?? "",
@@ -16,10 +11,7 @@ export function wordingOf(question: QuestionSpec): string {
   return sha256(words).slice(0, 16);
 }
 
-/**
- * Whether a question's `tell` holds: it was earned at a look back for these words, or for words since changed, or not
- * yet. One that does not hold sends its answer no further than a candidate (REFLEX.md).
- */
+/** Whether a question's `tell` holds: earned for these words, for words since changed, or not yet. */
 export type Earned = "earned" | "reworded" | "not yet";
 export const earnedOf = (question: QuestionSpec): Earned =>
   question.for === undefined ? "not yet" : question.for.wording === wordingOf(question) ? "earned" : "reworded";

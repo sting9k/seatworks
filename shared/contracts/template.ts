@@ -1,9 +1,6 @@
 import { z } from "zod";
 
-/**
- * A template as it is shared: one JSON file that holds the text of each of its files by its path (TEMPLATE.md). The
- * editor writes it and the plugin installs it, so both read it here.
- */
+/** A template as it is shared: one JSON file holding each file's text by its path, read here by editor and plugin. */
 const PackedSchema = z.object({ files: z.record(z.string().min(1), z.string()) }).strict();
 
 /** A path inside a template: names joined by `/`, none of them a way out of the template's own directory. */

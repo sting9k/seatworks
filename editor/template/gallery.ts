@@ -3,10 +3,7 @@ import { installName, unpacked } from "../../shared/contracts/template.ts";
 import { packed } from "./pack.ts";
 import { readTemplate, type TemplateFiles } from "./read-template.ts";
 
-/**
- * The gallery as a page reads it (TEMPLATE.md, The gallery): an index of templates beside the one file each is shared
- * as. It is built from a repository's template directories and never written by hand.
- */
+/** The gallery as a page reads it: an index of templates beside the one file each is shared as, always built. */
 const EntrySchema = z
   .object({
     /** The name it is installed under, which its directory in the gallery's repository carries too. */
@@ -23,11 +20,7 @@ const IndexSchema = z.object({ templates: z.array(EntrySchema) }).strict();
 
 const INDEX = "index.json";
 
-/**
- * The files of a gallery built from templates, each by the name of its directory: the index, and every template as
- * the one file it is shared as. A template that does not load, or whose directory is not the name it would be
- * installed under, is left out and said, with why: a gallery lists only what would run, each under one name.
- */
+/** A gallery's files built from template directories; one that does not load or is misnamed is left out, with why. */
 export function galleryOf(templates: ReadonlyMap<string, TemplateFiles>): {
   readonly files: ReadonlyMap<string, string>;
   readonly refused: readonly { readonly id: string; readonly says: string }[];
@@ -61,10 +54,7 @@ export type Listed =
   | { readonly entry: Entry; readonly ok: true; readonly files: TemplateFiles }
   | { readonly entry: Entry; readonly ok: false; readonly says: string };
 
-/**
- * The gallery a page was built beside. `get` hands back the text of one of its files, or null when it is not there:
- * the page fetches, a test hands over what a build wrote.
- */
+/** The gallery a page was built beside; `get` hands back one of its files, or null when it is not there. */
 export async function loadGallery(
   get: (file: string) => Promise<string | null>,
 ): Promise<

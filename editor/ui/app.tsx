@@ -6,10 +6,7 @@ import { Gallery, type Shown } from "./gallery.tsx";
 import { Icon } from "./icons.tsx";
 import { Workspace } from "./workspace.tsx";
 
-/**
- * A template open in a tab. Its files are what is kept: every change makes new ones, and the ones before are kept to
- * go back to. A change lives only in the page until it is exported.
- */
+/** A template open in a tab: its files, and the ones before each change to go back to, until it is exported. */
 type Tab = {
   readonly id: number;
   readonly past: readonly TemplateFiles[];

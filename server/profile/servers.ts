@@ -1,10 +1,7 @@
 import { VARIABLE, variablesNamed } from "../../shared/contracts/profile.ts";
 import type { Grant } from "./bundle.ts";
 
-/**
- * A role's servers with each variable they name filled in from the environment, or the first one that names a
- * variable with no value: a server started without what it reads fails where nobody looks.
- */
+/** A role's servers with each variable filled in, or the first unset one: a server lacking it fails unseen. */
 export function filledIn(
   grants: readonly Grant[],
   env: NodeJS.ProcessEnv,

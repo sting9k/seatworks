@@ -6,10 +6,7 @@ type Point = { readonly x: number; readonly y: number };
 
 const GAP = 12;
 
-/**
- * Where each node sits when the template keeps no positions: what goes into a role on its left, what it seats on its
- * right, and what no wire touches in rows underneath.
- */
+/** Where each node sits when a template keeps no positions: inputs left of a role, what it seats right of it. */
 export function laidOut(graph: Graph, sizes: ReadonlyMap<string, Size>): Map<string, Point> {
   const wired = new graphlib.Graph();
   wired.setGraph({ rankdir: "LR", nodesep: 10, ranksep: 140 });

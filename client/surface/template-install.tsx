@@ -10,10 +10,7 @@ import { Card } from "../kit/card.tsx";
 import { FONT, RADIUS, SPACE } from "../kit/theme.ts";
 import { problemText } from "../state/problem-text.ts";
 
-/**
- * Installs a template from a file the Human downloaded: they give its path, read what it would bring, and agree.
- * The plugin reads the file where it is and fetches nothing (TEMPLATE.md, Installing).
- */
+/** Installs a template from a file on this machine: the Human gives its path, reads what it brings, and agrees. */
 export function TemplateInstall({ theme, onInstalled }: { theme: PluginTheme; onInstalled: () => void }) {
   const read = useRpc(RPC.templateOffer);
   const install = useRpc(RPC.installTemplate);

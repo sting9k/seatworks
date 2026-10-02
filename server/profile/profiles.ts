@@ -7,10 +7,7 @@ export const SHIPPED = "slp";
 /** Where the profiles the Human installed are kept, each in a directory of its name (TEMPLATE.md). */
 export const profilesDir = (stateRoot: string) => join(stateRoot, "profiles");
 
-/**
- * The directory of a profile by its name: one installed under that name, or the one shipped. An installed profile
- * of the shipped one's name stands in its place, so the shipped way of working is changed without a fork.
- */
+/** A profile's directory by its name; one installed under the shipped one's name stands in its place. */
 export function profilePath(pluginDir: string, stateRoot: string, name: string): string | null {
   const installed = join(profilesDir(stateRoot), name);
   if (existsSync(join(installed, "profile.yaml"))) return installed;

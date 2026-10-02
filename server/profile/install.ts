@@ -9,19 +9,13 @@ import { type Has, namedBy, there } from "./agents.ts";
 import { type Bundle, loadBundle } from "./bundle.ts";
 import { profilesDir } from "./profiles.ts";
 
-/**
- * What installing a shared template would bring to this machine, for the Human to read before it is theirs. Its
- * `hash` is of the file as it was read: installing asks for the same file again, and takes no other.
- */
+/** What installing a template would bring; its `hash` is of the file as read, and no other file is installed. */
 type Offer = TemplateOffer;
 
 type Failed = { readonly ok: false; readonly says: string };
 type Staged = { readonly ok: true; readonly offer: Offer; readonly dir: string };
 
-/**
- * Reads a shared template from a file on this machine, unpacks it aside and loads it as the plugin would. Nothing is
- * put where a project could run it. The directory it hands back is the caller's to install or remove.
- */
+/** Reads a shared template, unpacks it aside and loads it; the directory is the caller's to install or remove. */
 function staged(stateRoot: string, path: string, has: readonly Has[], env: NodeJS.ProcessEnv): Staged | Failed {
   if (!existsSync(path)) return { ok: false, says: `there is no file at ${path}` };
   const text = readFileSync(path, "utf8");
@@ -83,10 +77,7 @@ export function offerOf(
   return { ok: true, offer: made.offer };
 }
 
-/**
- * Installs the template at `path` under its name, in place of one already there. `hash` is the offer the Human
- * agreed to: a file that changed since is not what they read, and is not installed.
- */
+/** Installs the template at `path` under its name; a file changed since the offer of `hash` is not installed. */
 export function install(
   stateRoot: string,
   path: string,

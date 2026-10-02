@@ -6,11 +6,7 @@ import { ROLE_TOOLS } from "./tools.ts";
 export const RELATIONS = ["parent", "children", "descendants", "human"] as const;
 export type Relation = (typeof RELATIONS)[number];
 
-/**
- * An MCP server that is not the team's, as Paseo takes one (TEMPLATE.md, Outside tool servers). A value of `env`,
- * `headers` or `url` names an environment variable as `$NAME`, filled in when an agent is made: a secret is never
- * written in a profile.
- */
+/** An MCP server that is not the team's; a secret is named as `$NAME` and filled in when an agent is made. */
 const ServerSchema = z.discriminatedUnion("type", [
   z
     .object({

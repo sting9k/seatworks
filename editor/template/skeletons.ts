@@ -1,7 +1,4 @@
-/**
- * What a new file starts as (TEMPLATE.md, Each kind of file). A line in italics says what belongs in its place and is
- * written over; one left standing is a fault the editor shows.
- */
+/** What a new file starts as; a line in italics is to be written over, and one left standing draws a note. */
 
 const title = (name: string) => name.charAt(0).toUpperCase() + name.slice(1).replace(/-/g, " ");
 

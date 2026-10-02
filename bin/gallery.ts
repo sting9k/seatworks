@@ -3,11 +3,7 @@ import { join } from "node:path";
 import { galleryOf } from "../editor/template/gallery.ts";
 import { filesUnder } from "./template-files.ts";
 
-/**
- * Builds a gallery (TEMPLATE.md, The gallery): `gallery.ts <out> <dir>...`, each `<dir>` holding template
- * directories. It writes the index and every template as the one file it is shared as, and fails, saying which and
- * why, when a template does not load: that is the check a template passes to be published.
- */
+/** `gallery.ts <out> <dir>...`: builds a gallery, and fails naming each template that does not load. */
 
 const [out, ...dirs] = process.argv.slice(2);
 if (out === undefined || dirs.length === 0) {

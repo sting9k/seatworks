@@ -2,10 +2,7 @@ import type { CommandType } from "../../shared/contracts/commands.ts";
 import type { Role } from "../../shared/contracts/profile.ts";
 import type { ReadName } from "../../shared/contracts/tools.ts";
 
-/**
- * Tools that mean something to the same roles (EDITOR.md, Tool groups). `follows` says which roles' nodes a group
- * sits in; an optional group is a node of its own, wired to the roles that are given it.
- */
+/** Tools that mean something to the same roles; `follows` says whose nodes a group sits in, or that it is a node. */
 type ToolGroup = {
   readonly id: string;
   readonly name: string;
@@ -15,10 +12,7 @@ type ToolGroup = {
 
 const delegates = (role: Role) => role.delegates;
 
-/**
- * The tools a role's properties bring it, ticked until the author unticks one. A role that watches is also shown
- * `look`, alone of its group: it reads the agents it is seated over, and owns nothing they could ask leave of.
- */
+/** The tools a role's properties bring it, ticked until unticked; a role that watches is also shown `look`. */
 export function toolsFollowing(role: Role): Set<string> {
   const tools = new Set<string>();
   for (const group of TOOL_GROUPS)

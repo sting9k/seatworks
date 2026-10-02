@@ -6,10 +6,7 @@ import type { Asked, Template } from "./read-template.ts";
 import { TOOL_GROUPS } from "./tool-groups.ts";
 import { earnedOf } from "./wording.ts";
 
-/**
- * Something a machine saw in a template that a person should look at (EDITOR.md, Checks): the node it is about and
- * what was seen. A note stops nothing. Whether a template makes a team work well is known only by running it.
- */
+/** Something a machine saw in a template that a person should look at, on the node it is about; it stops nothing. */
 export type Note = { readonly node: string; readonly says: string };
 
 const TOOLS = new Set(TOOL_GROUPS.flatMap((group): readonly string[] => group.tools));
@@ -155,10 +152,7 @@ function askedNotes({ spec }: Asked): string[] {
 
 const wordsIn = (text: string | undefined) => (text ?? "").split(/\s+/).filter((word) => word !== "").length;
 
-/**
- * The words a role reads on every turn: its prompt, the description of each of its skills and the team's flow. The
- * cost a template raises without anyone seeing it.
- */
+/** The words a role reads on every turn: its prompt, its skills' descriptions and the flow. */
 export function alwaysOnWords(template: Template, role: string): number {
   const spec = template.file.roles[role];
   const skills = (spec?.skills ?? []).reduce((sum, skill) => sum + wordsIn(template.skills.get(skill)?.description), 0);

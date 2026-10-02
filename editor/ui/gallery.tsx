@@ -9,10 +9,7 @@ import { filesOfFolder } from "./files.ts";
 /** The gallery's templates, or why there are none to show. */
 export type Shown = { readonly templates: readonly Listed[] } | { readonly says: string };
 
-/**
- * Every template of the gallery built beside the page, and the way in for one of the person's own. A template that
- * does not load says why on its card, and the page says why when there is no gallery to show.
- */
+/** Every template of the gallery beside the page, and the way in for one's own; what does not load says why. */
 export function Gallery({
   gallery,
   onOpen,

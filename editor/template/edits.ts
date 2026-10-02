@@ -7,20 +7,14 @@ import { momentSkeleton, promptSkeleton, questionSkeleton, serverSkeleton, skill
 import { TOOL_GROUPS, toolsFollowing } from "./tool-groups.ts";
 import { deleteIn, renameItem, renameKey, setIn, type Value, withItem } from "./yaml-patch.ts";
 
-/**
- * A change to a template: its files in, its files out, or why it is not made. A change touches only the file it
- * changes, and in a YAML file only the node it changes (EDITOR.md, Decided 7).
- */
+/** A change to a template: its files in, its files out, or why it is not made; only what it changes is touched. */
 export type Edit = (template: Template) => TemplateFiles | { readonly refused: string };
 
 const PROFILE = "profile.yaml";
 const FLOW = "flow.md";
 const NAME = /^[a-z][a-z0-9-]*$/;
 
-/**
- * The template after the edit, or why the edit was not made: one that would leave a template that does not load is
- * not made.
- */
+/** The template after the edit; one that would leave a template that does not load is not made. */
 export function applied(
   template: Template,
   edit: Edit,
@@ -66,10 +60,7 @@ const having = <T>(items: Iterable<T>, item: T, on: boolean): T[] => {
 const listed = (text: string, role: string, key: string, items: readonly string[]) =>
   items.length > 0 ? setIn(text, ["roles", role, key], items) : deleteIn(text, ["roles", role, key]);
 
-/**
- * Switches a role's property. The tools the property brings come ticked and go with it. The root moves: switching it
- * on for one role switches it off for the role that had it, since a template has exactly one.
- */
+/** Switches a role's property; its tools come ticked and go with it, and the root moves, since there is one. */
 export const setProperty =
   (name: string, property: Property, on: boolean): Edit =>
   (template) => {
@@ -455,10 +446,7 @@ export const removeStep =
 
 const withSteps = (template: Template, change: (steps: readonly Step[]) => Step[]) => stepsIn(template.files, change);
 
-/**
- * The steps changed, `flow.md` written from them again and named in the profile, which is how every role is given it;
- * with no step left there is no flow to give, and the profile names none.
- */
+/** The steps changed and `flow.md` written from them again; with no step left the profile names no flow. */
 function stepsIn(files: TemplateFiles, change: (steps: readonly Step[]) => Step[]): Map<string, string> {
   let steps: Step[] = [];
   const next = new Map(
