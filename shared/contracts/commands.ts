@@ -266,7 +266,13 @@ export const COMMANDS = {
   resume_scope: z.object({ scope: id.describe("The scope to resume."), reason: why }),
   release: z.object({ actor: id.describe("The agent whose seat ends, by its actor id."), reason: why }),
   // An agent names its sections side by side; the kernel reads them as one map, apart from a command's own fields.
-  report: z.record(z.string().max(64), ReportLines).transform((sections) => ({ sections })),
+  report: z
+    .record(z.string().max(64), ReportLines)
+    .refine(
+      (sections) => Object.values(sections).some((lines) => lines.length > 0),
+      "a report says a line under one section at least",
+    )
+    .transform((sections) => ({ sections })),
   send_message: z.object({
     to: id.describe("An actor's id, or `human`."),
     text: text.describe("What you say."),

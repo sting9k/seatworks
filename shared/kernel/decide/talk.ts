@@ -1,8 +1,9 @@
 import type { CommandBody } from "../../contracts/commands.ts";
-import { HUMAN, type Party } from "../../contracts/ids.ts";
+import { BRIDGE, HUMAN, type Party } from "../../contracts/ids.ts";
 import type { Message } from "../../contracts/ledger.ts";
 import { fromOutside, maySpeak, ownerOfParent } from "../authority.ts";
 import { type Context, type Refusal, isRefusal, refuse } from "./context.ts";
+import { answererOf } from "./seats.ts";
 
 type Of<T extends CommandBody["type"]> = Context<Extract<CommandBody, { type: T }>>;
 
@@ -38,10 +39,26 @@ export function answer(ctx: Of<"answer">): Refusal | undefined {
       o.owedBy === ctx.party && (o.about.kind === "message" || o.about.kind === "direction") && o.about.id === about,
   );
   if (asked.to !== ctx.party && owed.length === 0) return refuse("authority", `message ${asked.id} was not to you`);
+  if (asked.from === BRIDGE)
+    return refuse("state", `message ${asked.id} is a note of the record's own: nobody reads an answer to it`);
   // An answer goes back to whoever asked, whatever the edges: I10 governs who may start a conversation.
-  post(ctx, { to: asked.from, text: ctx.body.text, asks: false, directs: false, replyTo: asked.id, queued: true });
+  post(ctx, {
+    to: askerNow(ctx, asked.from),
+    text: ctx.body.text,
+    asks: false,
+    directs: false,
+    replyTo: asked.id,
+    queued: true,
+  });
   for (const o of owed) ctx.emit({ type: "obligation_closed", obligation: o.id, how: "answered" });
   return undefined;
+}
+
+/** Who reads an answer to what `from` asked: `from` while it is seated, then whoever holds its seat, or the owner above. */
+function askerNow(ctx: Context, from: Party): Party {
+  const asker = ctx.state.actors.get(from);
+  if (!asker || asker.status === "seated") return from;
+  return answererOf(ctx, asker.scope) ?? from;
 }
 
 export function humanWords(ctx: Of<"record_human_words">): Refusal | undefined {

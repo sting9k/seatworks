@@ -253,9 +253,9 @@ agent also settles any open attention about the actors or scopes it names that t
 | `drop_scope`       | `scope, reason`                                                                            | `scope_dropped`, `obligation_closed`\*  |
 | `hold_scope`, `resume_scope` | `scope, reason`                                                                  | `scope_held`, `scope_resumed`           |
 | `release`          | `actor, reason`                                                                            | `actor_released`, `obligation_moved`\*  |
-| `report`           | lines under each section the profile names, none required; another section is refused `unknown` | `report_made`                      |
+| `report`           | lines under each section the profile names, none required but one line in all; another section is refused `unknown` | `report_made`    |
 | `send_message`     | `to, text, asks, directs, replyTo?`                                                        | `message_sent` (and a copy, I7), `obligation_opened`\* |
-| `answer`           | `replyTo, text`                                                                            | `message_sent`, `obligation_closed`     |
+| `answer`           | `replyTo, text`; it goes to whoever asked, or to who holds that one's seat now, or the owner above an empty one; refused for a note of the record's own | `message_sent`, `obligation_closed` |
 | `ask_human`        | `text, about?, options?, recommend?`                                                       | `question_asked`, `obligation_opened`, `finding_waiting`? |
 | `hold_machine`     | `hold, why`; a holder that is released, reseated, gone, or whose scope is closed lets it go  | `machine_held` or `machine_released`    |
 | `answer_permission`| `permission, allow, reason`                                                                | `permission_answered`, `obligation_closed` |
@@ -451,7 +451,9 @@ last `after` edge that made it wait is removed (`edge_removed`): no other event 
 could not be made (`workspace_failed`) has no agent, and `status` says so; a reseat asks for the copy again, and the
 actor it seats gets its agent once the copy is there. Without that a reseat would seat an actor nothing ever starts.
 
-A tool's reply names what was recorded. An `attend` on a kind its reader marked noise for that agent and scope
+A tool's reply names what was recorded, and what it made by the id it is called by from then on: the scope and the
+actor an `open_scope` made, a finding, a claim, a message with its reader, a question, an attention. Without the id
+its caller would need a second call to learn what to name in its next one. An `attend` on a kind its reader marked noise for that agent and scope
 records the attending and opens no attention, and the reply says so, so whoever watches stops sending that kind.
 
 The reflex is not an effect: the watch reads committed events, and missing one costs a look, not a
@@ -492,7 +494,8 @@ A project runs for months. Everything below is bounded by open work, not by hist
   which stays citable; so are delivered messages that ask nothing or were answered,
   answered questions and permissions, attentions about closed scopes, and released or gone actors that nothing points
   at. Nothing an open obligation, attention or message still points at is let go, so pruning never closes anything
-  (I11). The log keeps all of it for views, and replay prunes at the same command boundaries.
+  (I11). A check asked for on a scope that has since been let go is waited on by nobody, and is
+  let go with it. The log keeps all of it for views, and replay prunes at the same command boundaries.
 - A project with nothing open and no agent seated for a day is unloaded by the shell; the next command folds it from
   its latest snapshot.
 - Every map in the shell (per-project queues, per-agent subscriptions, delivery batches, the reflex's caches) has a

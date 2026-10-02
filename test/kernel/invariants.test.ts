@@ -369,6 +369,33 @@ test("I11: what a seat owed while it was empty comes back to whoever is seated i
   assert.deepEqual(Object.keys(owes()).sort(), ["claim", "direction", "permission"]);
 });
 
+test("an answer goes to whoever holds the asker's seat now; one to a note of the ledger's own is refused, for nobody reads it", () => {
+  const { ledger, supervisor, lead, peer, lane, task } = team();
+  ledger.must(ledger.as(lead, "send_message", { to: peer, text: "Why int16?", asks: true }));
+  const asked = [...ledger.state.messages.values()].at(-1)!.id;
+  ledger.must(ledger.as(supervisor, "reseat", { scope: lane, reason: "a new owner for the lane" }));
+  const fresh = ledger.state.scopes.get(lane)!.owner!;
+  const answered = ledger.must(ledger.as(peer, "answer", { replyTo: asked, text: "The wire is int16" }));
+  const reply = answered.find((e) => e.type === "message_sent");
+  assert.equal(reply?.message.to, fresh, "the one who asked has left; the answer is the seat's");
+
+  ledger.must(ledger.as(fresh, "send_message", { to: peer, text: "And the sign?", asks: true }));
+  const second = [...ledger.state.messages.values()].at(-1)!.id;
+  ledger.must(ledger.fact("record_gone", { actor: fresh, why: "its agent was archived" }));
+  const up = ledger.must(ledger.as(peer, "answer", { replyTo: second, text: "Two's complement" }));
+  assert.equal(
+    up.find((e) => e.type === "message_sent")?.message.to,
+    supervisor,
+    "with the seat empty it goes to the owner above, who holds what the seat is owed",
+  );
+
+  const note = { kind: "note", to: "self", text: "The brief may not fit" };
+  const seen = { question: "brief-fits", actor: peer, scope: task, source: "reflex", answer: "0.9", level: "tell" };
+  ledger.must(ledger.fact("record_observation", { ...seen, route: note }));
+  const fromLedger = [...ledger.state.messages.values()].find((m) => m.from === "bridge")!.id;
+  assert.equal(refusedBy(ledger.as(peer, "answer", { replyTo: fromLedger, text: "Noted" })), "state");
+});
+
 test("a delivery reported late, for a reader that has since left, marks nothing delivered that moved to another", () => {
   const { ledger, lead, peer } = team();
   ledger.must(ledger.as(lead, "send_message", { to: peer, text: "Why int16?", asks: true }));

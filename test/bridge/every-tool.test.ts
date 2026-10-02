@@ -225,7 +225,10 @@ test("the finding tools: raised on a line, kept, reopened on new evidence, carri
   const maker = await c.tools(2);
   const choice = /Chosen so far[^]*?\[(l\d+)\] Use a map/.exec(await status(maker))?.[1];
 
-  await did(c, maker, "raise_finding", { disputes: choice, text: "A map loses order", default: "keep the map" });
+  assert.equal(
+    await did(c, maker, "raise_finding", { disputes: choice, text: "A map loses order", default: "keep the map" }),
+    "Recorded: finding raised (f1); obligation opened.",
+  );
   assert.match(c.told(1).join("\n"), /Finding f1 from a3: A map loses order\nMeanwhile: keep the map/);
   await refused(keeper, "classify_finding", { finding: "f1", verdict: "changes", reason: "right" }, /^Refused \(I8\)/);
   await did(c, keeper, "classify_finding", { finding: "f1", verdict: "minor", reason: "order does not matter here" });
@@ -310,12 +313,19 @@ test("the finding tools: raised on a line, kept, reopened on new evidence, carri
 test("the talk tools: a message that asks is owed until answered, a direction from above reaches the owner between, a question reaches the Human and its answer the asker, a report its sections", async () => {
   const c = await started();
   const chief = await c.tools(0);
-  await did(c, chief, "open_scope", { parent: "root", role: "keeper", paths: ["src/"], brief: brief("Lane") });
+  assert.equal(
+    await did(c, chief, "open_scope", { parent: "root", role: "keeper", paths: ["src/"], brief: brief("Lane") }),
+    "Recorded: scope opened (1); actor seated (a2); brief issued.",
+    "a reply names what was made by the id it is called by from then on",
+  );
   const keeper = await c.tools(1);
   await did(c, keeper, "open_scope", { parent: "1", role: "maker", paths: ["src/a/"], brief: brief("A") });
   const maker = await c.tools(2);
 
-  await did(c, keeper, "send_message", { to: "a3", text: "How far are you?", asks: true });
+  assert.equal(
+    await did(c, keeper, "send_message", { to: "a3", text: "How far are you?", asks: true }),
+    "Recorded: message sent (m1 to a3); obligation opened.",
+  );
   assert.match(
     c.told(2).at(-1) ?? "",
     /^m1 from a2 \(keeper, scope 1\) · it asks an answer: `answer` with replyTo m1\nHow far are you\?$/,
@@ -335,11 +345,8 @@ test("the talk tools: a message that asks is owed until answered, a direction fr
   );
   assert.match(await status(keeper), /You owe:\n- direction m3 to a1: Switch to int8$/m);
 
-  await did(c, chief, "ask_human", {
-    text: "int8 or int16?",
-    options: ["int8", "int16"],
-    recommend: "int8, it is enough",
-  });
+  const question = { text: "int8 or int16?", options: ["int8", "int16"], recommend: "int8, it is enough" };
+  assert.equal(await did(c, chief, "ask_human", question), "Recorded: question asked (q1); obligation opened.");
   const asked = (await c.plugin.view(c.project))!.human.questions;
   assert.deepEqual(asked, [
     { id: "q1", from: "a1", text: "int8 or int16?", options: ["int8", "int16"], recommend: "int8, it is enough" },
@@ -349,6 +356,13 @@ test("the talk tools: a message that asks is owed until answered, a direction fr
   await c.plugin.idle();
   assert.match(c.told(0).at(-1) ?? "", /^The Human answered question q1: int8$/);
 
+  await refused(
+    keeper,
+    "report",
+    {},
+    /^The arguments do not fit report: .*a report says a line under one section at least/s,
+  );
+  await refused(keeper, "report", { done: [] }, /^The arguments do not fit report/);
   await did(c, keeper, "report", { unsure: ["The load"], done: ["Half the lane"] });
   assert.match(c.told(0).at(-1) ?? "", /^Report from scope 1\.\ndone:\n- Half the lane\nunsure:\n- The load$/);
 

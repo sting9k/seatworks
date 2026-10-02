@@ -63,7 +63,10 @@ sent ──► queued ──► delivered ──► answered        (if it asks 
   saying how many still wait. A message is never cut, and one longer than a delivery goes alone. A reader long idle
   under a busy team would otherwise be woken with its whole backlog in one message, past what its context holds.
 - **Answered.** A message that asks for an answer keeps its obligation open (I11) until the reader answers with
-  `answer` and `replyTo`, whoever reads it and however long it takes.
+  `answer` and `replyTo`, whoever reads it and however long it takes. The answer goes to whoever asked; when that one
+  has left its seat, to whoever holds the seat now, or to the owner above an empty one, since an answer sent to an
+  agent that is no longer there would be read by nobody. A note of the record's own asks nothing and is answered by
+  nothing: an `answer` to one is refused, saying so.
 - **Moved.** What waited unread goes to whoever is reseated, or with the seat left empty to the owner above. A
   message its reader had read and not answered is owed by the seat still: reseated, its new holder is sent it again,
   since it owes the answer and never read the question. While the seat is empty the owner above holds the debt, and

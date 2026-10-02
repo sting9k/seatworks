@@ -11,6 +11,7 @@ import {
 } from "../../shared/contracts/tools.ts";
 import type { Keys } from "../core/keys.ts";
 import { daemonLog } from "../core/logger.ts";
+import type { Event } from "../../shared/contracts/events.ts";
 import type { Submitted } from "./project.ts";
 import type { State } from "../../shared/kernel/state.ts";
 import type { Refusal } from "../../shared/kernel/decide/context.ts";
@@ -189,14 +190,38 @@ export class TeamSocket {
   }
 }
 
-function recorded(events: readonly { type: string; [k: string]: unknown }[]): string {
+function recorded(events: readonly Event[]): string {
   if (events.length === 0) return "Nothing changed.";
-  // An attention its reader marked noise opens nothing, and whoever watches would otherwise go on sending its kind.
-  const said = (e: { type: string; [k: string]: unknown }) =>
-    e.type === "attended" && e.attention === null
-      ? "attended, and nobody was told: this kind is marked noise for that agent and scope"
-      : e.type.replace(/_/g, " ");
+  const said = (e: Event) => {
+    // An attention its reader marked noise opens nothing, and whoever watches would otherwise go on sending its kind.
+    if (e.type === "attended" && e.attention === null)
+      return "attended, and nobody was told: this kind is marked noise for that agent and scope";
+    const id = made(e);
+    return `${e.type.replace(/_/g, " ")}${id === null ? "" : ` (${id})`}`;
+  };
   return `Recorded: ${events.map(said).join("; ")}.`;
+}
+
+/** The id of what an event made, where its caller names it by that id from then on; a second call would only read it. */
+function made(e: Event): string | null {
+  switch (e.type) {
+    case "scope_opened":
+      return e.scope.id;
+    case "actor_seated":
+      return e.actor;
+    case "finding_raised":
+      return e.finding.id;
+    case "claim_made":
+      return e.claim.id;
+    case "message_sent":
+      return `${e.message.id} to ${e.message.to}`;
+    case "question_asked":
+      return e.question.id;
+    case "attention_opened":
+      return e.attention.id;
+    default:
+      return null;
+  }
 }
 
 function refusedText(r: Refusal, standing: readonly string[]): string {

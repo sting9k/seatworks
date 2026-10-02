@@ -40,6 +40,8 @@ test("one lane end to end: hand back, candidate, checks, integrate, land; then o
     }),
   );
   const evidence = [...ledger.state.evidence.values()].find((e) => e.subject === SHA(2))!.id;
+  const own = { scope: task, commit: SHA(1), steps: [{ name: "mine", run: ["npm", "run", "acceptance"] }] };
+  ledger.must(ledger.as(lead, "run_checks", own));
   ledger.must(ledger.as(lead, "integrate", { scope: task, evidence: [evidence] }));
   assert.ok(
     ledger.effects.some((e) => e.body.kind === "workspace.advance" && e.body.to === SHA(2) && e.body.from === SHA(3)),
@@ -75,6 +77,7 @@ test("one lane end to end: hand back, candidate, checks, integrate, land; then o
   assert.equal(ledger.state.obligations.size, 0);
   assert.equal(ledger.state.messages.size, 0);
   assert.equal(ledger.state.evidence.size, 0);
+  assert.equal(ledger.state.checksAsked.size, 0, "a check still running on a scope that closed is waited on by nobody");
 });
 
 test("a base that moved under an integration is taken in again, on the same commit", () => {
