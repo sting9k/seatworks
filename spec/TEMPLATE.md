@@ -265,6 +265,22 @@ server and no accounts. SLP is the only one at first.
 The gallery's own repository, and where its page is served from, are the owner's to set up: both are made outside
 this repository.
 
+## Checking one without the editor
+
+A template written by hand, or by an agent from `docs/TEMPLATE-SPEC.md`, is checked from a terminal in a checkout of
+this repository:
+
+```sh
+npm run template -- check <dir>          # does it load, what it needs of a machine, and its notes
+npm run template -- pack <dir> <file>    # the same check, then the one file it is shared as
+```
+
+- **It loads a template both ways**, as the editor reads it and as the plugin does, so one that passes installs. It
+  fails, saying why, on the first thing that stops either.
+- **It says what the template needs of a machine**: the name it installs under, each role with the words it reads on
+  every turn, the Paseo agent profiles its roles name, and the variables its servers read.
+- **It prints the editor's notes** (`EDITOR.md`, Checks), which stop nothing here either.
+
 ## Installing
 
 A template is downloaded as the one file it is shared as and installed from the plugin's page in Paseo. The Human

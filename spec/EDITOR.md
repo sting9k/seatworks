@@ -184,11 +184,22 @@ of them in a panel of the rail. A note stops nothing, neither a change nor an ex
 - A prompt that names, in backticks, a tool its role is not shown. It cannot tell a role told to call a tool from
   one told that others have it, so it is a thing to look at: SLP's watcher once named the owners' `status` so, and
   was reworded, since a role that reads a tool's name may try to call it.
+- **A role with no way on.** One that no role seats and that is not the root; one that names no agent profile; one
+  with no prompt. One whose properties need a tool it is not shown: a writer without `hand_back`, a reader without
+  `record_verdict`, a watching role without `attend`, a role that seats others without `open_scope` or without
+  `integrate`. And one shown a tool the kernel refuses every role like it: `ask_human` without `humanDoor`, `attend`
+  without `watches`, `open_scope` with nobody to seat. Each is certain from `profile.yaml` alone, and each would
+  otherwise show only as a team that stalls.
 - A prompt or a skill that names a role the template has lost since it was opened.
 - A prompt of a watched role that names the watch.
 - A skill whose folder and `name` differ, whose description does not say when to use it, or which points at a file
   that is not beside it.
 - A question or a moment that asks of a backticked field not in its `state`, or lacks the description of an outcome.
+- **A question or a moment that would never be asked, or never reach anyone.** A question asked `on` what is not an
+  event a question is asked on; a `state` that reads what the record does not have; a `tells` the plugin does not
+  know; a moment that watches a role the template does not have; a moment `by: code` under a name the plugin counts
+  nothing for. The lists these are held against are the plugin's own (`shared/contracts/reflex.ts`), which the code
+  that asks is typed by.
 - A prompt, a skill, a question, a moment or a server that still holds a skeleton's words.
 - An outside server no role is given; and one whose settings hold what looks like a secret, by the patterns the
   plugin masks before text leaves a machine. A secret is named as a variable, never written.
@@ -198,7 +209,12 @@ of them in a panel of the rail. A note stops nothing, neither a change nor an ex
   tests. The panel of a question says which of the three holds: earned, reworded since, or not yet.
 
 A change `resolveProfile` would refuse (no root or more than one; a role that spawns but does not delegate; a role
-with two kinds; a `spawns` that names no role) is never there to note: it is not made (Decided 9).
+with two kinds; a `spawns` that names no role; a tool the team does not have) is never there to note: it is not made
+(Decided 9). Nor is one that leaves a file the template names and does not carry, or a question or a moment named as
+asked and not written.
+
+The same notes are printed by `npm run template -- check <dir>` for a template written without the page
+(`TEMPLATE.md`, Checking one without the editor).
 
 ## Easy to use
 

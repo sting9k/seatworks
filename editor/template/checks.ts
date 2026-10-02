@@ -1,4 +1,5 @@
-import { settingsOf } from "../../shared/contracts/profile.ts";
+import { type Role, settingsOf } from "../../shared/contracts/profile.ts";
+import { ASKED_ON, CODE_MOMENTS, STATE_PATHS, TELLS } from "../../shared/contracts/reflex.ts";
 import { SECRETS } from "../../shared/contracts/secrets.ts";
 import type { Asked, Template } from "./read-template.ts";
 import { TOOL_GROUPS } from "./tool-groups.ts";
@@ -24,11 +25,18 @@ export function notesOf(template: Template, opened: Template): Note[] {
   const watched = new Set(template.moments.flatMap((moment) => moment.spec.watches ?? []));
   const notes: Note[] = [];
 
+  const seated = new Set([...template.profile.roles.values()].flatMap((role) => [...role.spawns]));
   for (const role of template.profile.roles.values()) {
+    const say = (says: string) => notes.push({ node: `role:${role.name}`, says });
+    if (!role.root && !seated.has(role.name)) say("no role seats it, so it never joins the team");
+    if (role.models.length === 0) say("it names no agent profile, so it cannot be seated");
+    for (const says of deadEnds(role)) say(says);
     const prompt = template.file.roles[role.name]?.prompt;
     const text = prompt === undefined ? undefined : template.files.get(prompt);
-    if (text === undefined) continue;
-    const say = (says: string) => notes.push({ node: `role:${role.name}`, says });
+    if (text === undefined) {
+      say("it has no prompt");
+      continue;
+    }
     if (SKELETON.test(text)) say("its prompt still holds the skeleton's words");
     for (const tool of new Set(backticked(text)))
       if (TOOLS.has(tool) && !role.tools.has(tool)) say(`its prompt names \`${tool}\`, which the role is not shown`);
@@ -65,9 +73,65 @@ export function notesOf(template: Template, opened: Template): Note[] {
     ["question", template.questions],
     ["moment", template.moments],
   ] as const)
-    for (const one of asked) for (const says of askedNotes(one)) notes.push({ node: `${kind}:${one.name}`, says });
+    for (const one of asked) {
+      const say = (says: string) => notes.push({ node: `${kind}:${one.name}`, says });
+      for (const says of askedNotes(one)) say(says);
+      for (const says of kind === "question" ? questionNotes(one) : momentNotes(one, template)) say(says);
+    }
   return notes;
 }
+
+/**
+ * Where a role's properties and its tools leave it with no way on: what it does can reach nobody, or it is shown a
+ * tool the kernel refuses every role like it. Each is certain from `profile.yaml` alone.
+ */
+function deadEnds(role: Role): string[] {
+  const shown = (tool: string) => role.tools.has(tool);
+  const lacks: [boolean, string, string][] = [
+    [role.writes, "hand_back", "it writes, so its work never comes back"],
+    [role.reading, "record_verdict", "it reads a commit, so what it finds is evidence for nobody"],
+    [role.watches, "attend", "it watches, so what it sees reaches nobody"],
+    [role.spawns.size > 0, "open_scope", "it seats other roles, so it can seat none"],
+    [role.spawns.size > 0, "integrate", "it seats other roles, so their work is never taken in"],
+  ];
+  const refused: [boolean, string, string][] = [
+    [!role.humanDoor, "ask_human", "only a role with `humanDoor` asks the Human"],
+    [!role.watches, "attend", "only a role that watches attends"],
+    [role.spawns.size === 0, "open_scope", "it seats no role"],
+  ];
+  return [
+    ...lacks.flatMap(([holds, tool, why]) => (holds && !shown(tool) ? [`it is not shown \`${tool}\`: ${why}`] : [])),
+    ...refused.flatMap(([holds, tool, why]) =>
+      holds && shown(tool) ? [`it is shown \`${tool}\`, which it is always refused: ${why}`] : [],
+    ),
+  ];
+}
+
+const known = (all: readonly string[], one: string) => all.includes(one);
+
+/** What a question asks of the record that the record does not have: it would never be asked, with nobody told. */
+function questionNotes({ spec }: Asked): string[] {
+  const notes = (spec.on ?? [])
+    .filter((event) => !known(ASKED_ON, event))
+    .map((event) => `it is asked on \`${event}\`, which is not an event a question is asked on`);
+  if (spec.tells !== undefined && !known(TELLS, spec.tells))
+    notes.push(`it tells \`${spec.tells}\`, which is not one of ${TELLS.join(", ")}`);
+  return [...notes, ...stateNotes(spec)];
+}
+
+function momentNotes({ name, spec }: Asked, template: Template): string[] {
+  const notes = (spec.watches ?? [])
+    .filter((role) => !template.profile.roles.has(role))
+    .map((role) => `it watches ${role}, which is not a role of the template`);
+  if (spec.by === "code" && !known(CODE_MOMENTS, name))
+    notes.push(`it is counted in code, and no moment of this name is: ${CODE_MOMENTS.join(", ")} are`);
+  return [...notes, ...stateNotes(spec)];
+}
+
+const stateNotes = (spec: Asked["spec"]) =>
+  Object.values(spec.state ?? {})
+    .filter((path) => !known(STATE_PATHS, path))
+    .map((path) => `its state reads \`${path}\`, which the record does not have`);
 
 /** What `REFLEX.md`, Asking well, asks of a question that a machine can see is missing. */
 function askedNotes({ spec }: Asked): string[] {

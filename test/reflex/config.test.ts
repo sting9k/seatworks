@@ -56,3 +56,12 @@ test("where the reflex asks is the plugin's: a profile that names a route of its
   assert.deepEqual(Object.keys(routes).sort(), [...reflexSettings.schema.shape.route.unwrap().options].sort());
   assert.ok(Object.values(routes).every((route) => new URL(route.endpoint).protocol === "https:"));
 });
+
+test("a question or a moment named as asked that its file does not write: the profile does not load, saying which", () => {
+  const dir = profileOf({ "reflex.yaml": QUESTION.replace("active: [vague-goal]", "active: [vague-goal, vage-goal]") });
+
+  assert.throws(
+    () => loadReflex(dir, { reflex: "reflex.yaml", watch: null }),
+    /vage-goal is named but not written under questions/,
+  );
+});

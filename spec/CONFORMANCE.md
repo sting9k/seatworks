@@ -248,7 +248,7 @@ A template's files in, what a person sees out (`EDITOR.md`).
 | The SLP profile opened                                      | A node for each role, skill, question and moment of its files and one for the Human; a wire for each `spawns`, each skill a role has, each role a moment watches and each role that may ask or tell the Human |
 | The SLP profile opened                                      | Each role's ticked tools are exactly its `tools` in `profile.yaml`, in its node's groups or on a wire to it |
 | Every tool a profile may give a role                        | In one of the editor's groups, and in one only                      |
-| A template that names a skill it does not carry             | Not opened, saying which skill                                      |
+| A template that names a skill, or a note for the project, it does not carry | Not opened, saying which                             |
 | A template that keeps no positions opened                   | Every node placed, no two on top of each other                      |
 | The SLP profile packed with nothing changed, and opened again | Every file as it was, to the byte                                  |
 | A template whose nodes were put somewhere, then saved       | The places are in `template.json` and in no other file; opened again, each node is where it was put |
@@ -265,6 +265,8 @@ A template's files in, what a person sees out (`EDITOR.md`).
 | Steps set down, given roles and joined; then taken away      | `flow.md` holds a line a step in order, each with its role and what follows, and `profile.yaml` gains the one line that names it; with the last step gone, the file and that line are gone |
 | The SLP profile as shipped                                  | No note                                                             |
 | A prompt naming a tool its role is not shown; a prompt naming a role the template lost; a watched role's prompt naming the watch; a prompt, skill or question still holding its skeleton; a skill named otherwise than its folder, not saying when to use it, or pointing at a file not beside it; a question asking of a field not in its state, or with one outcome described | Each a note on the node it is about |
+| A writer not shown `hand_back`, a reader not shown `record_verdict`, a watching role not shown `attend`, a role that seats others not shown `open_scope` or `integrate`; a role shown `ask_human`, `attend` or `open_scope` that the kernel always refuses it; a role nobody seats, one with no agent profile, one with no prompt | Each a note on the role |
+| A question asked on what is no event of the record, reading a state the record does not have, or telling whom the plugin does not know; a moment watching a role the template lacks, or counted in code under a name the plugin does not count | Each a note on the question or the moment |
 | A file put beside a skill that points at it                 | Kept in the skill's folder; no note                                 |
 | A skill wired to a role                                     | The role's always-on words rise by the words of the skill's description |
 | A question added, ticked as asked, then taken away          | Written and not asked; asked by one line of its file; taken away, the file is as it was to the byte |
@@ -287,6 +289,10 @@ What the plugin reads of a profile that a template adds (`TEMPLATE.md`).
 | Two projects attached with different profiles, and the Human's rules kept for one of them | Each project's agents get their own profile's prompts; the rules reach only the agents of their profile; a profile nobody installed is not attached |
 | A role taken out of a profile while an agent sits in it     | The project runs on; a tool the agent calls is refused, saying its role is gone from the profile, and it still reads the record; `stuck` names its seat |
 | A profile that names the file of its questions; and one that names none while a `reflex.yaml` lies in its directory | The questions are read from the file named; the second asks nothing |
+| A question or a moment named as asked that its file does not write | The profile does not load, saying which                          |
+| The check command on a template's directory that loads      | Says the name it installs under, its roles and the agent profiles it needs; its notes are printed and it still passes |
+| The check command on a directory that does not load         | Fails, saying why, and prints nothing else                          |
+| The pack command                                            | The one file a template is shared as, holding the directory's very files; nothing is written for a template that does not load |
 | A profile whose reflex file names a route of its own, or masks nothing | The reflex has no route but the plugin's, one for each the settings offer; what looks like a secret is still masked |
 | A shared template read from a file on the machine           | What it would bring is said: its name, its roles, each agent profile its roles name and whether Paseo has it; nothing is installed and nothing unpacked is left |
 | The template installed with the hash of what was read       | Under its name, listed to attach a project with; read again, it says it would replace the one there |

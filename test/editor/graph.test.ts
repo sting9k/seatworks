@@ -90,7 +90,7 @@ test("each role's ticked tools are exactly its `tools` in the profile, in its no
   }
 });
 
-test("a template that names a skill it does not carry does not open, and says which", () => {
+test("a template that names a skill, or a note for the project, it does not carry does not open, and says which", () => {
   const without = new Map(files);
   const [, first] = roles.find(([, r]) => (r.skills ?? []).length > 0)!;
   const skill = first.skills![0]!;
@@ -100,6 +100,12 @@ test("a template that names a skill it does not carry does not open, and says wh
 
   assert.ok(!read.ok);
   assert.match(read.says, new RegExp(skill));
+
+  const noNote = new Map(files);
+  noNote.delete("project.md");
+  const unread = readTemplate(noNote);
+  assert.ok(!unread.ok);
+  assert.match(unread.says, /the project's note needs project\.md, which is not in the template/);
 });
 
 test("every tool a role may be given sits in one of the editor's groups, and in one only", () => {

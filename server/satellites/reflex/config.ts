@@ -36,7 +36,7 @@ export function loadReflex(
   const reflex = named.reflex === null ? null : ReflexFileSchema.parse(read(join(dir, named.reflex)));
   const watch = named.watch === null ? null : WatchFileSchema.parse(read(join(dir, named.watch)));
   const pick = (all: Record<string, QuestionSpec>, active: readonly string[]) =>
-    new Map(active.flatMap((name) => (all[name] ? [[name, all[name]] as const] : [])));
+    new Map(active.map((name) => [name, all[name]!] as const));
   return {
     mask: SECRETS.map((p) => new RegExp(p, "g")),
     questions: reflex ? pick(reflex.questions, reflex.active) : new Map(),

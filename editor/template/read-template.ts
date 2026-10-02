@@ -45,6 +45,7 @@ export function readTemplate(files: TemplateFiles): Read {
   for (const [name, role] of Object.entries(file.roles))
     if (role.prompt && !files.has(role.prompt)) return missing(role.prompt, `role ${name}`);
   if (file.flow && !files.has(file.flow)) return missing(file.flow, "the profile's flow");
+  if (file.project && !files.has(file.project.note)) return missing(file.project.note, "the project's note");
   const skills = new Map<string, Skill>();
   const carried = [...files.keys()].flatMap((path) => /^skills\/([^/]+)\/SKILL\.md$/.exec(path)?.[1] ?? []);
   for (const name of new Set([...Object.values(file.roles).flatMap((role) => role.skills ?? []), ...carried])) {

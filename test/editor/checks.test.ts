@@ -99,6 +99,96 @@ test("each thing a machine can see in a template is a note on the node it is abo
   }
 });
 
+test("where a template leaves a role, a question or a moment with no way on, a note says so", () => {
+  const profile = (from: string, to: string) => rewritten("profile.yaml", (text) => text.replace(from, to));
+  const cases: [string, Edit, string][] = [
+    [
+      "a writer with no way to hand back",
+      setTool("peer", "hand_back", false),
+      "role:peer: it is not shown `hand_back`: it writes, so its work never comes back",
+    ],
+    [
+      "a reader with no way to say what it found",
+      setTool("reviewer", "record_verdict", false),
+      "role:reviewer: it is not shown `record_verdict`: it reads a commit, so what it finds is evidence for nobody",
+    ],
+    [
+      "a watching role with no way to tell",
+      setTool("watcher", "attend", false),
+      "role:watcher: it is not shown `attend`: it watches, so what it sees reaches nobody",
+    ],
+    [
+      "a role that seats others and cannot open a scope",
+      setTool("lead", "open_scope", false),
+      "role:lead: it is not shown `open_scope`: it seats other roles, so it can seat none",
+    ],
+    [
+      "a role that seats others and cannot take their work in",
+      setTool("lead", "integrate", false),
+      "role:lead: it is not shown `integrate`: it seats other roles, so their work is never taken in",
+    ],
+    [
+      "a tool shown to a role with no door to the Human",
+      setTool("peer", "ask_human", true),
+      "role:peer: it is shown `ask_human`, which it is always refused: only a role with `humanDoor` asks the Human",
+    ],
+    [
+      "a tool to attend shown to a role that does not watch",
+      setTool("peer", "attend", true),
+      "role:peer: it is shown `attend`, which it is always refused: only a role that watches attends",
+    ],
+    [
+      "a tool to open a scope shown to a role that seats none",
+      setTool("peer", "open_scope", true),
+      "role:peer: it is shown `open_scope`, which it is always refused: it seats no role",
+    ],
+    ["a role nobody seats", addRole("planner"), "role:planner: no role seats it, so it never joins the team"],
+    [
+      "a role with no agent profile",
+      addRole("planner"),
+      "role:planner: it names no agent profile, so it cannot be seated",
+    ],
+    ["a role with no prompt", profile("    prompt: roles/watcher.md\n", ""), "role:watcher: it has no prompt"],
+    [
+      "a question asked on what is no event of the record",
+      rewritten("reflex.yaml", (text) => text.replace("on: [report_made]", "on: [report_written]")),
+      "question:unrecorded-structure: it is asked on `report_written`, which is not an event a question is asked on",
+    ],
+    [
+      "a question whose state reads what the record does not have",
+      rewritten("reflex.yaml", (text) =>
+        text.replace(
+          "state: { goal: brief.goal }\n    noul: Does `goal` fail",
+          "state: { goal: brief.aim }\n    noul: Does `goal` fail",
+        ),
+      ),
+      "question:unobservable-goal: its state reads `brief.aim`, which the record does not have",
+    ],
+    [
+      "a question that tells nobody the plugin knows",
+      rewritten("reflex.yaml", (text) => text.replace("tells: answerer", "tells: owner")),
+      "question:cannot-be-undone: it tells `owner`, which is not one of root, parent, self, answerer, evidence",
+    ],
+    [
+      "a moment watching a role the template does not have",
+      rewritten("watch.yaml", (text) => text.replace("watches: [peer]", "watches: [builder]")),
+      "moment:trades-the-goal: it watches builder, which is not a role of the template",
+    ],
+    [
+      "a moment counted in code under a name the plugin does not count",
+      rewritten(
+        "watch.yaml",
+        (text) => `${text}\n  stalled:\n    watches: [peer]\n    by: code\n    fact: nothing moved\n`,
+      ),
+      "moment:stalled: it is counted in code, and no moment of this name is: going-in-circles, check-made-to-pass, silent-without-progress, findings-waiting, past-appetite are",
+    ],
+  ];
+  for (const [name, edit, expected] of cases) {
+    const found = notes(changed(slp, edit)).filter((note) => !notes(slp).includes(note));
+    assert.ok(found.includes(expected), `${name}: ${JSON.stringify(found)}`);
+  }
+});
+
 test("a file put beside a skill is kept, and a skill that points at it draws no note", () => {
   const after = changed(
     slp,

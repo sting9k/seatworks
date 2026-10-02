@@ -2,7 +2,14 @@ import type { CommandBody } from "../../shared/contracts/commands.ts";
 import type { Event } from "../../shared/contracts/events.ts";
 import { HUMAN, ROOT } from "../../shared/contracts/ids.ts";
 import type { Brief, Line, Plan } from "../../shared/contracts/ledger.ts";
-import type { QuestionSpec } from "../../shared/contracts/reflex.ts";
+import {
+  ASKED_ON,
+  type AskedOn,
+  type CodeMoment,
+  type QuestionSpec,
+  STATE_PATHS,
+  type StatePath,
+} from "../../shared/contracts/reflex.ts";
 import { isWithin } from "../../shared/kernel/authority.ts";
 import type { State } from "../../shared/kernel/state.ts";
 import { KeyedQueue } from "../core/keyed-queue.ts";
@@ -12,6 +19,10 @@ import type { Answer, Jev } from "../satellites/reflex/jev.ts";
 
 type Observation = Extract<CommandBody, { type: "record_observation" }>;
 type Asked = { name: string; spec: QuestionSpec; p: number; label: string | null; model: string };
+/** An event a question is asked on with a subject of its own; a turn's end is asked of its last words instead. */
+type Subject = Extract<Event, { type: Exclude<AskedOn, "turn_ended"> }>;
+const isSubject = (e: Event): e is Subject =>
+  e.type !== "turn_ended" && (ASKED_ON as readonly string[]).includes(e.type);
 
 /** Asks queued per project past this are left unread, so a slow host never grows a backlog without bound. */
 const MAX_QUEUED = 100;
@@ -76,7 +87,7 @@ export class Reflex {
       for (const [name, spec] of this.config.questions) {
         // Asked elsewhere: a question that borrows another's wording (`use`), one read hunk by hunk, one at a turn's end.
         if (!spec.on?.includes(e.type) || (spec.noul === undefined && spec.choice === undefined)) continue;
-        if (spec.hunks !== undefined) continue;
+        if (spec.hunks !== undefined || !isSubject(e)) continue;
         const asked = this.subjectOf(e, state);
         if (!asked || !matches(spec, e, state)) continue;
         const ctx = { event: e, state, item: null, actor: asked.actor, scope: asked.scope };
@@ -340,7 +351,7 @@ export class Reflex {
    * the owner at once.
    */
   private madeToPass(project: string, actor: string, role: string, scope: string, item: TurnItem, state: State): void {
-    const spec = this.config.moments.get("check-made-to-pass");
+    const spec = this.counted("check-made-to-pass");
     const test = this.config.testPath;
     if (!spec?.watches?.includes(role) || !test || item.path === null || !test.test(item.path)) return;
     const brief = state.scopes.get(scope)?.brief;
@@ -376,7 +387,7 @@ export class Reflex {
   private silence(project: string, e: Extract<Event, { type: "turn_ended" }>, state: State): void {
     const key = `${project}:${e.actor}`;
     const acted = this.acted.delete(key);
-    const spec = this.config.moments.get("silent-without-progress");
+    const spec = this.counted("silent-without-progress");
     const actor = state.actors.get(e.actor);
     if (!spec || !actor || !spec.watches?.includes(actor.role)) return;
     if (acted || (e.tokens === 0 && e.usd === 0)) {
@@ -407,7 +418,7 @@ export class Reflex {
   /** Findings waiting: one its answerer has let stand past the end of its next turn, told once to the owner above it. */
   private findingsWaiting(project: string, actorId: string, state: State): void {
     const actor = state.actors.get(actorId);
-    const spec = this.config.moments.get("findings-waiting");
+    const spec = this.counted("findings-waiting");
     if (!spec || !actor || !spec.watches?.includes(actor.role)) return;
     for (const f of state.findings.values()) {
       if (f.status !== "raised" || state.scopes.get(f.answeredBy)?.owner !== actorId) continue;
@@ -437,7 +448,7 @@ export class Reflex {
 
   /** Going in circles: the same failing call again and again, counted with no model asked. */
   private circles(project: string, actor: string, scope: string, items: readonly TurnItem[]): void {
-    if (!this.config.moments.has("going-in-circles")) return;
+    if (!this.counted("going-in-circles")) return;
     const key = `${project}:${actor}`;
     const seen = this.loops.get(key) ?? new Map<string, number>();
     this.loops.set(key, seen);
@@ -469,7 +480,7 @@ export class Reflex {
 
   /** Past the appetite: spend crossing the amount a scope's plan names, told once as it crosses. */
   private pastAppetite(project: string, e: Extract<Event, { type: "turn_ended" }>, state: State): void {
-    if (!this.config.moments.has("past-appetite") || e.usd <= 0) return;
+    if (!this.counted("past-appetite") || e.usd <= 0) return;
     for (let at = state.actors.get(e.actor)?.scope ?? null; at !== null; at = state.scopes.get(at)?.parent ?? null) {
       const scope = state.scopes.get(at);
       const usd = scope?.plan?.appetite.usd ?? null;
@@ -495,7 +506,12 @@ export class Reflex {
     }
   }
 
-  private subjectOf(e: Event, state: State): { scope: string; actor: string | null; commit: string | null } | null {
+  /** A moment counted in code, when the profile watches for it. */
+  private counted(name: CodeMoment): QuestionSpec | undefined {
+    return this.config.moments.get(name);
+  }
+
+  private subjectOf(e: Subject, state: State): { scope: string; actor: string | null; commit: string | null } | null {
     const by = state.actors.has(e.by) ? e.by : null;
     const seatOf = (actor: string) => {
       const a = state.actors.get(actor);
@@ -521,8 +537,6 @@ export class Reflex {
         return seatOf(e.permission.actor);
       case "message_sent":
         return seatOf(e.message.to);
-      default:
-        return null;
     }
   }
 }
@@ -709,7 +723,12 @@ function valueOf(path: string, ctx: Context): string | null {
   const { event, state, item, actor } = ctx;
   const root = state.scopes.get(ROOT);
   const brief = briefOf(ctx);
-  switch (path) {
+  const known = STATE_PATHS.find((p) => p === path);
+  if (known === undefined) return null;
+  switch (known satisfies StatePath) {
+    // Given by the code that counts a test's minted names, never read off the record.
+    case "names.unsettled":
+      return null;
     case "item":
     case "hunk":
     case "turn.lastSaid":
@@ -783,8 +802,6 @@ function valueOf(path: string, ctx: Context): string | null {
           ...event.brief.constraints.map((l) => l.text),
           ...event.brief.choices.map((l) => l.text),
         ].join("\n");
-      return null;
-    default:
       return null;
   }
 }
