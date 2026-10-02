@@ -73,6 +73,10 @@ from Paseo 0.10.1: the plugin SDK, `@getpaseo/client`, `@getpaseo/protocol`, the
   whatever the daemon runs as: Node from the CLI, the desktop app's Electron binary when the app started the daemon
   (`desktop/daemon/node-entrypoint-launcher.ts` sets `ELECTRON_RUN_AS_NODE`). Anything a plugin spawns through
   `process.execPath` needs `ELECTRON_RUN_AS_NODE=1` in its own environment, or it launches the app.
+- Stopping a plugin, the daemon sends its worker `shutdown`; the worker awaits the cleanup the contribution returned,
+  then disconnects. Two seconds after the `shutdown` the daemon sends SIGTERM, and two after that SIGKILL
+  (`plugins/runtime.ts`, `SOFT_SHUTDOWN_TIMEOUT_MS`, 0.10.2). So the plugin's cleanup returns its promise, and ends
+  every running check before it waits on anything: what it has not ended in two seconds outlives it.
 - In the app, `agents.subscribe` hears only what a listing made with `subscribe: {}` streams: the daemon sends no
   `agent_update` otherwise. The listing's `subscription` gives its snapshot again after each reconnect and is released
   with the plugin.

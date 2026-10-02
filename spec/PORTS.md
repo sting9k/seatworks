@@ -87,10 +87,14 @@ Runs checks on one commit and says what came of them.
 
 ```text
 run(path, sha, steps, timeout) -> { sha, ok, steps: [{ name, exit, log, seconds, cause? }] }
+stop()
 ```
 
 - It checks that the copy is at `sha` before it starts and after it ends; a copy that moved fails the run.
-- A step that runs past the timeout is killed with everything it started.
+- A step is its command: it ends when the command does, with the command's exit code, and whatever the command
+  started that still runs is ended with it. A step that runs past the timeout is killed the same way.
+- `stop` ends every step now running and starts no other: a check left running would outlive whoever asked for it,
+  with no timeout left to end it. A run that was stopped fails, saying so, and is never a pass.
 - It never runs while the machine is held: the kernel does not ask it to.
 - A failed step's `cause` is `environment` or `code` when the log matches a known shape, from data, and is left for
   the reflex otherwise (`REFLEX.md`). It never turns a failure into a pass.

@@ -13,15 +13,29 @@ const TAIL_BYTES = 8 * 1024;
 export class EvidenceRunner {
   private readonly repo: string;
   private readonly scratch: string;
-  private readonly environment: readonly RegExp[];
+  /** The process group of each step now running, which `stop` ends. */
+  private readonly running = new Set<number>();
+  private stopped = false;
 
-  constructor(repo: string, scratch: string, environmentPatterns: readonly string[]) {
+  constructor(repo: string, scratch: string) {
     this.repo = repo;
     this.scratch = scratch;
-    this.environment = environmentPatterns.map((p) => new RegExp(p, "i"));
   }
 
-  async run(key: string, subject: string, steps: readonly Check[], timeoutMs: number): Promise<Ran> {
+  /** Ends every step now running with what it started: a check left running would outlive whoever asked for it. */
+  stop(): void {
+    this.stopped = true;
+    for (const group of this.running) killGroup(group);
+  }
+
+  /** `environment` holds the shapes of a failure that is the environment's and not the code's. */
+  async run(
+    key: string,
+    subject: string,
+    steps: readonly Check[],
+    timeoutMs: number,
+    environment: readonly string[],
+  ): Promise<Ran> {
     const at = await sha(this.repo, subject);
     if (at === null) return { ok: false, steps: [], summary: `${subject} is not in the repository` };
     mkdirSync(this.scratch, { recursive: true });
@@ -37,18 +51,20 @@ export class EvidenceRunner {
       const results: Step[] = [];
       let failed: { name: string; tail: string } | null = null;
       for (const step of steps) {
-        const r = await runStep(path, step, timeoutMs);
+        if (this.stopped) break;
+        const r = await runStep(path, step, timeoutMs, this.running);
         results.push({
           name: step.name,
           exit: r.exit,
           seconds: r.seconds,
-          cause: r.exit === 0 ? null : this.causeOf(r.tail),
+          cause: r.exit !== 0 && environment.some((p) => new RegExp(p, "i").test(r.tail)) ? "environment" : null,
         });
         if (r.exit !== 0) {
           failed = { name: step.name, tail: r.tail };
           break;
         }
       }
+      if (this.stopped) return { ok: false, steps: results, summary: "the run was stopped before its checks ended" };
       if ((await sha(path, "HEAD")) !== at)
         return { ok: false, steps: results, summary: "the copy moved while the checks ran" };
       if (failed)
@@ -62,17 +78,14 @@ export class EvidenceRunner {
       await git(this.repo, ["worktree", "remove", "--force", "--force", path], 120_000);
     }
   }
-
-  private causeOf(tail: string): Step["cause"] {
-    return this.environment.some((p) => p.test(tail)) ? "environment" : null;
-  }
 }
 
-/** One step as argv, in its own process group, killed with everything it started when it runs past the timeout. */
+/** One step as argv, in its own process group, which is ended whole when the command ends or runs past the timeout. */
 function runStep(
   cwd: string,
   step: Check,
   timeoutMs: number,
+  running: Set<number>,
 ): Promise<{ exit: number; seconds: number; tail: string }> {
   const started = Date.now();
   return new Promise((resolve) => {
@@ -83,6 +96,8 @@ function runStep(
       stdio: ["ignore", "pipe", "pipe"],
       env: { ...process.env, CI: "1" },
     });
+    const group = child.pid;
+    if (group !== undefined) running.add(group);
     let tail = Buffer.alloc(0);
     const keep = (chunk: Buffer) => {
       tail = Buffer.concat([tail, chunk]);
@@ -97,10 +112,15 @@ function runStep(
     }, timeoutMs);
     const done = (exit: number, extra = "") => {
       clearTimeout(timer);
+      if (group !== undefined) running.delete(group);
       resolve({ exit, seconds: (Date.now() - started) / 1000, tail: tail.toString("utf8") + extra });
     };
     child.on("error", (error) => {
       done(127, `\n${error.message}`);
+    });
+    // The command's end is the step's: what it left running holds the step's output open, and nothing would end it.
+    child.on("exit", () => {
+      killGroup(group);
     });
     child.on("close", (code, signal) => {
       done(timedOut ? 124 : (code ?? (signal ? 128 : 1)), timedOut ? `\nkilled after ${timeoutMs / 1000}s` : "");

@@ -206,6 +206,7 @@ export function handlersFor(w: Wiring): Handlers {
         e.subject,
         e.steps,
         w.checkTimeoutMs,
+        w.bundle.environment,
       );
       return done({
         type: "record_evidence",

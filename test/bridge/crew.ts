@@ -68,5 +68,5 @@ export async function crew() {
   const tools = (nth: number) => agentTools(socketPath, paseo.created[nth]!.env);
   /** What an agent was told by the plugin, newest last. */
   const told = (nth: number) => paseo.sent.filter((s) => s.host === paseo.created[nth]!.host).map((s) => s.text);
-  return { plugin, paseo, repo, remote, project, tools, told };
+  return { plugin, paseo, root, repo, remote, project, tools, told };
 }

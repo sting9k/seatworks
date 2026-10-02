@@ -143,8 +143,11 @@ export default function contribute(server: PluginServerContext) {
     return { text: plugin.statusOf(input.project, input.scope) ?? "No such project or scope is open." };
   });
 
-  return () => {
+  // Paseo waits two seconds for this before it ends the process: what runs is ended and each log closed in them.
+  return async () => {
     void stopSettings();
-    guard("stopping", () => plugin.dispose());
+    await plugin.dispose().catch((error: unknown) => {
+      daemonLog.error("seatworks: stopping failed", error);
+    });
   };
 }

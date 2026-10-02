@@ -17,7 +17,11 @@ const lineInput = z.object({ text, via });
 const term = z.string().trim().min(1).max(200);
 const check = z.object({
   name: z.string().trim().min(1).max(200).describe("What the check is called."),
-  run: z.array(z.string().min(1)).min(1).max(100).describe("The program and its arguments, run with no shell."),
+  run: z
+    .array(z.string().min(1))
+    .min(1)
+    .max(100)
+    .describe("The program and its arguments, run with no shell; whatever it starts is ended when it ends."),
 });
 const briefLines = z.array(lineInput).max(100);
 const briefKind = z.enum(["verification", "discovery"]);

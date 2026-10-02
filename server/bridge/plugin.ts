@@ -74,14 +74,15 @@ type Runtime = {
   store: ProjectStore;
   dispatcher: Dispatcher;
   workspace: Workspace;
+  evidence: EvidenceRunner;
   wiring: Wiring;
   /** What the project runs of its profile, replaced whole when it takes the files anew. */
   loaded: Loaded;
   stops: (() => void)[];
   lastActive: number;
 };
-/** A profile's files as a project runs them: the bundle, its reflex, and the runner that knows its environment. */
-type Loaded = { bundle: Bundle; reflex: Reflex | null; evidence: EvidenceRunner };
+/** A profile's files as a project runs them: the bundle and its reflex. */
+type Loaded = { bundle: Bundle; reflex: Reflex | null };
 /** A project's own file: its repository, its profile's name, and the hash of the copy of it the project runs. */
 type ProjectFile = { readonly repo: string; readonly profile: string; readonly hash: string };
 type Ready = {
@@ -240,7 +241,7 @@ export class Plugin {
     keep(dir, { ...kept, hash: pinned.hash });
     const runtime = this.runtimes.get(project);
     if (runtime) {
-      runtime.loaded = this.load(project, kept.repo, pinnedDir(dir, pinned.hash), ready);
+      runtime.loaded = this.load(project, pinnedDir(dir, pinned.hash), ready);
       runtime.project.use(runtime.loaded.bundle.profile);
       await this.recordProfile(runtime);
     }
@@ -773,9 +774,15 @@ export class Plugin {
     }
   }
 
-  private async unload(id: string, runtime: Runtime): Promise<void> {
+  /** Takes no further effect for a project and ends its running checks, which nothing would end once this process is gone. */
+  private halt(runtime: Runtime): void {
     for (const stop of runtime.stops) stop();
     runtime.dispatcher.dispose();
+    runtime.evidence.stop();
+  }
+
+  private async unload(id: string, runtime: Runtime): Promise<void> {
+    this.halt(runtime);
     await runtime.dispatcher.idle();
     runtime.project.dispose();
     this.runtimes.delete(id);
@@ -786,6 +793,8 @@ export class Plugin {
     if (this.disposed) return;
     this.disposed = true;
     clearInterval(this.upkeep);
+    // Every project first: Paseo ends a stopping plugin after two seconds, and one project's unloading may take them.
+    for (const runtime of this.runtimes.values()) this.halt(runtime);
     for (const [id, runtime] of this.runtimes) await this.unload(id, runtime);
     this.byHost.clear();
     await this.readyNow?.socket.close();
@@ -797,7 +806,7 @@ export class Plugin {
     if (existing) return existing;
     const dir = projectDir(this.root, id);
     const { repo, profile, hash } = keptIn(dir, id);
-    const loaded = this.load(id, repo, pinnedDir(dir, hash), ready);
+    const loaded = this.load(id, pinnedDir(dir, hash), ready);
     const store = new ProjectStore(join(dir, "ledger.db"));
     let project: Project;
     try {
@@ -809,13 +818,13 @@ export class Plugin {
     }
     const workspace = new Workspace(repo, join(dir, "copies"));
     const scratch = scratchFor(this.root, id);
+    mkdirSync(scratch, { recursive: true });
+    const evidence = new EvidenceRunner(repo, join(scratch, "evidence"));
     // What a profile gives is read through the runtime, so files taken anew reach every effect that follows.
     const wiring: Wiring = {
       project: id,
       workspace,
-      get evidence() {
-        return runtime.loaded.evidence;
-      },
+      evidence,
       host: ready.host,
       holds: this.holds,
       profile,
@@ -843,6 +852,7 @@ export class Plugin {
       store,
       dispatcher,
       workspace,
+      evidence,
       wiring,
       loaded,
       stops: [],
@@ -872,17 +882,11 @@ export class Plugin {
   }
 
   /** A profile's files loaded for a project from its own copy of them. */
-  private load(id: string, repo: string, dir: string, ready: Ready): Loaded {
+  private load(id: string, dir: string, ready: Ready): Loaded {
     if (!existsSync(join(dir, "profile.yaml")))
       throw new Error(`project ${id} has lost its copy of its template at ${dir}: sync it on its page`);
     const bundle = loadBundle(dir);
-    const scratch = scratchFor(this.root, id);
-    mkdirSync(scratch, { recursive: true });
-    return {
-      bundle,
-      reflex: this.reflexFor(bundle, ready.routes),
-      evidence: new EvidenceRunner(repo, join(scratch, "evidence"), bundle.environment),
-    };
+    return { bundle, reflex: this.reflexFor(bundle, ready.routes) };
   }
 
   /** Says on the record the hash of the files a project runs, when it is not the one the record has. */

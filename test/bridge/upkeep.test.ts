@@ -1,11 +1,15 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import { once } from "node:events";
+import { createReadStream, existsSync, mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import { readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, test } from "node:test";
 import { Plugin } from "../../server/bridge/plugin.ts";
+import { parseBody } from "../../shared/contracts/commands.ts";
 import { agentTools } from "./agent-tools.ts";
+import { crew } from "./crew.ts";
 import { fakePaseo } from "./fake-paseo.ts";
 import { stateRoot } from "./state-root.ts";
 
@@ -15,6 +19,15 @@ const git = (cwd: string, ...args: string[]) =>
     cwd,
     encoding: "utf8",
   }).trim();
+
+/** A gate a test holds: `open` lets through whoever awaits `opened`. */
+function gateOf() {
+  let open = () => {};
+  const opened = new Promise<void>((resolve) => {
+    open = resolve;
+  });
+  return { open, opened };
+}
 
 const plugins: Plugin[] = [];
 after(async () => {
@@ -215,3 +228,93 @@ test("removing a project whose repository is gone lets it go from memory, and fr
   await plugin.idle();
   assert.equal(paseo.created.length, 3, "the other project's Supervisor starts once the hold is let go");
 });
+
+test(
+  "the plugin stopped while a check runs ends the check, and started again it runs the check anew",
+  { timeout: 60_000 },
+  async () => {
+    const c = await crew();
+    plugins.push(c.plugin);
+    const gate = join(mkdtempSync(join(tmpdir(), "sw-gate-")), "gate");
+    execFileSync("mkfifo", [gate]);
+    const chief = await c.tools(0);
+    const brief = { goal: { text: "Make a" }, kind: "verification" };
+    assert.ok((await chief.call("open_scope", { parent: "root", role: "maker", paths: ["src/"], brief })).ok);
+    await c.plugin.idle();
+    const maker = await c.tools(1);
+    // Ten minutes of a check, saying first that it runs: only being stopped ends it within this test.
+    const steps = [{ name: "slow", run: ["sh", "-c", `echo started > ${gate}; exec sleep 600`] }];
+    assert.ok((await maker.call("run_checks", { scope: "1", commit: git(c.repo, "rev-parse", "main"), steps })).ok);
+    assert.equal(await readFile(gate, "utf8"), "started\n", "the check is running");
+    await c.plugin.dispose();
+
+    const again = new Plugin(c.root);
+    plugins.push(again);
+    again.saw(c.paseo.api);
+    await again.whenReady();
+    assert.equal(await readFile(gate, "utf8"), "started\n", "it runs again: the run that was stopped recorded nothing");
+    assert.doesNotMatch(again.statusOf(c.project, "1") ?? "", /Evidence:/);
+    for (const t of [chief, maker]) t.close();
+  },
+);
+
+test(
+  "the plugin stopping ends every project's running check before it waits on the first project",
+  { timeout: 60_000 },
+  async () => {
+    const c = await crew();
+    plugins.push(c.plugin);
+    const { socketPath } = await c.plugin.whenReady();
+    const other = realpathSync(mkdtempSync(join(tmpdir(), "sw-second-")));
+    git(other, "init", "-q", "-b", "main");
+    writeFileSync(join(other, "a.txt"), "a\n");
+    git(other, "add", ".");
+    git(other, "commit", "-q", "-m", "start");
+    assert.ok((await c.plugin.openProject(other, "main", "crew")).outcome.ok);
+    await c.plugin.idle();
+    const chief = await agentTools(socketPath, c.paseo.created[1]!.env);
+    const brief = { goal: { text: "Make a" }, kind: "verification" };
+    assert.ok((await chief.call("open_scope", { parent: "root", role: "maker", paths: ["src/"], brief })).ok);
+    await c.plugin.idle();
+    const maker = await agentTools(socketPath, c.paseo.created[2]!.env);
+
+    // The first project is held in unloading: words to its agent are on their way and Paseo does not answer.
+    const first = c.paseo.created[0]!.host;
+    const agents = (c.paseo.api as unknown as { agents: { ref: (id: string) => { send: () => Promise<void> } } })
+      .agents;
+    const ref = agents.ref;
+    const sending = gateOf();
+    const answered = gateOf();
+    agents.ref = (id) =>
+      id === first
+        ? {
+            ...ref(id),
+            send: async () => {
+              sending.open();
+              await answered.opened;
+            },
+          }
+        : ref(id);
+    const words = parseBody("send_message", { to: "a1", text: "Where does it stand?", asks: true });
+    assert.ok(words.ok);
+    await c.plugin.human(c.project, words.body);
+    await sending.opened;
+
+    // The second runs a check that holds a pipe open for as long as it lives.
+    const pipes = mkdtempSync(join(tmpdir(), "sw-gate-"));
+    const [gate, held] = [join(pipes, "gate"), join(pipes, "held")];
+    execFileSync("mkfifo", [gate, held]);
+    const steps = [{ name: "slow", run: ["sh", "-c", `echo started > ${gate}; exec sleep 600 > ${held}`] }];
+    assert.ok((await maker.call("run_checks", { scope: "1", commit: git(other, "rev-parse", "main"), steps })).ok);
+    assert.equal(await readFile(gate, "utf8"), "started\n");
+    const alive = createReadStream(held);
+    await once(alive, "open");
+
+    const stopping = c.plugin.dispose();
+    alive.resume();
+    await once(alive, "end");
+    answered.open();
+    await stopping;
+    for (const t of [chief, maker]) t.close();
+  },
+);

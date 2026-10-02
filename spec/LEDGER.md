@@ -491,5 +491,12 @@ A project runs for months. Everything below is bounded by open work, not by hist
 - Candidate refs (`refs/sw/<scope>/candidate`) go when the scope closes.
 - Agents are archived in Paseo when their seat ends; Seatworks keeps no transcript of its own.
 
+**Processes.**
+
+- Each step of a check runs in a process group of its own, ended whole when its command ends, at its timeout, when
+  its project is unloaded and when the plugin stops. The plugin records nothing of a run it stopped: the effect stays
+  pending and runs again when the plugin is back.
+- A plugin whose process is killed outright ends nothing: a check then running goes on until it ends by itself.
+
 **Reported, never removed silently.** A kept worktree, a failed removal, a branch that could not be deleted: each is a
 fact on the root's status.
