@@ -147,18 +147,19 @@ Oh My Pi's instruction to delete incidental tests. V1's seven near-copies of the
 
 On 2 October 2026, on Paseo 0.10.2: a daemon of its own with its own home and state root, a throwaway repository with
 a bare remote, SLP as it comes, the Supervisor and the Lead on Claude Code (Opus 5.5, medium) and the Peer and the
-Reviewer on Pi (`zai/glm-5.3-flash`). Three small runs, each landed and published: one Peer under the root; a lane
-with two Peers; a lane with a Peer that raised a finding, a Reviewer, a report and a question to the Human.
+Reviewer on Pi (`zai/glm-5.3-flash`). Four small runs, each landed and published: one Peer under the root; a lane
+with two Peers; a lane with a Peer that raised a finding, a Reviewer, a report and a question to the Human; and one
+Peer on Claude Code under the root.
 
 - **Claude Code.** Made with the team's server and its tools approved ahead; the server said hello before the first
-  turn; no permission was asked. Its tools went on answering after the plugin was loaded again twice.
+  turn; no permission was asked. Its tools went on answering after the plugin was loaded again, four times. A writer
+  on it, under the sandbox its harness file asks for, committed in its own worktree and handed back as Pi's did.
 - **Pi.** Made, with no server and no tool handed to Paseo; the extension in Seatworks' home gave it its role's tools.
   A Peer ran checks of its own, raised a finding and handed back; a Reviewer recorded a verdict. A writer's commits
   were made through the git shim in its own worktree.
 - **The mailbox.** What the Human sent reached the Supervisor at its turn's end; a Lead was told of a hand-back and
   of its checks' result in one numbered message.
-- **Not seen.** A Claude writer under its sandbox, since every writer was on Pi; a permission asked; a turn that
-  failed; the reflex, which had no key there.
+- **Not seen.** A permission asked; a turn that failed; the reflex, which had no key there.
 - **`look` at an agent whose seat has ended** finds nothing: the record no longer has its agent. Whoever takes a lane
   in cannot ask its owner anything once it is in.
 

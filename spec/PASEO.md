@@ -162,6 +162,8 @@ On 2 October 2026, Paseo 0.10.2, a daemon run for it with a home of its own (`HA
   that turn spent is counted nowhere. A Peer taken in within seconds of its hand-back, while it was still writing
   its last words, had none of its spend recorded.
 - The timeline of an archived agent could not be read from the command line.
+- A daemon run with a home of its own made an empty folder for each agent's directory under the Human's own Pi
+  sessions, for Claude agents too; the sessions themselves were in the home Seatworks lays out for Pi.
 
 ## To check before building on it
 
