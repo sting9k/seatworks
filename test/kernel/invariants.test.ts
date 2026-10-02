@@ -359,7 +359,7 @@ test("a profile with every role renamed behaves the same", () => {
   );
   const profile = { roles: renamed, root: renamed.get("x-supervisor")! };
   const other = new Ledger(profile);
-  other.must(other.human("open_project", { base: "main", profileHash: "p1", model: "m" }));
+  other.must(other.human("open_project", { base: "main", profile: "slp", profileHash: "p1", model: "m" }));
   other.must(other.fact("record_workspace", { scope: "root", ok: true, branch: "main" }));
   other.must(other.as("a1", "open_scope", { parent: "root", role: "x-lead", paths: ["src/"], brief: brief("Net") }));
   other.must(other.as("a2", "open_scope", { parent: "1", role: "x-peer", paths: ["src/net/"], brief: brief("Enc") }));

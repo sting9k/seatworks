@@ -14,6 +14,7 @@ export function humanRules(dir: string, role: string): string | null {
   return texts.length > 0 ? texts.join("\n\n") : null;
 }
 
-export function rulesDir(stateRoot: string): string {
-  return join(stateRoot, "rules");
+/** The Human's rules for one profile: they are kept by role, and a role's name belongs to its profile. */
+export function rulesDir(stateRoot: string, profile: string): string {
+  return join(stateRoot, "rules", profile);
 }

@@ -28,7 +28,7 @@ function fresh() {
 test("a restart folds the same state from the log, and again with every snapshot gone", async () => {
   const { file, store } = fresh();
   const project = Project.open("p", store, profile);
-  await project.submit(command(human, "open_project", { base: "main", profileHash: "h", model: "m" }));
+  await project.submit(command(human, "open_project", { base: "main", profile: "slp", profileHash: "h", model: "m" }));
   await project.submit(command({ kind: "bridge" }, "record_workspace", { scope: "root", ok: true, branch: "main" }));
   const before = project.view;
   project.dispose();
@@ -41,7 +41,7 @@ test("a restart folds the same state from the log, and again with every snapshot
 test("a command retried with the same id gets its earlier result and appends nothing", async () => {
   const { store } = fresh();
   const project = Project.open("p", store, profile);
-  const open = command(human, "open_project", { base: "main", profileHash: "h", model: "m" });
+  const open = command(human, "open_project", { base: "main", profile: "slp", profileHash: "h", model: "m" });
   const first = await project.submit(open);
   const second = await project.submit(open);
   assert.ok(first.ok && second.ok);
@@ -54,7 +54,7 @@ test("a command retried with the same id gets its earlier result and appends not
 test("an effect committed but not dispatched before a crash is dispatched once on restart", async () => {
   const { file, store } = fresh();
   const project = Project.open("p", store, profile);
-  await project.submit(command(human, "open_project", { base: "main", profileHash: "h", model: "m" }));
+  await project.submit(command(human, "open_project", { base: "main", profile: "slp", profileHash: "h", model: "m" }));
   assert.equal(store.pending().length, 1, "workspace.create waits in the outbox");
   project.dispose();
 
@@ -90,7 +90,7 @@ test("an effect committed but not dispatched before a crash is dispatched once o
 test("a fact delivered twice is recorded once", async () => {
   const { store } = fresh();
   const project = Project.open("p", store, profile);
-  await project.submit(command(human, "open_project", { base: "main", profileHash: "h", model: "m" }));
+  await project.submit(command(human, "open_project", { base: "main", profile: "slp", profileHash: "h", model: "m" }));
   const fact = command(
     { kind: "bridge" },
     "record_workspace",
@@ -110,7 +110,7 @@ test("while the machine is held, effects that load it wait, and start when the h
   let held = true;
   const { handlers, asked } = recordingHandlers();
   const dispatcher = new Dispatcher(project, store, handlers, () => held);
-  await project.submit(command(human, "open_project", { base: "main", profileHash: "h", model: "m" }));
+  await project.submit(command(human, "open_project", { base: "main", profile: "slp", profileHash: "h", model: "m" }));
   dispatcher.kick();
   await dispatcher.idle();
   assert.equal(asked.length, 0);
@@ -151,7 +151,7 @@ test("an effect that waits is tried again only after a change, never spun on whi
     return { status: "done" };
   });
   const dispatcher = new Dispatcher(project, store, handlers, () => false);
-  await project.submit(command(human, "open_project", { base: "main", profileHash: "h", model: "m" }));
+  await project.submit(command(human, "open_project", { base: "main", profile: "slp", profileHash: "h", model: "m" }));
   dispatcher.kick();
   await dispatcher.idle();
   store.append(
@@ -181,7 +181,9 @@ test("an effect whose satellite threw is tried again after its pause, with no ch
       return { status: "done" };
     });
     const dispatcher = new Dispatcher(project, store, handlers, () => false);
-    await project.submit(command(human, "open_project", { base: "main", profileHash: "h", model: "m" }));
+    await project.submit(
+      command(human, "open_project", { base: "main", profile: "slp", profileHash: "h", model: "m" }),
+    );
     dispatcher.kick();
     await dispatcher.idle();
     assert.equal(tries, 1);

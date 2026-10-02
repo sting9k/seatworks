@@ -47,6 +47,8 @@ export const COMMANDS = {
   open_project: z.object({
     base: z.string().min(1).max(250),
     remote: z.string().max(250).nullable().default(null),
+    /** The profile the project runs, by its name, and the hash of its files when the project opened. */
+    profile: id,
     profileHash: id,
     model: z.string().min(1),
   }),

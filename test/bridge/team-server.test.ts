@@ -59,6 +59,7 @@ test("an agent's tool server lists its role's tools and carries a call to the ke
       return Promise.resolve(ledger.send(command.caller, type, args) as never);
     },
     roleTools: (actor: string) => ledger.profile.roles.get(ledger.state.actors.get(actor)?.role ?? "")?.tools ?? null,
+    roleGone: () => null,
     read: () => Promise.resolve("status text"),
   };
   const socket = new TeamSocket(join(root, "team.sock"), keys, (id) => (id === "p" ? port : undefined));
@@ -107,6 +108,7 @@ test("a tool server with a key that is not its agent's is refused", async () => 
     view: ledger.state,
     submit: () => Promise.reject(new Error("never")),
     roleTools: () => new Set(["status"]),
+    roleGone: () => null,
     read: () => Promise.resolve(""),
   };
   const socket = new TeamSocket(join(root, "team.sock"), keys, () => port);
@@ -140,7 +142,9 @@ test("a call whose answer is lost with the connection is sent again and recorded
     if (!parsed.ok) throw new Error(parsed.says);
     return { id: type, at: "2026-09-30T00:00:00.000Z", caller: { kind: "human" as const }, body: parsed.body };
   };
-  await project.submit(stamp("open_project", { base: "main", profileHash: "h", model: "slp-supervisor" }));
+  await project.submit(
+    stamp("open_project", { base: "main", profile: "slp", profileHash: "h", model: "slp-supervisor" }),
+  );
   const supervisor = "a1";
   const port = {
     get view() {
@@ -148,6 +152,7 @@ test("a call whose answer is lost with the connection is sent again and recorded
     },
     submit: (command: Command) => project.submit(command),
     roleTools: (actor: string) => profile.roles.get(project.view.actors.get(actor)?.role ?? "")?.tools ?? null,
+    roleGone: () => null,
     read: () => Promise.resolve(""),
   };
   const socket = new TeamSocket(join(root, "team.sock"), keys, (id) => (id === "p" ? port : undefined));

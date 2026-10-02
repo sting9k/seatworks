@@ -25,9 +25,9 @@ test("the Human's own rules follow their role's prompt, read when each agent is 
   git("add", ".");
   git("commit", "-q", "-m", "start");
   const root = mkdtempSync(join(tmpdir(), "sw-root-"));
-  mkdirSync(join(root, "rules"));
-  writeFileSync(join(root, "rules", "all.md"), "Write commit subjects in the imperative.\n");
-  writeFileSync(join(root, "rules", "lead.md"), "Split no scope smaller than a day.\n");
+  mkdirSync(join(root, "rules", "slp"), { recursive: true });
+  writeFileSync(join(root, "rules", "slp", "all.md"), "Write commit subjects in the imperative.\n");
+  writeFileSync(join(root, "rules", "slp", "lead.md"), "Split no scope smaller than a day.\n");
   const plugin = new Plugin(root);
   plugins.push(plugin);
   const paseo = fakePaseo(pluginDir);
@@ -40,7 +40,7 @@ test("the Human's own rules follow their role's prompt, read when each agent is 
   assert.match(supervisorAgent.systemPrompt, /# Supervisor[\s\S]*Write commit subjects in the imperative\./);
   assert.doesNotMatch(supervisorAgent.systemPrompt, /Split no scope/);
 
-  writeFileSync(join(root, "rules", "lead.md"), "Split no scope smaller than half a day.\n");
+  writeFileSync(join(root, "rules", "slp", "lead.md"), "Split no scope smaller than half a day.\n");
   const supervisor = await agentTools(socketPath, supervisorAgent.env);
   const lane = await supervisor.call("open_scope", {
     parent: "root",

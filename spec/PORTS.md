@@ -135,7 +135,8 @@ upkeep: attach(repository), leftovers, clean(picked), checkUpdate
   on after its last try, with the error; an open scope with nobody seated, with its parent's owner; words queued for
   a seated actor whose agent never started. Facts only; it changes nothing and suggests nothing.
 - A message the Human types here or straight into an agent's chat is the same message on the record.
-- Attaching opens a project for one of Paseo's projects and starts its Supervisor. The plugin serves only attached
+- Attaching opens a project for one of Paseo's projects with the profile named, asked for only when more than one is
+  installed, and starts its root's agent. The plugin serves only attached
   projects: every hook passes over an agent it did not start.
 - Attaching also commits the profile's `project.md` into the project's `AGENTS.md` on its base, between the plugin's
   markers, as a commit of that file alone, so every agent in the repository, the team's or the Human's own, knows the

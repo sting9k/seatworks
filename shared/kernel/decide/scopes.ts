@@ -36,7 +36,13 @@ export function openProject(ctx: Of<"open_project">): Refusal | undefined {
     workspace: "pending",
   };
   ctx.emit(
-    { type: "project_opened", base: ctx.body.base, remote: ctx.body.remote, profileHash: ctx.body.profileHash },
+    {
+      type: "project_opened",
+      base: ctx.body.base,
+      remote: ctx.body.remote,
+      profile: ctx.body.profile,
+      profileHash: ctx.body.profileHash,
+    },
     { type: "scope_opened", scope },
     { type: "actor_seated", actor, role: root.name, scope: ROOT, model: ctx.body.model },
   );

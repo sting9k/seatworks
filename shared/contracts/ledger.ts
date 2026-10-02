@@ -239,6 +239,8 @@ export type Check = { readonly name: string; readonly run: readonly string[] };
 export type Project = {
   readonly base: string;
   readonly remote: string | null;
+  /** The profile the project runs, by its name; a look back reads which way of working the team had. */
+  readonly profile: string;
   readonly profileHash: string;
   readonly checks: readonly Check[];
 };

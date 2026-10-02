@@ -73,7 +73,12 @@ export type UpdateCheck = z.infer<typeof UpdateCheckSchema>;
 export const RPC = {
   openProject: {
     name: "seatworks.open_project",
-    input: z.object({ cwd: z.string().min(1), base: z.string().min(1).optional() }),
+    /** `profile` names the profile a project is attached with; none is the shipped one. */
+    input: z.object({
+      cwd: z.string().min(1),
+      base: z.string().min(1).optional(),
+      profile: z.string().min(1).optional(),
+    }),
     output: z.object({ project: z.string(), ok: z.boolean(), text: z.string() }),
   },
   human: {
@@ -91,6 +96,8 @@ export const RPC = {
     output: z.object({
       projects: z.array(z.object({ id: z.string(), repo: z.string(), open: z.boolean() })),
       unattached: z.array(z.object({ name: z.string(), root: z.string() })),
+      /** The profiles a project may be attached with: the shipped one and each installed. */
+      profiles: z.array(z.object({ name: z.string(), title: z.string(), description: z.string() })),
     }),
   },
   view: {

@@ -91,7 +91,9 @@ export const SHA = (n: number) => n.toString(16).padStart(40, "a");
 
 /** A project with a Supervisor (a1), a lane under it with its Lead (a2), and one Peer (a3) on src/net/. */
 export function team(ledger = new Ledger()) {
-  ledger.must(ledger.human("open_project", { base: "main", profileHash: "p1", model: "slp-supervisor" }));
+  ledger.must(
+    ledger.human("open_project", { base: "main", profile: "slp", profileHash: "p1", model: "slp-supervisor" }),
+  );
   ledger.must(ledger.fact("record_workspace", { scope: "root", ok: true, branch: "main", head: SHA(0) }));
   ledger.must(
     ledger.as("a1", "open_scope", {

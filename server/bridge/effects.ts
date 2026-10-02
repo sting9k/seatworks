@@ -22,6 +22,8 @@ export type Wiring = {
   readonly evidence: EvidenceRunner;
   readonly host: PaseoHost;
   readonly holds: MachineHolds;
+  /** The profile the project runs, by its name. */
+  readonly profile: string;
   readonly bundle: Bundle;
   readonly keys: Keys;
   /** How an agent's tool server is started, and the directory of the git shim put first on its PATH. */

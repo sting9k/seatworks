@@ -30,12 +30,6 @@ export type Bundle = {
   } | null;
 };
 
-/** A profile in the state root replaces the shipped one whole, so another arrangement needs no fork. */
-export function profileDir(shipped: string, stateRoot: string): string {
-  const own = join(stateRoot, "profile");
-  return existsSync(join(own, "profile.yaml")) ? own : shipped;
-}
-
 export function loadBundle(dir: string): Bundle {
   const text = readFileSync(join(dir, "profile.yaml"), "utf8");
   const file = ProfileFileSchema.parse(parse(text));

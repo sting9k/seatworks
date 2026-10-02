@@ -5,8 +5,8 @@ touching the plugin. SLP is the one Seatworks ships. A template is to Seatworks 
 ComfyUI: picked from a gallery, opened as a graph, changed, and run. `EDITOR.md` says how one is opened and changed;
 this says what a template is, what the plugin reads of it, and how it reaches a machine.
 
-Built so far: the editor (`EDITOR.md`, steps 1 and 2 below), and of step 3 the flow, the list of docs and the hash.
-A profile for each project and installing are not. The order it is built in is at the end. A change it asks of another spec file is listed under What this changes, and is made in the commit that
+Built so far: the editor (`EDITOR.md`, steps 1 and 2 below), and of step 3 the flow, the list of docs, the hash and a
+profile for each project. Installing is not. The order it is built in is at the end. A change it asks of another spec file is listed under What this changes, and is made in the commit that
 builds it, so a spec and the code never disagree.
 
 ## Open, not neutral
@@ -190,15 +190,23 @@ roles:
 
 ## A profile for each project
 
-- The state root keeps profiles by name, `profiles/<name>/`, beside the one Seatworks ships. Attaching a project
-  picks one; the project's record keeps its name and its hash.
-- The plugin loads a bundle for each project, where today one bundle serves the machine.
+- The state root keeps the profiles the Human installed by name, `profiles/<name>/`, beside the one Seatworks ships,
+  `slp`. One installed under the shipped one's name stands in its place, so the shipped way of working is changed
+  without a fork.
+- Attaching a project names its profile. The surface asks which only when more than one is there; with the shipped
+  one alone a project is attached at once. A project keeps the profile it was attached with: its name is in the
+  project's own file in the state root, and on the record beside the hash of its files when the project opened.
+- The plugin loads a profile for each project, each time the project is opened: its roles for the kernel, its
+  prompts, its reflex and its watch. What is edited in a profile (a prompt, a skill, a question, a moment) reaches the
+  agents seated once the project is next opened, which is when the plugin starts or the project wakes. That is how a
+  look back improves a way of working.
 - The Human's own rules are by profile, since they are named by role: `rules/<profile>/all.md` and
   `rules/<profile>/<role>.md`.
-- Words edited while a project is open (a prompt, a skill, a question, a moment) reach the next agent seated, as
-  today. That is how a look back improves a way of working.
-- A role an agent is seated in must still be in the profile when it is loaded. One that is not is said to the Human,
-  naming the seat and the role.
+- A profile edited so that the role of a seated agent is gone leaves the project running. The agent keeps the prompt it
+  was made with and reads the record as before; a tool it calls is refused, saying its role is gone from the profile;
+  and the Human's `stuck` view names the seat, until the profile has the role again or the seat is released. Stopping
+  the whole project would let one mistaken edit halt a team.
+- A project whose profile is no longer installed does not open, and the others do.
 
 ## The hash
 
@@ -243,10 +251,9 @@ Each is made in the commit that builds it.
 
 | File             | Change                                                                                             |
 | ---------------- | -------------------------------------------------------------------------------------------------- |
-| `KERNEL.md` §2   | A profile is chosen for each project; the four rules above. Later, §4 and §6: `report`'s sections are the profile's |
-| `PORTS.md`       | Agent host: `create` takes outside servers. Human surface: attaching names a profile               |
+| `KERNEL.md`      | Later, §4 and §6: `report`'s sections are the profile's                                            |
+| `PORTS.md`       | Agent host: `create` takes outside servers. Human surface: installing a template                   |
 | `HARNESS.md`     | Which agents take an outside server, and that the guards do not reach one                          |
-| `ROLES.md`       | What goes where: the Human's rules by profile                                                      |
 | `CONFORMANCE.md` | The cases below, and `EDITOR.md`'s                                                                 |
 
 ## Cases
@@ -255,9 +262,6 @@ They join `CONFORMANCE.md` with the step that builds them.
 
 | Case                                                                          | Expect                                                              |
 | ----------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| Two projects attached, each naming a different profile                        | Each project's agents get their own profile's prompts and tools      |
-| A profile edited so that the role of a seated agent is gone                   | Said to the Human, naming the seat and the role                      |
-| The Human keeps `rules/<profile>/lead.md` for one of two profiles             | A Lead of that profile gets it; a Lead of the other does not         |
 | A role given an outside server, seated on an agent that takes one             | Created with the server, its named tools approved ahead; a role given none has only the team's |
 | A role given an outside server, seated on an agent that cannot take one       | Not seated; the reason names the server                              |
 | A shared file whose profile does not load                                     | Refused, saying what is wrong; nothing copied                        |
@@ -290,6 +294,5 @@ a change to how a profile is loaded, made in the middle of that test, leaves a f
 ## To decide
 
 - The name of the command that installs a template.
-- What a project does while a seated agent's role is missing from its profile, beyond saying so.
 - Whether `profile/slp/reference/ANTIPATTERNS.md`, which no prompt, skill or code points at, goes into a skill or
   goes. It is SLP's content.

@@ -37,7 +37,8 @@ import { loadReflex } from "../satellites/reflex/config.ts";
 import { Jev } from "../satellites/reflex/jev.ts";
 import { git } from "../satellites/workspace/git.ts";
 import { Workspace } from "../satellites/workspace/workspace.ts";
-import { type Bundle, loadBundle, profileDir } from "../profile/bundle.ts";
+import { type Bundle, loadBundle } from "../profile/bundle.ts";
+import { listProfiles, type Listed as ListedProfile, profilePath, SHIPPED } from "../profile/profiles.ts";
 import { Dispatcher } from "./dispatcher.ts";
 import { type Wiring, branchesOf, handlersFor, scratchFor, seatEnv, withShim } from "./effects.ts";
 import { type Kept, leftoverId, leftoversOf, projectLeftover, refOf } from "./leftovers.ts";
@@ -61,10 +62,12 @@ type Runtime = {
   dispatcher: Dispatcher;
   workspace: Workspace;
   wiring: Wiring;
+  /** The profile's own reflex: its questions, its moments, the routes they are asked by. */
+  reflex: Reflex | null;
   stops: (() => void)[];
   lastActive: number;
 };
-type Ready = { dir: string; bundle: Bundle; host: PaseoHost; shimDir: string; socket: TeamSocket; socketPath: string };
+type Ready = { dir: string; host: PaseoHost; shimDir: string; socket: TeamSocket; socketPath: string };
 
 /** Words a delivery or a first prompt carried: their client message ids are the plugin's effect keys. */
 const OURS = /^\d+:/;
@@ -82,10 +85,7 @@ export class Plugin {
   private readonly runtimes = new Map<string, Runtime>();
   private readonly byHost = new Map<string, { project: string; actor: string }>();
   private ready: Promise<Ready> | null = null;
-  private bundle: Bundle | null = null;
-  private reflex: Reflex | null = null;
   private reflexKey: { route: string; key: string } = { route: "openrouter", key: "" };
-  private jev: { for: string; client: Jev } | null = null;
   private alarmText: string | null = null;
   private readyNow: Ready | null = null;
   private disposed = false;
@@ -164,37 +164,6 @@ export class Plugin {
     const plugins = (await api.config.get()).config.plugins ?? {};
     const dir = plugins[PLUGIN_ID]?.path;
     if (!dir) throw new Error(`Paseo's config has no plugins.${PLUGIN_ID} with a path`);
-    const bundle = loadBundle(profileDir(join(dir, "profile", "slp"), this.root));
-    this.bundle = bundle;
-    const config = loadReflex(bundle.dir);
-    if (config)
-      this.reflex = new Reflex(
-        config,
-        () => {
-          const route = config.routes[this.reflexKey.route];
-          if (!route || this.reflexKey.key === "") return null;
-          const id = `${this.reflexKey.route}:${this.reflexKey.key}`;
-          if (this.jev?.for !== id) this.jev = { for: id, client: new Jev(route, this.reflexKey.key, config.mask) };
-          return this.jev.client;
-        },
-        async (project, body) => {
-          const runtime = this.runtimes.get(project);
-          if (runtime) await this.submitAs(runtime, { kind: "bridge" }, body);
-        },
-        (text) => {
-          this.alarmText = text;
-        },
-        {
-          settled: (project, actor, names) => this.settledNames(project, actor, names),
-          diffs: async (project, scope, commit) => {
-            const runtime = this.runtimes.get(project);
-            const s = runtime?.project.view.scopes.get(scope);
-            const parent = s?.parent ? runtime?.project.view.scopes.get(s.parent) : undefined;
-            if (!runtime || !parent?.branch) return [];
-            return runtime.workspace.fileDiffs(parent.branch, commit);
-          },
-        },
-      );
     const host = new PaseoHost(this.link, (provider) => this.harness(dir, provider));
     const shimDir = installShim(this.root, join(dir, "bin", "git-shim.ts"));
     const socketPath =
@@ -203,7 +172,7 @@ export class Plugin {
         : join(this.root, "team.sock");
     const socket = new TeamSocket(socketPath, this.keys, (id) => this.port(id));
     await socket.listen();
-    const ready: Ready = { dir, bundle, host, shimDir, socket, socketPath };
+    const ready: Ready = { dir, host, shimDir, socket, socketPath };
     this.readyNow = ready;
     const projects = join(this.root, "projects");
     for (const id of existsSync(projects) ? readdirSync(projects) : [])
@@ -217,42 +186,63 @@ export class Plugin {
     return ready;
   }
 
-  /** Opens a project for a repository, or the one already open for it, and starts its Supervisor. */
+  /** The profiles a project may be attached with: the one shipped, and each the Human installed. */
+  async profiles(): Promise<ListedProfile[]> {
+    return listProfiles((await this.whenReady()).dir, this.root);
+  }
+
+  /**
+   * Opens a project for a repository with the profile named, or the one already open for it, and starts its root's
+   * agent. A project keeps the profile it was attached with: naming another for one already attached changes nothing.
+   */
   async openProject(
     repo: string,
     base: string | undefined,
+    profile: string = SHIPPED,
   ): Promise<{ project: string; outcome: Submitted; note: string | null }> {
     const ready = await this.whenReady();
     const real = realpathSync(repo);
     const branch = base ?? (await currentBranch(real));
     const id = createHash("sha256").update(real).digest("hex").slice(0, 12);
     const dir = projectDir(this.root, id);
-    mkdirSync(dir, { recursive: true });
-    if (!existsSync(join(dir, "project.json")))
-      writeFileSync(join(dir, "project.json"), JSON.stringify({ repo: real }));
+    if (!existsSync(join(dir, "project.json"))) {
+      if (profilePath(ready.dir, this.root, profile) === null)
+        throw new Error(`no profile named ${profile} is installed`);
+      mkdirSync(dir, { recursive: true });
+      writeFileSync(join(dir, "project.json"), JSON.stringify({ repo: real, profile }));
+    }
     const runtime = this.open(id, ready);
-    const model = [...ready.bundle.profile.root.models][0] ?? "";
+    const bundle = runtime.wiring.bundle;
     const outcome = await this.submitAs(
       runtime,
       { kind: "human" },
-      { type: "open_project", base: branch, remote: null, profileHash: ready.bundle.hash, model },
+      {
+        type: "open_project",
+        base: branch,
+        remote: null,
+        profile: runtime.wiring.profile,
+        profileHash: bundle.hash,
+        model: [...bundle.profile.root.models][0] ?? "",
+      },
     );
     // Attaching again writes a note that waited, on the base the project opened with.
     const opened = runtime.project.view.scopes.get(ROOT)?.branch;
-    const note = opened ? (await this.writeNote(runtime.workspace, id, opened)).text : null;
+    const note = opened ? (await this.writeNote(runtime, opened)).text : null;
     return { project: id, outcome, note };
   }
 
   /** Commits the profile's note to the project's instruction file on its base, or takes it out; says what came of it. */
   private async writeNote(
-    workspace: Workspace,
-    project: string,
+    runtime: Runtime,
     base: string,
     remove = false,
   ): Promise<{ ok: boolean; text: string | null }> {
-    const note = (await this.whenReady()).bundle.project;
+    const { workspace, wiring } = runtime;
+    const note = wiring.bundle.project;
     if (!note) return { ok: true, text: null };
-    const body = remove ? null : note.note.replaceAll("{branches}", branchesOf(project)).replaceAll("{base}", base);
+    const body = remove
+      ? null
+      : note.note.replaceAll("{branches}", branchesOf(wiring.project)).replaceAll("{base}", base);
     const message = remove
       ? `Take the ${PLUGIN_ID} note out of ${note.file}`
       : `Tell every agent here how the ${PLUGIN_ID} team works`;
@@ -404,8 +394,8 @@ export class Plugin {
         text: `Uncommitted work is still in ${unsaved.map((c) => c.path).join(", ")}: commit or move it first.`,
       };
     const base = runtime?.project.view.scopes.get(ROOT)?.branch;
-    if (workspace && base) {
-      const taken = await this.writeNote(workspace, id, base, true);
+    if (runtime && workspace && base) {
+      const taken = await this.writeNote(runtime, base, true);
       if (!taken.ok) return { ok: false, text: taken.text ?? "" };
     }
     // Nothing opens the project again while it goes: every reader looks for this file first.
@@ -477,7 +467,7 @@ export class Plugin {
     if (existsSync(repo)) {
       const runtime = this.open(id, ready);
       const base = runtime.project.view.scopes.get(ROOT)?.branch;
-      if (base) await this.writeNote(runtime.workspace, id, base);
+      if (base) await this.writeNote(runtime, base);
       for (const a of runtime.project.view.actors.values())
         if (a.status === "seated" && a.host !== null && archived.has(a.host))
           await this.submitAs(
@@ -501,7 +491,12 @@ export class Plugin {
     return {
       human: humanView(runtime.project.view),
       activity,
-      stuck: stuckOf(runtime.project.view, runtime.store.pending(), runtime.store.abandoned()),
+      stuck: stuckOf(
+        runtime.project.view,
+        runtime.store.pending(),
+        runtime.store.abandoned(),
+        runtime.wiring.bundle.profile,
+      ),
       root: statusText(runtime.project.view, "root", null) ?? "",
     };
   }
@@ -543,7 +538,7 @@ export class Plugin {
     if (!who || !runtime) return;
     const read = runtime.project.view.actors.get(who.actor)?.seen ?? 0;
     const { items, typed, began, seen } = turnOf(timeline, read, (id) => OURS.test(id));
-    this.reflex?.onTurn(who.project, who.actor, items, runtime.project.view);
+    runtime.reflex?.onTurn(who.project, who.actor, items, runtime.project.view);
     const usage = await ready.host.usage(hostId);
     const result = outcome.kind === "completed" ? "done" : outcome.kind === "failed" ? "failed" : "cancelled";
     for (const text of typed)
@@ -635,7 +630,7 @@ export class Plugin {
     const runtime = this.runtimes.get(who.project) ?? this.open(who.project, ready);
     const actor = runtime.project.view.actors.get(who.actor);
     const scope = actor ? runtime.project.view.scopes.get(actor.scope) : undefined;
-    const role = actor ? ready.bundle.profile.roles.get(actor.role) : undefined;
+    const role = actor ? runtime.wiring.bundle.profile.roles.get(actor.role) : undefined;
     if (!actor || !scope || !role) return null;
     const { env } = seatEnv(runtime.wiring, actor.id, scope, role.writes);
     return { ...withShim(runtime.wiring, env), ...this.harness(ready.dir, provider)?.env };
@@ -667,7 +662,6 @@ export class Plugin {
     await runtime.dispatcher.idle();
     runtime.project.dispose();
     this.runtimes.delete(id);
-    this.reflex?.forget(id);
     for (const [host, who] of this.byHost) if (who.project === id) this.byHost.delete(host);
   }
 
@@ -685,12 +679,19 @@ export class Plugin {
     const existing = this.runtimes.get(id);
     if (existing) return existing;
     const dir = projectDir(this.root, id);
-    const { repo } = JSON.parse(readFileSync(join(dir, "project.json"), "utf8")) as { repo: string };
+    const kept = JSON.parse(readFileSync(join(dir, "project.json"), "utf8")) as { repo: string; profile?: string };
+    const { repo, profile } = kept;
+    if (profile === undefined)
+      throw new Error(`project ${id} was attached before a project named its profile: remove it and attach it again`);
+    const profileDir = profilePath(ready.dir, this.root, profile);
+    if (profileDir === null) throw new Error(`project ${id} runs the profile ${profile}, which is no longer installed`);
+    // Read each time the project is opened, so what was changed in the profile reaches the agents seated after.
+    const bundle = loadBundle(profileDir);
     const store = new ProjectStore(join(dir, "ledger.db"));
     let project: Project;
     try {
       store.sweep(Date.now());
-      project = Project.open(id, store, ready.bundle.profile);
+      project = Project.open(id, store, bundle.profile);
     } catch (error) {
       store.close();
       throw error;
@@ -701,10 +702,11 @@ export class Plugin {
     const wiring: Wiring = {
       project: id,
       workspace,
-      evidence: new EvidenceRunner(repo, join(scratch, "evidence"), ready.bundle.environment),
+      evidence: new EvidenceRunner(repo, join(scratch, "evidence"), bundle.environment),
       host: ready.host,
       holds: this.holds,
-      bundle: ready.bundle,
+      profile,
+      bundle,
       keys: this.keys,
       team: {
         command: process.execPath,
@@ -713,19 +715,29 @@ export class Plugin {
         shimDir: ready.shimDir,
       },
       scratch,
-      rules: rulesDir(this.root),
+      rules: rulesDir(this.root, profile),
       checkTimeoutMs: CHECK_TIMEOUT_MS,
       log: () => store.read(0),
       marker: PLUGIN_ID,
     };
     const handlers = handlersFor(wiring);
     const dispatcher = new Dispatcher(project, store, handlers, () => this.holds.held());
-    const runtime: Runtime = { project, store, dispatcher, workspace, wiring, stops: [], lastActive: Date.now() };
+    const reflex = this.reflexFor(bundle);
+    const runtime: Runtime = {
+      project,
+      store,
+      dispatcher,
+      workspace,
+      wiring,
+      reflex,
+      stops: [],
+      lastActive: Date.now(),
+    };
     this.runtimes.set(id, runtime);
     this.index(id, runtime);
     runtime.stops.push(
       project.onCommitted((events) => {
-        this.reflex?.onEvents(id, events, project.view);
+        reflex?.onEvents(id, events, project.view);
         runtime.lastActive = Date.now();
         this.index(id, runtime);
         dispatcher.kick();
@@ -739,6 +751,40 @@ export class Plugin {
     );
     dispatcher.kick();
     return runtime;
+  }
+
+  /** A profile's reflex, asking by the route and key of the plugin's settings; none when the profile asks nothing. */
+  private reflexFor(bundle: Bundle): Reflex | null {
+    const config = loadReflex(bundle.dir);
+    if (!config) return null;
+    let jev: { for: string; client: Jev } | null = null;
+    return new Reflex(
+      config,
+      () => {
+        const route = config.routes[this.reflexKey.route];
+        if (!route || this.reflexKey.key === "") return null;
+        const id = `${this.reflexKey.route}:${this.reflexKey.key}`;
+        if (jev?.for !== id) jev = { for: id, client: new Jev(route, this.reflexKey.key, config.mask) };
+        return jev.client;
+      },
+      async (project, body) => {
+        const runtime = this.runtimes.get(project);
+        if (runtime) await this.submitAs(runtime, { kind: "bridge" }, body);
+      },
+      (text) => {
+        this.alarmText = text;
+      },
+      {
+        settled: (project, actor, names) => this.settledNames(project, actor, names),
+        diffs: async (project, scope, commit) => {
+          const runtime = this.runtimes.get(project);
+          const s = runtime?.project.view.scopes.get(scope);
+          const parent = s?.parent ? runtime?.project.view.scopes.get(s.parent) : undefined;
+          if (!runtime || !parent?.branch) return [];
+          return runtime.workspace.fileDiffs(parent.branch, commit);
+        },
+      },
+    );
   }
 
   /** Keeps the map from Paseo's agent ids to seated actors current: one entry per seated agent, none after. */
@@ -761,7 +807,12 @@ export class Plugin {
       submit: (command) => runtime.project.submit(command),
       roleTools: (actor) => {
         const a = runtime.project.view.actors.get(actor);
-        return a?.status === "seated" ? (this.bundle?.profile.roles.get(a.role)?.tools ?? null) : null;
+        if (a?.status !== "seated") return null;
+        return runtime.wiring.bundle.profile.roles.get(a.role)?.tools ?? new Set();
+      },
+      roleGone: (actor) => {
+        const a = runtime.project.view.actors.get(actor);
+        return a?.status === "seated" && !runtime.wiring.bundle.profile.roles.has(a.role) ? a.role : null;
       },
       read: (actor, name, args) => this.read(runtime, actor, name, args),
     };

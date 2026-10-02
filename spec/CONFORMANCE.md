@@ -139,7 +139,7 @@ What the Human's surface shows as stuck: read from the log and the outbox, chang
 | Case                                                        | Expect                                                     |
 | ----------------------------------------------------------- | ---------------------------------------------------------- |
 | A Pi agent is seated                                        | Seatworks' home, with the Human's login linked; the extension gives it the team's tools |
-| The Human keeps `rules/all.md` and `rules/lead.md` under the state root | A Lead seated after gets both after its role's prompt; a Supervisor only `all.md` |
+| The Human keeps `rules/slp/all.md` and `rules/slp/lead.md` under the state root | A Lead seated after gets both after its role's prompt; a Supervisor only `all.md` |
 | A rules file edited after one agent was made                | The next agent seated gets the edit                        |
 
 ## Workspace and evidence
@@ -280,3 +280,6 @@ What the plugin reads of a profile that a template adds (`TEMPLATE.md`).
 | ----------------------------------------------------------- | ------------------------------------------------------------------- |
 | Two profiles that differ in a skill, a file beside a skill, a question, a moment or a prompt | Different hashes; two that differ only in `template.json` or `NOTICE.md`, the same |
 | A profile that names a flow and lists two docs of its own   | Every agent's standing instructions carry the flow after its role's prompt and before its skills; its first words point at the glossary, both docs and the map |
+| A project opened                                            | On the record with the profile it runs, by name and by the hash of its files then |
+| Two projects attached with different profiles, and the Human's rules kept for one of them | Each project's agents get their own profile's prompts; the rules reach only the agents of their profile; a profile nobody installed is not attached |
+| A role taken out of a profile while an agent sits in it     | The project runs on; a tool the agent calls is refused, saying its role is gone from the profile, and it still reads the record; `stuck` names its seat |

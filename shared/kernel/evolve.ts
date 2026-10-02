@@ -27,7 +27,10 @@ export function evolveAll(state: State, bodies: readonly EventBody[]): State {
 function apply(s: State, e: Event, at: string): State {
   switch (e.type) {
     case "project_opened":
-      return { ...s, project: { base: e.base, remote: e.remote, profileHash: e.profileHash, checks: [] } };
+      return {
+        ...s,
+        project: { base: e.base, remote: e.remote, profile: e.profile, profileHash: e.profileHash, checks: [] },
+      };
     case "scope_opened": {
       const parent = e.scope.parent === null ? undefined : s.scopes.get(e.scope.parent);
       const scopes = parent ? withEntry(s.scopes, parent.id, { ...parent, children: parent.children + 1 }) : s.scopes;

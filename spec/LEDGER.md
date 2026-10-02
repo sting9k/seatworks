@@ -65,7 +65,7 @@ Everything `decide` reads, and nothing else. What only a view needs stays in the
 type State = {
   readonly seq: number;
   readonly counters: Readonly<Record<IdKind, number>>;
-  readonly project: { base: string; profileHash: string; checks: readonly Check[]; remote: string | null } | null;
+  readonly project: { base: string; profile: string; profileHash: string; checks: readonly Check[]; remote: string | null } | null;
   readonly scopes: ReadonlyMap<ScopeId, Scope>;          // open, and closed ones until pruned (§10)
   readonly actors: ReadonlyMap<ActorId, Actor>;          // seated, until released or gone and settled
   readonly findings: ReadonlyMap<FindingId, Finding>;    // until their scope is pruned
@@ -294,7 +294,7 @@ Every event, with its payload. `evolve` handles each; an unknown type stops the 
 
 | Event                 | Payload                                                                                      |
 | --------------------- | -------------------------------------------------------------------------------------------- |
-| `project_opened`      | `base, remote, profileHash, root: ScopeId`                                                   |
+| `project_opened`      | `base, remote, profile, profileHash, root: ScopeId`: the profile by its name, and the hash of its files then |
 | `scope_opened`        | `scope: Scope` (as opened)                                                                   |
 | `actor_seated`        | `actor, role, scope, model`                                                                  |
 | `workspace_ready`     | `scope, branch, head`                                                                              |

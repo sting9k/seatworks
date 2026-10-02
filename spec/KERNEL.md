@@ -26,6 +26,10 @@ The kernel:
 A profile is data: roles as sets of properties, and what each may call. Another arrangement of the team is another
 profile, with no change to the kernel. A role renamed with its properties kept behaves the same.
 
+A project runs one profile, named when the project is opened and kept on its record with the hash of its files then
+(`TEMPLATE.md`). The kernel reads neither: it is handed the profile's roles. A profile arranges a team and words what
+its agents read; it never gives the kernel a reason to refuse (§1), brings no code, and does not rename a command.
+
 | Property    | Meaning                                                                                   |
 | ----------- | ----------------------------------------------------------------------------------------- |
 | `root`      | Owns the project's root scope. Exactly one role has it.                                   |

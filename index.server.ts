@@ -57,7 +57,10 @@ export default function contribute(server: PluginServerContext) {
     const inside = await git(input.cwd, ["rev-parse", "--is-inside-work-tree"]);
     if (inside.stdout.trim() !== "true")
       return { project: "", ok: false, text: `${input.cwd} is not a git repository, and a team works on one.` };
-    const { project, outcome, note } = await plugin.openProject(input.cwd, input.base);
+    const named = input.profile;
+    if (named !== undefined && !(await plugin.profiles()).some((profile) => profile.name === named))
+      return { project: "", ok: false, text: `No profile named ${named} is installed.` };
+    const { project, outcome, note } = await plugin.openProject(input.cwd, input.base, input.profile);
     const said = [outcome.ok ? `Project ${project} is open.` : outcome.refused.says, note].filter(Boolean).join(" ");
     return { project, ok: outcome.ok, text: said };
   });
@@ -74,7 +77,7 @@ export default function contribute(server: PluginServerContext) {
   });
   server.handle(RPC.projects, async (_input, { paseo }) => {
     plugin.saw(paseo);
-    return { projects: plugin.projects(), unattached: await plugin.unattached() };
+    return { projects: plugin.projects(), unattached: await plugin.unattached(), profiles: await plugin.profiles() };
   });
   server.handle(RPC.leftovers, async (_input, { paseo }) => {
     plugin.saw(paseo);

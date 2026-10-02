@@ -12,7 +12,10 @@ import type { Refusal } from "../../shared/kernel/decide/context.ts";
 export type ProjectPort = {
   readonly view: State;
   submit(command: Command): Promise<Submitted>;
+  /** The tools a seated actor's role names; none for a role the profile no longer has; null when it is not seated. */
   roleTools(actor: string): ReadonlySet<string> | null;
+  /** A seated actor's role, when the project's profile no longer has it. */
+  roleGone(actor: string): string | null;
   read(actor: string, name: ReadName, args: unknown): Promise<string>;
 };
 
@@ -141,6 +144,12 @@ export class TeamSocket {
     if (Object.hasOwn(READS, name))
       return { ok: true, text: await who.project.read(who.actor, name as ReadName, args ?? {}) };
     const tools = who.project.roleTools(who.actor);
+    const gone = who.project.roleGone(who.actor);
+    if (gone !== null)
+      return {
+        ok: false,
+        text: `Your role, ${gone}, is no longer in this project's profile, so none of its tools can be given to you. The Human sees this; go on with what needs no tool, or wait for them.`,
+      };
     if (!tools?.has(name)) return { ok: false, text: `You are not given ${name}.` };
     const parsed = parseBody(name, args ?? {});
     if (!parsed.ok) return { ok: false, text: `The arguments do not fit ${name}: ${parsed.says}` };

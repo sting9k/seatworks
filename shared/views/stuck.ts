@@ -1,5 +1,6 @@
 import type { Effect } from "../contracts/effects.ts";
 import { HUMAN } from "../contracts/ids.ts";
+import type { Profile } from "../contracts/profile.ts";
 import { ownerOfParent } from "../kernel/authority.ts";
 import type { State } from "../kernel/state.ts";
 
@@ -8,10 +9,21 @@ type Abandoned = Effect & { readonly why: string };
 
 /**
  * What looks stuck, as facts for the Human: effects the satellites keep throwing on or gave up on, open scopes with
- * nobody seated, and words queued for a seated actor whose agent never started. It reads and changes nothing.
+ * nobody seated, words queued for a seated actor whose agent never started, and an actor seated in a role the
+ * project's profile no longer has. It reads and changes nothing.
  */
-export function stuckOf(state: State, pending: readonly Pending[], abandoned: readonly Abandoned[]): string[] {
+export function stuckOf(
+  state: State,
+  pending: readonly Pending[],
+  abandoned: readonly Abandoned[],
+  profile: Profile,
+): string[] {
   const lines: string[] = [];
+  for (const actor of state.actors.values())
+    if (actor.status === "seated" && !profile.roles.has(actor.role))
+      lines.push(
+        `${actor.id} is seated on scope ${actor.scope} in a role the project's profile no longer has; its tools are refused until the profile has the role again or the seat is released.`,
+      );
   for (const e of abandoned) lines.push(`Effect ${e.key} (${e.body.kind}) was given up: ${e.why}`);
   for (const e of pending)
     if (e.attempts > 0)

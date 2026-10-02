@@ -131,7 +131,7 @@ test("an amended brief changes only the sections it names: a Human's constraint 
 
 test("publish names the head the record last saw on the base; a moved tip is recorded so asking again works", () => {
   const early = new Ledger();
-  early.must(early.human("open_project", { base: "main", profileHash: "p1", model: "slp-supervisor" }));
+  early.must(early.human("open_project", { base: "main", profile: "slp", profileHash: "p1", model: "slp-supervisor" }));
   assert.equal(
     refusedBy(early.human("publish", { remote: "origin" })),
     "state",
@@ -191,7 +191,7 @@ test("a hand-back from the root owes the Human, who sends it back or publishes o
 
 test("a small change: the Supervisor seats a Peer under the root and integrates it, with no Lead", () => {
   const ledger = new Ledger();
-  ledger.must(ledger.human("open_project", { base: "main", profileHash: "p", model: "m" }));
+  ledger.must(ledger.human("open_project", { base: "main", profile: "slp", profileHash: "p", model: "m" }));
   ledger.must(ledger.fact("record_workspace", { scope: "root", ok: true, branch: "main" }));
   ledger.must(
     ledger.as("a1", "open_scope", { parent: "root", role: "peer", paths: ["README.md"], brief: brief("Fix the typo") }),
@@ -559,4 +559,17 @@ test("a scope opened after its sibling gets no copy and no agent until that sibl
   assert.equal(creates("1.2"), 1, "its copy once 1.1 is in");
   ledger.must(ledger.fact("record_workspace", { scope: "1.2", ok: true, branch: "sw/1.2" }));
   assert.ok(ledger.effects.some((e) => e.body.kind === "agent.create" && e.body.actor === "a4"));
+});
+
+test("a project opened is on the record with the profile it runs, by name and by the hash of its files then", () => {
+  const ledger = new Ledger();
+  const events = ledger.must(
+    ledger.human("open_project", { base: "main", profile: "crew", profileHash: "abc123", model: "slp-supervisor" }),
+  );
+
+  assert.deepEqual(
+    events.filter((e) => e.type === "project_opened").map((e) => [e.profile, e.profileHash]),
+    [["crew", "abc123"]],
+  );
+  assert.equal(ledger.state.project?.profile, "crew");
 });

@@ -79,9 +79,9 @@ export function Surface({ theme, layout, navigation }: PluginSurfaceProps) {
         setPage({ name: "plugin" });
       }}
       onRetry={() => void refresh()}
-      onAttach={(root) => {
+      onAttach={(root, profile) => {
         setAttaching(root);
-        void attach({ cwd: root })
+        void attach(profile === undefined ? { cwd: root } : { cwd: root, profile })
           .then((r) => {
             toast.show(r.text, { variant: r.ok ? "success" : "warning" });
             if (r.ok) setPage({ name: "project", id: r.project });
