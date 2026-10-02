@@ -13,7 +13,7 @@ hardest.
 
 - Two or three discovery scopes with the same brief. Blind means blind to you and to each other by what you send: no
   brief names the other scopes, and nothing of one design reaches another until you bring them together. Nothing
-  stops a designer reading the code, or anything else: its independence comes from a brief without your answer, not
+  stops a designer reading the code or the record: its independence comes from a brief without your answer, not
   from a wall.
 - On different models where the role's list allows: one model on one question tends to one answer.
 - The brief is the problem, its constraints with whose word they are, and how an answer will be judged. Not your idea,

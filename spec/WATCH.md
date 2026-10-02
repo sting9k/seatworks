@@ -35,12 +35,14 @@ The owner gave this design to the builder. These choices settle it, each with it
    and that still holds, goes up one owner (`STEERING.md`). `mark_noise` quiets a moment for one agent and scope.
 6. **The agent never learns it is watched.** An agent that knows plays to the watch (V1). The owner's question is its
    own, with no attention's words, id or source in it. Its own scope's `record` shows it nothing of what was told of
-   its work, what a look back reads of the watch is shown to the root's owner alone, and a `look` at an agent that
-   watches answers only an owner above it or another that watches.
+   its work, what a look back reads of the watch is shown to the root's owner alone, a scope that watches is shown
+   only to its own agent and to those above it, and a `look` reaches only down: an attention sits in the timeline of
+   whoever was sent it, so an agent looks at those in its own scope or below, and one that watches at those it
+   watches over (`PORTS.md`).
 7. **An open question to a Peer copies its Lead and opens no obligation**, since it directs nothing (KERNEL I7).
 8. **Blind designs narrow no one's reading.** A design is blind to its Lead's framing and to the other designs
-   because the Lead does not put them in its brief, and Peers do not message each other. What an agent may read stays
-   open (CONCEPT-V2 §4.3, N2): the article's parachute is an agent that may only read about the parachute (A3.2¶6),
+   because the Lead does not put them in its brief, and Peers do not message each other or look at each other's turns
+   (6). What an agent may read of the code and the record stays open (CONCEPT-V2 §4.3, N2): the article's parachute is an agent that may only read about the parachute (A3.2¶6),
    and independence of thought comes from reading widely (A3.3¶6).
 
 ## When: moments

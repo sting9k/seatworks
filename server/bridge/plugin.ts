@@ -13,8 +13,8 @@ import { join } from "node:path";
 import type { PaseoApi } from "@getpaseo/client";
 import type { AgentTimelineItem } from "@getpaseo/protocol/agent-types";
 import type { Caller, CommandBody } from "../../shared/contracts/commands.ts";
-import { PROJECT_LABEL, ROOT, parentScopeId } from "../../shared/contracts/ids.ts";
-import type { State } from "../../shared/kernel/state.ts";
+import { PROJECT_LABEL, ROOT } from "../../shared/contracts/ids.ts";
+import { isUnseen, mayLook, standsAbove } from "../../shared/kernel/authority.ts";
 import type { ReadArgs, ReadName } from "../../shared/contracts/tools.ts";
 import { activityLine } from "../../shared/views/activity.ts";
 import { mapText } from "../../shared/views/docs.ts";
@@ -23,6 +23,7 @@ import {
   type Signals,
   chainOf,
   lookBackText,
+  noRecord,
   scopeRecordText,
   signalsOf,
 } from "../../shared/views/record.ts";
@@ -1009,19 +1010,16 @@ export class Plugin {
     if (name === "status") return statusText(view, a.scope ?? own, actor) ?? `No scope ${a.scope ?? own} is open.`;
     if (name === "record") {
       const scope = a.scope ?? own;
-      const text = scopeRecordText(
-        runtime.store.about(scope),
-        scope,
-        standsAbove(view, actor, scope) ? "above" : "other",
-      );
+      const held = view.scopes.get(scope);
+      if (held && isUnseen(view, actor, held)) return noRecord(scope);
+      const reader = standsAbove(view, actor, scope) ? "above" : held?.owner === actor ? "owner" : "other";
+      const text = scopeRecordText(runtime.store.about(scope), scope, reader);
       // What a look back reads is the root's owner's alone: it names the watch, which the watched never learn of.
-      return scope === ROOT && view.scopes.get(ROOT)?.owner === actor
-        ? `${text}\n\n${lookBackText(() => runtime.store.read(0))}`
-        : text;
+      return scope === ROOT && held?.owner === actor ? `${text}\n\n${lookBackText(() => runtime.store.read(0))}` : text;
     }
     if (name === "diff") {
       const scope = view.scopes.get(a.scope ?? own);
-      if (!scope) return `No scope ${a.scope ?? own} is open.`;
+      if (!scope || isUnseen(view, actor, scope)) return `No scope ${a.scope ?? own} is open.`;
       const parent = scope.parent ? view.scopes.get(scope.parent) : undefined;
       if (!parent?.branch) return `Scope ${scope.id} has no parent branch to compare with.`;
       const tip = a.commit ?? scope.branch ?? scope.commit;
@@ -1030,24 +1028,17 @@ export class Plugin {
     }
     const ready = await this.whenReady();
     const target = view.actors.get(a.actor ?? "");
-    // One that watches is looked at only from above it or by one that watches: the watched never learn of it.
-    const watches = target !== undefined && view.scopes.get(target.scope)?.kind === "watch";
-    if (!target?.host || (watches && !standsAbove(view, actor, target.scope)))
-      return `${a.actor ?? "?"} has no agent to look at.`;
+    const reader = view.actors.get(actor);
+    // Those told of an agent's work are above it, so a look reaches only down: the watched never learn of the watch.
+    if (!target || !reader || !mayLook(view, reader, target))
+      return `${a.actor ?? "?"} is no agent in your scope or below it: those are the ones you look at.`;
+    if (!target.host) return `${target.id} has no agent to look at.`;
     return ready.host.look(target.host, a.last ?? 40);
   }
 
   private async submitAs(runtime: Runtime, caller: Caller, body: CommandBody): Promise<Submitted> {
     return runtime.project.submit({ id: crypto.randomUUID(), at: new Date().toISOString(), caller, body });
   }
-}
-
-/** Whether an actor owns a scope above this one or watches over the project: who is shown what the watch told of it. */
-function standsAbove(view: State, actor: string, scope: string): boolean {
-  if (view.scopes.get(view.actors.get(actor)?.scope ?? "")?.kind === "watch") return true;
-  for (let at = parentScopeId(scope); at !== null; at = parentScopeId(at))
-    if (view.scopes.get(at)?.owner === actor) return true;
-  return false;
 }
 
 /** What `work` gives, or null when it takes longer than `ms`. */

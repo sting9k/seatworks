@@ -511,7 +511,7 @@ test("the attention tools: a watcher's attention reaches the owner above the age
   const keeper = await c.tools(1);
   await did(c, keeper, "open_scope", { parent: "1", role: "maker", paths: ["src/a/"], brief: brief("A") });
   const maker = await c.tools(2);
-  await did(c, chief, "open_scope", { parent: "root", role: "guard", over: "all" });
+  await did(c, chief, "open_scope", { parent: "root", role: "guard", over: "all", brief: brief("Watch the lane") });
   const guard = await c.tools(3);
   assert.match(await status(guard), /^Watches over: every scope$/m, "a watcher reads what it watches");
 
@@ -561,17 +561,28 @@ test("the attention tools: a watcher's attention reaches the owner above the age
     /signals|going-in-circles/,
     "nobody else is shown it",
   );
+  const none = (actor: string) => `${actor} is no agent in your scope or below it: those are the ones you look at.`;
+  assert.equal((await maker.call("look", { actor: "a4" })).text, none("a4"), "the one that watches is not looked at");
+  assert.equal((await maker.call("look", { actor: "a2" })).text, none("a2"), "nor is the owner above, who is told");
   assert.equal(
-    (await maker.call("look", { actor: "a4" })).text,
-    "a4 has no agent to look at.",
-    "an agent that looks at the one that watches is told what it is told of an actor with no agent",
+    (await maker.call("look", { actor: "a9" })).text,
+    none("a9"),
+    "an actor that is not there reads the same",
   );
-  assert.equal((await keeper.call("look", { actor: "a4" })).text, "a4 has no agent to look at.");
-  assert.equal(
-    (await chief.call("look", { actor: "a4" })).text,
-    "Nothing in its timeline yet.",
-    "the owner above it looks as before",
-  );
+  assert.equal((await keeper.call("look", { actor: "a4" })).text, none("a4"));
+  for (const [who, actor] of [
+    [keeper, "a3"],
+    [chief, "a4"],
+    [guard, "a3"],
+  ] as const)
+    assert.equal((await who.call("look", { actor })).text, "Nothing in its timeline yet.", `looking at ${actor}`);
+
+  assert.match(await status(chief, "root"), /^- 2 open · a4 \(guard\)/m, "the owner above sees the scope that watches");
+  assert.doesNotMatch(await status(maker, "root"), /a4|guard/, "the watched are shown no scope that watches");
+  assert.equal(await status(maker, "2"), "No scope 2 is open.");
+  assert.match((await chief.call("record", { scope: "root" })).text, /scope 2 opened under it: a guard/);
+  assert.doesNotMatch((await maker.call("record", { scope: "root" })).text, /guard/);
+  assert.equal((await maker.call("record", { scope: "2" })).text, "Nothing on the record for scope 2.");
   const before = c.told(1).length;
   assert.equal(
     await did(c, guard, "attend", { actor: "a3", moment: "going-in-circles", why: "a third time", urgency: "now" }),

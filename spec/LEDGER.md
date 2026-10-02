@@ -483,7 +483,7 @@ promise.
 Views read the log in SQL, or fold events in memory for what is open. Nothing a view needs is kept in `State` only
 for it.
 
-- `status(scope)`: who holds the machine while it is held, that its copy could not be made, the brief, its children with their state (one with no copy, or whose agent is not made yet, says so), the siblings it waits for, each `mustTell` and
+- `status(scope)`: who holds the machine while it is held, that its copy could not be made, the brief, its children with their state (one with no copy, or whose agent is not made yet, says so; one that watches is listed only for its own agent and those above it, `PORTS.md`), the siblings it waits for, each `mustTell` and
   `mayChange` edge at both its ends while both are open, what a watching scope watches over, a hand-back with whether any check is set to run on it, open obligations on and to its owner, a message or direction owed with its words, the
   latest claim and its evidence, spend of the scope and its descendants beside its appetite.
 - `record(scope)`: briefs with every version; what the owner above did to the scope (paths moved, held, resumed,

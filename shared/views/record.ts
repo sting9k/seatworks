@@ -375,20 +375,28 @@ export function lookBackText(read: () => Iterable<Event>): string {
   ].join("\n");
 }
 
-/** Who reads a scope's record: an owner above the work or one that watches it, or anyone else. */
-export type RecordReader = "above" | "other";
+/** Who reads a scope's record: an owner above it or one that watches, its own owner, or anyone else. */
+export type RecordReader = "above" | "owner" | "other";
 
-/** A scope's history for the `record` read; what the watch told of the work is shown only to a reader above it. */
+/** What a scope with nothing on its record reads as. */
+export const noRecord = (scope: string): string => `Nothing on the record for scope ${scope}.`;
+
+/** A scope's history for the `record` read; the watch's part is shown by who reads (WATCH.md, Decided 6). */
 export function scopeRecordText(events: Iterable<Event>, scope: string, reader: RecordReader): string {
   const out: string[] = [];
   const findings = new Map<string, string[]>();
   const attentions = new Set<string>();
   const mine = (finding: string) => (findings.has(finding) ? [scope] : []);
   const told: string[] = [];
+  const watching = new Set<string>();
   const mineToo = (attention: string) => (attentions.has(attention) ? [scope] : []);
   for (const e of events) {
     if (!recordedIn(e, mine, mineToo).includes(scope)) continue;
-    const done = doneTo(e, scope) ?? doneUnder(e, scope);
+    // A scope that watches, opened under this one, is shown to this one's owner and to those above.
+    if (e.type === "scope_opened" && e.scope.kind === "watch") watching.add(e.scope.id);
+    const child = e.type === "scope_opened" ? e.scope.id : "scope" in e && typeof e.scope === "string" ? e.scope : null;
+    const unseen = reader === "other" && child !== null && watching.has(child);
+    const done = doneTo(e, scope) ?? (unseen ? null : doneUnder(e, scope));
     if (done !== null) out.push(`${e.at} ${done}`);
     if ((e.type === "brief_issued" || e.type === "brief_amended") && e.scope === scope)
       out.push(
@@ -420,7 +428,7 @@ export function scopeRecordText(events: Iterable<Event>, scope: string, reader: 
   // The watched never learn they are watched (WATCH.md, Decided 6): what was told of the work is for those above it.
   if (reader === "above") out.push(...told);
   for (const lines of findings.values()) out.push(lines.join("\n"));
-  return out.length > 0 ? out.join("\n") : `Nothing on the record for scope ${scope}.`;
+  return out.length > 0 ? out.join("\n") : noRecord(scope);
 }
 
 /** What became of a scope opened under this one, as one line of this one's record. */

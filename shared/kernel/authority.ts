@@ -1,4 +1,4 @@
-import { type ActorId, HUMAN, type Party, type ScopeId } from "../contracts/ids.ts";
+import { type ActorId, HUMAN, type Party, type ScopeId, parentScopeId } from "../contracts/ids.ts";
 import type { Actor, Scope } from "../contracts/ledger.ts";
 import type { Profile, Relation, Role } from "../contracts/profile.ts";
 import type { State } from "./state.ts";
@@ -43,6 +43,26 @@ export function isWithin(state: State, inner: ScopeId, outer: ScopeId): boolean 
   for (let at: ScopeId | null = inner; at !== null; at = state.scopes.get(at)?.parent ?? null)
     if (at === outer) return true;
   return false;
+}
+
+/** Whether an actor owns a scope above this one or watches: who is shown what the watch does and tells of it. */
+export function standsAbove(state: State, actor: Party, scope: ScopeId): boolean {
+  if (state.scopes.get(state.actors.get(actor)?.scope ?? "")?.kind === "watch") return true;
+  for (let at = parentScopeId(scope); at !== null; at = parentScopeId(at))
+    if (state.scopes.get(at)?.owner === actor) return true;
+  return false;
+}
+
+/** Whether an actor looks at another: one in its own scope or below it, or, watching, one in what it watches over. */
+export function mayLook(state: State, reader: Actor, target: Actor): boolean {
+  const own = state.scopes.get(reader.scope);
+  if (own?.kind === "watch") return own.over === "all" || own.over.some((o) => isWithin(state, target.scope, o));
+  return isWithin(state, target.scope, reader.scope);
+}
+
+/** Whether a scope is one a reader is not shown: one that watches, to anyone but its own actor and those above it. */
+export function isUnseen(state: State, reader: Party, scope: Scope): boolean {
+  return scope.kind === "watch" && scope.owner !== reader && !standsAbove(state, reader, scope.id);
 }
 
 /** Whether a sender may start a message to a reader along its role's `speaksTo` (I10). */

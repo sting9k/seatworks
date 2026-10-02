@@ -241,10 +241,13 @@ back the key its agent was bound to. It guards against mistakes, not intent, as 
 Each tool is one kernel command, shown to the roles whose `tools` name it, or a read: `status` (a scope's view),
 `record` (briefs, findings, reports, attentions), `look` (what an agent was last told, said, thought and ran, newest
 last, through the agent host; `last` counts those, not turns), `diff` (a scope's change at a commit). A read with no scope named is of the caller's own.
-Three reads are by who asks, read off the scope graph, so that the watched never learn of the watch (`WATCH.md`,
-Decided 6): the attentions in a scope's record, for an owner above it or one that watches; what a look back reads,
-for the root's owner; and a `look` at an agent that watches, for an owner above it or another that watches, with
-anyone else told what is said of an actor that has no agent. A reply is the
+What bears on the watch is read by who asks, off the scope graph, so that the watched never learn of it (`WATCH.md`,
+Decided 6). The attentions in a scope's record are for an owner above it or one that watches; what a look back
+reads is for the root's owner. A scope that watches is shown, in `status`, `record` and `diff` and among its
+parent's children, to its own agent and to those above it, and reads to anyone else as a scope that is not open. A
+`look` reaches down only, at an agent in the reader's own scope or below it, since an attention sits in the
+timeline of whoever was sent it; one that watches looks at the agents it watches over. Any other actor named, there
+or not, gets one same reply. A reply is the
 command's result and the facts it produced, never advice on what to do next. Every argument an agent is shown says what it is, in a line of its own; a line and what it comes
 from (`via`) are the same in every tool, so each tool that takes lines says them once rather than on every line. A
 tool's description says what it is for, and `raise_finding`'s names the points of conflict it is

@@ -1,5 +1,6 @@
 import { BRIDGE, type ScopeId } from "../contracts/ids.ts";
 import type { Brief, Line, Obligation, Plan, Scope } from "../contracts/ledger.ts";
+import { isUnseen } from "../kernel/authority.ts";
 import type { State } from "../kernel/state.ts";
 
 /** What a piece of evidence says of its commit, in a word; a reader's answer to a question says nothing of it. */
@@ -8,7 +9,7 @@ export const resultText = (ok: boolean | null): string => (ok === null ? "an ans
 /** A scope as its agents read it with `status` (KERNEL.md §8): facts from the record, nothing advised. */
 export function statusText(state: State, scopeId: ScopeId, reader: string | null): string | null {
   const scope = state.scopes.get(scopeId);
-  if (!scope) return null;
+  if (!scope || (reader !== null && isUnseen(state, reader, scope))) return null;
   const out: string[] = [];
   const owner = scope.owner ? state.actors.get(scope.owner) : undefined;
   out.push(
@@ -42,7 +43,9 @@ export function statusText(state: State, scopeId: ScopeId, reader: string | null
   out.push(
     `Spent by this scope and below: $${spent.usd.toFixed(2)}, ${spent.tokens} tokens${appetite?.usd ? ` of an appetite of $${appetite.usd}` : ""}`,
   );
-  const children = [...state.scopes.values()].filter((c) => c.parent === scope.id);
+  const children = [...state.scopes.values()].filter(
+    (c) => c.parent === scope.id && (reader === null || !isUnseen(state, reader, c)),
+  );
   if (children.length > 0) out.push(`Children:\n${children.map((c) => `- ${childLine(state, c)}`).join("\n")}`);
   const claim = scope.claim ? state.claims.get(scope.claim) : undefined;
   if (claim)

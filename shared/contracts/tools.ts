@@ -45,7 +45,7 @@ export const DESCRIPTIONS: Record<CommandType | ReadName, string> = {
   record:
     "A scope's history: every brief version, what its owner above did to it, each hand-back and what came of it, each scope opened under it and what came of that, its findings and its reports. Yours, unless you pass `scope`.",
   diff: "A scope's change against its parent branch, at its branch head or a named commit. Yours, unless you pass `scope`.",
-  look: "What an agent was last told and what it said, thought and ran, newest last.",
+  look: "What an agent in your scope or below it was last told and what it said, thought and ran, newest last.",
   open_project: "Opens the project.",
   open_scope: `Opens a child scope under one you own, with its paths, its brief and an agent of the role you name. ${LINES}`,
   amend_brief: `Amends a child scope's brief with a reason. ${LINES}`,
