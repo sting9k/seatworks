@@ -192,7 +192,9 @@ What closes each obligation:
 | `permission_asked`             | its answerer                | `permission_answered`, `permission_settled`, or the asking actor leaving its seat |
 
 When an actor is released, reseated or gone, every obligation it owes moves to the new holder of its seat or, with
-no seat left, to the owner of its scope's parent (`obligation_moved`). An obligation owed by the Human never moves.
+no seat left, to the owner of its scope's parent (`obligation_moved`). A question, which is the Human's own to
+answer, never moves; what came to the Human only because the root's seat was empty goes to whoever is seated there
+next, as below.
 
 What a seat owes is a position's, not a person's: a reseat brings to its new holder every obligation that is the
 seat's by the graph, whoever held it while the seat was empty. That is a finding its scope answers (or one that
