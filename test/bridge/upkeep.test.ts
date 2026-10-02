@@ -340,3 +340,40 @@ test("an agent whose seat ended while Paseo was still making it is archived once
   );
   chief.close();
 });
+
+test("an integration does not wait for a check that still runs on its scope", { timeout: 60_000 }, async () => {
+  const c = await crew();
+  plugins.push(c.plugin);
+  const gate = join(mkdtempSync(join(tmpdir(), "sw-gate-")), "gate");
+  execFileSync("mkfifo", [gate]);
+  const chief = await c.tools(0);
+  const brief = { goal: { text: "Make a" }, kind: "verification" };
+  assert.ok((await chief.call("open_scope", { parent: "root", role: "maker", paths: ["src/"], brief })).ok);
+  await c.plugin.idle();
+  const maker = await c.tools(1);
+  const copy = c.paseo.created[1]!.cwd;
+  mkdirSync(join(copy, "src"), { recursive: true });
+  writeFileSync(join(copy, "src/a.txt"), "a\n");
+  git(copy, "add", ".");
+  git(copy, "commit", "-q", "-m", "a");
+  const head = git(copy, "rev-parse", "HEAD");
+  assert.ok((await maker.call("hand_back", { commit: head, text: "a" })).ok);
+  const quick = [{ name: "quick", run: ["true"] }];
+  assert.ok((await chief.call("run_checks", { scope: "1", commit: head, steps: quick })).ok);
+  await c.plugin.idle();
+
+  // Ten minutes of a check on the same scope, saying first that it runs.
+  const slow = [{ name: "slow", run: ["sh", "-c", `echo started > ${gate}; exec sleep 600`] }];
+  assert.ok((await chief.call("run_checks", { scope: "1", commit: head, steps: slow })).ok);
+  assert.equal(await readFile(gate, "utf8"), "started\n", "the slow check is running");
+  assert.ok((await chief.call("integrate", { scope: "1", evidence: ["e1"] })).ok);
+  const landed = async () => {
+    for (const until = Date.now() + 15_000; Date.now() < until;) {
+      if (git(c.repo, "rev-parse", "main") === head) return true;
+      await new Promise((resolve) => setImmediate(resolve));
+    }
+    return false;
+  };
+  assert.ok(await landed(), "the base holds the commit while the check still runs");
+  for (const t of [chief, maker]) t.close();
+});

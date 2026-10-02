@@ -71,7 +71,10 @@ Human's question of where a line's authority came from, which is P8.
 - **Commit.** The events and the effects they ask for are written in one SQLite transaction, with the expected
   sequence checked. Nothing is sent before the commit, so nothing is sent for an event that was not kept.
 - **Dispatch.** A dispatcher takes each pending effect to its satellite, and records its result as a fact with the
-  effect's key. A fact whose key was seen is dropped. An effect whose satellite throws, or whose fact the record
+  effect's key. Effects run side by side, but one at a time within a channel, in the order they were asked for: an
+  agent's (its making, its mail, its archiving), a scope's copy and branch (made, a candidate, an advance, removed),
+  a scope's checks, publishing, the machine's hold, the docs. Checks have a channel of their own because they run in
+  a copy of their own: an integration, or a hand-back's candidate, never waits out a check that still runs. A fact whose key was seen is dropped. An effect whose satellite throws, or whose fact the record
   throws on, is tried again after a pause that doubles; after five throws it is settled `abandoned`, which no fact
   reached, and the Human's `stuck` view shows it. The pause is its channel's: what follows it there waits too, so
   their order is kept, and nothing that changes meanwhile ends the pause sooner, or a short outage would use up its

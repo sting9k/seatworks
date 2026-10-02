@@ -211,6 +211,7 @@ A call as an agent's tool server sends it, the answer read back.
 | The process that asked for a check is killed outright while the check runs | The check is ended                       |
 | A run of checks answers                                     | No process it started is left, its steps' guards included |
 | The plugin stops while two projects each have work in flight, the first held up by Paseo | The second's check is ended without waiting for the first |
+| An integration asked for while a long check still runs on the same scope | Made at once: the base holds the commit while the check runs on |
 | An evidence run asked while the machine is held             | Starts when the hold is released         |
 | Another project on the machine asks for an evidence run during a hold | Deferred the same way          |
 

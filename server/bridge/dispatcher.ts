@@ -166,7 +166,7 @@ export class Dispatcher {
   }
 }
 
-/** The lane an effect runs in: one at a time per agent, per scope, or for the machine and publishing. */
+/** The lane an effect runs in: one at a time per agent, per scope, per scope's checks, or for the machine and publishing. */
 function channelOf(e: EffectBody): string {
   switch (e.kind) {
     case "deliver":
@@ -179,8 +179,10 @@ function channelOf(e: EffectBody): string {
     case "workspace.candidate":
     case "workspace.advance":
     case "workspace.remove":
-    case "evidence.run":
       return `scope:${e.scope}`;
+    // Checks run in a copy of their own, so nothing of the scope waits out a check: only its next check does.
+    case "evidence.run":
+      return `checks:${e.scope}`;
     case "workspace.publish":
       return "publish";
     case "machine.hold":
