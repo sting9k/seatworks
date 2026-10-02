@@ -208,7 +208,7 @@ attends, only the owner of a scope's parent amends its brief or integrates it.
 | `status`            | Its scope as the record has it: brief, children, what is owed, spend                        | Every role has it, listed or not |
 | `record`            | A scope's history: brief versions, findings, reports                                       | Every role has it, listed or not |
 | `diff`              | A scope's change against its parent branch                                                 | Every role has it, listed or not |
-| `look`              | An agent's recent turns: what it said, thought and ran                                     | Every role has it, listed or not |
+| `look`              | What an agent was last told and what it said, thought and ran; `last` counts those, not turns | Every role has it, listed or not |
 | `send_message`      | Sends a message along the edges `speaksTo` gives; may ask, may direct                      | Roles that speak to anyone    |
 | `answer`            | Answers a message it was sent                                                              | Roles that speak to anyone    |
 | `open_scope`        | Opens a child scope with its paths and brief, and seats an agent of a role it names        | Roles that delegate           |
@@ -244,6 +244,34 @@ attends, only the owner of a scope's parent amends its brief or integrates it.
 | `hold_machine`      | Holds the machine while it measures; nothing that loads the machine starts meanwhile       | Roles that measure            |
 
 A good start for a role: every tool whose last column fits it. Then take away what its way of working never uses.
+
+### What a prompt can rely on
+
+What the tools do by themselves, so that a prompt says none of it and counts on all of it:
+
+- **A reply names what it made.** `open_scope` answers with the scope's id and its agent's actor id, `raise_finding`
+  with the finding's, `send_message` with the message's and its reader, `ask_human` with the question's. No second
+  call is needed to learn what to name next.
+- **Words never land inside a turn.** What is sent to an agent waits until its turn ends, then goes as one message,
+  numbered, oldest first. What asks nothing (a copy, a fact) waits for something that asks, and goes with it. A queue
+  longer than 60,000 characters goes as several, the next at the end of the turn the one before began.
+- **An answer finds the seat.** An `answer`, and the Human's answer to a question, reach whoever asked; once that
+  agent was reseated, whoever sits there now; with the seat empty, the owner above.
+- **A hand-back becomes a candidate.** The plugin makes the commit to integrate: the commit handed back with its
+  parent's head taken in. The project's checks run on it when any is set, and their result wakes the owner above
+  with the evidence's id. `integrate` cites evidence on that candidate; `status` shows which commit it is. A commit
+  may be named by an abbreviation.
+- **An integration that was not made is said.** When the parent moved under the candidate, as it does each time
+  something else lands, the owner above is woken, another candidate is made, and evidence is wanted on that one.
+  Refused for another reason, such as a base checked out with uncommitted changes, the candidate stands and the same
+  `integrate` works once the reason is gone.
+- **A reseat carries the seat.** The new agent reads in its first words what the seat owes, is sent the question
+  its predecessor left unanswered, and gets a copy made again if the scope's copy had failed.
+- **A hold ends with its holder.** The machine is let go when the agent that holds it leaves its seat. `status`
+  says who holds it meanwhile, which is why a check has not come back.
+- **A refused publish wakes the root's owner**, with why. A publish that worked is told with its next message.
+- **Saying nothing is refused.** A report with no line, and an amendment of a brief or a plan that changes nothing,
+  are refused where their arguments are read.
 
 ### The report's sections
 
