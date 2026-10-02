@@ -40,7 +40,7 @@ its agents read; it never gives the kernel a reason to refuse (§1), brings no c
 | `spawns`    | The roles it may seat under a scope it owns.                                              |
 | `speaksTo`  | Relations it may message: `parent`, `children`, `descendants`, `human`.                   |
 | `humanDoor` | May put a question to the Human.                                                          |
-| `tools`     | The commands it is shown, by name.                                                        |
+| `tools`     | The commands it is shown, by name. A name that is no tool of the team's fails the profile's loading. |
 | `like`      | Takes the properties of another role, then its own on top.                                |
 
 Prompts, skills, models and harness choices are in the profile too, but the kernel does not read them.

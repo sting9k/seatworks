@@ -3,6 +3,8 @@ import { test } from "node:test";
 import { parse } from "yaml";
 import { type Graph, graphOf } from "../../editor/template/graph.ts";
 import { readTemplate } from "../../editor/template/read-template.ts";
+import { TOOL_GROUPS } from "../../editor/template/tool-groups.ts";
+import { ROLE_TOOLS } from "../../shared/contracts/tools.ts";
 import { slpFiles } from "./slp.ts";
 
 // Each case is a row of spec/CONFORMANCE.md, Editor: a template's files in, the graph a person sees out.
@@ -98,4 +100,9 @@ test("a template that names a skill it does not carry does not open, and says wh
 
   assert.ok(!read.ok);
   assert.match(read.says, new RegExp(skill));
+});
+
+test("every tool a role may be given sits in one of the editor's groups, and in one only", () => {
+  const grouped = TOOL_GROUPS.flatMap((group): readonly string[] => group.tools);
+  assert.deepEqual([...grouped].sort(), [...ROLE_TOOLS].sort());
 });

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { TEAM_SERVER } from "./ids.ts";
+import { ROLE_TOOLS } from "./tools.ts";
 
 /** What a role may message, as relations on the scope graph (KERNEL.md §2). */
 export const RELATIONS = ["parent", "children", "descendants", "human"] as const;
@@ -157,6 +158,10 @@ export function resolveProfile(file: ProfileFile): { ok: true; profile: Profile 
         return { ok: false, says: `role ${role.name} spawns ${spawned}, which is not a role` };
     if (role.spawns.size > 0 && !role.delegates)
       return { ok: false, says: `role ${role.name} spawns roles but does not delegate` };
+    // A name that is no tool would leave the role without one and nobody told: a misspelling, or another core's tool.
+    for (const tool of role.tools)
+      if (!ROLE_TOOLS.has(tool))
+        return { ok: false, says: `role ${role.name} is given the tool ${tool}, which the team does not have` };
   }
   if (Object.hasOwn(file.servers, TEAM_SERVER))
     return { ok: false, says: `no outside server may be named ${TEAM_SERVER}: that is the team's own` };

@@ -252,3 +252,17 @@ test("a profile that gives a role a server it does not declare, or names one as 
   rewrite(join(asTheTeams, "profile.yaml"), (text) => `${text}\nservers:\n  team:\n    type: stdio\n    command: x\n`);
   assert.throws(() => loadBundle(asTheTeams), /no outside server may be named team/);
 });
+
+test("a profile that gives a role a tool the team does not have, such as one misspelt, does not load", () => {
+  const misspelt = profileCopy();
+  rewrite(join(misspelt, "profile.yaml"), (text) =>
+    text.replace("hand_back, run_checks, send_message", "handback, run_checks, send_message"),
+  );
+  assert.throws(() => loadBundle(misspelt), /role peer is given the tool handback, which the team does not have/);
+
+  const theHumans = profileCopy();
+  rewrite(join(theHumans, "profile.yaml"), (text) =>
+    text.replace("tools: [look, record, diff, attend, pass]", "tools: [look, record, answer_question]"),
+  );
+  assert.throws(() => loadBundle(theHumans), /role watcher is given the tool answer_question/);
+});

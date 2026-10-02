@@ -59,6 +59,7 @@ on an implementation without the rule before it is trusted.
 | The whole suite run on the SLP profile with every role renamed             | Same results                  |
 | A search of the kernel and satellites for any role name in the profile     | None found                    |
 | A profile with no `humanDoor` role                                         | Loads; `ask_human` is shown to no one |
+| A profile that gives a role a tool the team does not have: one misspelt, or one only the Human sends | Does not load, saying which role and which tool |
 
 ## Workflow
 
@@ -245,6 +246,7 @@ A template's files in, what a person sees out (`EDITOR.md`).
 | ----------------------------------------------------------- | ------------------------------------------------------------------- |
 | The SLP profile opened                                      | A node for each role, skill, question and moment of its files and one for the Human; a wire for each `spawns`, each skill a role has, each role a moment watches and each role that may ask or tell the Human |
 | The SLP profile opened                                      | Each role's ticked tools are exactly its `tools` in `profile.yaml`, in its node's groups or on a wire to it |
+| Every tool a profile may give a role                        | In one of the editor's groups, and in one only                      |
 | A template that names a skill it does not carry             | Not opened, saying which skill                                      |
 | A template that keeps no positions opened                   | Every node placed, no two on top of each other                      |
 | The SLP profile packed with nothing changed, and opened again | Every file as it was, to the byte                                  |

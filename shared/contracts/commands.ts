@@ -299,6 +299,9 @@ export const HUMAN_COMMANDS: ReadonlySet<CommandType> = new Set<CommandType>([
   "classify_finding",
 ]);
 
+/** Commands the Human alone sends, which no role is given. */
+export const HUMAN_ONLY: ReadonlySet<CommandType> = new Set<CommandType>(["open_project", "answer_question"]);
+
 export type Caller =
   { readonly kind: "agent"; readonly actor: string } | { readonly kind: "human" } | { readonly kind: "bridge" };
 

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { COMMANDS, type CommandType } from "./commands.ts";
+import { COMMANDS, type CommandType, FACTS, HUMAN_ONLY } from "./commands.ts";
 
 /** The reads every agent may be shown besides the commands its role names. */
 export const READS = {
@@ -9,6 +9,12 @@ export const READS = {
   look: z.object({ actor: z.string(), last: z.number().int().positive().max(200).default(40) }),
 } as const;
 export type ReadName = keyof typeof READS;
+
+/** Every tool a profile may give a role, by name: the reads, and the commands an agent may send. */
+export const ROLE_TOOLS: ReadonlySet<string> = new Set([
+  ...Object.keys(READS),
+  ...(Object.keys(COMMANDS) as CommandType[]).filter((type) => !FACTS.has(type) && !HUMAN_ONLY.has(type)),
+]);
 
 /**
  * What each tool is for, in the words an agent reads: what it does and what comes back, never what to do next.
