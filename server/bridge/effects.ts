@@ -67,9 +67,14 @@ export function seatEnv(
   };
 }
 
-/** The seat's environment with the git shim first on its PATH, as its agent's own process gets it. */
-export function withShim(w: Pick<Wiring, "team">, env: Record<string, string>): Record<string, string> {
-  return { ...env, PATH: `${w.team.shimDir}${process.platform === "win32" ? ";" : ":"}${process.env.PATH ?? ""}` };
+/** Where an agent's `paseo` looks for a daemon: a name that never resolves, and that says why in the error it gives. */
+const NO_DAEMON = { PASEO_HOST: "not-for-a-teams-agent.invalid:1", PASEO_HOME: "" };
+
+/** The seat's environment as its agent's own process gets it: the git shim first on its PATH, and no Paseo daemon. */
+export function agentEnv(w: Pick<Wiring, "team">, env: Record<string, string>): Record<string, string> {
+  const path = `${w.team.shimDir}${process.platform === "win32" ? ";" : ":"}${process.env.PATH ?? ""}`;
+  // Paseo's command line lists, reads and prompts every agent of the daemon; a team's reach each other by the record.
+  return { ...env, ...NO_DAEMON, PATH: path };
 }
 const done = (...facts: CommandBody[]): Handled => ({ status: "done", facts });
 /** The fact that an actor's agent was never made, or is no more, and why. */
@@ -130,7 +135,7 @@ export function handlersFor(w: Wiring): Handlers {
           [...state.actors.values()].some((a) => a.scope === actor.scope && a.id !== actor.id),
           w.bundle.project?.docs ?? [],
         ),
-        env: withShim(w, env),
+        env: agentEnv(w, env),
         tools: {
           command: w.team.command,
           args: [...w.team.args, w.team.socket],

@@ -21,7 +21,8 @@
     "from": "~/.codex",
     "link": ["auth.json"],
     "files": {
-      "config.toml": "[features]\nmulti_agent = false\nmulti_agent_v2 = false\n"
+      "config.toml": "[features]\nmulti_agent = false\nmulti_agent_v2 = false\n\n[mcp_servers.paseo]\nurl = \"http://not-for-a-teams-agent.invalid/\"\nenabled = false\n",
+      "rules/seatworks.rules": "prefix_rule(\n    pattern = [\"paseo\"],\n    decision = \"forbidden\",\n    justification = \"Paseo's command line is not for a team's agents: use the team's tools.\",\n)\n"
     }
   }
 }

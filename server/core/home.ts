@@ -1,6 +1,6 @@
 import { existsSync, lstatSync, mkdirSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 
 /** A home directory an agent is pointed at through one variable, as a harness file describes it. */
 export type Home = {
@@ -30,6 +30,7 @@ export function layHome(dir: string, home: Home, places: Places): Record<string,
   }
   for (const [name, content] of Object.entries(home.files)) {
     const placed = withPlaces(content, places);
+    mkdirSync(dirname(join(dir, name)), { recursive: true });
     writeFileSync(join(dir, name), typeof placed === "string" ? placed : `${JSON.stringify(placed, null, 2)}\n`);
   }
   return { [home.env]: dir };

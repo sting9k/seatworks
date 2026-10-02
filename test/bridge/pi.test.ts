@@ -92,8 +92,16 @@ test("a Codex agent asks nobody and starts no agent of its own, and only as a wr
     assert.equal(realpathSync(join(home, "auth.json")), realpathSync(join(human, "auth.json")));
     assert.equal(
       readFileSync(join(home, "config.toml"), "utf8"),
-      "[features]\nmulti_agent = false\nmulti_agent_v2 = false\n",
-      "its own sub-agents are off in a config of Seatworks' own, not the Human's",
+      [
+        "[features]\nmulti_agent = false\nmulti_agent_v2 = false\n",
+        '[mcp_servers.paseo]\nurl = "http://not-for-a-teams-agent.invalid/"\nenabled = false\n',
+      ].join("\n"),
+      "its own sub-agents are off in a config of Seatworks' own, and so is the server Paseo may add for its tools",
+    );
+    assert.match(
+      readFileSync(join(home, "rules", "seatworks.rules"), "utf8"),
+      /prefix_rule\(\s*pattern = \["paseo"\],\s*decision = "forbidden"/,
+      "and Paseo's command line is forbidden it by a rule in that home",
     );
 
     const tools = await agentTools(ready.socketPath, owner.env);
@@ -174,6 +182,23 @@ test("an agent reopened after a daemon restart gets its whole seat back: the git
   assert.ok(env.PATH?.startsWith(ready.shimDir), env.PATH);
   assert.equal(env.SEATWORKS_KEY, paseo.created[0]!.env.SEATWORKS_KEY);
   assert.equal(env.SEATWORKS_WRITES, paseo.created[0]!.env.SEATWORKS_WRITES);
+});
+
+test("no agent is left Paseo's own tools or its command line: its process is pointed at no daemon, when made and when reopened, and a Claude agent is denied both by name", async () => {
+  const { plugin, paseo, root } = await openedOn("claude");
+  const made = paseo.created[0]!;
+  const nowhere = { PASEO_HOST: "not-for-a-teams-agent.invalid:1", PASEO_HOME: "" };
+  assert.deepEqual({ PASEO_HOST: made.env.PASEO_HOST, PASEO_HOME: made.env.PASEO_HOME }, nowhere);
+  const denied = (made.config.options?.settings as { permissions: { deny: string[] } }).permissions.deny;
+  assert.ok(denied.includes("mcp__paseo"), "every tool of the server Paseo adds for its own tools");
+  assert.ok(denied.includes("Bash(paseo *)"), "and its command line, as Claude usually writes it");
+
+  await plugin.dispose();
+  const restarted = new Plugin(root);
+  plugins.push(restarted);
+  restarted.saw(paseo.api);
+  const env = await restarted.envFor(made.host, "claude");
+  assert.deepEqual({ PASEO_HOST: env?.PASEO_HOST, PASEO_HOME: env?.PASEO_HOME }, nowhere);
 });
 
 test("a permission asked while the plugin was down is on the record once it starts, and once only", async () => {

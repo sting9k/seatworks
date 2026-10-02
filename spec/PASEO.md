@@ -50,8 +50,8 @@ from Paseo 0.10.1: the plugin SDK, `@getpaseo/client`, `@getpaseo/protocol`, the
 
 - **Paseo's orchestration.** Its tools injected into agents (`create_agent`, `send_agent_prompt`, …), its handoff,
   committee and advisor skills, schedules, heartbeats, Hub workflows. SLP organizes work on Paseo's mechanism, not
-  on its orchestration (CONCEPT-V2 §2.1). Agents Seatworks starts get neither Paseo's tools nor their own agent's native
-  subagents.
+  on its orchestration (CONCEPT-V2 §2.1). Agents Seatworks starts get neither Paseo's tools, nor its command line, nor
+  their own agent's native subagents (`HARNESS.md`, Paseo's own tools and command line).
 - **Paseo's parent label.** Archiving an agent archives every child that carries `paseo.parent-agent-id` pointing
   at it. In SLP a Lead replaced or released does not end its Peers, so Seatworks keeps parentage in its own log.
 - **Provider plugins and ACP.** Seatworks is not an agent provider.
@@ -174,8 +174,9 @@ On 2 October 2026, Paseo 0.10.2, a daemon run for it with a home of its own (`HA
 ## To check before building on it
 
 - Per-agent control of Paseo's tools: today it is per provider ID (`paseoTools` on a custom provider) and injection
-  is off by default. If the Human turns it on, Seatworks needs provider entries of its own, the one reason to write Paseo's
-  config.
+  is off by default. With it on, a team's Claude and Codex agents have them switched off in their harness
+  (`HARNESS.md`); an Oh My Pi agent keeps them until the Human gives its profile a provider with
+  `paseoTools.enabled: false`. Seatworks writes nothing in Paseo's config.
 - Branch names and locking through `workspaces.create`, against what the workspace port needs.
 - That the daemon's `PATH` finds Paseo's command line, so the update check runs; when it does not, the surface says
   so and gives the command to run by hand.

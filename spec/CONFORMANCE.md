@@ -149,6 +149,7 @@ What the Human's surface shows as stuck: read from the log and the outbox, chang
 | A project where nothing is stuck                         | Nothing shown                                                       |
 | A create Paseo refuses, such as a profile with no model            | The seat is gone with Paseo's reason, which its owner hears |
 | An agent reopened after a daemon restart                           | Its whole seat's environment again, the git shim first on its PATH |
+| Any agent, when made and each time its session opens               | Its process is given no Paseo daemon to find: a host that never resolves, and an empty home; a Claude agent is also denied, by name, every tool of the server Paseo adds and Paseo's command line |
 | The plugin's start fails once, then is asked again                 | It starts                                       |
 | One project's log cannot be read at start                          | Every other project opens and works             |
 | A permission asked while the plugin was down, then its hook too    | On the record once the plugin starts, and once only |
@@ -159,7 +160,7 @@ What the Human's surface shows as stuck: read from the log and the outbox, chang
 | Case                                                        | Expect                                                     |
 | ----------------------------------------------------------- | ---------------------------------------------------------- |
 | A Pi agent is seated                                        | Seatworks' home, with the Human's login linked; the extension gives it the team's tools; Paseo is handed no server and no tool to approve, which it refuses for Pi |
-| A Codex agent is seated, in a role that does not write and in one that does | Its mode and options ask nobody and switch its own agents off, with the rest in a config of Seatworks' own home, which links the Human's login and not their config; it takes the team's server from Paseo; only the writer's options name the repository's git directory as a root to write |
+| A Codex agent is seated, in a role that does not write and in one that does | Its mode and options ask nobody and switch its own agents off, with the rest in a config of Seatworks' own home, which links the Human's login and not their config, switches off the server Paseo may add for its own tools, and holds a rule that forbids Paseo's command line; it takes the team's server from Paseo; only the writer's options name the repository's git directory as a root to write |
 | An Oh My Pi agent is seated                                 | Paseo is handed no server, no tool to approve and no option; Seatworks' home links the Human's logins, denies the tools that start agents, waits for its servers before a turn, and holds the team's server, which started as that file says lists the agent's tools |
 | The Human keeps `rules/slp/all.md` and `rules/slp/lead.md` under the state root | A Lead seated after gets both after its role's prompt; a Supervisor only `all.md` |
 | A rules file edited after one agent was made                | The next agent seated gets the edit                        |

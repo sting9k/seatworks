@@ -64,7 +64,7 @@ import { pin, pinnedDir, templateOf } from "../profile/pinned.ts";
 import { listPresets } from "../profile/presets.ts";
 import { listProfiles, type Listed as ListedProfile, removeProfile } from "../profile/profiles.ts";
 import { Dispatcher } from "./dispatcher.ts";
-import { type Wiring, branchesOf, handlersFor, scratchFor, seatEnv, withShim } from "./effects.ts";
+import { type Wiring, branchesOf, handlersFor, scratchFor, seatEnv, agentEnv } from "./effects.ts";
 import { type Kept, leftoverId, leftoversOf, projectLeftover, refOf } from "./leftovers.ts";
 import { Project, type Submitted } from "./project.ts";
 import { Reflex } from "./reflex.ts";
@@ -786,7 +786,7 @@ export class Plugin {
     const role = actor ? runtime.wiring.bundle.profile.roles.get(actor.role) : undefined;
     if (!actor || !scope || !role) return null;
     const { env } = seatEnv(runtime.wiring, actor.id, scope, role.writes);
-    return { ...withShim(runtime.wiring, env), ...this.harness(provider)?.env };
+    return { ...agentEnv(runtime.wiring, env), ...this.harness(provider)?.env };
   }
 
   /** Resolves once no project has an effect in flight; for tests and a clean unload. */

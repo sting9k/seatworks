@@ -43,6 +43,33 @@ home's files, `{git}` (the repository's git directory) in the settings.
 Rules that match a command's text (Claude's `Bash(git push *)`, Codex's exec policy, Oh My Pi's `bash.patterns`)
 are passed by `git -C`, an alias or a full path; Seatworks does not rely on them.
 
+## Paseo's own tools and command line
+
+A team's agent is left none of Paseo's own. Its tools list, read and prompt every agent on the daemon, and so does
+its command line (`paseo ls`, `logs`, `send`), which asks a local daemon for no credential: either takes an agent
+past the record, where a word to a Peer reaches its Lead, and past the watch, which the watched never learn of
+(`PASEO.md`, What Seatworks does not take). Paseo gives its tools when the Human has `daemon.mcp.injectIntoAgents`
+on, by provider and never by agent, and a create has no field for them, so each harness switches them off where it
+can:
+
+| Agent       | Paseo's tools                                                                              | Its command line                                 |
+| ----------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------ |
+| Claude Code | `permissions.deny` names `mcp__paseo`: every tool of the server Paseo adds leaves its context | Denied as `Bash(paseo *)`, beside the environment |
+| Codex       | The shared `config.toml` holds a server named `paseo`, switched off; the entry Paseo adds merges into it and stays off, and with none added the entry loads as it is | Forbidden by a rule in the home's `rules/`, beside the environment |
+| Pi          | None reach it: Paseo hands them as an MCP server, and Seatworks' home loads no adapter for one | The environment                                  |
+| Oh My Pi    | Not switched off: Paseo registers them with the session itself, and nothing in its home refuses a tool by where it came from | The environment                                  |
+
+The environment is the guard that holds however the command is called. Every agent's own process is given
+`PASEO_HOST` naming a host that never resolves and an empty `PASEO_HOME`, when it is made and each time its session
+opens, so Paseo's command line finds no daemon and its error names the host, which says why. With both variables set
+its error tells the reader to pass `--home` or `--host`, which is why the home is left empty. The two rules that
+match the command's text only refuse the usual form sooner, with a reason.
+
+Read against Paseo 0.10.2 as installed, Claude Code's own documentation for 2.1.280 and Codex 0.154.0. Paseo's
+command line was run against a host that does not resolve; Codex's `mcp list` and `execpolicy check` were run on the
+files as the harness writes them, alone and under the servers as Paseo hands them; no provider of Paseo's reads
+either variable. No agent was started for any of it.
+
 ## Outside tool servers
 
 A role may be given an MCP server that is not the team's (`TEMPLATE.md`). It is handed to Paseo beside the team's own,
@@ -172,3 +199,5 @@ Peer on Claude Code under the root.
   server for the next agent, as Pi's `defaultProjectTrust` rules out.
 - Whether Paseo's fixed `settingSources` let a project's `.claude/settings.json` add hooks or servers to a Claude
   agent, and whether `extraArgs` can narrow them.
+- On a live Paseo with `daemon.mcp.injectIntoAgents` on: that a Claude, a Codex and a Pi agent of a team are shown
+  none of Paseo's tools, and what an Oh My Pi agent is shown, which Seatworks does not switch off.

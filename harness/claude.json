@@ -1,10 +1,22 @@
 {
   "always": {
     "modeId": "bypassPermissions",
-    "options": { "settings": { "permissions": { "deny": ["Agent", "Workflow", "AskUserQuestion"] } } }
+    "options": {
+      "settings": {
+        "permissions": {
+          "deny": ["Agent", "Workflow", "AskUserQuestion", "mcp__paseo", "Bash(paseo *)"]
+        }
+      }
+    }
   },
   "writes": {
-    "options": { "sandbox": { "enabled": true, "failIfUnavailable": true, "allowUnsandboxedCommands": false } }
+    "options": {
+      "sandbox": {
+        "enabled": true,
+        "failIfUnavailable": true,
+        "allowUnsandboxedCommands": false
+      }
+    }
   },
   "reads": {}
 }
