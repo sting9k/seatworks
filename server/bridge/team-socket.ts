@@ -127,6 +127,10 @@ export class TeamSocket {
           project.reached(actor);
           const shown = toolsFor(new Set([...tools, ...Object.keys(READS)]), project.report);
           write({ type: "welcome", tools: shown satisfies ToolSpec[] });
+        } else if (message.type === "call" && !who) {
+          // A line that was refused, or never said hello, is answered too: a call left waiting looks like a tool that hangs.
+          const text = "This line has not said hello as a seated agent: nothing was done.";
+          write({ type: "result", id: message.id, ok: false, text });
         } else if (message.type === "call" && who) {
           const id = message.id;
           const call = typeof message.call === "string" && message.call.length <= 100 ? message.call : null;

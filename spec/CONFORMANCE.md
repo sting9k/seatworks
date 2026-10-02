@@ -186,6 +186,7 @@ A call as an agent's tool server sends it, the answer read back.
 | A tool server that says hello for a project the plugin cannot open | Refused, saying so, with the reason in Paseo's log; every other agent's tools go on working |
 | A tool server started before the plugin listens             | It waits, and has its tools once the plugin is there       |
 | A tool server the plugin refuses                            | Not tried again: the refusal is the plugin's answer        |
+| A call sent on a line the plugin refused                    | Answered, in words, that nothing was done; never left waiting |
 | A call made while the plugin is away; then once it is back  | Answered in words that the plugin is not answering and nothing was recorded; then carried |
 
 ## Workspace and evidence

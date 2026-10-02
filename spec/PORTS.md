@@ -249,6 +249,8 @@ The line between the server and the bridge fails in words, never in silence:
 - A call whose answer is lost with the connection is sent again under its id, and taken once.
 - A server's first hello is kept on the record (`tools_reached`). An agent that ends a turn with none kept is shown
   to the Human as stuck: an agent with no tools looks like one that is thinking.
+- A call on a line that was refused, or that never said hello, is answered that nothing was done: one left unanswered
+  would look to its agent like a tool that hangs.
 - Nothing thrown while a server is answered leaves the socket: the server is refused, the reason goes to Paseo's
   log, and every other agent's tools go on working.
 

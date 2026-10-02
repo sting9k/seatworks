@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { test } from "node:test";
 import { Line } from "../../bin/team-line.ts";
 import { Keys } from "../../server/core/keys.ts";
+import { agentTools } from "./agent-tools.ts";
 import { TeamSocket } from "../../server/bridge/team-socket.ts";
 import type { Command } from "../../shared/contracts/commands.ts";
 import { Project } from "../../server/bridge/project.ts";
@@ -73,34 +74,50 @@ test("an agent's tool server lists its role's tools and carries a call to the ke
   }
 });
 
-test("a tool server with a key that is not its agent's is refused", async () => {
-  const { ledger, peer, lead } = team();
-  const root = mkdtempSync(join(tmpdir(), "sw-mcp-"));
-  const keys = new Keys(join(root, "secret"));
-  const port = {
-    view: ledger.state,
-    submit: () => Promise.reject(new Error("never")),
-    report: ledger.profile.report,
-    roleTools: () => new Set(["status"]),
-    roleGone: () => null,
-    reached: () => undefined,
-    read: () => Promise.resolve(""),
-  };
-  const socket = new TeamSocket(join(root, "team.sock"), keys, () => port);
-  await socket.listen();
-  const server = mcp(join(root, "team.sock"), {
-    SEATWORKS_PROJECT: "p",
-    SEATWORKS_ACTOR: lead,
-    SEATWORKS_KEY: keys.keyOf("p", peer),
-  });
-  try {
-    const init = await server.initialize();
-    assert.ok(init.error !== undefined || init.result === undefined, "no tools for a borrowed key");
-  } finally {
-    server.stop();
-    await socket.close();
-  }
-});
+test(
+  "a tool server with a key that is not its agent's is refused, and a call on its line is answered so",
+  { timeout: 10_000 },
+  async () => {
+    const { ledger, peer, lead } = team();
+    const root = mkdtempSync(join(tmpdir(), "sw-mcp-"));
+    const keys = new Keys(join(root, "secret"));
+    const port = {
+      view: ledger.state,
+      submit: () => Promise.reject(new Error("never")),
+      report: ledger.profile.report,
+      roleTools: () => new Set(["status"]),
+      roleGone: () => null,
+      reached: () => undefined,
+      read: () => Promise.resolve(""),
+    };
+    const socket = new TeamSocket(join(root, "team.sock"), keys, () => port);
+    await socket.listen();
+    const server = mcp(join(root, "team.sock"), {
+      SEATWORKS_PROJECT: "p",
+      SEATWORKS_ACTOR: lead,
+      SEATWORKS_KEY: keys.keyOf("p", peer),
+    });
+    try {
+      const init = await server.initialize();
+      assert.ok(init.error !== undefined || init.result === undefined, "no tools for a borrowed key");
+      const line = await agentTools(join(root, "team.sock"), {
+        SEATWORKS_PROJECT: "p",
+        SEATWORKS_ACTOR: lead,
+        SEATWORKS_KEY: keys.keyOf("p", peer),
+      });
+      assert.equal(line.welcome.type, "refused");
+      assert.deepEqual(
+        await line.call("status", {}),
+        { type: "result", id: 1, ok: false, text: "This line has not said hello as a seated agent: nothing was done." },
+        "a call on a line the plugin refused is answered in words, not left waiting",
+      );
+      line.close();
+    } finally {
+      server.stop();
+      await socket.close();
+    }
+  },
+);
 
 test("a call whose answer is lost with the connection is sent again and recorded once", async () => {
   const root = mkdtempSync(join(tmpdir(), "sw-line-"));
