@@ -6,6 +6,7 @@ import {
   type Profile,
   ProfileFileSchema,
   resolveProfile,
+  type Route,
   type Server,
   skillDescription,
 } from "../../shared/contracts/profile.ts";
@@ -27,6 +28,8 @@ export type Bundle = {
   readonly environment: readonly string[];
   /** The files the profile names for its questions and its moments, each within `dir`; none when it names none. */
   readonly asks: { readonly reflex: string | null; readonly watch: string | null };
+  /** The model those are asked of, by each route it is served at; none when the profile names none. */
+  readonly classifier: Readonly<Record<string, Route>> | null;
   /** The note an attached project's instruction file carries, with `{branches}` and `{base}` to fill. */
   readonly project: {
     readonly file: string;
@@ -86,6 +89,7 @@ export function loadBundle(dir: string): Bundle {
     skills,
     environment,
     asks: { reflex: file.reflex ?? null, watch: file.watch ?? null },
+    classifier: file.classifier ?? null,
     project,
   };
 }

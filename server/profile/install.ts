@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { variablesNamed } from "../../shared/contracts/profile.ts";
+import { hostOf, variablesNamed } from "../../shared/contracts/profile.ts";
 import type { TemplateOffer, TemplateSource } from "../../shared/contracts/rpc.ts";
 import { installName, packed, unpacked } from "../../shared/contracts/template.ts";
 import { loadReflex } from "../satellites/reflex/config.ts";
@@ -78,6 +78,10 @@ function staged({ pluginDir, stateRoot, env }: Where, from: TemplateSource, has:
       variables: variablesNamed([...servers.values()]).map((variable) => ({
         name: variable,
         there: (env[variable] ?? "") !== "",
+      })),
+      classifier: Object.values(bundle.classifier ?? {}).map((route) => ({
+        host: hostOf(route.endpoint) ?? route.endpoint,
+        model: route.model,
       })),
     },
   };

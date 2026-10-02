@@ -108,6 +108,8 @@ const TemplateOfferSchema = z.object({
   servers: z.array(z.object({ name: z.string(), runs: z.string() })),
   /** Each environment variable its servers read, and whether this machine has it set. */
   variables: z.array(z.object({ name: z.string(), there: z.boolean() })),
+  /** Each host its classifier is served at, with the model asked there; none when it names no classifier. */
+  classifier: z.array(z.object({ host: z.string(), model: z.string() })),
 });
 export type TemplateOffer = z.infer<typeof TemplateOfferSchema>;
 

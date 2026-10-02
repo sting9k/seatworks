@@ -17,7 +17,7 @@ import { KeyedQueue } from "../core/keyed-queue.ts";
 import { daemonLog } from "../core/logger.ts";
 import type { TurnItem } from "../satellites/agent-host/items.ts";
 import { type ReflexConfig, wordingOf } from "../satellites/reflex/config.ts";
-import type { Answer, Jev } from "../satellites/reflex/jev.ts";
+import type { Answer, Asker } from "../satellites/reflex/classifier.ts";
 
 type Observation = Extract<CommandBody, { type: "record_observation" }>;
 /** An item with up to two either side, as an observation carries it. */
@@ -30,17 +30,20 @@ type Subject = Extract<Event, { type: Exclude<AskedOn, "turn_ended"> }>;
 const isSubject = (e: Event): e is Subject =>
   e.type !== "turn_ended" && (ASKED_ON as readonly string[]).includes(e.type);
 
+/** What an alarm ends with: nothing waits on the reflex, so the team is never held by it. */
+export const WORKS_ON = "The team works on, less watched.";
+
 /** Asks queued per project past this are left unread, so a slow host never grows a backlog without bound. */
 const MAX_QUEUED = 100;
 /** Failed calls remembered per agent for the loop count; the oldest go first. */
 const MAX_SIGNATURES = 50;
 
-/** The reflex and the watch's eye: they ask Jev one condition at a time and record the answer; nothing decides. */
+/** The reflex and the watch's eye: they ask a classifier one condition at a time and record the answer; nothing decides. */
 export class Reflex {
   private readonly config: ReflexConfig;
-  private readonly jev: () => Jev | null;
+  private readonly asker: () => Asker;
   private readonly submit: (project: string, body: Observation) => Promise<void>;
-  private readonly alarm: (text: string | null) => void;
+  private readonly alarm: (project: string, text: string | null) => void;
   private readonly code: Code;
   /** The roles some moment watches: only their work is gathered for a sweep. */
   private readonly watched: ReadonlySet<string>;
@@ -61,15 +64,15 @@ export class Reflex {
 
   constructor(
     config: ReflexConfig,
-    jev: () => Jev | null,
+    asker: () => Asker,
     submit: (project: string, body: Observation) => Promise<void>,
-    alarm: (text: string | null) => void,
+    alarm: (project: string, text: string | null) => void,
     code: Code,
   ) {
     this.code = code;
     this.config = config;
     this.watched = new Set([...config.moments.values()].flatMap((m) => m.watches ?? []));
-    this.jev = jev;
+    this.asker = asker;
     this.submit = submit;
     this.alarm = alarm;
   }
@@ -230,6 +233,11 @@ export class Reflex {
     });
   }
 
+  /** Resolves once everything asked of a project so far is answered or let go. */
+  settled(project: string): Promise<void> {
+    return this.queue.run(project, () => undefined);
+  }
+
   /** Lets go of what the reflex keeps for a project that left memory. */
   forget(project: string): void {
     const mine = (key: string) => key.startsWith(`${project}:`);
@@ -277,19 +285,24 @@ export class Reflex {
     shown: Shown | null = null,
     ctx: Context | null = null,
   ): Promise<void> {
-    const jev = this.jev();
-    if (!jev) {
-      this.alarm(
-        "The reflex has no key: set Jev's route and key in the plugin's settings. The team works on, less watched.",
-      );
+    const asker = this.asker();
+    if (!asker.ok) {
+      // With nothing said it is a choice, the template's or the Human's: no model is asked, and nobody is told.
+      if (asker.says !== null) this.alarm(project, asker.says);
       return;
     }
-    const asking = await jev.ask(values, questions);
+    const asking = await asker.classifier.ask(values, questions);
     if (!asking.ok) {
-      if (asking.why === "refused") this.alarm(`Jev refused the key: ${asking.says}. The team works on, less watched.`);
+      const asked = Object.keys(questions).join(", ");
+      if (asking.why === "refused") this.alarm(project, `The classifier refused the key: ${asking.says}. ${WORKS_ON}`);
+      if (asking.why === "broken")
+        this.alarm(
+          project,
+          `The classifier could not be asked ${asked}: ${asking.says}. The template's words for it are at fault.`,
+        );
       return;
     }
-    this.alarm(null);
+    this.alarm(project, null);
     for (const [name, spec] of Object.entries(questions)) {
       const a = asking.answers[name];
       if (!a) continue;
@@ -299,7 +312,7 @@ export class Reflex {
     }
   }
 
-  /** A test that mints an API: names its added lines give the code that nothing settled; only then is Jev asked. */
+  /** A test that mints an API: names its added lines give the code that nothing settled; only then is a model asked. */
   private mints(
     project: string,
     actor: string,

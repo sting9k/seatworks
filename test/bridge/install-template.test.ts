@@ -57,6 +57,14 @@ test("a shared template is read before it is installed: what it would bring is l
   assert.ok(read.offer.agentProfiles.some((profile) => profile.name === "slp-lead" && profile.there));
   assert.deepEqual(read.offer.servers, []);
   assert.deepEqual(read.offer.variables, []);
+  assert.deepEqual(
+    read.offer.classifier,
+    [
+      { host: "openrouter.ai", model: "typesafe/jev-1.13" },
+      { host: "api.typesafe.ai", model: "jev-1.13.0" },
+    ],
+    "each host its questions would be sent to, and the model asked there",
+  );
   assert.deepEqual(installed(root), []);
   assert.deepEqual(leftAside(root), []);
   assert.deepEqual(plugin.profiles(), []);

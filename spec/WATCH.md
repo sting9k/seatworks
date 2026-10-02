@@ -22,10 +22,11 @@ The owner gave this design to the builder. These choices settle it, each with it
    template's to say and never the plugin's: SLP's Supervisor is told to with its first lane. With none seated a
    candidate stays in the record and reaches nobody. The Supervisor may seat more, each over the lanes it names, for
    work where many answers can be right and the design will be tested as it is built.
-3. **Jev is required; the Watcher adds no new reader.** The reflex is part of Seatworks, and installing it with its key is
-   the Human's consent to send agents' words to Jev's host, through OpenRouter with data collection denied unless
-   they choose TypeSafe's own API (`REFLEX.md`). The Watcher runs on a provider the team already uses. Before any text
-   leaves, what looks like a secret is masked.
+3. **The classifier is the template's, and the Watcher adds no new reader.** A template names the model its moments
+   are asked of, SLP's Jev, and a Human's key for its host is their consent to send agents' words there (`REFLEX.md`).
+   A template that names none, or a Human who switches it off, is still watched: by what code counts and by the
+   sweeps (With parts missing). The Watcher runs on a provider the team already uses. Before any text leaves, what
+   looks like a secret is masked.
 4. **Driven by the work, sweeps too.** A turn's end starts a look. A sweep is not a clock and not a shadow reading
    the stream: each Watcher gathers the work of the agents it watches, and once it passes `sweep.everyChars` it is
    woken with a digest of it. A busy lane is swept often, an idle project never, and the Watcher, a model, runs only
@@ -229,10 +230,20 @@ aloud is a matter for the surface.
 | Present                    | The watch                                                              |
 | -------------------------- | ---------------------------------------------------------------------- |
 | All                        | As above                                                               |
-| Jev's host unreachable, or its key missing | Facts and sweeps go to the Watcher, and a standing alarm tells the Human |
+| The classifier's host unreachable, or its key missing or for another host | Facts and sweeps go to the Watcher, and a standing alarm on the project's page tells the Human |
+| No classifier in the template, or switched off by the Human | The same, and nothing is said: it is a choice |
 | No Watcher role            | Only the reflex's `tell` answers, the facts that need no judging, and the alarms reach the owners |
 
 Every other part of Seatworks works the same in each case.
+
+**Without a classifier** the cascade keeps its first and its last tier. Code still counts the five facts and tells
+them as before: a loop a third time is a candidate and a fifth an attention, silence, a finding left waiting, spend
+past an appetite, a test's line changed. The Watcher still reads every watched agent's work, in the sweeps, and
+looks there for each moment its prompt names, since no candidate names one for it. What is lost is what only a
+reading of meaning gives at the moment it happens: the questions asked of a brief, a plan's change, a kept finding
+and a report; the `judgement` evidence on a hand-back; whether a red check failed on the environment beyond the
+known patterns; and the notice of a moment within the turn it showed in, which now waits for the next sweep. A
+template made to run without one sets `sweep.everyChars` lower, so a sweep comes sooner.
 
 ## What V1 did that Seatworks keeps and drops
 

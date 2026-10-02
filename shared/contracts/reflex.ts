@@ -93,17 +93,6 @@ const QuestionSchema = z
   .loose();
 export type QuestionSpec = z.infer<typeof QuestionSchema>;
 
-const RouteSchema = z.object({
-  endpoint: z.url(),
-  model: z.string(),
-  budget: z.number().int().positive(),
-  body: z.record(z.string(), z.unknown()).optional(),
-});
-export type Route = z.infer<typeof RouteSchema>;
-
-/** The routes the reflex asks by, the plugin's own (`harness/jev.json`): a profile never says where the key is sent. */
-export const RoutesFileSchema = z.object({ routes: z.record(z.string(), RouteSchema) }).strict();
-
 /** One named under `active` that the file does not write would never be asked, with nobody told. */
 const written =
   (kind: "questions" | "moments") =>

@@ -210,13 +210,15 @@ Answers typed questions about a piece of text, each with a probability. What it 
 go, is in `REFLEX.md`.
 
 ```text
-ask(state, questions, model) -> Result<{ model, answers, tokens }>
-  question: noul | choice(labels) | score(rubric), each with instructions and a description per outcome
-  answer: p(yes) | label, confidence, p per label | score, confidence, p per level
+ask(state, questions) -> Result<{ model, answers, tokens }>
+  question: noul | choice(labels), each with instructions and a description per outcome
+  answer: p(yes) | label, confidence, p per label
 ```
 
 - Every question is answered as asked, or the call fails.
-- Where it is sent is data: endpoint, pinned model, and a body sent with every request.
+- Where it is sent is the profile's data, a route of its `classifier`: endpoint, pinned model, and a body sent with
+  every request. A profile with none has nothing behind this port, and nothing is asked.
+- A `score` on a rubric, which the classifier SLP names also answers, is not built: no question asks one.
 - Never asked from a hook that can refuse, and nothing waits on it.
 
 ## Code index

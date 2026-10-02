@@ -4,7 +4,7 @@ import { alwaysOnWords, notesOf } from "../editor/template/checks.ts";
 import { readTemplate } from "../editor/template/read-template.ts";
 import { loadBundle } from "../server/profile/bundle.ts";
 import { loadReflex } from "../server/satellites/reflex/config.ts";
-import { variablesNamed } from "../shared/contracts/profile.ts";
+import { hostOf, variablesNamed } from "../shared/contracts/profile.ts";
 import { installName, packed } from "../shared/contracts/template.ts";
 import { filesUnder } from "../server/profile/template-files.ts";
 
@@ -48,6 +48,10 @@ say(
 );
 say(`  Paseo agent profiles it needs: ${agentProfiles.join(", ") || "none named"}`);
 if (variables.length > 0) say(`  variables its servers read: ${variables.join(", ")}`);
+const served = Object.values(template.file.classifier ?? {}).map(
+  (route) => `${hostOf(route.endpoint)} (${route.model})`,
+);
+if (served.length > 0) say(`  a classifier its questions are asked of, at: ${served.join(", ")}`);
 const notes = notesOf(template, template);
 say(notes.length === 0 ? "No note." : `${notes.length} note${notes.length === 1 ? "" : "s"}, which stop nothing:`);
 for (const note of notes) say(`  ${note.node}: ${note.says}`);

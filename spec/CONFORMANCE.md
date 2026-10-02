@@ -249,7 +249,7 @@ A call as an agent's tool server sends it, the answer read back.
 | A state past the budget                                     | Not cut to fit; the step says `too large`                  |
 | An answer with one question missing                         | The call fails; nothing is recorded as answered            |
 | 400 `max_tokens_exceeded`                                   | Not retried; recorded `too large`                          |
-| 401 from Jev's host                                         | Not retried; an alarm to the Human; nothing else stops     |
+| 401 from the classifier's host                              | Not retried; an alarm to the Human; nothing else stops     |
 | 429 with a wait named                                       | Asked once more after that wait, then unread               |
 | Twenty questions reading the same fields of one item        | One call                                                   |
 | A question past `tell` whose wording changed since its look back | A candidate for the Watcher, not an attention          |
@@ -277,7 +277,8 @@ A call as an agent's tool server sends it, the answer read back.
 | An agent reads `status` or `record` of the root, or of the scope that watches | The root's show it no scope that watches, and that scope reads as not open and with nothing on its record; its own agent and the owner above it read both |
 | The root's owner reads the root's record                    | It ends with the five signals and, for each question and moment, its answers and how they fall, those past its threshold, the candidates attended and passed, and its attentions with what came of each; any other reader of the root's record is shown none of it |
 | A restart with a candidate neither attended nor passed      | Given to the Watcher again                                 |
-| Jev's host unreachable                                      | Facts and sweeps reach the Watcher; nothing else changes   |
+| The classifier's host unreachable                           | Facts and sweeps reach the Watcher; nothing else changes   |
+| No classifier by choice: none in the template, or switched off | Nothing is asked and nothing is said; what code counts still reaches the owner above, a candidate and a sweep the one that watches |
 | No Watcher role                                             | Only `tell` answers, code moments and alarms reach the owners |
 | Three moments on one Peer in one turn                       | One numbered message to its Lead, after the Lead's turn    |
 | The Lead marks a moment noise for its Peer                  | That moment is not told again for that Peer and scope      |
@@ -372,7 +373,11 @@ What the plugin reads of a profile that a template adds (`TEMPLATE.md`).
 | The check command on a template's directory that loads      | Says the name it installs under, its roles and the agent profiles it needs; its notes are printed and it still passes |
 | The check command on a directory that does not load         | Fails, saying why, and prints nothing else                          |
 | The pack command                                            | The one file a template is shared as, holding the directory's very files; nothing is written for a template that does not load |
-| A profile whose reflex file names a route of its own, or masks nothing | The reflex has no route but the plugin's, one for each the settings offer; what looks like a secret is still masked |
+| A profile whose reflex file masks nothing of its own                  | What looks like a secret is still masked: the patterns are the plugin's |
+| A template's classifier, on a machine whose key is for one of its hosts, then for the other, then for neither, then with no key | A brief is asked about at that host alone, with that route's model and body and the Human's key; for neither host or with no key nothing leaves, and the project's page says which hosts the template is served at |
+| The same, switched off on the machine; and a template that names no classifier | Nothing leaves and nothing is said, whatever key the machine has |
+| A classifier served over plain http anywhere but the machine itself, at a host not written plainly, or by no route | The profile does not load, saying why |
+| A template read before it is installed                               | Each host its classifier is served at is listed with the model asked there |
 | A plugin just installed, with nothing of the Human's yet     | The template that comes with it is listed as not installed; no project is attached, the reason saying to install one; installed from the plugin's own, it is listed as installed as it comes and a project attaches with it |
 | An installed copy changed since, or a release that brings another | Said to differ, and left as it is until it is installed again, which the offer says replaces it |
 | A name that is no template of the plugin's, such as a path out of them | Read from nowhere, saying so; nothing unpacked is left     |

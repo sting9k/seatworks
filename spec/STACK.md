@@ -1,7 +1,7 @@
 # Stack
 
 The language each part of Seatworks is written in, chosen for what that part does best, under one limit: a user installs
-nothing but Paseo, Jev's key and git. Every part is either bundled by Paseo itself or already on the machine. Read on
+nothing but Paseo, git and, for a template that names a classifier, a key for it. Every part is either bundled by Paseo itself or already on the machine. Read on
 29 September 2026 against Paseo 0.10.1's plugin reference and source.
 
 ## What Paseo decides for us
@@ -33,7 +33,7 @@ nothing but Paseo, Jev's key and git. Every part is either bundled by Paseo itse
 | Prompts and skills                | Markdown                            | What agents read                                                           |
 | Patterns: environment failures, minted names | Regular expressions, as profile data | Code first, before any model is asked                             |
 | Patterns: what looks like a secret | Regular expressions in `shared/contracts/secrets.ts` | The plugin's own, so every profile masks the same               |
-| The reflex's routes               | JSON in `harness/jev.json`          | The plugin's own: where the Human's key is sent is never a profile's to say |
+| The classifier and its routes     | YAML, in the profile                | The template's: which model is asked and where it is served. The Human's key is for one host, kept in the plugin's settings |
 | Codex's shared settings, OpenCode's inline config  | TOML and JSON, shipped as they are             | Each agent's own format, written once, not generated        |
 | Evidence steps                    | The project's own commands          | The project decides how it is checked                                      |
 | Template editor                   | TypeScript and React in `editor/`, on React Flow, laid out by dagre, Markdown shown by markdown-it, built by Vite | A web page of its own, outside what Paseo bundles (`EDITOR.md`). It imports `shared/contracts`, so it reads a profile with the schemas the plugin loads it with |

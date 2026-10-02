@@ -36,6 +36,8 @@ import type {
   TemplateOffer,
   TemplateSource,
 } from "../../shared/contracts/rpc.ts";
+import { hostOf } from "../../shared/contracts/profile.ts";
+import type { ReflexSettings } from "../../shared/contracts/settings.ts";
 import { humanView } from "../../shared/views/human.ts";
 import { statusText } from "../../shared/views/status.ts";
 import { stuckOf } from "../../shared/views/stuck.ts";
@@ -52,9 +54,8 @@ import { EvidenceRunner } from "../satellites/evidence/runner.ts";
 import { MachineHolds } from "../satellites/machine/holds.ts";
 import { ProjectStore } from "../satellites/store/project-store.ts";
 import { turnOf } from "../satellites/agent-host/items.ts";
-import type { Route } from "../../shared/contracts/reflex.ts";
-import { loadReflex, loadRoutes } from "../satellites/reflex/config.ts";
-import { Jev } from "../satellites/reflex/jev.ts";
+import { type Asker, Classifier } from "../satellites/reflex/classifier.ts";
+import { loadReflex } from "../satellites/reflex/config.ts";
 import { git } from "../satellites/workspace/git.ts";
 import { Workspace } from "../satellites/workspace/workspace.ts";
 import { agentsByProfile, match, type Matching, matchingFile } from "../profile/agents.ts";
@@ -67,7 +68,7 @@ import { Dispatcher } from "./dispatcher.ts";
 import { type Wiring, branchesOf, handlersFor, scratchFor, seatEnv, agentEnv } from "./effects.ts";
 import { type Kept, leftoverId, leftoversOf, projectLeftover, refOf } from "./leftovers.ts";
 import { Project, type Submitted } from "./project.ts";
-import { Reflex } from "./reflex.ts";
+import { Reflex, WORKS_ON } from "./reflex.ts";
 import { type ProjectPort, TeamSocket } from "./team-socket.ts";
 
 export const PLUGIN_ID = "seatworks";
@@ -102,8 +103,6 @@ type Ready = {
   shimDir: string;
   socket: TeamSocket;
   socketPath: string;
-  /** Where the reflex asks, by the name the plugin's settings give each route. */
-  routes: Readonly<Record<string, Route>>;
 };
 
 /** A project's own file; one attached before a project kept its own copy of its template is attached again. */
@@ -141,8 +140,10 @@ export class Plugin {
   private readonly byHost = new Map<string, { project: string; actor: string }>();
   private readonly turns = new KeyedQueue<string>();
   private ready: Promise<Ready> | null = null;
-  private reflexKey: { route: string; key: string } = { route: "openrouter", key: "" };
-  private alarmText: string | null = null;
+  /** Nothing is asked until the Human's settings are read. */
+  private asks: ReflexSettings = { on: false, host: "", key: "" };
+  /** Per project, what its reflex cannot ask by and the Human did not choose so. */
+  private readonly alarms = new Map<string, string>();
   private readyNow: Ready | null = null;
   private disposed = false;
   private readonly upkeep: NodeJS.Timeout;
@@ -191,15 +192,15 @@ export class Plugin {
     return settled;
   }
 
-  /** Where the reflex asks Jev, from the plugin's settings; the key is kept here only, never logged. */
-  setReflex(route: string, key: string): void {
-    this.reflexKey = { route, key };
-    this.alarmText = null;
+  /** Whether a classifier is asked on this machine and the host its key is for; the key is kept here only, never logged. */
+  setReflex(asks: ReflexSettings): void {
+    this.asks = asks;
+    this.alarms.clear();
   }
 
-  /** A standing alarm for the Human, such as the reflex having no key; null when all is well. */
-  get alarm(): string | null {
-    return this.alarmText;
+  /** A standing alarm for the Human on one project, such as its classifier having no key; null when all is well. */
+  alarmOf(project: string): string | null {
+    return this.alarms.get(project) ?? null;
   }
 
   /** Paseo's API from a hook or a panel call; the first one starts everything that needs the plugin's own files. */
@@ -230,7 +231,7 @@ export class Plugin {
         : join(this.root, "team.sock");
     const socket = new TeamSocket(socketPath, this.keys, (id) => this.port(id));
     await socket.listen();
-    const ready: Ready = { dir, host, shimDir, socket, socketPath, routes: loadRoutes(dir) };
+    const ready: Ready = { dir, host, shimDir, socket, socketPath };
     this.readyNow = ready;
     const projects = join(this.root, "projects");
     for (const id of existsSync(projects) ? readdirSync(projects) : [])
@@ -246,7 +247,7 @@ export class Plugin {
 
   /** Takes the installed template's files for a project anew; agents seated from then on are made from them. */
   async syncTemplate(project: string): Promise<{ ok: true; says: string } | { ok: false; says: string }> {
-    const ready = await this.whenReady();
+    await this.whenReady();
     const dir = projectDir(this.root, project);
     if (!existsSync(join(dir, "project.json"))) return { ok: false, says: `no project ${project} is attached` };
     const kept = keptIn(dir, project);
@@ -255,7 +256,7 @@ export class Plugin {
     keep(dir, { ...kept, hash: pinned.hash });
     const runtime = this.runtimes.get(project);
     if (runtime) {
-      runtime.loaded = this.load(project, pinnedDir(dir, pinned.hash), ready);
+      runtime.loaded = this.load(project, pinnedDir(dir, pinned.hash));
       runtime.project.use(runtime.loaded.bundle.profile);
       await this.recordProfile(runtime);
     }
@@ -793,6 +794,7 @@ export class Plugin {
   async idle(): Promise<void> {
     for (let round = 0; round < 50; round++) {
       await new Promise((resolve) => setTimeout(resolve, 5));
+      for (const [id, r] of this.runtimes) await r.loaded.reflex?.settled(id);
       const busy = [...this.runtimes.values()].some((r) => r.dispatcher.busy);
       if (!busy) return;
       for (const r of this.runtimes.values()) await r.dispatcher.idle();
@@ -841,7 +843,7 @@ export class Plugin {
     if (existing) return existing;
     const dir = projectDir(this.root, id);
     const { repo, profile, hash } = keptIn(dir, id);
-    const loaded = this.load(id, pinnedDir(dir, hash), ready);
+    const loaded = this.load(id, pinnedDir(dir, hash));
     const store = new ProjectStore(join(dir, "ledger.db"));
     let project: Project;
     try {
@@ -916,11 +918,11 @@ export class Plugin {
   }
 
   /** A profile's files loaded for a project from its own copy of them. */
-  private load(id: string, dir: string, ready: Ready): Loaded {
+  private load(id: string, dir: string): Loaded {
     if (!existsSync(join(dir, "profile.yaml")))
       throw new Error(`project ${id} has lost its copy of its template at ${dir}: sync it on its page`);
     const bundle = loadBundle(dir);
-    return { bundle, reflex: this.reflexFor(bundle, ready.routes) };
+    return { bundle, reflex: this.reflexFor(bundle) };
   }
 
   /** Says on the record the hash of the files a project runs, when it is not the one the record has. */
@@ -930,26 +932,42 @@ export class Plugin {
     await this.submitAs(runtime, { kind: "bridge" }, { type: "record_profile", profileHash: hash });
   }
 
-  /** A profile's reflex, asked by the plugin's own route and key; none when the profile asks nothing. */
-  private reflexFor(bundle: Bundle, routes: Readonly<Record<string, Route>>): Reflex | null {
+  /** A profile's reflex, asked of the profile's own classifier with the Human's key; none when it asks nothing. */
+  private reflexFor(bundle: Bundle): Reflex | null {
     const config = loadReflex(bundle.dir, bundle.asks);
     if (!config) return null;
-    let jev: { for: string; client: Jev } | null = null;
+    const routes = Object.values(bundle.classifier ?? {});
+    let made: { for: string; classifier: Classifier } | null = null;
     return new Reflex(
       config,
-      () => {
-        const route = routes[this.reflexKey.route];
-        if (!route || this.reflexKey.key === "") return null;
-        const id = `${this.reflexKey.route}:${this.reflexKey.key}`;
-        if (jev?.for !== id) jev = { for: id, client: new Jev(route, this.reflexKey.key, config.mask) };
-        return jev.client;
+      (): Asker => {
+        const { on, host, key } = this.asks;
+        // No classifier in the template, or switched off on this machine: a choice, so nothing is said of it.
+        if (routes.length === 0 || !on) return { ok: false, says: null };
+        const served = `This project's template asks a classifier at ${routes.map((r) => hostOf(r.endpoint)).join(", ")}`;
+        const route = routes.find((r) => hostOf(r.endpoint) === host);
+        // A key goes to the host the Human gave it for and to no other, whatever a template names.
+        if (!route)
+          return {
+            ok: false,
+            says: `${served}, and the key in the plugin's settings is for ${host || "no host"}: name one of those hosts there, or switch the classifier off. ${WORKS_ON}`,
+          };
+        if (key === "")
+          return {
+            ok: false,
+            says: `${served}, and no key is set for ${host}: set one in the plugin's settings, or switch the classifier off there. ${WORKS_ON}`,
+          };
+        const id = `${route.endpoint}\n${key}`;
+        if (made?.for !== id) made = { for: id, classifier: new Classifier(route, key, config.mask) };
+        return { ok: true, classifier: made.classifier };
       },
       async (project, body) => {
         const runtime = this.runtimes.get(project);
         if (runtime) await this.submitAs(runtime, { kind: "bridge" }, body);
       },
-      (text) => {
-        this.alarmText = text;
+      (project, text) => {
+        if (text === null) this.alarms.delete(project);
+        else this.alarms.set(project, text);
       },
       {
         settled: (project, actor, names) => this.settledNames(project, actor, names),

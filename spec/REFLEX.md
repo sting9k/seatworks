@@ -1,9 +1,11 @@
 # Reflex
 
 A reflex is a fast, cheap, typed judgement: text and a few typed questions go in, and an answer to each comes back
-with a probability. Jev, TypeSafe's first System One model, is the first to back it. It lets the plugin look at every
-event as it happens, where V1 could afford to look only on a timer. **The reflex notices; the roles decide.** SLP's
-thinking stays with the agents, and the Supervisor is the one that judges.
+with a probability. What answers is a template's to name, its **classifier**: SLP names Jev, TypeSafe's first System
+One model. It lets the plugin look at every event as it happens, where V1 could afford to look only on a timer.
+**The reflex notices; the roles decide.** SLP's thinking stays with the agents, and the Supervisor is the one that
+judges. A template that names no classifier asks no model, and a Human may switch the asking off on their machine:
+the watch then goes on with what code counts and with the sweeps (`WATCH.md`, With parts missing).
 
 ## Jev, as read on 29 September 2026
 
@@ -55,9 +57,9 @@ to do: V1's patterns carried advice in a `next` field, and Seatworks does not.
 
 ## Every use in Seatworks
 
-Everything Seatworks asks Jev, in one place. Each row's questions live in the profile; the spec named owns the rest. Every
-row is asked from the first lane (Decided); those on the project's own rules start once it has its `rules.yaml`
-(The project's own rules).
+Everything SLP asks its classifier, in one place. Each row's questions live in the profile; the spec named owns the
+rest. Every row is asked from the first lane (Decided); those on the project's own rules start once it has its
+`rules.yaml` (The project's own rules).
 
 | Asked on                                   | What it asks                                                                 | Answer goes to                         | Spec          |
 | ------------------------------------------ | ---------------------------------------------------------------------------- | -------------------------------------- | ------------- |
@@ -210,25 +212,39 @@ One client for the project, behind the reflex port. A call goes through the same
 | Answer                          | What Seatworks does                                                                  |
 | ------------------------------- | ----------------------------------------------------------------------------- |
 | 400 `max_tokens_exceeded`       | Never retried: the same call fails the same way. Recorded `too large`         |
-| 400 or 422, anything else       | Never retried. The question is broken, which is the profile's fault: an alarm names it |
+| 400 or 422, anything else       | Never retried. The question is broken, which is the profile's fault: an alarm names the questions of that call |
 | 401, 403                        | Never retried. An alarm to the Human: the key is refused, and the reflex is idle until it is fixed |
 | 429, 5xx, a timeout, no answer  | Asked once more, after the time the answer names if it names one; then the event goes unread |
 
-An event that goes unread is recorded so. A hand-back's evidence step then says `not run`, so the Lead knows it is
-missing.
+An event that goes unread leaves nothing on the record: a hand-back then carries no `judgement` evidence, and the
+checks beside it are what the Lead has. Counting what went unread is not built.
 
-**Setup, and failing open.** Jev is a requirement of Seatworks: the plugin's setup asks for the route and the key, and
-installing Seatworks with them is the Human's consent to send the record's text and the agents' words to Jev's host, through
-OpenRouter with data collection denied unless they choose TypeSafe's own API. The key lives in the plugin's settings
-and is never written to a log. That consent is to the plugin's routes, so a profile words the questions and never
-says where they are sent: a template the Human installs cannot point their key or their record's text at a host of
-its own (`TEMPLATE.md`, What a template never chooses).
+**The classifier is the template's.** `profile.yaml` names it under `classifier`, by each route it is served at: the
+`endpoint`, the versioned `model` id as that route names it (`typesafe/jev-1.13` on OpenRouter, `jev-1.13.0` on
+TypeSafe's API), the `budget`, and a `body` sent with every request, such as OpenRouter's
+`provider: { data_collection: deny }`. Nothing of it is the plugin's: no code names a model or a host, and a template
+is free to name another model that answers typed questions with probabilities, or none. An endpoint is `https`, or
+`http` on the machine itself for a model run there, and its host is written plainly, with no user and no escape, so
+the host a person reads is the host a call goes to.
 
-The reflex is advisory: it decides nothing (I12), so it is a soft dependency and fails open. A key missing, refused
-or out of credit never stops an agent from being seated or a command from running. It raises a standing alarm on the
-Human's surface, and the watch goes on with what is left: code facts and known patterns, the Watcher's sweeps, the
-Supervisor. Blocking the team on its sensor would make the tool constrain the way SLP works; failing closed is for a
-control that decides, and nothing that asks Jev does.
+**The key is the Human's, for one host.** The plugin's settings hold a switch, the host the key is for and the key.
+A project's questions go by the first route of its template served at that host, and by no other: a template says
+where its classifier is served and never where a key goes, so one the Human installs cannot point their key or their
+record's text at a host of its own. Each host a template would ask is shown before it is installed (`TEMPLATE.md`).
+Setting the key is the Human's consent to send the record's text and the agents' words to that host; it lives in the
+plugin's settings and is never written to a log. What looks like a secret is masked first, by the plugin's own
+patterns.
+
+**Off is a choice, and says nothing.** A template with no classifier, or a machine where the switch is off, asks no
+model: no call leaves, nothing is recorded of one, and no alarm is raised, since nobody is owed a warning of what
+they chose. Until the Human's settings are read nothing is asked either.
+
+**Failing open.** The reflex is advisory: it decides nothing (I12), so it is a soft dependency. When a template names
+a classifier and the switch is on, a key missing, set for a host the template is not served at, refused or out of
+credit never stops an agent from being seated or a command from running. It raises a standing alarm on that project's
+page, and the watch goes on with what is left: code facts and known patterns, the sweeps of whoever watches, the
+owners. Blocking the team on its sensor would make the tool constrain the way a team works; failing closed is for a
+control that decides, and nothing that asks a classifier does.
 
 **Cost.** A busy day, five agents with forty turns each and thirty items a turn, is about 6,000 calls of some 600
 tokens: under four million tokens, about fifteen cents. Events and hand-backs add little beside it.
@@ -286,7 +302,9 @@ failing (I4).
 ## What the tools built on Jev taught
 
 Read on 29 September 2026: pi-warden and abide (guards for Pi, Claude Code, Codex and OpenCode, each with measured
-results), Foreman (a supervisor of coding workers), fast-jev-compaction, jev-harness, and two cookbooks.
+results), Foreman (a supervisor of coding workers), fast-jev-compaction, jev-harness, and two cookbooks. Read again
+on 3 October 2026, for whether a team should stand without its classifier: TypeSafe's own cookbooks (the cascade that
+puts a cheap verifier before a costly step, routing by confidence), Edward, jev-harness, abide and Foreman.
 
 | Lesson                                                                                           | From               | In Seatworks                               |
 | ------------------------------------------------------------------------------------------------ | ------------------ | ----------------------------------- |
@@ -303,6 +321,12 @@ results), Foreman (a supervisor of coding workers), fast-jev-compaction, jev-har
 | Coalesce a noisy stream; let lifecycle events through at once                                    | Foreman            | The watch's eye                     |
 | A red check on the environment is not a reason to rework code                                    | jev-harness        | A red check                         |
 | Failures never break the agent's session; misses are counted                                     | abide              | Running it                          |
+| What cannot be undone is held by plain code; the scorer is optional, advises only, and with it off the rules run alone | Edward | Off is a choice; I12        |
+| The deterministic tier always runs and is worth having alone; a degraded answer is said, never silent | jev-harness   | Failing open; `WATCH.md`, With parts missing |
+| A cheap verifier before a costly reader, and only what it is unsure of goes on                    | TypeSafe's cascade | `WATCH.md`, The cascade         |
+
+Foreman stops a run when its classifier cannot be asked, since there the classifier decides what a worker does next.
+Here nothing it answers decides, so the team goes on.
 
 **Considered, and not taken:**
 
@@ -322,11 +346,11 @@ ask(state, questions, model) -> Result<{ model, answers, tokens }>
 
 - Every question is answered as it was asked, or the call fails. An answer with one question missing is not what was
   asked (V1).
-- A route is the plugin's data, in `harness/jev.json` by the name its settings give it: `endpoint`, the versioned `model` id as that route names it (`typesafe/jev-1.13` on OpenRouter,
-  `jev-1.13.0` on TypeSafe's API), the `budget`, and a `body` sent with every request, such as OpenRouter's
-  `provider: { data_collection: deny }`. One adapter serves both routes, with no SDK; V1's `adapters/decisions.ts`
-  is its shape: all or nothing, retried only where retrying can help, with a time limit that cuts a stalled body too.
-- Another model that answers typed questions with probabilities can stand behind the same port.
+- A route is the template's data (Running it, The classifier is the template's). One adapter serves every route, with
+  no SDK: it sends the body TypeSafe's System One API takes, `{ model, state, questions }` with whatever the route's
+  `body` adds; V1's `adapters/decisions.ts` is its shape: all or nothing, retried only where retrying can help, with
+  a time limit that cuts a stalled body too.
+- Another model that answers that body with probabilities stands behind the same port by being named in a template.
 
 ## What V1 did that Seatworks drops
 

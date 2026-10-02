@@ -1,5 +1,6 @@
 # The SLP profile's reflex (spec/REFLEX.md): the questions asked of the record's events, and what code settles
-# before Jev is asked. Where Jev is reached and what is masked on the way are the plugin's, not a profile's. The watch's questions are in watch.yaml, the project's rules in its own rules.yaml.
+# before a model is asked. The model is the classifier profile.yaml names; what is masked on the way is the plugin's.
+# The watch's questions are in watch.yaml, the project's rules in its own rules.yaml.
 #
 # `on` names a kernel event (KERNEL §7); `turn_ended` questions are asked of the turn's last words.
 #

@@ -41,6 +41,34 @@ export function variablesNamed(servers: readonly Server[]): string[] {
   return [...new Set(texts.flatMap((text) => [...text.matchAll(VARIABLE)].map((found) => found[1]!)))].sort();
 }
 
+/** An endpoint's scheme and host, written plainly: no user, no escape, nothing a reader and a socket would part on. */
+const ENDPOINT = /^(https?):\/\/((?:[a-z0-9.-]+|\[[0-9a-f:]+\])(?::\d+)?)(?:[/?#]\S*)?$/i;
+const ON_THIS_MACHINE = /^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/;
+
+/** The host an endpoint is served at, which is what the Human gives a key for; null when it is not one to ask. */
+export function hostOf(endpoint: string): string | null {
+  const found = ENDPOINT.exec(endpoint);
+  if (!found) return null;
+  const host = found[2]!.toLowerCase();
+  return found[1]!.toLowerCase() === "https" || ON_THIS_MACHINE.test(host) ? host : null;
+}
+
+/** One place a profile's classifier is served: where a call goes, the model as that place names it, what fits. */
+const RouteSchema = z
+  .object({
+    endpoint: z
+      .string()
+      .refine(
+        (endpoint) => hostOf(endpoint) !== null,
+        "a classifier is asked over https at a host written plainly, or over http on this machine alone",
+      ),
+    model: z.string().min(1),
+    budget: z.number().int().positive(),
+    body: z.record(z.string(), z.unknown()).optional(),
+  })
+  .strict();
+export type Route = z.infer<typeof RouteSchema>;
+
 const RoleSchema = z
   .object({
     root: z.boolean().optional(),
@@ -67,6 +95,11 @@ export const ProfileFileSchema = z
     servers: z.record(z.string().regex(/^[a-z][a-z0-9-]*$/), ServerSchema).default({}),
     reflex: z.string().optional(),
     watch: z.string().optional(),
+    /** The model the questions and the moments are asked of, by each route it is served at; none asks no model. */
+    classifier: z
+      .record(z.string().regex(/^[a-z][a-z0-9-]*$/), RouteSchema)
+      .refine((routes) => Object.keys(routes).length > 0, "a classifier is served by at least one route")
+      .optional(),
     /** The sections a report has, each a name and what it holds, in the order they are read (TEMPLATE.md). */
     report: z.record(z.string().regex(/^[a-z][a-z0-9_]*$/), z.string().min(1)).default({}),
     /** The team's flow, a passage every role is given after its own prompt (TEMPLATE.md). */

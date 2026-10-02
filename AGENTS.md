@@ -56,7 +56,7 @@ server/profile    a profile's files on disk: loading, installing, a project's ow
 client/           the Human's surface
 bin/              the git shim, the team's MCP server, the gallery's build and the template check: their own Node
                   processes
-harness/          each agent's shipped settings, and the routes the reflex asks by (jev.json)
+harness/          each agent's shipped settings
 templates/slp/    SLP, the template that comes with the plugin: roles, prompts, skills, reflex.yaml, watch.yaml:
                   runtime content, not docs
 editor/           the template editor, a web page of its own that Paseo does not build (spec/EDITOR.md)
@@ -158,7 +158,7 @@ The skills hold the recipes. The rules:
   hand.
 - **Code owns only the concept.** Agents, models, tools, thresholds, questions, moments and a report's sections are
   profile data. A role, agent or server name in `shared/`, `server/` or `client/` is a defect, and a test finds it.
-  What a template must never choose is the plugin's: where the reflex sends its questions, and what is masked as a
+  What a template must never choose is the plugin's: where the Human's key is sent, and what is masked as a
   secret.
 - **Comments are few**: a docstring is one line, saying why, and none restates the code. The reasons for a change
   are in its commit message and the spec.

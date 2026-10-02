@@ -54,8 +54,9 @@ A piece of work goes like this:
 - Node.js `22.13` or newer, with npm, where the daemon runs: Paseo builds the plugin with npm.
 - git.
 - A Paseo agent profile for each name the template's roles use (below).
-- Optional: a key for **Jev**, the small model the watch asks one question at a time, through OpenRouter or
-  TypeSafe's own API. Without it the team still works, less watched, and you are told.
+- Optional: a key for the template's **classifier**, the small model its watch asks one question at a time. SLP names
+  Jev, served through OpenRouter or TypeSafe's own API. Without a key the team still works, less watched, and you are
+  told; you may also switch it off, or take it out of the template.
 
 ## Install
 
@@ -87,7 +88,7 @@ Then, in Paseo:
    until a template is installed.
 2. **Match its agent profiles.** Under Agent profiles on the same page, match each name the template gives to an
    agent profile you already have, or create one of that name in Paseo's settings. Give each an explicit model.
-3. **Set Jev's key**, if you have one, under Settings, Jev.
+3. **Set a key for the template's classifier**, if you have one, under Settings, Classifier.
 
 SLP names these:
 

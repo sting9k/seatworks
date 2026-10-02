@@ -1,5 +1,5 @@
 import type { PluginClientContext } from "@getpaseo/plugin/client";
-import { JevSettings } from "./client/jev-settings.tsx";
+import { ClassifierSettings } from "./client/classifier-settings.tsx";
 import { TeamPanel } from "./client/panel/team-panel.tsx";
 import { addWaitingPills } from "./client/pill/waiting.tsx";
 import { Surface } from "./client/surface/surface.tsx";
@@ -19,7 +19,12 @@ export default function contribute(client: PluginClientContext) {
       locations: ["explorer"],
       Component: TeamPanel,
     }),
-    client.addSettingsScreen({ id: "jev", title: "Jev", icon: "KeyRound", Component: JevSettings }),
+    client.addSettingsScreen({
+      id: "classifier",
+      title: "Classifier",
+      icon: "KeyRound",
+      Component: ClassifierSettings,
+    }),
     client.addCommandCenterItem({
       id: "open-team",
       title: "Open a Seatworks team here",

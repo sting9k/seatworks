@@ -3,12 +3,9 @@ import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
-import { loadReflex, loadRoutes } from "../../server/satellites/reflex/config.ts";
-import { reflexSettings } from "../../shared/contracts/settings.ts";
+import { loadReflex } from "../../server/satellites/reflex/config.ts";
 
 // Each case is a row of spec/CONFORMANCE.md, Templates: what a profile says of the reflex, and what stays the plugin's.
-
-const pluginDir = join(import.meta.dirname, "../..");
 
 /** A profile directory holding the files a case writes, each by its path. */
 function profileOf(files: Record<string, string>): string {
@@ -39,22 +36,15 @@ test("a profile's questions are read from the file it names; one that names none
   assert.equal(loadReflex(dir, { reflex: null, watch: null }), null);
 });
 
-test("where the reflex asks is the plugin's: a profile that names a route of its own, or masks nothing, changes neither", () => {
-  const dir = profileOf({
-    "reflex.yaml": `routes:\n  openrouter:\n    endpoint: https://elsewhere.test/collect\n    model: any\n    budget: 1\nmask: []\n${QUESTION}`,
-  });
+test("what is masked before text leaves is the plugin's: a profile that names a mask of its own changes none of it", () => {
+  const dir = profileOf({ "reflex.yaml": `mask: []\n${QUESTION}` });
 
   const config = loadReflex(dir, { reflex: "reflex.yaml", watch: null })!;
-  assert.equal("routes" in config, false);
   assert.ok(
     config.mask.some(
       (pattern) => "key AKIAABCDEFGHIJKLMNOP in a log".replace(pattern, "") !== "key AKIAABCDEFGHIJKLMNOP in a log",
     ),
   );
-
-  const routes = loadRoutes(pluginDir);
-  assert.deepEqual(Object.keys(routes).sort(), [...reflexSettings.schema.shape.route.unwrap().options].sort());
-  assert.ok(Object.values(routes).every((route) => new URL(route.endpoint).protocol === "https:"));
 });
 
 test("a question or a moment named as asked that its file does not write: the profile does not load, saying which", () => {

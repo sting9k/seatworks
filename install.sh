@@ -94,5 +94,5 @@ say "  2. Under Agent profiles on that page, match each name the template gives 
 say "     or add one of that name in Paseo's settings."
 say "  3. Attach a project on Seatworks' page, or run \"Open a Seatworks team here\" from the command center"
 say "     in a workspace."
-say "  4. Set Jev's key under Settings, Jev, so the watch can tell an owner when to look; without it the team"
+say "  4. Set a key under Settings, Classifier, so the watch can tell an owner when to look; without it the team"
 say "     still works, less watched."

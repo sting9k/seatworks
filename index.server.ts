@@ -13,7 +13,7 @@ export default function contribute(server: PluginServerContext) {
   const plugin = new Plugin(stateRoot());
   const settings = server.registerSettings(reflexSettings);
   const useSettings = (state: Awaited<ReturnType<typeof settings.read>>) => {
-    if (state.status === "ready") plugin.setReflex(state.values.route, state.values.key);
+    if (state.status === "ready") plugin.setReflex(state.values);
   };
   const guard = (what: string, work: () => Promise<unknown>) => {
     void work().catch((error: unknown) => {
@@ -116,7 +116,7 @@ export default function contribute(server: PluginServerContext) {
     plugin.saw(paseo);
     const view = await plugin.view(input.project);
     const none = { human: null, activity: [], stuck: [], root: "No such project.", template: null };
-    return { ...(view ?? none), alarm: plugin.alarm };
+    return { ...(view ?? none), alarm: plugin.alarmOf(input.project) };
   });
   server.handle(RPC.syncTemplate, async (input, { paseo }) => {
     plugin.saw(paseo);

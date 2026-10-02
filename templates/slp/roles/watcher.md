@@ -35,8 +35,9 @@ closes the choice, or asks for a state meant to go; a change that reaches the go
 its evidence unanswered; a structure settled that no plan records. Attend with the candidate's own name as the
 moment.
 
-In a sweep, look for what spans turns: going in circles, drifting from the brief's goal, a lane quietly deciding what
-its Lead did not. Something outside this list that matters as much is `other`, with its name.
+In a sweep, look for the moments above that no candidate named, and for what spans turns: going in circles,
+drifting from the brief's goal, a lane quietly deciding what its Lead did not. Something outside this list that
+matters as much is `other`, with its name.
 
 ## How to judge
 

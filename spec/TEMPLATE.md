@@ -41,7 +41,7 @@ What a template may do, in four rules:
 <template>/
   template.json      its name, description and tags, and the editor's layout
   NOTICE.md          the outside sources its files draw on, with their licences
-  profile.yaml       roles, their properties, tools, skills and models; outside tool servers
+  profile.yaml       roles, their properties, tools, skills and models; outside tool servers; the classifier
   flow.md            the team's flow, written by the editor from its steps
   project.md         the note kept in an attached project's instruction file
   roles/<role>.md    a role's prompt
@@ -147,12 +147,20 @@ events a question is asked `on`, the places of the record its `state` reads (`ST
 other name in them is the profile's own, and no code names it: a test reads every role, question and moment SLP
 names and finds none in the plugin's code.
 
+### The classifier
+
+The model the questions and the moments are asked of is the template's, under `classifier` in `profile.yaml`: each
+route a place it is served, with its `endpoint`, the `model` as that place names it, its `budget` and what its `body`
+adds to every request (`REFLEX.md`). A template with none asks no model and loses nothing else. The plugin names no
+model and no host of its own.
+
 ### What a template never chooses
 
-Where the reflex sends its questions, and what is masked before they leave. The routes are the plugin's
-(`harness/jev.json`) and so are the patterns of what looks like a secret (`REFLEX.md`). The Human's key was given to
-the plugin they installed, for the hosts it names; a template that could name a host would be handed that key and the
-record's text with nobody told.
+Where the Human's key goes, and what is masked before text leaves. A template says where its classifier is served;
+the key is the Human's, kept in the plugin's settings for one host, and a question goes only by a route served at
+that host. So a template cannot be handed a key or the record's text by naming a host of its own: with no key for
+that host nothing is sent there, and the hosts a template names are shown before it is installed. The patterns of
+what looks like a secret are the plugin's (`REFLEX.md`), so no template can leave one out.
 
 ### `template.json`
 
@@ -329,7 +337,8 @@ npm run template -- pack <dir> <file>    # the same check, then the one file it 
 - **It loads a template both ways**, as the editor reads it and as the plugin does, so one that passes installs. It
   fails, saying why, on the first thing that stops either.
 - **It says what the template needs of a machine**: the name it installs under, each role with the words it reads on
-  every turn, the Paseo agent profiles its roles name, and the variables its servers read.
+  every turn, the Paseo agent profiles its roles name, the variables its servers read, and each host its classifier
+  is served at.
 - **It prints the editor's notes** (`EDITOR.md`, Checks), which stop nothing here either.
 
 ## Installing
@@ -343,7 +352,8 @@ the Human's machine. Both go the same way, and the plugin:
    a template of the plugin's is read from nowhere.
 2. Says what it would bring: the name it would be installed and attached under, whether one of that name is installed
    already, its roles, each Paseo agent profile its roles name with whether the Human has it, each outside server
-   with the command it runs or the address it calls, and each variable a server reads with whether it is set.
+   with the command it runs or the address it calls, each variable a server reads with whether it is set, and each
+   host its classifier is served at with the model asked there.
 3. Installs it under its name once the Human agrees, in place of one of that name. What is installed is the file the
    Human read: its hash is checked again, and a file changed since is not installed.
 

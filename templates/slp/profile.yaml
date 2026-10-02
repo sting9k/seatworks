@@ -63,6 +63,20 @@ report:
 
 reflex: reflex.yaml
 watch: watch.yaml
+# The model those two files' questions and moments are asked of, with each place it is served. Whoever runs the team
+# sets a key for one of these hosts in the plugin's settings, and may switch it off there. Taken out of here, no model
+# is asked at all: the watch goes on with what code counts and the Watcher's sweeps. The model is pinned by version,
+# since every threshold is earned for one (spec/REFLEX.md).
+classifier:
+  openrouter:
+    endpoint: https://openrouter.ai/api/v1/systemone
+    model: typesafe/jev-1.13
+    budget: 32000
+    body: { provider: { data_collection: deny } }
+  typesafe:
+    endpoint: https://api.typesafe.ai/v1/systemone
+    model: jev-1.13.0
+    budget: 32000
 # Kept in an attached project's instruction file, committed on its base, so every agent there knows the team is there.
 # `docs` are what the team keeps by hand, in the commits of the agents that write: the words of the domain and the
 # decisions. `map` is where what the record holds is left when the project is removed.

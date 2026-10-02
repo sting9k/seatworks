@@ -1,6 +1,7 @@
-import type { QuestionSpec, Route } from "../../../shared/contracts/reflex.ts";
+import type { Route } from "../../../shared/contracts/profile.ts";
+import type { QuestionSpec } from "../../../shared/contracts/reflex.ts";
 
-/** A question in the System One body, as TypeSafe's SDK sends it. */
+/** A question in the body a classifier is asked with: one condition, and what each outcome covers. */
 type Asked =
   | { type: "noul"; instructions: string; criteria: { true: string; false: string } }
   | { type: "choice"; instructions: string; criteria: Record<string, string> };
@@ -15,8 +16,11 @@ const TIMEOUT_MS = 15_000;
 /** The longest wait a 429 may name before the one retry; past it the event goes unread. */
 const MAX_WAIT_MS = 30_000;
 
-/** Asks Jev typed questions about one state in one call; secrets are masked, and a state past the budget is refused. */
-export class Jev {
+/** What the reflex asks by; or nothing to ask by, with what the Human is told when that is not their own choice. */
+export type Asker = { ok: true; classifier: Classifier } | { ok: false; says: string | null };
+
+/** Asks typed questions about one state in one call; secrets are masked, and a state past the budget is refused. */
+export class Classifier {
   private readonly route: Route;
   private readonly key: string;
   private readonly mask: readonly RegExp[];

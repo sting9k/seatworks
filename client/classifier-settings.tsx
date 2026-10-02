@@ -5,27 +5,23 @@ import {
   SettingsInput,
   type SettingsInputHandle,
   SettingsSection,
-  SettingsSelect,
+  SettingsSwitch,
 } from "@getpaseo/plugin/client/ui";
 import { useRef, useState } from "react";
 import { Text } from "react-native";
 import { reflexSettings } from "../shared/contracts/settings.ts";
 
-const ROUTES = [
-  { label: "OpenRouter, data collection denied", value: "openrouter" },
-  { label: "TypeSafe's own API", value: "typesafe" },
-] as const;
-
-/** Where the reflex asks Jev. The key is never shown: the field starts empty and is emptied once the key is saved. */
-export function JevSettings({ theme }: PluginSurfaceProps) {
+/** Whether a template's classifier is asked on this machine, and the one host the key is sent to. The key is never shown. */
+export function ClassifierSettings({ theme }: PluginSurfaceProps) {
   const settings = useSettings(reflexSettings);
   const [key, setKey] = useState("");
+  const [host, setHost] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const field = useRef<SettingsInputHandle>(null);
   if (settings.status === "loading") return <Text style={{ color: theme.colors.foregroundMuted }}>Loading…</Text>;
   if (settings.status !== "ready")
     return (
-      <SettingsSection title="Jev">
+      <SettingsSection title="Classifier">
         <SettingsCard>
           {settings.status === "invalid" ? (
             <SettingsAction
@@ -49,16 +45,30 @@ export function JevSettings({ theme }: PluginSurfaceProps) {
   const current = settings.values;
   return (
     <SettingsSection
-      title="Jev"
-      info="The reflex asks Jev typed questions about the record and the agents' words. Setting a key is your consent to send that text to the route you choose; what looks like a secret is masked first. Without a key the team works on, less watched."
+      title="Classifier"
+      info="A template may name a model its questions about the record and the agents' words are asked of, and where it is served. Setting a key is your consent to send that text to this one host, by a template served there; what looks like a secret is masked first. Switched off, or with no key, the team works on, watched by what the plugin counts itself and by whoever the template seats to watch."
     >
       <SettingsCard>
-        <SettingsSelect
-          label="Route"
-          value={current.route}
-          options={ROUTES}
-          onValueChange={(route) => void settings.save({ ...current, route }, settings.revision)}
+        <SettingsSwitch
+          label="Ask the classifier a template names"
+          hint={current.on ? "On, for a template that names one." : "Off: no model is asked on this machine."}
+          value={current.on}
+          onValueChange={(on) => void settings.save({ ...current, on }, settings.revision)}
           disabled={settings.saving}
+        />
+        <SettingsInput
+          label="Host the key is for"
+          hint={`The key goes to ${current.host || "no host"} and to no other, whatever a template names.`}
+          initialValue={current.host}
+          onChangeText={setHost}
+          placeholder="a host the template's classifier is served at"
+          disabled={settings.saving}
+        />
+        <SettingsAction
+          label="Save the host"
+          actionLabel="Save"
+          disabled={settings.saving || host === null || host.trim().toLowerCase() === current.host}
+          onPress={() => void settings.save({ ...current, host: (host ?? "").trim().toLowerCase() }, settings.revision)}
         />
         <SettingsInput
           label="Key"

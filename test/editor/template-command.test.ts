@@ -34,6 +34,10 @@ test("the check command on a template that loads says what it installs as and wh
   assert.equal(checked.status, 0, checked.stderr);
   assert.match(checked.stdout, /Night Crew loads\. It installs as night-crew\./);
   assert.match(checked.stdout, /Paseo agent profiles it needs: slp-lead, slp-peer, /);
+  assert.match(
+    checked.stdout,
+    /a classifier its questions are asked of, at: openrouter\.ai \(typesafe\/jev-1\.13\), api\.typesafe\.ai \(jev-1\.13\.0\)/,
+  );
   assert.match(checked.stdout, /No note\./);
 });
 

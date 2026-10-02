@@ -151,6 +151,12 @@ export function TemplateInstall({ theme, stamp, onInstalled }: Props) {
               }
             />
           ) : null}
+          {offer.classifier.length > 0 ? (
+            <SettingsRow
+              label="A model its questions are asked of"
+              hint={`${offer.classifier.map((route) => `${route.host}: ${route.model}`).join("\n")}\nThe record's text and the agents' words go to the one of these your key is for, set under Classifier in the plugin's settings, and to none without a key.`}
+            />
+          ) : null}
           <View style={{ padding: SPACE.md, alignItems: "flex-end" }}>
             <Button
               label={busy ? "Installing" : offer.replaces ? "Install in its place" : "Install"}

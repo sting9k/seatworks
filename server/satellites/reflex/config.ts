@@ -2,13 +2,7 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parse } from "yaml";
-import {
-  type QuestionSpec,
-  ReflexFileSchema,
-  type Route,
-  RoutesFileSchema,
-  WatchFileSchema,
-} from "../../../shared/contracts/reflex.ts";
+import { type QuestionSpec, ReflexFileSchema, WatchFileSchema } from "../../../shared/contracts/reflex.ts";
 import { SECRETS } from "../../../shared/contracts/secrets.ts";
 
 export type ReflexConfig = {
@@ -48,12 +42,6 @@ export function loadReflex(
 }
 
 const read = (path: string): unknown => parse(readFileSync(path, "utf8"));
-
-/** The routes the plugin ships, by the name its settings give each (`harness/jev.json`). */
-export function loadRoutes(pluginDir: string): Readonly<Record<string, Route>> {
-  const file = join(pluginDir, "harness", "jev.json");
-  return RoutesFileSchema.parse(JSON.parse(readFileSync(file, "utf8"))).routes;
-}
 
 /** The hash a threshold is earned for: the question's words and every outcome's description. */
 export function wordingOf(q: QuestionSpec): string {

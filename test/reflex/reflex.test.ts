@@ -8,7 +8,7 @@ import { Reflex } from "../../server/bridge/reflex.ts";
 import type { PaseoHost } from "../../server/satellites/agent-host/host.ts";
 import type { TurnItem } from "../../server/satellites/agent-host/items.ts";
 import { type ReflexConfig, loadReflex } from "../../server/satellites/reflex/config.ts";
-import type { Jev } from "../../server/satellites/reflex/jev.ts";
+import type { Classifier } from "../../server/satellites/reflex/classifier.ts";
 import { ProjectStore } from "../../server/satellites/store/project-store.ts";
 import { type Caller, type CommandBody, parseBody } from "../../shared/contracts/commands.ts";
 import { CODE_MOMENTS } from "../../shared/contracts/reflex.ts";
@@ -19,11 +19,11 @@ const slp = loadReflex(join(import.meta.dirname, "../../templates/slp"), {
   watch: "watch.yaml",
 })!;
 
-/** Jev answering every question it is asked with the probability the test names, or only those `sure` picks. */
-function fakeJev(p: number, sure: (name: string, state: Record<string, string>) => boolean = () => true) {
+/** A classifier answering every question it is asked with the probability the test names, or only those `sure` picks. */
+function fakeClassifier(p: number, sure: (name: string, state: Record<string, string>) => boolean = () => true) {
   const asked: string[][] = [];
   const read: Record<string, string>[] = [];
-  const jev = {
+  const classifier = {
     ask: (state: Record<string, string>, questions: Record<string, { labels?: Record<string, string> }>) => {
       asked.push(Object.keys(questions));
       read.push(state);
@@ -48,26 +48,27 @@ function fakeJev(p: number, sure: (name: string, state: Record<string, string>) 
       );
       return Promise.resolve({ ok: true as const, model: "jev-1.13.0", answers, tokens: 100 });
     },
-  } as unknown as Jev;
-  return { jev, asked, read };
+  } as unknown as Classifier;
+  return { classifier, asked, read };
 }
 
 const settledNames = new Set(["addPoints", "User"]);
 
-function wired(p: number | null, config: ReflexConfig = slp) {
+/** A team with a reflex over it; with no probability it has nothing to ask by, and `idle` is what it says of that. */
+function wired(p: number | null, config: ReflexConfig = slp, idle: string | null = null) {
   const t = team();
   const alarms: (string | null)[] = [];
-  const fake = p === null ? null : fakeJev(p);
-  const observed: { question: string; answer: string }[] = [];
+  const fake = p === null ? null : fakeClassifier(p);
+  const observed: { question: string; answer: string; actor: string | null }[] = [];
   const reflex = new Reflex(
     config,
-    () => fake?.jev ?? null,
+    () => (fake ? { ok: true, classifier: fake.classifier } : { ok: false, says: idle }),
     (_project, body) => {
       observed.push(body);
       t.ledger.must(t.ledger.fact(body.type, body));
       return Promise.resolve();
     },
-    (text) => alarms.push(text),
+    (_project, text) => alarms.push(text),
     {
       settled: (_project, _actor, names) => Promise.resolve(new Set(names.filter((n) => settledNames.has(n)))),
       diffs: () =>
@@ -158,16 +159,78 @@ test("a lane whose spend crosses its appetite is told to the Supervisor once, as
   assert.equal(told[0]?.to, supervisor);
 });
 
-test("with no key the reflex asks nothing and raises one standing alarm; the team goes on", async () => {
-  const { ledger, reflex, peer, alarms } = wired(null);
+test("a reflex that cannot ask, and not by anyone's choice, raises one standing alarm; the team goes on", async () => {
+  const { ledger, reflex, peer, alarms } = wired(null, slp, "no key is set");
   reflex.onTurn("p", peer, [thought("I'm not sure what 'direction' means here")], ledger.state);
   await settle();
   assert.equal(ledger.state.attentions.size, 0);
-  assert.match(alarms.at(-1) ?? "", /no key/);
+  assert.match(alarms.at(-1) ?? "", /no key is set/);
   assert.equal(
     ledger.must(ledger.as(peer, "raise_finding", { text: "unclear term", default: "guess" })).length > 0,
     true,
   );
+});
+
+test("a classifier that refuses the key, or cannot be asked a question as it is worded, raises an alarm saying which; its next answer clears it", async () => {
+  const t = team();
+  const alarms: (string | null)[] = [];
+  // What every call of a turn is answered with; with none, the classifier answers as one that works.
+  let refusal: { ok: false; why: "refused" | "broken"; says: string } | null = null;
+  const working = fakeClassifier(0.1).classifier;
+  const classifier = {
+    ask: (...asked: Parameters<Classifier["ask"]>) => refusal ?? working.ask(...asked),
+  } as unknown as Classifier;
+  const reflex = new Reflex(
+    slp,
+    () => ({ ok: true, classifier }),
+    (_project, body) => Promise.resolve(void t.ledger.must(t.ledger.fact(body.type, body))),
+    (_project, text) => alarms.push(text),
+    { settled: () => Promise.resolve(new Set()), diffs: () => Promise.resolve([]) },
+  );
+  const turn = (answered: typeof refusal) => {
+    refusal = answered;
+    reflex.onTurn("p", t.peer, [said("Handing back.")], t.ledger.state);
+    return reflex.settled("p");
+  };
+  await turn({ ok: false, why: "refused", says: "the key was refused (401)" });
+  assert.match(alarms.at(-1) ?? "", /refused the key: the key was refused \(401\)/);
+  await turn({ ok: false, why: "broken", says: "criteria must name both outcomes" });
+  assert.match(alarms.at(-1) ?? "", /could not be asked [a-z-, .]+: criteria must name both outcomes/);
+  await turn(null);
+  assert.equal(alarms.at(-1), null);
+});
+
+test("with no classifier by choice nothing is asked and nothing is said, and the watch goes on: what code counts reaches the owner, a candidate and a sweep the one that watches", async () => {
+  const { ledger, reflex, supervisor, lead, peer, alarms, observed } = wired(null);
+  ledger.must(ledger.as(supervisor, "open_scope", { parent: "root", role: "watcher", over: "all" }));
+  const watcher = "a4";
+
+  reflex.onTurn("p", peer, [thought("I'm not sure what 'direction' means here")], ledger.state);
+  await settle();
+  assert.equal(alarms.length, 0, "a choice is no alarm");
+  assert.equal(observed.length, 0, "and no model's answer is on the record");
+
+  for (let i = 0; i < 3; i++) reflex.onTurn("p", peer, [failing("npm test")], ledger.state);
+  await settle();
+  const candidate = [...ledger.state.obligations.values()].find((o) => o.owedBy === watcher && o.seen !== undefined);
+  assert.equal(
+    candidate?.seen?.moment,
+    "going-in-circles",
+    "the third failure is a candidate for the one that watches",
+  );
+  for (let i = 0; i < 2; i++) reflex.onTurn("p", peer, [failing("npm test")], ledger.state);
+  await settle();
+  const told = [...ledger.state.attentions.values()].find((a) => a.moment === "going-in-circles");
+  assert.equal(told?.to, lead, "and the fifth is told to the owner above, with no model asked");
+
+  const long = "x".repeat(1400);
+  for (let i = 0; i < 25; i++) reflex.onTurn("p", peer, [thought(long)], ledger.state);
+  await settle();
+  assert.ok(
+    observed.some((o) => o.question === "sweep" && o.actor === watcher),
+    "a sweep still wakes it once enough work has gathered",
+  );
+  assert.equal(alarms.length, 0);
 });
 
 const edit = (path: string, diff: string): TurnItem => ({
@@ -210,13 +273,13 @@ test("a candidate is given to the Watcher with the item and two either side, the
   const earlier = [...project.view.attentions.keys()][0]!;
   await send({ kind: "agent", actor: "a2" }, "acknowledge", { attention: earlier });
 
-  const { jev } = fakeJev(
+  const { classifier } = fakeClassifier(
     0.95,
     (name, state) => name === "trades-the-goal" && /to save bandwidth/.test(state.text ?? ""),
   );
   const reflex = new Reflex(
     slp,
-    () => jev,
+    () => ({ ok: true, classifier }),
     (_project, body) => submit(bridge, body),
     () => undefined,
     { settled: () => Promise.resolve(new Set()), diffs: () => Promise.resolve([]) },
@@ -536,7 +599,7 @@ test("what the watch counted and the record did not take is said in the log, and
   try {
     const reflex = new Reflex(
       slp,
-      () => null,
+      () => ({ ok: false, says: null }),
       () => Promise.reject(new Error("the log is at 9, not 8")),
       () => undefined,
       { settled: () => Promise.resolve(new Set()), diffs: () => Promise.resolve([]) },
