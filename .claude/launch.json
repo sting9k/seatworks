@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "editor",
-      "runtimeExecutable": "npx",
-      "runtimeArgs": ["vite", "editor", "--port", "5311", "--strictPort"],
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "editor", "--", "--port", "5311", "--strictPort"],
       "port": 5311
     }
   ]

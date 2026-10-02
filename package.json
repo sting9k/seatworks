@@ -12,8 +12,9 @@
     "format": "prettier --write .",
     "test": "node --test --experimental-strip-types --no-warnings=ExperimentalWarning --import ./test/setup.ts \"test/**/*.test.ts\"",
     "check": "npm run typecheck && npm run lint && prettier --check . && npm test",
-    "editor": "vite editor",
-    "editor:build": "vite build editor"
+    "gallery": "node --experimental-strip-types --no-warnings=ExperimentalWarning bin/gallery.ts editor/public/gallery profile",
+    "editor": "npm run gallery && vite editor",
+    "editor:build": "npm run gallery && vite build editor"
   },
   "dependencies": {
     "@getpaseo/client": "0.10.1",

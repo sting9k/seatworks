@@ -1,5 +1,4 @@
 import { type ReactNode, useState } from "react";
-import { TEMPLATES } from "../gallery/templates.ts";
 import type { Server } from "../../shared/contracts/profile.ts";
 import {
   giveServer,
@@ -12,8 +11,8 @@ import {
   setServer,
   setStep,
 } from "../template/edits.ts";
-import { type GraphNode, graphOf } from "../template/graph.ts";
-import { readTemplate, type Template } from "../template/read-template.ts";
+import type { GraphNode } from "../template/graph.ts";
+import type { Template } from "../template/read-template.ts";
 import { useEditing, useNotes } from "./editing.ts";
 import { FileEditor } from "./file-editor.tsx";
 import { nameOf } from "./sidebar.tsx";
@@ -36,21 +35,18 @@ const EARNED = {
 } as const;
 
 /** The fewest and the most words a role of the shipped template reads every turn: the mark another's are set beside. */
-const MARK = (() => {
-  const shipped = TEMPLATES[0] && readTemplate(TEMPLATES[0]);
-  if (!shipped?.ok) return null;
-  const words = graphOf(shipped.template).nodes.flatMap((node) => (node.kind === "role" ? [node.alwaysOn] : []));
-  return { name: shipped.template.about.name, least: Math.min(...words), most: Math.max(...words) };
-})();
+export type Mark = { readonly name: string; readonly least: number; readonly most: number };
 
 /** What the picked node says of itself and lets be set, above the file that is open. */
 export function Properties({
   template,
+  mark,
   picked,
   open,
   onOpen,
 }: {
   template: Template;
+  mark: Mark | null;
   picked: GraphNode | null;
   open: string | null;
   onOpen: (path: string) => void;
@@ -63,7 +59,7 @@ export function Properties({
         <section>
           <p className="section">{KIND[picked.kind]}</p>
           <h2>{nameOf(picked)}</h2>
-          <About key={picked.id} node={picked} template={template} onOpen={onOpen} />
+          <About key={picked.id} node={picked} template={template} mark={mark} onOpen={onOpen} />
           <Notes id={picked.id} />
         </section>
       ) : (
@@ -122,10 +118,12 @@ function Line({ label, value, onSet }: { label: string; value: string; onSet: (v
 function About({
   node,
   template,
+  mark,
   onOpen,
 }: {
   node: GraphNode;
   template: Template;
+  mark: Mark | null;
   onOpen: (path: string) => void;
 }): ReactNode {
   const { change } = useEditing();
@@ -162,10 +160,10 @@ function About({
             <dt>Reads every turn</dt>
             <dd>
               {node.alwaysOn.toLocaleString("en")} words
-              {MARK ? (
+              {mark ? (
                 <span className="hint">
                   {" "}
-                  · {MARK.name}&apos;s roles read {MARK.least.toLocaleString("en")} to {MARK.most.toLocaleString("en")}
+                  · {mark.name}&apos;s roles read {mark.least.toLocaleString("en")} to {mark.most.toLocaleString("en")}
                 </span>
               ) : null}
             </dd>

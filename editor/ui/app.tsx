@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
-import { TEMPLATES } from "../gallery/templates.ts";
+import { useEffect, useMemo, useState } from "react";
+import { loadGallery } from "../template/gallery.ts";
+import { graphOf } from "../template/graph.ts";
 import { readTemplate, type TemplateFiles } from "../template/read-template.ts";
-import { Gallery } from "./gallery.tsx";
+import { Gallery, type Shown } from "./gallery.tsx";
 import { Icon } from "./icons.tsx";
 import { Workspace } from "./workspace.tsx";
 
@@ -20,11 +21,38 @@ type Tab = {
 
 const changedIn = (tab: Tab) => tab.files !== tab.exported;
 
+/** The gallery built beside the page, fetched from where the page itself is served. */
+const fetched = async (file: string) => {
+  const answer = await fetch(new URL(`gallery/${file}`, document.baseURI));
+  return answer.ok ? answer.text() : null;
+};
+/** The shipped template's name in the gallery: the mark another template's always-on words are set beside. */
+const MARKED = "slp";
+
 /** The gallery and the templates open beside it, each in a tab. */
 export function App() {
   const [tabs, setTabs] = useState<readonly Tab[]>([]);
   const [active, setActive] = useState<number | null>(null);
   const [opened, setOpened] = useState(0);
+  const [gallery, setGallery] = useState<Shown | null>(null);
+  useEffect(() => {
+    void loadGallery(fetched).then(
+      (read) => {
+        setGallery(read.ok ? { templates: read.templates } : { says: read.says });
+      },
+      (failed: unknown) => {
+        setGallery({ says: failed instanceof Error ? failed.message : String(failed) });
+      },
+    );
+  }, []);
+  const mark = useMemo(() => {
+    const shipped =
+      gallery && "templates" in gallery ? gallery.templates.find((listed) => listed.entry.id === MARKED) : undefined;
+    const read = shipped?.ok ? readTemplate(shipped.files) : null;
+    if (!read?.ok) return null;
+    const words = graphOf(read.template).nodes.flatMap((node) => (node.kind === "role" ? [node.alwaysOn] : []));
+    return { name: read.template.about.name, least: Math.min(...words), most: Math.max(...words) };
+  }, [gallery]);
   const tab = tabs.find((candidate) => candidate.id === active) ?? null;
   const update = (id: number, change: (tab: Tab) => Tab) => {
     setTabs((all) => all.map((other) => (other.id === id ? change(other) : other)));
@@ -121,6 +149,7 @@ export function App() {
         <Workspace
           key={tab.id}
           template={read.template}
+          mark={mark}
           opened={tab.opened}
           changed={changedIn(tab)}
           canUndo={tab.past.length > 0}
@@ -143,7 +172,7 @@ export function App() {
         />
       ) : (
         <Gallery
-          templates={TEMPLATES}
+          gallery={gallery}
           onOpen={(files) => {
             setTabs((all) => [...all, { id: opened, past: [], files, future: [], exported: files, opened: files }]);
             setActive(opened);

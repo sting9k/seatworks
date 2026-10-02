@@ -3,8 +3,8 @@
 Where a template is opened as a graph, changed and saved: a web page, after ComfyUI's three screens. `TEMPLATE.md`
 says what a template is; this says how a person makes and changes one. The order it is built in is in `TEMPLATE.md`.
 
-Built: all of this file. A template is picked from the gallery, or opened from a file or a folder of the person's
-own, and opens in a tab. Its graph is drawn and laid out. Roles, skills, steps, questions and moments are added from a
+Built: all of this file. A template is picked from the gallery built beside the page (`TEMPLATE.md`, The gallery), or
+opened from a file or a folder of the person's own, and opens in a tab. Its graph is drawn and laid out. Roles, skills, steps, questions and moments are added from a
 skeleton, changed and taken away; wires are drawn and cut; a file is written in place and read as Markdown; what a
 machine can see is noted on the node it is about; every change can be undone; and the template is exported as one
 file. What is left is listed under Not built.
@@ -44,7 +44,7 @@ file. What is left is listed under Not built.
 
 | Screen       | Shows                                                                                            |
 | ------------ | ------------------------------------------------------------------------------------------------ |
-| Gallery      | The templates, each with its name, description, tags and its graph as a cover                    |
+| Gallery      | The templates of the gallery built beside the page, each with its name, description, tags and its graph as a cover; one that does not load says why on its card |
 | Graph        | One template: its nodes wired, a panel of its files, its faults on the nodes they concern        |
 | Node library | Every kind of node, in families, to drag onto the graph                                          |
 

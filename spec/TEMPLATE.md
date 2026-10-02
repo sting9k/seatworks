@@ -6,8 +6,8 @@ ComfyUI: picked from a gallery, opened as a graph, changed, and run. `EDITOR.md`
 this says what a template is, what the plugin reads of it, and how it reaches a machine.
 
 Built so far: the editor (`EDITOR.md`, steps 1 and 2 below), step 3, what the plugin reads of a template and how
-one reaches a machine, and step 4, outside tool servers, in the plugin and in the editor. The gallery and the
-report's sections are not built. The order it is built in
+one reaches a machine, step 4, outside tool servers, in the plugin and in the editor, and of step 5 the gallery's
+build and the page that reads one. The gallery's own repository and the report's sections are not. The order it is built in
 is at the end. A change it asks of another spec file is listed under What this changes, and is made in the commit that
 builds it, so a spec and the code never disagree.
 
@@ -226,6 +226,32 @@ a file beside a skill, a question and a moment change what agents do as a prompt
 
 A git repository of template directories, and a page that lists them. A template is published by a pull request. No
 server and no accounts. SLP is the only one at first.
+
+```text
+<gallery repository>/
+  templates/<name>/     a template's directory, as What a template holds lays it out
+<built beside the page>/gallery/
+  index.json            each template's directory name, its name, description and tags, and its file
+  <name>.template.json  the template as the one file it is shared as
+```
+
+- **The gallery is built, never written by hand.** `bin/gallery.ts <out> <directory of template directories>` reads
+  each directory that holds a `profile.yaml`, loads it as the page loads any template, and writes the index and each
+  template as its one file. In a pull request a template is a directory, so what changed in it is read line by line;
+  in the gallery it is the file a person opens, exports and installs.
+- **The build is the check a template passes to be published.** A template that does not load, or whose directory is
+  not a name to install it under, is left out and said with why, and the build fails. What a machine can note beyond
+  that stops nothing (`EDITOR.md`, Checks); whether a template is worth listing is its reviewers' to say.
+- **A template's directory name is the name it is installed under.** One name, in the gallery, in the state root and
+  on a project's record.
+- **The page reads the gallery built beside it**, `gallery/index.json` and the files it lists, from wherever the page
+  is served. A page with no gallery beside it says so, and still opens a file or a folder of the person's own; a
+  listed template whose file is gone or does not load says why on its own card.
+- **This repository builds a gallery of its own from `profile/`**, which holds the shipped SLP, each time the editor is
+  served or built (`npm run gallery`). So SLP is in the gallery from the one place it is kept, and never copied.
+
+The gallery's own repository, and where its page is served from, are the owner's to set up: both are made outside
+this repository.
 
 ## Installing
 

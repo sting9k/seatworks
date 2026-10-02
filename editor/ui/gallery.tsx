@@ -1,19 +1,28 @@
 import { useState } from "react";
-import { graphOf } from "../template/graph.ts";
 import { unpacked } from "../../shared/contracts/template.ts";
+import type { Listed } from "../template/gallery.ts";
+import { graphOf } from "../template/graph.ts";
 import { readTemplate, type TemplateFiles } from "../template/read-template.ts";
 import { Cover } from "./cover.tsx";
 import { filesOfFolder } from "./files.ts";
 
-/** Every template on offer, and the way in for one of the person's own; one that does not load says why. */
+/** The gallery's templates, or why there are none to show. */
+export type Shown = { readonly templates: readonly Listed[] } | { readonly says: string };
+
+/**
+ * Every template of the gallery built beside the page, and the way in for one of the person's own. A template that
+ * does not load says why on its card, and the page says why when there is no gallery to show.
+ */
 export function Gallery({
-  templates,
+  gallery,
   onOpen,
 }: {
-  templates: readonly TemplateFiles[];
+  /** Null while the gallery is fetched. */
+  gallery: Shown | null;
   onOpen: (files: TemplateFiles) => void;
 }) {
   const [refused, setRefused] = useState<string | null>(null);
+  const listed = gallery && "templates" in gallery ? gallery.templates : [];
   const open = (files: TemplateFiles) => {
     const read = readTemplate(files);
     if (read.ok) onOpen(files);
@@ -24,7 +33,11 @@ export function Gallery({
       <header>
         <h1>Templates</h1>
         <p className="lede">
-          {templates.length === 1 ? "1 way of working" : `${templates.length} ways of working`} for a team of agents
+          {gallery === null
+            ? "Reading the gallery"
+            : "says" in gallery
+              ? `The gallery could not be shown: ${gallery.says}.`
+              : `${listed.length === 1 ? "1 way of working" : `${listed.length} ways of working`} for a team of agents`}
         </p>
         <div className="ways-in">
           <label className="way-in">
@@ -58,18 +71,18 @@ export function Gallery({
         {refused === null ? null : <p className="refused">It did not open: {refused}</p>}
       </header>
       <ul className="cards">
-        {templates.map((files, index) => {
-          const read = readTemplate(files);
+        {listed.map((template) => {
+          const read = template.ok ? readTemplate(template.files) : template;
           if (!read.ok)
             return (
-              <li key={index} className="card broken">
-                <h2>A template that does not open</h2>
-                <p>{read.says}</p>
+              <li key={template.entry.id} className="card broken">
+                <h2>{template.entry.name}</h2>
+                <p>It does not open: {read.says}</p>
               </li>
             );
-          const { about, profile, skills } = read.template;
+          const { about, profile, skills, files } = read.template;
           return (
-            <li key={index} className="card">
+            <li key={template.entry.id} className="card">
               <div className="picture">
                 <Cover graph={graphOf(read.template)} />
                 <h2>{about.name}</h2>

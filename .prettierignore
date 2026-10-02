@@ -6,3 +6,4 @@ profile
 .claude
 *.md
 editor/dist
+editor/public/gallery

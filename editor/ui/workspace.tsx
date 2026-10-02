@@ -43,7 +43,7 @@ import { Menu, ZoomTools } from "./floating.tsx";
 import { Icon } from "./icons.tsx";
 import { laidOut } from "./layout.ts";
 import { type FlowNode, type FrameNode, NODE_TYPES } from "./nodes.tsx";
-import { Properties } from "./properties.tsx";
+import { type Mark, Properties } from "./properties.tsx";
 import { DRAGGED, FilesPanel, nameOf, NodesPanel, NotesPanel } from "./sidebar.tsx";
 
 type Drawn = FlowNode | FrameNode;
@@ -87,6 +87,8 @@ type Props = {
   readonly template: Template;
   /** Its files as they were opened, to tell what has gone from it since. */
   readonly opened: Template["files"];
+  /** The fewest and the most words a role of the shipped template reads every turn, when the gallery has it. */
+  readonly mark: Mark | null;
   /** Whether it holds a change that has not been exported. */
   readonly changed: boolean;
   readonly canUndo: boolean;
@@ -108,7 +110,19 @@ export function Workspace(props: Props) {
   );
 }
 
-function Opened({ template, opened, changed, canUndo, canRedo, onChange, onUndo, onRedo, onExported, onClose }: Props) {
+function Opened({
+  template,
+  opened,
+  mark,
+  changed,
+  canUndo,
+  canRedo,
+  onChange,
+  onUndo,
+  onRedo,
+  onExported,
+  onClose,
+}: Props) {
   const graph = useMemo(() => graphOf(template), [template]);
   const notes = useMemo(() => {
     const start = readTemplate(opened);
@@ -496,7 +510,7 @@ function Opened({ template, opened, changed, canUndo, canRedo, onChange, onUndo,
               </div>
             )}
           </div>
-          {about ? <Properties template={template} picked={picked} open={file} onOpen={setFile} /> : null}
+          {about ? <Properties template={template} mark={mark} picked={picked} open={file} onOpen={setFile} /> : null}
         </div>
       </NotesContext.Provider>
 

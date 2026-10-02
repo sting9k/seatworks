@@ -3,7 +3,7 @@ import { defineConfig } from "eslint/config";
 import tseslint from "typescript-eslint";
 
 export default defineConfig(
-  { ignores: ["node_modules", "concept", "spec", "profile", ".claude", "editor/dist"] },
+  { ignores: ["node_modules", "concept", "spec", "profile", ".claude", "editor/dist", "editor/public"] },
   js.configs.recommended,
   tseslint.configs.strictTypeChecked,
   {

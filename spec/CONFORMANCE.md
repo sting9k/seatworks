@@ -293,3 +293,14 @@ What the plugin reads of a profile that a template adds (`TEMPLATE.md`).
 | A shared template that declares an outside server           | What it runs is said, and each variable it reads with whether it is set, before anything is installed |
 | In the editor, an outside server declared, said how to reach, given to a role with two tools, one tool taken back, then the server taken away | A node, then a wire carrying the tools; a wire with no tool named is not drawn; taking a tool back changes one line; with the server gone every file is as it was to the byte |
 | In the editor, an outside server fresh from its skeleton and given to no role; then one with a secret written in it | A note for each of the first two; a note that a secret belongs in a variable for the last |
+
+## Gallery
+
+Template directories in, what a page lists out (`TEMPLATE.md`, The gallery).
+
+| Case                                                        | Expect                                                              |
+| ----------------------------------------------------------- | ------------------------------------------------------------------- |
+| A gallery built from two template directories               | An index naming each by its directory, with its name and tags, and each as the one file it is shared as; a page reads back the very files |
+| A template that does not load, or whose directory is not a name to install under | Left out of the gallery, and said with why           |
+| A page with no gallery beside it; with a wrong index; with a listed template whose file is gone or does not load | The page says why; the card of that template says why |
+| The build command on a directory of template directories    | The gallery written; with a template that does not load among them, it fails naming it and writes the rest |
