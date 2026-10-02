@@ -3,10 +3,7 @@ import type { State } from "../../shared/kernel/state.ts";
 import { statusText } from "../../shared/views/status.ts";
 import type { Bundle } from "../profile/bundle.ts";
 
-/**
- * An agent's standing instructions: its role's prompt, the team's flow, its skills named with where to read each, and
- * the rules the Human keeps for its role outside the profile.
- */
+/** An agent's standing instructions: its role's prompt, the flow, its skills by path, and the Human's rules. */
 export function systemPromptFor(bundle: Bundle, actor: Actor, rules: string | null): string {
   const prompt = (bundle.prompts.get(actor.role) ?? "").trimEnd();
   const skills = bundle.skills.get(actor.role) ?? [];

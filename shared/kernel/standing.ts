@@ -6,10 +6,7 @@ import { isWithin, ownerOfParent } from "./authority.ts";
 import { namedIn } from "./named.ts";
 import type { State } from "./state.ts";
 
-/**
- * What the record shows of where a refused command's caller stands, and of each scope and actor it names: the facts
- * its authority was read from, so the caller sees why without asking. Facts only, never advice.
- */
+/** What the record shows of where a refused command's caller stands; facts only, never advice. */
 export function standing(state: State, profile: Profile, command: Command): readonly string[] {
   const caller = command.caller;
   const lines: string[] = [];

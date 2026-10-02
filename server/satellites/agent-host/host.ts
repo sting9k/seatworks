@@ -50,12 +50,7 @@ export class PaseoHost {
     this.harness = harness;
   }
 
-  /**
-   * Starts an agent from one of the Human's Paseo agent profiles. Paseo keeps a keyed create's request and refuses the
-   * same key with a different one, and the first prompt reads the record as it is now, so a retry first looks for the
-   * agent its labels name. A create that throws is looked for the same way: found, its reply was lost; not found,
-   * Paseo refused it, and a new seat answers that. Only a lookup that throws is tried again.
-   */
+  /** Starts an agent from a Paseo agent profile; a retry or a throw first looks for the agent its labels name. */
   async create(spec: AgentSpec): Promise<{ host: string } | { failed: string } | Unavailable> {
     const api = this.link.current;
     if (!api) return UNAVAILABLE;

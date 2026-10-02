@@ -1,9 +1,6 @@
 import type { PaseoApi } from "@getpaseo/client";
 
-/**
- * Paseo's API as the plugin last received it. Paseo hands it out only with a hook or a panel call; it is one client
- * that reconnects by itself, so the latest one stays good. Until the first arrives, work that needs it waits.
- */
+/** Paseo's API as last received; it reconnects by itself, and work that needs it waits until the first arrives. */
 export class PaseoLink {
   private api: PaseoApi | null = null;
   private readonly waiting = new Set<() => void>();

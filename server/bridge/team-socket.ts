@@ -22,10 +22,7 @@ export type ProjectPort = {
 /** A line longer than this is a broken client, not a tool call: the connection is closed rather than buffered. */
 const MAX_LINE = 1024 * 1024;
 
-/**
- * Where each agent's tool server reaches the bridge: one local socket, newline-delimited JSON. The caller is the
- * agent its key belongs to, never a name in a tool's arguments (PORTS.md, Tools).
- */
+/** Where each agent's tool server reaches the bridge; the caller is the agent its key belongs to, never an argument. */
 export class TeamSocket {
   private readonly server: Server;
   private readonly sockets = new Set<Socket>();

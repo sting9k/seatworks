@@ -13,10 +13,7 @@ type Preview = {
   error?: string;
 };
 
-/**
- * Asks Paseo's own command line whether a newer release of the plugin is out: the plugin API has no call for it, and
- * the reviewed update stays Paseo's, so this only reads.
- */
+/** Asks Paseo's command line whether a newer release is out; the plugin API has no call for it, so this only reads. */
 export async function checkUpdate(pluginId: string): Promise<UpdateCheck> {
   const apply = `paseo plugin update ${pluginId}`;
   const ran = await run("paseo", ["plugin", "update", pluginId, "--check", "--json"]);

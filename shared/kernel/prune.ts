@@ -1,10 +1,7 @@
 import { HUMAN } from "../contracts/ids.ts";
 import type { State } from "./state.ts";
 
-/**
- * Keeps the state to open work (LEDGER.md §10): what is settled leaves memory and stays in the log. Nothing an open
- * obligation, attention or message still points at is removed, so pruning never closes anything (I11).
- */
+/** Keeps the state to open work; nothing an open obligation, attention or message points at is removed (I11). */
 export function prune(s: State): State {
   const owedAbout = new Set<string>();
   const parties = new Set<string>();

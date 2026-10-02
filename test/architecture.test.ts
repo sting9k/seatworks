@@ -46,11 +46,7 @@ test("the Human's surface writes no role's name of its own: it shows the names t
   assert.deepEqual(named, []);
 });
 
-/**
- * What Paseo 0.10.1's plugin compiler lets a bundle import without the plugin installing it (`compiler.js`,
- * `plugin-sdk-specifiers.js`): the SDK, zod, React and Node's own modules. Every other package, even one imported
- * for its types alone, must resolve from the plugin's directory, where the build installs no devDependency.
- */
+/** What Paseo's plugin compiler supplies; every other package a bundle imports must be installed by the build. */
 const SUPPLIED = /^(@getpaseo\/plugin(\/.*)?|zod|react|react-native|@tanstack\/react-query)$|^node:/;
 
 test("every package a bundle Paseo compiles imports, types included, is installed by the build or supplied by Paseo", () => {

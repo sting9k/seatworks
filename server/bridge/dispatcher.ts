@@ -27,10 +27,7 @@ export type Handlers = { [K in Exclude<EffectBody["kind"], "deliver">]: EffectHa
 /** Tries before an effect that keeps throwing is settled as failed and logged. */
 const MAX_ATTEMPTS = 5;
 
-/**
- * Carries a project's pending effects to their satellites and their facts back as commands (CORE.md, Dispatch).
- * Effects on different channels (one agent, one scope) run side by side; one channel runs one effect at a time.
- */
+/** Carries pending effects to their satellites and facts back as commands; one channel runs one effect at a time. */
 export class Dispatcher {
   private readonly inFlight = new Set<string>();
   private readonly busyChannels = new Set<string>();
@@ -58,10 +55,7 @@ export class Dispatcher {
     this.now = now;
   }
 
-  /**
-   * Starts every pending effect whose channel is free. After a change (a commit, Paseo's API arriving, a hold lifting)
-   * effects that waited are tried again; when only a channel freed up, they are not, or a wait would spin.
-   */
+  /** Starts each pending effect whose channel is free; waiters are retried only after a change, or one would spin. */
   kick(after: "change" | "freed" = "change"): void {
     if (this.disposed) return;
     if (after === "change") this.waiting.clear();

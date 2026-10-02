@@ -74,10 +74,7 @@ export class Line {
     return this.greeting;
   }
 
-  /**
-   * Sends a call and waits for its answer. A line that drops first is opened again and the call sent again with the
-   * same call id, which the plugin records as one command, so a call it already took is answered, not taken twice.
-   */
+  /** Sends a call and waits; a dropped line is opened again and the call resent under its id, so it is taken once. */
   async call(name: string, args: unknown): Promise<{ ok: boolean; text: string }> {
     const call = randomUUID();
     for (let tried = 0; tried < TRIES; tried++) {

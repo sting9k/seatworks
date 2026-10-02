@@ -16,10 +16,7 @@ export const ROLE_TOOLS: ReadonlySet<string> = new Set([
   ...(Object.keys(COMMANDS) as CommandType[]).filter((type) => !FACTS.has(type) && !HUMAN_ONLY.has(type)),
 ]);
 
-/**
- * What each tool is for, in the words an agent reads: what it does and what comes back, never what to do next.
- * A description names no role, so another profile uses the same words.
- */
+/** What each tool is for, in the words an agent reads; a description names no role, so any profile uses them. */
 export const DESCRIPTIONS: Record<CommandType | ReadName, string> = {
   status:
     "Your scope as the record has it: its brief with line ids, its children, what waits on whom, what you owe and are owed, spend beside the appetite. Pass `scope` to see another.",

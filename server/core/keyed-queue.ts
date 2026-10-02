@@ -1,7 +1,4 @@
-/**
- * Runs work one at a time per key, and lets a key go once its queue is empty, so a long-lived process keeps no entry
- * for a project or agent that went quiet.
- */
+/** Runs work one at a time per key, and lets a key go once its queue is empty, so a quiet project keeps no entry. */
 export class KeyedQueue<K> {
   private readonly tails = new Map<K, Promise<unknown>>();
 

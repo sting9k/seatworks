@@ -86,10 +86,7 @@ const UNREACHED = "Paseo's API has not arrived; try again in a moment";
 /** Words a delivery or a first prompt carried: their client message ids are the plugin's effect keys. */
 const OURS = /^\d+:/;
 
-/**
- * The bridge: the only place that builds the whole. It opens each project's shell, carries Paseo's hooks in as facts
- * and each effect out to its satellite, and serves the agents' tools (PORTS.md, Bridge).
- */
+/** The bridge, the only place that builds the whole: Paseo's hooks in as facts, effects out to their satellites. */
 export class Plugin {
   readonly link = new PaseoLink();
   private readonly root: string;
@@ -406,11 +403,7 @@ export class Plugin {
     return "removed" in done ? { ok: true, text: `Removed ${item.label}.` } : { ok: false, text: done.kept };
   }
 
-  /**
-   * Detaches a project and removes what the plugin made for it: its agents archived, its copies and branches deleted.
-   * Its record is kept aside, since a look back reads the log after the team is gone (P14); deleting it is a pick of
-   * its own. A copy holding unsaved work stops it before anything is touched.
-   */
+  /** Detaches a project and removes what the plugin made; its record is kept, and unsaved work stops it first. */
   private async removeProject(id: string): Promise<{ ok: boolean; text: string }> {
     const ready = await this.whenReady();
     const dir = projectDir(this.root, id);
@@ -486,10 +479,7 @@ export class Plugin {
     return { ok: true, text: `Removed the project for ${repo}; its record is kept in ${into} until you delete it.` };
   }
 
-  /**
-   * Attaches a project again after its removal stopped part way: its note back on its base, and its record saying of
-   * each agent archived meanwhile that it is gone, so no seat waits on an agent that no longer runs.
-   */
+  /** Attaches a project again after a removal stopped part way: its note back, and each archived agent said gone. */
   private async putBack(
     id: string,
     aside: string,
@@ -630,11 +620,7 @@ export class Plugin {
       );
   }
 
-  /**
-   * Catches up on what agents' hooks said while the plugin was not running (PASEO.md rule 5): a permission still waiting
-   * in its prompt, an agent archived. The plugin runs as the daemon's child, so a daemon restart is a start. A turn's
-   * end missed is read at the next one, from the actor's `seen`; the deliveries it held are tried again now.
-   */
+  /** Catches up on hooks missed while the plugin was not running: a waiting permission, an archived agent. */
   private async reconcile(ready: Ready): Promise<void> {
     for (const host of [...this.byHost.keys()]) {
       const now = await ready.host.now(host);
@@ -651,10 +637,7 @@ export class Plugin {
     return this.harnesses.get(provider) ?? null;
   }
 
-  /**
-   * The environment a reopened session of one of the plugin's agents gets back. Paseo keeps none of what the agent was
-   * started with, so it is the whole of it again: the seat, the git shim first on its PATH, and its harness's.
-   */
+  /** The environment a reopened agent session gets back whole, since Paseo keeps none of what it started with. */
   async envFor(hostId: string, provider: string): Promise<Record<string, string> | null> {
     // After a daemon restart this hook comes first, before the projects are open that know the agent.
     const ready = await within(this.whenReady(), READY_WAIT_MS).catch((error: unknown) => {

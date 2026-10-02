@@ -4,10 +4,7 @@ import type { State } from "../../../shared/kernel/state.ts";
 type Item = Extract<EffectBody, { kind: "deliver" }>["item"];
 export type Rendered = { text: string; asks: boolean; messages: string[]; attentions: string[] };
 
-/**
- * One delivery: everything queued for a reader, numbered, oldest first, each with who it is from and what it asks
- * (COMMUNICATION.md, The mailbox). Facts only: nothing here ranks, merges or advises.
- */
+/** One delivery: everything queued for a reader, numbered, oldest first; nothing here ranks, merges or advises. */
 export function renderBatch(items: readonly Item[], state: State): Rendered | null {
   const parts: { text: string; asks: boolean; message?: string; attention?: string }[] = [];
   for (const item of items) {

@@ -25,10 +25,7 @@ const SNAPSHOTS_KEPT = 2;
 /** How long a settled effect's key is kept, so a late duplicate fact is still recognised and dropped. */
 const SETTLED_KEPT_MS = 7 * 24 * 3600 * 1000;
 
-/**
- * One project's log in its own SQLite file: events appended in order, the effects they ask for written in the same
- * transaction (an outbox), and snapshots as a cache (CORE.md, The store). Synchronous, as node:sqlite is.
- */
+/** One project's log in its own SQLite file: events and the effects they ask for in one transaction. */
 export class ProjectStore {
   private readonly db: DatabaseSync;
   private readonly insertEvent: StatementSync;

@@ -1,10 +1,7 @@
 import type { ActorId, AttentionId, MessageId, ScopeId } from "./ids.ts";
 import type { Check } from "./ledger.ts";
 
-/**
- * What an event asks the world to do (LEDGER.md §8). An effect names ids, not copies: the dispatcher reads the current
- * state when it sends one, so what was delivered meanwhile is not sent twice.
- */
+/** What an event asks the world to do; it names ids, not copies, so what was delivered meanwhile is not sent twice. */
 export type EffectBody =
   | { kind: "workspace.create"; scope: ScopeId }
   | { kind: "workspace.candidate"; scope: ScopeId; commit: string }

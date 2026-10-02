@@ -69,11 +69,7 @@ export const ProfileFileSchema = z
     watch: z.string().optional(),
     /** The team's flow, a passage every role is given after its own prompt (TEMPLATE.md). */
     flow: z.string().min(1).optional(),
-    /**
-     * What every agent in an attached project reads: `note` kept between the plugin's markers in `file`, and the docs
-     * written from the record into the repository, `glossary` and `map`, which stay with it; `docs` are the lasting
-     * docs the team keeps by hand, which the plugin only points at.
-     */
+    /** What every agent in an attached project reads: the note in `file`, the docs written from the record, `docs`. */
     project: z
       .object({
         file: z.string().min(1),

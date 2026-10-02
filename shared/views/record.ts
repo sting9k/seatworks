@@ -60,10 +60,7 @@ export function chainOf(events: Iterable<Event>, finding: string): Chain | null 
   return chain;
 }
 
-/**
- * The five signals of CONCEPT-V2 §10.3, as ratios for a reader to weigh; never turned into a rule. Each is
- * `count of total`, and the definitions are the plainest the log supports.
- */
+/** The five signals of CONCEPT-V2 §10.3, as `count of total` ratios for a reader to weigh; never a rule. */
 export type Signals = {
   /** Findings on a line or scope that already had one. */
   repeatedFindings: [number, number];

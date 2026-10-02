@@ -27,10 +27,7 @@ export function safeKey(key: string): string {
   return clean === key ? key : `${clean}-${createHash("sha256").update(key).digest("hex").slice(0, 8)}`;
 }
 
-/**
- * Copies of one repository for the agents that work on it, and the merges between their branches, done with git's own
- * CLI and never inside an agent's copy (PORTS.md, Workspace).
- */
+/** Copies of one repository for its agents and the merges between their branches, never inside an agent's copy. */
 export class Workspace {
   readonly repo: string;
   readonly copies: string;
@@ -101,10 +98,7 @@ export class Workspace {
     return made.code === 0 ? { candidate: made.stdout.trim(), parentHead } : { failed: said(made) };
   }
 
-  /**
-   * Moves `branch` to `to` only from `from`: a fast-forward where the Human has it checked out and clean, otherwise a
-   * ref update git refuses once the branch has moved. Nothing written in between is written over.
-   */
+  /** Moves `branch` to `to` only from `from`, so nothing written in between is written over. */
   async advance(branch: string, from: string, to: string): Promise<Moved> {
     // Asked again after it landed, as after a crash before the result was recorded: it landed.
     if ((await sha(this.repo, `refs/heads/${branch}`)) === to) return { sha: to };
@@ -153,10 +147,7 @@ export class Workspace {
     return { removed: true };
   }
 
-  /**
-   * Each copy on disk under the copies root, the branch it stands on, and whether it holds unsaved work: uncommitted
-   * changes on a branch, which `remove` keeps. What a detached reader's copy holds was never anyone's.
-   */
+  /** Each copy on disk, its branch, and whether it holds unsaved work, which `remove` keeps. */
   async onDisk(): Promise<{ key: string; path: string; branch: string | null; unsaved: boolean }[]> {
     if (!existsSync(this.copies)) return [];
     const found = [];
@@ -187,11 +178,7 @@ export class Workspace {
     return run.code === 0 ? { removed: true } : { kept: said(run) };
   }
 
-  /**
-   * Puts `body` between `marker`'s lines in `file` on `branch`, or takes the block out when `body` is null, as one
-   * commit of that file alone made through an index of its own. Where the branch is checked out, only `file` follows
-   * it there, and only when it holds no uncommitted change: whatever else the Human has staged or changed stays so.
-   */
+  /** Puts `body` between `marker`'s lines in `file` on `branch` as one commit, leaving what the Human changed. */
   async putBlock(
     branch: string,
     file: string,
@@ -274,10 +261,7 @@ export class Workspace {
     return `${stat.stdout.trim()}\n\n${body}`;
   }
 
-  /**
-   * Which of `names` appear as whole words in code outside test paths: at a revision of the repository, or in a copy's
-   * working tree when `rev` is null. One git grep for all of them.
-   */
+  /** Which of `names` appear as whole words in code outside test paths, at a revision or in a working tree. */
   async namesIn(cwd: string, rev: string | null, names: readonly string[]): Promise<Set<string>> {
     if (names.length === 0) return new Set();
     // In a working tree, files the agent has not committed yet count too.
@@ -319,10 +303,7 @@ export class Workspace {
     return out;
   }
 
-  /**
-   * Pushes a branch to a remote, never forced: a remote that moved refuses it, and a tip that moved since the
-   * request was made is refused too, saying what it found.
-   */
+  /** Pushes a branch to a remote, never forced; a tip that moved since the request is refused, saying what it found. */
   async publish(
     branch: string,
     remote: string,
@@ -340,10 +321,7 @@ export class Workspace {
   }
 }
 
-/**
- * `text` with the block between `marker`'s lines holding `body`, added at the end when it has none, or taken out when
- * `body` is null. What is outside the block stays; a file left with nothing else is empty.
- */
+/** `text` with `marker`'s block holding `body`, or without it when `body` is null; the rest stays. */
 function withBlock(text: string, marker: string, body: string | null): string {
   const begin = `<!-- ${marker}:begin`;
   const end = `<!-- ${marker}:end -->`;

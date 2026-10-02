@@ -9,10 +9,7 @@ export function evolve(state: State, event: Event): State {
   return apply({ ...state, seq: event.seq }, event, event.at);
 }
 
-/**
- * Folds the events of one command, then lets go of what they settled. Pruning waits for the command's last event, so
- * nothing is let go between two events of one decision; the log groups events by command, so replay prunes alike.
- */
+/** Folds one command's events, then prunes: nothing is let go between two events of one decision. */
 export function foldCommand(state: State, events: readonly Event[]): State {
   return prune(events.reduce(evolve, state));
 }

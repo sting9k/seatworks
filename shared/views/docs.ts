@@ -3,10 +3,7 @@ import { HUMAN, ROOT } from "../contracts/ids.ts";
 import type { Line, Plan } from "../contracts/ledger.ts";
 import type { State } from "../kernel/state.ts";
 
-/**
- * The project's docs as the record holds them, written into its repository so they go with it: every agent reads them
- * before it plans, and they stay when the team is gone. Each is an index of what was settled, never a second store.
- */
+/** The project's docs as the record holds them, written into its repository; an index, never a second store. */
 
 const by = (l: Line) => (l.origin === HUMAN ? "the Human" : l.origin);
 
@@ -48,12 +45,7 @@ const VERDICT: Record<string, string> = {
   minor: "not worth stopping for",
 };
 
-/**
- * The project's map: where it is going, what the Human made must hold apart from what the team chose so far, what is
- * not yet known, each lane landed with its owner's report beside every finding raised in it and how it was weighed,
- * and what is still in dispute. A choice is listed as one, open to question on evidence, so no later lane takes it for
- * a requirement. None until the root has a plan.
- */
+/** The project's map: the goal, what must hold apart from what was chosen, each lane landed, what is in dispute. */
 export function mapText(events: Iterable<Event>, state: State): string | null {
   const plan = state.scopes.get(ROOT)?.plan;
   if (!plan) return null;

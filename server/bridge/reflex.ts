@@ -29,10 +29,7 @@ const MAX_QUEUED = 100;
 /** Failed calls remembered per agent for the loop count; the oldest go first. */
 const MAX_SIGNATURES = 50;
 
-/**
- * The reflex and the watch's eye: they read what the record and the agents' turns hold, ask Jev one condition at a
- * time, and record what it answered as observations the kernel routes (REFLEX.md, WATCH.md). Nothing here decides.
- */
+/** The reflex and the watch's eye: they ask Jev one condition at a time and record the answer; nothing decides. */
 export class Reflex {
   private readonly config: ReflexConfig;
   private readonly jev: () => Jev | null;
@@ -135,11 +132,7 @@ export class Reflex {
     }
   }
 
-  /**
-   * A sweep, driven by the work rather than a clock (WATCH.md, decision 4): each Watcher gathers the items of the agents
-   * it watches, and once they pass `sweep.everyChars` it is woken with a digest of them, the newest of each agent kept.
-   * An idle project gathers nothing and sends nothing.
-   */
+  /** A sweep driven by the work, not a clock: a watching agent is woken with a digest once enough has gathered. */
   private gather(project: string, actorId: string, items: readonly TurnItem[], state: State): void {
     const sweep = this.config.sweep;
     const actor = state.actors.get(actorId);
@@ -262,10 +255,7 @@ export class Reflex {
     }
   }
 
-  /**
-   * A test that mints an API (WATCH.md): the names its added lines give the code, less those the brief, the plans,
-   * the base or the agent's own code already settled. Only when some are left is Jev asked, two questions over them.
-   */
+  /** A test that mints an API: names its added lines give the code that nothing settled; only then is Jev asked. */
   private mints(project: string, actor: string, role: string, scope: string, item: TurnItem): void {
     const spec = this.config.moments.get("mints-an-api");
     const test = this.config.testPath;
@@ -295,11 +285,7 @@ export class Reflex {
     });
   }
 
-  /**
-   * A hand-back's diff, read hunk by hunk as REFLEX.md asks: the questions for test files over their hunks, those for
-   * the rest over theirs, and a minted API's two questions over the test files' added names. All go to the Lead as
-   * `judgement` evidence on the commit.
-   */
+  /** A hand-back's diff read hunk by hunk, test files and the rest apart; all go as judgement evidence on it. */
   private handBack(project: string, scope: string, actor: string, commit: string, state: State): void {
     const test = this.config.testPath;
     const mints = this.config.questions.has("mints-an-api") ? this.config.moments.get("mints-an-api") : undefined;
@@ -345,11 +331,7 @@ export class Reflex {
     );
   }
 
-  /**
-   * A check made to pass: an existing line of a test file changed or removed by an agent watched for it, in a scope
-   * whose brief does not ask for work on tests. Code sees it; the Watcher weighs it, and a removed assertion goes to
-   * the owner at once.
-   */
+  /** A check made to pass: a test file's existing line changed in a scope whose brief asks for no work on tests. */
   private madeToPass(project: string, actor: string, role: string, scope: string, item: TurnItem, state: State): void {
     const spec = this.counted("check-made-to-pass");
     const test = this.config.testPath;
@@ -610,10 +592,7 @@ function namesIn(text: string, spec: QuestionSpec): string[] {
   return [...found].slice(0, 40);
 }
 
-/**
- * The answer read as a probability of the outcome that matters, and the label chosen. A choice is weighed on the labels
- * its `matters` names, or on every label but the one the record gives (`against`), or else on its first label.
- */
+/** The answer as a probability of the outcome that matters: `matters`, every label but `against`, or the first. */
 function read(name: string, spec: QuestionSpec, a: Answer, model: string, given: string | null): Asked {
   if (a.type === "noul") return { name, spec, p: a.noul, label: null, model };
   const labels = Object.keys(spec.labels ?? {});

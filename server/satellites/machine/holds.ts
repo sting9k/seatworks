@@ -2,10 +2,7 @@ import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
-/**
- * Who holds the machine, for every project the plugin runs: a measurement in one project is spoiled by a build in
- * another as surely as by one of its own (KERNEL.md §4.8). Kept on disk so a restart keeps the hold.
- */
+/** Who holds the machine across every project, since one's build spoils another's measurement; kept on disk. */
 export class MachineHolds {
   private readonly db: DatabaseSync;
   private readonly listeners = new Set<() => void>();

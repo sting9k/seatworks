@@ -18,10 +18,7 @@ export type Submitted =
 /** A snapshot every so many events, so a restart folds little. */
 const SNAPSHOT_EVERY = 500;
 
-/**
- * One project's shell around the kernel: one writer, commands one at a time, events and their effects committed
- * together, nothing kept in memory the log does not hold (CORE.md, The shell).
- */
+/** One project's shell around the kernel: one writer, events and effects committed together, nothing off the log. */
 export class Project {
   readonly id: string;
   private state: State;

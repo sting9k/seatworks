@@ -13,10 +13,7 @@ export function agentFact(ctx: Of<"record_agent">): Refusal | undefined {
   return undefined;
 }
 
-/**
- * A turn's end: what it spent, and every attention its reader was sent and left, which climbs (LEDGER.md §7). A turn
- * the plugin's words began that failed gets them again, once: the host's error, not the reader, ended it.
- */
+/** A turn's end: what it spent and each attention left, which climbs; a failed turn's own words are sent once more. */
 export function turnFact(ctx: Of<"record_turn">): Refusal | undefined {
   const actor = ctx.state.actors.get(ctx.body.actor);
   if (actor?.status !== "seated") return undefined;
@@ -107,10 +104,7 @@ export function answerPermission(ctx: Of<"answer_permission">): Refusal | undefi
   return undefined;
 }
 
-/**
- * A permission answered in the agent host's own prompt, not through the ledger: it closes on the record as settled
- * there, with no second answer sent. One the ledger already answered has nothing left to close.
- */
+/** A permission answered in the host's own prompt closes on the record as settled there, with no second answer. */
 export function permissionSettledFact(ctx: Of<"record_permission_settled">): Refusal | undefined {
   const permission = [...ctx.state.permissions.values()].find(
     (p) => p.actor === ctx.body.actor && p.request === ctx.body.request,

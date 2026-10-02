@@ -21,10 +21,7 @@ export function refOf(id: string): string {
   return id.split(":").slice(2).join(":");
 }
 
-/**
- * What a project's team left behind: copies and branches no open scope uses, and agents whose seat ended but that Paseo
- * still keeps. A copy holding unsaved work is listed and never offered for removal.
- */
+/** What a team left behind: unused copies and branches, ended agents; a copy with unsaved work is never offered. */
 export async function leftoversOf(
   project: string,
   view: State,

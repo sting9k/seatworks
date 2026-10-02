@@ -54,10 +54,7 @@ function spawn(args: readonly string[], timeout: number, env: Readonly<Record<st
   });
 }
 
-/**
- * git as the plugin runs it, outside any agent's sandbox: no hooks, no fsmonitor, and every command the repository's
- * own config names emptied, since an agent could have planted one. The Human's global config stands.
- */
+/** git as the plugin runs it: no hooks, and every command the repository's config names emptied against a planted one. */
 export async function git(
   cwd: string,
   args: readonly string[],

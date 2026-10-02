@@ -9,10 +9,7 @@ export type Ran = { ok: boolean; steps: Step[]; summary: string };
 /** Output kept per step: its tail, where a failure says why; a long build log never sits whole in memory. */
 const TAIL_BYTES = 8 * 1024;
 
-/**
- * Runs the project's checks on one commit in a throwaway copy made for the run and removed after it, and says what
- * came of them (PORTS.md, Evidence). It never turns a failure into a pass.
- */
+/** Runs the project's checks on one commit in a throwaway copy; it never turns a failure into a pass. */
 export class EvidenceRunner {
   private readonly repo: string;
   private readonly scratch: string;

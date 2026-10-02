@@ -15,10 +15,7 @@ const TIMEOUT_MS = 15_000;
 /** The longest wait a 429 may name before the one retry; past it the event goes unread. */
 const MAX_WAIT_MS = 30_000;
 
-/**
- * Asks Jev typed questions about one state, in one call (REFLEX.md, Running it). What looks like a secret is masked
- * before the text leaves; a state past the route's budget is not cut but refused; failures follow REFLEX.md's table.
- */
+/** Asks Jev typed questions about one state in one call; secrets are masked, and a state past the budget is refused. */
 export class Jev {
   private readonly route: Route;
   private readonly key: string;

@@ -2,10 +2,7 @@ import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 
-/**
- * The key an agent's tool server shows to say which agent calls: made from one secret per installation, so nothing
- * per agent is stored and a reopened session is given back the same key. It guards against mistakes, not intent.
- */
+/** The key an agent's tool server shows, from one secret per installation; it guards against mistakes, not intent. */
 export class Keys {
   private readonly secret: Buffer;
 

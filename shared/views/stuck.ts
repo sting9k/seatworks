@@ -7,11 +7,7 @@ import type { State } from "../kernel/state.ts";
 type Pending = Effect & { readonly attempts: number };
 type Abandoned = Effect & { readonly why: string };
 
-/**
- * What looks stuck, as facts for the Human: effects the satellites keep throwing on or gave up on, open scopes with
- * nobody seated, words queued for a seated actor whose agent never started, and an actor seated in a role the
- * project's profile no longer has. It reads and changes nothing.
- */
+/** What looks stuck, as facts for the Human: effects given up on, empty seats, unread words, a role gone. */
 export function stuckOf(
   state: State,
   pending: readonly Pending[],

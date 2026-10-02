@@ -19,13 +19,7 @@ type Created = {
   labels: Record<string, string>;
 };
 
-/**
- * The part of Paseo's API the plugin uses, recording what it was asked. Agents are always between turns. As Paseo does,
- * a keyed create keeps its request and refuses the key with a different one; `loseReplies` drops that many create
- * replies after the agent is made, and the list after each, as a dropped connection would; `refuse` rejects every
- * create with that error; `configFails` and `archiveFails` reject that many
- * reads of Paseo's config and archives.
- */
+/** The part of Paseo's API the plugin uses, recording what it was asked; `gate` makes creates and reads fail. */
 export function fakePaseo(pluginDir: string, provider = "claude") {
   const created: Created[] = [];
   const sent: Sent[] = [];

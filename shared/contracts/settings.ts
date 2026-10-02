@@ -1,10 +1,7 @@
 import { defineSettings } from "@getpaseo/plugin";
 import { z } from "zod";
 
-/**
- * Where the reflex asks Jev, and with what key: host-scoped plugin settings, kept by Paseo per installation. The key is
- * never logged or shown back; installing it is the Human's consent to send the record's text to that route.
- */
+/** Where the reflex asks Jev and with what key; installing the key is the Human's consent to send text there. */
 export const reflexSettings = defineSettings({
   id: "reflex",
   scope: "host",

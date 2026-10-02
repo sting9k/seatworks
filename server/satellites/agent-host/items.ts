@@ -11,10 +11,7 @@ export type TurnItem = {
   readonly path: string | null;
 };
 
-/**
- * What one turn showed: its items, the words a person typed into it, the plugin's words that began it if they did, and
- * how much of the history is now read.
- */
+/** What one turn showed: its items, a person's typed words, the plugin's words that began it, and what is now read. */
 export type Turn = {
   readonly items: readonly TurnItem[];
   readonly typed: readonly string[];
@@ -22,11 +19,7 @@ export type Turn = {
   readonly seen: number;
 };
 
-/**
- * The turn that just ended. Paseo's hook hands over the agent's whole history, so the turn is what follows the `seen`
- * items read at the last turn's end. A history shorter than that was rebuilt from the agent's own transcript, and the
- * turn is read from its last prompt. A user message is typed by a person when its client id is not one the plugin gave.
- */
+/** The turn that just ended: what follows the `seen` items, or from its last prompt when the history was rebuilt. */
 export function turnOf(
   timeline: readonly AgentTimelineItem[],
   seen: number,
