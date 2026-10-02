@@ -7,7 +7,10 @@ import { loadReflex } from "../../server/satellites/reflex/config.ts";
 import type { Jev } from "../../server/satellites/reflex/jev.ts";
 import { SHA, brief, plan, team } from "../kernel/ledger.ts";
 
-const config = loadReflex(join(import.meta.dirname, "../../profile/slp"))!;
+const config = loadReflex(join(import.meta.dirname, "../../profile/slp"), {
+  reflex: "reflex.yaml",
+  watch: "watch.yaml",
+})!;
 
 /** Jev answering every question it is asked with the probability the test names. */
 function fakeJev(p: number) {

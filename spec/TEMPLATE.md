@@ -135,6 +135,16 @@ back, as `WATCH.md` says of every moment.
 As `REFLEX.md`, Asking well, and `WATCH.md` say. A threshold belongs to a question's wording and the model that
 answered it, so a question reworded in a template has not earned its `tell` and goes no further than a candidate.
 
+`profile.yaml` names the file of each under `reflex` and `watch`, and the plugin reads the file named: a profile
+that names neither asks nothing and watches for nothing.
+
+### What a template never chooses
+
+Where the reflex sends its questions, and what is masked before they leave. The routes are the plugin's
+(`harness/jev.json`) and so are the patterns of what looks like a secret (`REFLEX.md`). The Human's key was given to
+the plugin they installed, for the hosts it names; a template that could name a host would be handed that key and the
+record's text with nobody told.
+
 ### `template.json`
 
 | Field         | Holds                                                                                                |

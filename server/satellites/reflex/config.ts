@@ -1,11 +1,17 @@
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parse } from "yaml";
-import { type QuestionSpec, ReflexFileSchema, type Route, WatchFileSchema } from "../../../shared/contracts/reflex.ts";
+import {
+  type QuestionSpec,
+  ReflexFileSchema,
+  type Route,
+  RoutesFileSchema,
+  WatchFileSchema,
+} from "../../../shared/contracts/reflex.ts";
+import { SECRETS } from "../../../shared/contracts/secrets.ts";
 
 export type ReflexConfig = {
-  readonly routes: Readonly<Record<string, Route>>;
   readonly mask: readonly RegExp[];
   readonly questions: ReadonlyMap<string, QuestionSpec>;
   readonly moments: ReadonlyMap<string, QuestionSpec>;
@@ -18,19 +24,22 @@ export type ReflexConfig = {
   readonly sweep: { readonly everyChars: number; readonly digestChars: number } | null;
 };
 
-/** The profile's active questions and moments; one not in its file's `active` list is written but not asked. */
-export function loadReflex(dir: string): ReflexConfig | null {
-  const reflexFile = join(dir, "reflex.yaml");
-  if (!existsSync(reflexFile)) return null;
-  const reflex = ReflexFileSchema.parse(parse(readFileSync(reflexFile, "utf8")));
-  const watchFile = join(dir, "watch.yaml");
-  const watch = existsSync(watchFile) ? WatchFileSchema.parse(parse(readFileSync(watchFile, "utf8"))) : null;
+/**
+ * The profile's active questions and moments, from the files its `profile.yaml` names; one not in its file's `active`
+ * list is written but not asked. A profile that names neither file asks nothing.
+ */
+export function loadReflex(
+  dir: string,
+  named: { readonly reflex: string | null; readonly watch: string | null },
+): ReflexConfig | null {
+  if (named.reflex === null && named.watch === null) return null;
+  const reflex = named.reflex === null ? null : ReflexFileSchema.parse(read(join(dir, named.reflex)));
+  const watch = named.watch === null ? null : WatchFileSchema.parse(read(join(dir, named.watch)));
   const pick = (all: Record<string, QuestionSpec>, active: readonly string[]) =>
     new Map(active.flatMap((name) => (all[name] ? [[name, all[name]] as const] : [])));
   return {
-    routes: reflex.routes,
-    mask: reflex.mask.map((p) => new RegExp(p, "g")),
-    questions: pick(reflex.questions, reflex.active),
+    mask: SECRETS.map((p) => new RegExp(p, "g")),
+    questions: reflex ? pick(reflex.questions, reflex.active) : new Map(),
     moments: watch ? pick(watch.moments, watch.active) : new Map(),
     itemChars: watch?.item.chars ?? 1500,
     repeats: watch?.facts.repeats ?? 3,
@@ -39,6 +48,14 @@ export function loadReflex(dir: string): ReflexConfig | null {
     testPath: watch?.facts.testPath ? new RegExp(watch.facts.testPath) : null,
     sweep: watch?.sweep ?? null,
   };
+}
+
+const read = (path: string): unknown => parse(readFileSync(path, "utf8"));
+
+/** The routes the plugin ships, by the name its settings give each (`harness/jev.json`). */
+export function loadRoutes(pluginDir: string): Readonly<Record<string, Route>> {
+  const file = join(pluginDir, "harness", "jev.json");
+  return RoutesFileSchema.parse(JSON.parse(readFileSync(file, "utf8"))).routes;
 }
 
 /** The hash a threshold is earned for: the question's words and every outcome's description. */

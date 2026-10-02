@@ -25,8 +25,6 @@ export type Template = {
   /** Every skill the template carries, wired to a role or not. */
   readonly skills: ReadonlyMap<string, Skill>;
   readonly steps: readonly Step[];
-  /** What looks like a secret, as the template's own reflex masks it before any text leaves a machine. */
-  readonly mask: readonly string[];
   readonly questions: readonly Asked[];
   readonly moments: readonly Asked[];
 };
@@ -69,7 +67,6 @@ export function readTemplate(files: TemplateFiles): Read {
       profile: resolved.profile,
       skills,
       steps: about.value.editor?.steps ?? [],
-      mask: reflex?.value.mask ?? [],
       questions: asked(reflex?.value.questions ?? {}, reflex?.value.active ?? []),
       moments: asked(watch?.value.moments ?? {}, watch?.value.active ?? []),
     },

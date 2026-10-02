@@ -1,5 +1,5 @@
-# The SLP profile's reflex (spec/REFLEX.md): the questions asked of the record's events, the routes, and what code
-# settles before Jev is asked. The watch's questions are in watch.yaml, the project's rules in its own rules.yaml.
+# The SLP profile's reflex (spec/REFLEX.md): the questions asked of the record's events, and what code settles
+# before Jev is asked. Where Jev is reached and what is masked on the way are the plugin's, not a profile's. The watch's questions are in watch.yaml, the project's rules in its own rules.yaml.
 #
 # `on` names a kernel event (KERNEL §7); `turn_ended` questions are asked of the turn's last words.
 #
@@ -27,26 +27,6 @@ active:
   - human-words
   - words-only
   - red-check
-
-routes:
-  openrouter:
-    endpoint: https://openrouter.ai/api/v1/systemone
-    model: typesafe/jev-1.13
-    budget: 32000
-    body: { provider: { data_collection: deny } }
-  typesafe:
-    endpoint: https://api.typesafe.ai/v1/systemone
-    model: jev-1.13.0
-    budget: 32000
-
-# Replaced before any text leaves the machine (from V1's catalog).
-mask:
-  - "AKIA[0-9A-Z]{16}"
-  - "-----BEGIN [A-Z ]*PRIVATE KEY-----"
-  - "\\bgh[pousr]_[A-Za-z0-9]{36,}"
-  - "\\bsk-[A-Za-z0-9_-]{20,}"
-  - "\\bxox[abprs]-[A-Za-z0-9-]{10,}"
-  - "\\bAIza[0-9A-Za-z_-]{35}"
 
 # A failed check whose log matches one of these failed on the environment; nothing is asked.
 environment:

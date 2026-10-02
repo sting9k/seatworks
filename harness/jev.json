@@ -1,0 +1,15 @@
+{
+  "routes": {
+    "openrouter": {
+      "endpoint": "https://openrouter.ai/api/v1/systemone",
+      "model": "typesafe/jev-1.13",
+      "budget": 32000,
+      "body": { "provider": { "data_collection": "deny" } }
+    },
+    "typesafe": {
+      "endpoint": "https://api.typesafe.ai/v1/systemone",
+      "model": "jev-1.13.0",
+      "budget": 32000
+    }
+  }
+}

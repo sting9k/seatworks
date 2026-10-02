@@ -1,4 +1,5 @@
 import { settingsOf } from "../../shared/contracts/profile.ts";
+import { SECRETS } from "../../shared/contracts/secrets.ts";
 import type { Asked, Template } from "./read-template.ts";
 import { TOOL_GROUPS } from "./tool-groups.ts";
 import { earnedOf } from "./wording.ts";
@@ -50,7 +51,7 @@ export function notesOf(template: Template, opened: Template): Note[] {
         say(`it points at ${path!}, which is not beside it`);
   }
 
-  const secret = template.mask.map((pattern) => new RegExp(pattern));
+  const secret = SECRETS.map((pattern) => new RegExp(pattern));
   for (const [name, server] of Object.entries(template.file.servers)) {
     const say = (says: string) => notes.push({ node: `server:${name}`, says });
     const settings = settingsOf(server);

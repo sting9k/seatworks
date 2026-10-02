@@ -191,7 +191,7 @@ of them in a panel of the rail. A note stops nothing, neither a change nor an ex
 - A question or a moment that asks of a backticked field not in its `state`, or lacks the description of an outcome.
 - A prompt, a skill, a question, a moment or a server that still holds a skeleton's words.
 - An outside server no role is given; and one whose settings hold what looks like a secret, by the patterns the
-  template's own reflex masks before text leaves a machine. A secret is named as a variable, never written.
+  plugin masks before text leaves a machine. A secret is named as a variable, never written.
 - A question or a moment whose words changed since its threshold was earned: it is not yet earned again. A threshold
   is earned for a hash of the wording (`REFLEX.md`). The plugin makes that hash with Node's own SHA-256, which a page
   has only by waiting on it, so the page makes the same hash in plain code, held to Node's and to the plugin's by

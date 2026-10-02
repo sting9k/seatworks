@@ -37,18 +37,22 @@ const RouteSchema = z.object({
 });
 export type Route = z.infer<typeof RouteSchema>;
 
-/** `reflex.yaml`: the questions asked of the record's events, and the routes they are sent by. */
+/**
+ * The routes the reflex asks by, each named as the plugin's settings name it. They are the plugin's own, in
+ * `harness/jev.json`: the Human's key goes where the plugin they installed says, never where a profile does.
+ */
+export const RoutesFileSchema = z.object({ routes: z.record(z.string(), RouteSchema) }).strict();
+
+/** The questions a profile asks of the record's events, in the file its `reflex` names. */
 export const ReflexFileSchema = z
   .object({
     active: z.array(z.string()).default([]),
-    routes: z.record(z.string(), RouteSchema),
-    mask: z.array(z.string()).default([]),
     environment: z.array(z.string()).default([]),
     questions: z.record(z.string(), QuestionSchema).default({}),
   })
   .loose();
 
-/** `watch.yaml`: the moments, and what the eye counts in code. */
+/** The moments a profile watches for, and what the eye counts in code, in the file its `watch` names. */
 export const WatchFileSchema = z
   .object({
     active: z.array(z.string()).default([]),

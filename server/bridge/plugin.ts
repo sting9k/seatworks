@@ -33,7 +33,8 @@ import { EvidenceRunner } from "../satellites/evidence/runner.ts";
 import { MachineHolds } from "../satellites/machine/holds.ts";
 import { ProjectStore } from "../satellites/store/project-store.ts";
 import { turnOf } from "../satellites/agent-host/items.ts";
-import { loadReflex } from "../satellites/reflex/config.ts";
+import type { Route } from "../../shared/contracts/reflex.ts";
+import { loadReflex, loadRoutes } from "../satellites/reflex/config.ts";
 import { Jev } from "../satellites/reflex/jev.ts";
 import { git } from "../satellites/workspace/git.ts";
 import { Workspace } from "../satellites/workspace/workspace.ts";
@@ -63,12 +64,20 @@ type Runtime = {
   dispatcher: Dispatcher;
   workspace: Workspace;
   wiring: Wiring;
-  /** The profile's own reflex: its questions, its moments, the routes they are asked by. */
+  /** The profile's own reflex: its questions and its moments, asked by the plugin's routes. */
   reflex: Reflex | null;
   stops: (() => void)[];
   lastActive: number;
 };
-type Ready = { dir: string; host: PaseoHost; shimDir: string; socket: TeamSocket; socketPath: string };
+type Ready = {
+  dir: string;
+  host: PaseoHost;
+  shimDir: string;
+  socket: TeamSocket;
+  socketPath: string;
+  /** Where the reflex asks, by the name the plugin's settings give each route. */
+  routes: Readonly<Record<string, Route>>;
+};
 
 /** Words a delivery or a first prompt carried: their client message ids are the plugin's effect keys. */
 const OURS = /^\d+:/;
@@ -173,7 +182,7 @@ export class Plugin {
         : join(this.root, "team.sock");
     const socket = new TeamSocket(socketPath, this.keys, (id) => this.port(id));
     await socket.listen();
-    const ready: Ready = { dir, host, shimDir, socket, socketPath };
+    const ready: Ready = { dir, host, shimDir, socket, socketPath, routes: loadRoutes(dir) };
     this.readyNow = ready;
     const projects = join(this.root, "projects");
     for (const id of existsSync(projects) ? readdirSync(projects) : [])
@@ -739,7 +748,7 @@ export class Plugin {
     };
     const handlers = handlersFor(wiring);
     const dispatcher = new Dispatcher(project, store, handlers, () => this.holds.held());
-    const reflex = this.reflexFor(bundle);
+    const reflex = this.reflexFor(bundle, ready.routes);
     const runtime: Runtime = {
       project,
       store,
@@ -770,15 +779,18 @@ export class Plugin {
     return runtime;
   }
 
-  /** A profile's reflex, asking by the route and key of the plugin's settings; none when the profile asks nothing. */
-  private reflexFor(bundle: Bundle): Reflex | null {
-    const config = loadReflex(bundle.dir);
+  /**
+   * A profile's reflex, asking by the plugin's own route and the key of its settings; none when the profile asks
+   * nothing. The profile words the questions and never says where they are sent.
+   */
+  private reflexFor(bundle: Bundle, routes: Readonly<Record<string, Route>>): Reflex | null {
+    const config = loadReflex(bundle.dir, bundle.asks);
     if (!config) return null;
     let jev: { for: string; client: Jev } | null = null;
     return new Reflex(
       config,
       () => {
-        const route = config.routes[this.reflexKey.route];
+        const route = routes[this.reflexKey.route];
         if (!route || this.reflexKey.key === "") return null;
         const id = `${this.reflexKey.route}:${this.reflexKey.key}`;
         if (jev?.for !== id) jev = { for: id, client: new Jev(route, this.reflexKey.key, config.mask) };

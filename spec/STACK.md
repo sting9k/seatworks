@@ -31,7 +31,9 @@ nothing but Paseo, Jev's key and git. Every part is either bundled by Paseo itse
 | RPC between surface and daemon    | zod schemas in `shared/`            | Paseo's own contract form                                                  |
 | Profile, questions, moments, rules | YAML                               | Read and edited by people; validated against zod schemas when loaded       |
 | Prompts and skills                | Markdown                            | What agents read                                                           |
-| Patterns: masks, environment failures, minted names | Regular expressions, as data | Code first, before any model is asked                                |
+| Patterns: environment failures, minted names | Regular expressions, as profile data | Code first, before any model is asked                             |
+| Patterns: what looks like a secret | Regular expressions in `shared/contracts/secrets.ts` | The plugin's own, so every profile masks the same               |
+| The reflex's routes               | JSON in `harness/jev.json`          | The plugin's own: where the Human's key is sent is never a profile's to say |
 | Codex's shared settings, Oh My Pi's agent directory | TOML, YAML and JSON files, shipped as they are | Each agent's own format, written once, not generated        |
 | Evidence steps                    | The project's own commands          | The project decides how it is checked                                      |
 | Template editor                   | TypeScript and React in `editor/`, on React Flow, laid out by dagre, Markdown shown by markdown-it, built by Vite | A web page of its own, outside what Paseo bundles (`EDITOR.md`). It imports `shared/contracts`, so it reads a profile with the schemas the plugin loads it with |

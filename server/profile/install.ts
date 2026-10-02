@@ -48,7 +48,7 @@ function staged(
   let bundle: Bundle;
   try {
     bundle = loadBundle(dir);
-    loadReflex(dir);
+    loadReflex(dir, bundle.asks);
   } catch (error) {
     rmSync(dir, { recursive: true, force: true });
     return { ok: false, says: `it does not load: ${error instanceof Error ? error.message : String(error)}` };

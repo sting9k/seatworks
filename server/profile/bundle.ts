@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parse } from "yaml";
 import {
@@ -25,6 +25,8 @@ export type Bundle = {
   /** The outside servers each role is given; a role given none has no entry. */
   readonly servers: ReadonlyMap<string, readonly Grant[]>;
   readonly environment: readonly string[];
+  /** The files the profile names for its questions and its moments, each within `dir`; none when it names none. */
+  readonly asks: { readonly reflex: string | null; readonly watch: string | null };
   /** The note an attached project's instruction file carries, with `{branches}` and `{base}` to fill. */
   readonly project: {
     readonly file: string;
@@ -62,9 +64,10 @@ export function loadBundle(dir: string): Bundle {
     }));
     if (grants.length > 0) servers.set(name, grants);
   }
-  const reflexFile = file.reflex ? join(dir, file.reflex) : null;
-  const reflex = reflexFile && existsSync(reflexFile) ? (parse(readFileSync(reflexFile, "utf8")) as { environment?: unknown }) : {};
-  const environment = Array.isArray(reflex.environment) ? reflex.environment.filter((p): p is string => typeof p === "string") : [];
+  const reflex = file.reflex ? (parse(readFileSync(join(dir, file.reflex), "utf8")) as { environment?: unknown }) : {};
+  const environment = Array.isArray(reflex.environment)
+    ? reflex.environment.filter((p): p is string => typeof p === "string")
+    : [];
   const project = file.project
     ? {
         file: file.project.file,
@@ -83,6 +86,7 @@ export function loadBundle(dir: string): Bundle {
     flow: file.flow ? readFileSync(join(dir, file.flow), "utf8") : null,
     skills,
     environment,
+    asks: { reflex: file.reflex ?? null, watch: file.watch ?? null },
     project,
   };
 }

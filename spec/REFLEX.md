@@ -188,7 +188,8 @@ One client for the project, behind the reflex port. A call goes through the same
 1. **Gather.** An event, an item or a hand-back names the questions its profile rows ask.
 2. **Group by state.** Questions that read the same fields go in one call: the state is paid for once, and twenty
    questions cost about what one does. Questions that read different fields go in separate calls, side by side.
-3. **Mask.** What looks like a secret is replaced before any text leaves. The patterns are data, taken from V1's.
+3. **Mask.** What looks like a secret is replaced before any text leaves. The patterns are taken from V1's and are
+   the plugin's own (`shared/contracts/secrets.ts`), so no profile can leave one out.
 4. **Fit.** The state and the longest question must fit the route's budget, the smaller of what the route lists
    (32k on OpenRouter). The context around the subject is fitted in stages (Asking well). A subject that alone does
    not fit is not cut: it is recorded `too large`, and a diff is asked hunk by hunk.
@@ -213,7 +214,9 @@ missing.
 **Setup, and failing open.** Jev is a requirement of Seatworks: the plugin's setup asks for the route and the key, and
 installing Seatworks with them is the Human's consent to send the record's text and the agents' words to Jev's host, through
 OpenRouter with data collection denied unless they choose TypeSafe's own API. The key lives in the plugin's settings
-and is never written to a log.
+and is never written to a log. That consent is to the plugin's routes, so a profile words the questions and never
+says where they are sent: a template the Human installs cannot point their key or their record's text at a host of
+its own (`TEMPLATE.md`, What a template never chooses).
 
 The reflex is advisory: it decides nothing (I12), so it is a soft dependency and fails open. A key missing, refused
 or out of credit never stops an agent from being seated or a command from running. It raises a standing alarm on the
@@ -306,7 +309,7 @@ ask(state, questions, model) -> Result<{ model, answers, tokens }>
 
 - Every question is answered as it was asked, or the call fails. An answer with one question missing is not what was
   asked (V1).
-- A route is data: `endpoint`, the versioned `model` id as that route names it (`typesafe/jev-1.13` on OpenRouter,
+- A route is the plugin's data, in `harness/jev.json` by the name its settings give it: `endpoint`, the versioned `model` id as that route names it (`typesafe/jev-1.13` on OpenRouter,
   `jev-1.13.0` on TypeSafe's API), the `budget`, and a `body` sent with every request, such as OpenRouter's
   `provider: { data_collection: deny }`. One adapter serves both routes, with no SDK; V1's `adapters/decisions.ts`
   is its shape: all or nothing, retried only where retrying can help, with a time limit that cuts a stalled body too.
