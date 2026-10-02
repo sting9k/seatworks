@@ -28,6 +28,8 @@ function apply(s: State, e: Event, at: string): State {
         ...s,
         project: { base: e.base, remote: e.remote, profile: e.profile, profileHash: e.profileHash, checks: [] },
       };
+    case "profile_taken":
+      return s.project ? { ...s, project: { ...s.project, profileHash: e.profileHash } } : s;
     case "scope_opened": {
       const parent = e.scope.parent === null ? undefined : s.scopes.get(e.scope.parent);
       const scopes = parent ? withEntry(s.scopes, parent.id, { ...parent, children: parent.children + 1 }) : s.scopes;

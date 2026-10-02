@@ -49,6 +49,15 @@ export const HumanViewSchema = z.object({
 });
 export type HumanView = z.infer<typeof HumanViewSchema>;
 
+/** How a project's own copy of its template stands beside the one installed: behind it, or changed by hand since. */
+const ProjectTemplateSchema = z.object({
+  name: z.string(),
+  hash: z.string(),
+  state: z.enum(["current", "behind", "uninstalled"]),
+  edited: z.boolean(),
+});
+export type ProjectTemplate = z.infer<typeof ProjectTemplateSchema>;
+
 /** Something a team left behind that nothing uses any more, or a whole project, for the Human to remove or keep. */
 export const LeftoverSchema = z.object({
   id: z.string(),
@@ -151,8 +160,22 @@ export const RPC = {
       /** What looks stuck, as facts (`shared/views/stuck.ts`). */
       stuck: z.array(z.string()),
       root: z.string(),
+      /** How the project's own copy of its template stands beside the one installed. */
+      template: ProjectTemplateSchema.nullable(),
       alarm: z.string().nullable(),
     }),
+  },
+  /** Takes the installed template's files for a project anew, for the agents seated from then on. */
+  syncTemplate: {
+    name: "seatworks.sync_template",
+    input: z.object({ project: z.string().min(1) }),
+    output: z.object({ ok: z.boolean(), text: z.string() }),
+  },
+  /** Removes an installed template from this machine; projects go on with their own copies of it. */
+  removeTemplate: {
+    name: "seatworks.remove_template",
+    input: z.object({ name: z.string().min(1) }),
+    output: z.object({ ok: z.boolean(), text: z.string() }),
   },
   projectAt: {
     name: "seatworks.project_at",

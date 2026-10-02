@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 
 /** Where the profiles the Human installed are kept, each in a directory of its name (TEMPLATE.md). */
@@ -23,6 +23,13 @@ export function templatesIn(dir: string): Listed[] {
 
 /** Every profile a project may be attached with: each the Human installed. */
 export const listProfiles = (stateRoot: string): Listed[] => templatesIn(profilesDir(stateRoot));
+
+/** Removes an installed profile; only a listed name is joined into a path, since it comes from the surface. */
+export function removeProfile(stateRoot: string, name: string): boolean {
+  if (!listProfiles(stateRoot).some((listed) => listed.name === name)) return false;
+  rmSync(join(profilesDir(stateRoot), name), { recursive: true, force: true });
+  return true;
+}
 
 /** What a profile's `template.json` calls it, when it has one that reads; the plugin needs nothing else of the file. */
 function aboutOf(path: string): { name?: string; description?: string } {

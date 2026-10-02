@@ -286,9 +286,16 @@ What the plugin reads of a profile that a template adds (`TEMPLATE.md`).
 | ----------------------------------------------------------- | ------------------------------------------------------------------- |
 | Two profiles that differ in a skill, a file beside a skill, a question, a moment or a prompt | Different hashes; two that differ only in `template.json` or `NOTICE.md`, the same |
 | A profile that names a flow and lists two docs of its own   | Every agent's standing instructions carry the flow after its role's prompt and before its skills; its first words point at the glossary, both docs and the map |
+| A project that takes its profile's files anew; the same files again | `profile_taken` with their hash, which the state then has; nothing for the hash the record already has |
 | A project opened                                            | On the record with the profile it runs, by name and by the hash of its files then |
 | Two projects attached with different profiles, and the Human's rules kept for one of them | Each project's agents get their own profile's prompts; the rules reach only the agents of their profile; a profile nobody installed is not attached |
-| A role taken out of a profile while an agent sits in it     | The project runs on; a tool the agent calls is refused, saying its role is gone from the profile, and it still reads the record; `stuck` names its seat |
+| A project attached; then the installed template changed and the plugin started again | The project runs the copy it took: an agent seated after reads the words as they were; its page says it is behind what is installed |
+| Sync on a project whose installed template changed          | An agent seated after is made from the installed files; one seated before keeps its agent; the record has the new hash, once however often Sync is pressed |
+| A role taken out of the installed template and the project synced while an agent sits in it; the template gains a role | The project runs on; a tool the agent calls is refused, saying its role is gone from the profile, and it still reads the record; `stuck` names its seat; the kernel seats the role gained |
+| Sync when the template is no longer installed, or the installed one does not load | Refused, saying which; the project runs on as it was |
+| A template removed from the machine; a name not installed, such as a path out of the profiles | No project is attached with it after; a project that runs it goes on, the plugin started again too; the second is refused |
+| A project attached again under another template's name      | It runs the one it was first attached with                          |
+| A project's own copy changed by hand                        | Said on its page; when the project is next opened the record takes the hash of the files loaded; Sync puts the installed files back |
 | A profile that names the file of its questions; and one that names none while a `reflex.yaml` lies in its directory | The questions are read from the file named; the second asks nothing |
 | A question or a moment named as asked that its file does not write | The profile does not load, saying which                          |
 | `docs/TEMPLATE-SPEC.md` read beside the code                | It names every tool a role may be given, every key of `template.json`, `profile.yaml`, a role, the project, the reflex and watch files and a question, every relation, every event a question is asked on, every state path, whom a question tells and every moment counted in code |

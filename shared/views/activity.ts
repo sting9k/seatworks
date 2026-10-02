@@ -10,6 +10,8 @@ export function activityLine(e: Event): string | null {
       return line(
         `${who} opened scope ${e.scope.id} (${e.scope.role})${e.scope.paths.length ? ` on ${e.scope.paths.join(", ")}` : ""}`,
       );
+    case "profile_taken":
+      return line(`the project took its template's files anew (${e.profileHash})`);
     case "brief_amended":
       return line(`${who} amended scope ${e.scope}'s brief to v${e.brief.version}: ${e.reason}`);
     case "plan_amended":

@@ -573,3 +573,22 @@ test("a project opened is on the record with the profile it runs, by name and by
   );
   assert.equal(ledger.state.project?.profile, "crew");
 });
+
+test("a project that takes its profile's files anew is on the record with their hash; the hash it already runs changes nothing", () => {
+  const ledger = new Ledger();
+  ledger.must(
+    ledger.human("open_project", { base: "main", profile: "crew", profileHash: "abc123", model: "slp-supervisor" }),
+  );
+
+  assert.deepEqual(ledger.must(ledger.fact("record_profile", { profileHash: "abc123" })), []);
+  const taken = ledger.must(ledger.fact("record_profile", { profileHash: "def456" }));
+
+  assert.deepEqual(
+    taken.map((e) => (e.type === "profile_taken" ? e.profileHash : e.type)),
+    ["def456"],
+  );
+  assert.deepEqual(ledger.state.project && [ledger.state.project.profile, ledger.state.project.profileHash], [
+    "crew",
+    "def456",
+  ]);
+});

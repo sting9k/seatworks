@@ -228,25 +228,51 @@ roles:
   of each template that comes with the plugin whether it is not installed, installed as it comes, or installed and
   not as this release brings it.
 - Attaching a project names its profile. With none installed no project is attached, and the reason says to install
-  one; with one, a project is attached with it at once; with more, the surface asks which. A project keeps the profile it was attached with: its name is in the
-  project's own file in the state root, and on the record beside the hash of its files when the project opened.
-- The plugin loads a profile for each project, each time the project is opened: its roles for the kernel, its
-  prompts, its reflex and its watch. What is edited in a profile (a prompt, a skill, a question, a moment) reaches the
-  agents seated once the project is next opened, which is when the plugin starts or the project wakes. That is how a
-  look back improves a way of working.
+  one; with one, a project is attached with it at once; with more, the surface asks which.
 - The Human's own rules are by profile, since they are named by role: `rules/<profile>/all.md` and
   `rules/<profile>/<role>.md`.
-- A profile edited so that the role of a seated agent is gone leaves the project running. The agent keeps the prompt it
-  was made with and reads the record as before; a tool it calls is refused, saying its role is gone from the profile;
-  and the Human's `stuck` view names the seat, until the profile has the role again or the seat is released. Stopping
-  the whole project would let one mistaken edit halt a team.
-- A project whose profile is no longer installed does not open, and the others do.
+
+## A project's own copy
+
+A project runs a copy of its template that is its own, taken when it is attached. What is installed on the machine
+is where templates are kept and changed; what a team runs is what its project took.
+
+- **One template for the life of a project.** Its name is in the project's own file in the state root, with the hash
+  of the copy the project runs. Attaching the project again under another name changes nothing; a team that is to
+  work another way is removed and attached again.
+- **The copy is kept under its hash**, `projects/<id>/profile/<hash>/`, and the files a project runs are read from
+  there alone. So what is installed may be changed, installed again or removed, and the plugin started again, with
+  no team running other words than it did. A copy is written whole before the project points at it.
+- **Sync takes the installed files anew**, on the project's page, for the agents seated from then on. An agent
+  already seated keeps the prompt it was made with, since Paseo fixes it then, and the files it was pointed at stay
+  where they were; its owner or the Human reseats it to give it the new ones. Sync takes only files that load: a
+  template no longer installed, or one that does not load, is refused with the reason, and the project runs on as it
+  was. That is how a look back improves a way of working: change the template, install it, sync the project.
+- **A role gone from the files a project took** leaves it running. An agent seated in that role keeps its prompt and
+  reads the record as before; a tool it calls is refused, saying its role is gone from the profile; and the Human's
+  `stuck` view names the seat, until the profile has the role again or the seat is released. Stopping the whole
+  project would let one mistaken edit halt a team.
+- **Removing a template** takes it off the machine, on the plugin's page. No project is attached with it after, and
+  a project that runs it goes on with its own copy, with nothing to sync from until it is installed again. The
+  Human's matching and rules for it are theirs and are left.
 
 ## The hash
 
 A bundle's hash covers every file of the profile's directory, each by its path, in the order of the paths: a skill,
 a file beside a skill, a question and a moment change what agents do as a prompt does. `template.json` and
 `NOTICE.md` are left out, since the plugin reads neither.
+
+The hash is how anyone's change is seen, with nothing kept but files and the record:
+
+| Compared                                                   | Says                                                           |
+| ---------------------------------------------------------- | -------------------------------------------------------------- |
+| The template that comes with the plugin, and the installed | Whether it is installed as it comes, or differs: changed by the Human, or brought anew by a release |
+| The installed template, and the hash a project took        | Whether the project is behind what is installed: Sync is offered |
+| The files of a project's copy, and the hash it was taken at | Whether the copy was changed by hand since: said on its page, and put back by Sync |
+| The files a project loads, and the hash on its record      | Whether the record still says what the team runs: when not, the bridge records the hash loaded |
+
+The record keeps the hash a project opened with and each one it took after (`profile_taken`), so a look back knows
+which words were in force when.
 
 ## The gallery
 

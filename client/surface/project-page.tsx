@@ -1,9 +1,9 @@
 import { TextInput } from "@getpaseo/plugin/client/react-native";
-import type { PluginSurfaceProps } from "@getpaseo/plugin/client";
-import { SettingsCard, SettingsRow, SettingsSection } from "@getpaseo/plugin/client/ui";
+import { type PluginSurfaceProps, useRpc } from "@getpaseo/plugin/client";
+import { SettingsAction, SettingsCard, SettingsRow, SettingsSection } from "@getpaseo/plugin/client/ui";
 import { useState } from "react";
 import { Text, View } from "react-native";
-import type { HumanView } from "../../shared/contracts/rpc.ts";
+import { type HumanView, type ProjectTemplate, RPC } from "../../shared/contracts/rpc.ts";
 import { AttentionCard } from "../decide/attention-card.tsx";
 import { ClaimCard } from "../decide/claim-card.tsx";
 import { PermissionCard } from "../decide/permission-card.tsx";
@@ -16,6 +16,7 @@ import { PageHeader } from "../kit/header.tsx";
 import { Dot, type Tone, toneColor } from "../kit/mark.tsx";
 import { type Tab, TabBar } from "../kit/tab-bar.tsx";
 import { FONT, RADIUS, SPACE } from "../kit/theme.ts";
+import { problemText } from "../state/problem-text.ts";
 import { useProjectView } from "../state/project-view.ts";
 import { useSeatAgents } from "../state/seat-agents.ts";
 import { nameOf } from "./home.tsx";
@@ -95,6 +96,7 @@ export function ProjectPage({
         }
       />
       <TabBar tabs={tabs} active={tab} theme={theme} onPick={setTab} />
+      {view?.template ? <TemplateRow project={project} template={view.template} onSynced={refresh} /> : null}
       {error || view?.alarm ? (
         <SettingsCard>
           {error ? <SettingsRow label="Seatworks did not answer" error={error} /> : null}
@@ -247,6 +249,54 @@ function Spend({ human, theme }: { human: HumanView; theme: Theme }) {
       Spent ${usd.toFixed(2)}
       {appetiteUsd !== null ? ` of an appetite of $${appetiteUsd}` : ""} · {tokens.toLocaleString()} tokens
     </Text>
+  );
+}
+
+/** Says when the project's own copy of its template is not the one installed, and takes the installed one on a press. */
+function TemplateRow(props: { project: string; template: ProjectTemplate; onSynced: () => void }) {
+  const { project, template, onSynced } = props;
+  const sync = useRpc(RPC.syncTemplate);
+  const [busy, setBusy] = useState(false);
+  const [said, setSaid] = useState<string | null>(null);
+  if (template.state === "current" && !template.edited) return null;
+  if (template.state === "uninstalled")
+    return (
+      <SettingsCard>
+        <SettingsRow
+          label={`${template.name} is no longer installed on this machine`}
+          hint="The project goes on with the copy it took. Install the template again to sync with it."
+        />
+      </SettingsCard>
+    );
+  const press = () => {
+    setBusy(true);
+    void sync({ project })
+      .then((answer) => {
+        setSaid(answer.ok ? null : answer.text);
+        onSynced();
+      })
+      .catch((failed: unknown) => {
+        setSaid(problemText(failed));
+      })
+      .finally(() => {
+        setBusy(false);
+      });
+  };
+  return (
+    <SettingsCard>
+      <SettingsAction
+        label={
+          template.edited
+            ? `This project's copy of ${template.name} was changed by hand`
+            : `${template.name} was changed since this project took it`
+        }
+        hint="Sync takes the installed files for agents seated from now on. An agent already seated keeps what it was made with until it is reseated."
+        error={said}
+        actionLabel={busy ? "Syncing" : "Sync"}
+        disabled={busy}
+        onPress={press}
+      />
+    </SettingsCard>
   );
 }
 

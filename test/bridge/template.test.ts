@@ -134,7 +134,7 @@ test("two projects attached with different profiles each run their own, and the 
   assert.equal(again.project, crewOne.project, "one attached already is opened again with no profile named");
 });
 
-test("a role taken out of a profile while an agent sits in it: the project runs on, the agent is told why its tools are refused, and the Human sees it", async () => {
+test("a role taken out of a profile, and the project synced, while an agent sits in it: the project runs on, the agent is told why its tools are refused, and the Human sees it", async () => {
   const root = rootWith("crew", () => undefined);
   const first = await started(root);
   const { project } = await first.plugin.openProject(repository(), "main", "crew");
@@ -150,17 +150,25 @@ test("a role taken out of a profile while an agent sits in it: the project runs 
   await first.plugin.idle();
   supervisor.close();
   const leadEnv = first.paseo.created[1]!.env;
-  await first.plugin.dispose();
 
   rewrite(join(root, "profiles", "crew", "profile.yaml"), (text) =>
     text.replace("  lead:\n", "  mate:\n").replace("spawns: [lead, peer, watcher]", "spawns: [mate, peer, watcher]"),
   );
-  const again = await started(root);
+  assert.deepEqual((await first.plugin.view(project))?.stuck, [], "the project runs its own copy until it is synced");
+  const synced = await first.plugin.syncTemplate(project);
+  assert.ok(synced.ok, synced.says);
+  const again = first;
 
   const view = await again.plugin.view(project);
   assert.ok(view);
   assert.equal(view.stuck.filter((line) => line.includes("a role the project's profile no longer has")).length, 1);
   assert.match(view.stuck.join("\n"), /a2 is seated on scope 1 in a role the project's profile no longer has/);
+  assert.deepEqual(again.paseo.archived, [], "the agent seated keeps its seat");
+  const owner = await agentTools(again.socketPath, again.paseo.created[0]!.env);
+  const brief = { goal: { text: "Tidy the tests" }, kind: "verification" };
+  const mate = await owner.call("open_scope", { parent: "root", role: "mate", paths: ["test/"], brief });
+  assert.ok(mate.ok, `the role the template gained is seated by the kernel's own reading of it: ${mate.text}`);
+  owner.close();
   const lead = await agentTools(again.socketPath, leadEnv);
   const refused = await lead.call("report", { decided: ["Nothing yet"] });
   assert.equal(refused.ok, false);

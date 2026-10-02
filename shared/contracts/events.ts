@@ -32,6 +32,7 @@ import type {
 /** Every event the kernel appends, with its payload (LEDGER.md §6). */
 export type EventBody =
   | { type: "project_opened"; base: string; remote: string | null; profile: string; profileHash: string }
+  | { type: "profile_taken"; profileHash: string }
   | { type: "scope_opened"; scope: Scope }
   | { type: "actor_seated"; actor: ActorId; role: string; scope: ScopeId; model: string }
   | { type: "workspace_ready"; scope: ScopeId; branch: string | null; head: string | null }

@@ -95,7 +95,7 @@ export function loadBundle(dir: string): Bundle {
 const UNREAD = new Set(["template.json", "NOTICE.md"]);
 
 /** One hash of everything a profile's directory makes agents do: every file by its path, in the order of the paths. */
-function hashOf(dir: string): string {
+export function hashOf(dir: string): string {
   const hash = createHash("sha256");
   const walk = (within: string): void => {
     for (const entry of readdirSync(join(dir, within), { withFileTypes: true }).sort((a, b) =>

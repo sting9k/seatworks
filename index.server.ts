@@ -115,7 +115,22 @@ export default function contribute(server: PluginServerContext) {
   server.handle(RPC.view, async (input, { paseo }) => {
     plugin.saw(paseo);
     const view = await plugin.view(input.project);
-    return { ...(view ?? { human: null, activity: [], stuck: [], root: "No such project." }), alarm: plugin.alarm };
+    const none = { human: null, activity: [], stuck: [], root: "No such project.", template: null };
+    return { ...(view ?? none), alarm: plugin.alarm };
+  });
+  server.handle(RPC.syncTemplate, async (input, { paseo }) => {
+    plugin.saw(paseo);
+    const synced = await plugin.syncTemplate(input.project);
+    return { ok: synced.ok, text: synced.ok ? `The project ${synced.says}.` : `Not synced: ${synced.says}.` };
+  });
+  server.handle(RPC.removeTemplate, (input) => {
+    const removed = plugin.removeTemplate(input.name);
+    return removed.ok
+      ? {
+          ok: true,
+          text: `${input.name} is removed from this machine. Projects that run it go on with their own copy.`,
+        }
+      : { ok: false, text: `Not removed: ${removed.says}.` };
   });
   server.handle(RPC.projectAt, (input) => ({ project: plugin.projectAt(input.dir) }));
   server.handle(RPC.record, async (input, { paseo }) => {

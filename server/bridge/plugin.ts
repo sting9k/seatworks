@@ -22,6 +22,7 @@ import type {
   Leftover,
   Preset,
   ProfileAgents,
+  ProjectTemplate,
   TemplateOffer,
   TemplateSource,
 } from "../../shared/contracts/rpc.ts";
@@ -48,8 +49,9 @@ import { Workspace } from "../satellites/workspace/workspace.ts";
 import { agentsByProfile, match, type Matching, matchingFile } from "../profile/agents.ts";
 import { type Bundle, loadBundle } from "../profile/bundle.ts";
 import { install, offerOf } from "../profile/install.ts";
+import { pin, pinnedDir, templateOf } from "../profile/pinned.ts";
 import { listPresets } from "../profile/presets.ts";
-import { listProfiles, type Listed as ListedProfile, profilePath } from "../profile/profiles.ts";
+import { listProfiles, type Listed as ListedProfile, removeProfile } from "../profile/profiles.ts";
 import { Dispatcher } from "./dispatcher.ts";
 import { type Wiring, branchesOf, handlersFor, scratchFor, seatEnv, withShim } from "./effects.ts";
 import { type Kept, leftoverId, leftoversOf, projectLeftover, refOf } from "./leftovers.ts";
@@ -73,11 +75,15 @@ type Runtime = {
   dispatcher: Dispatcher;
   workspace: Workspace;
   wiring: Wiring;
-  /** The profile's own reflex: its questions and its moments, asked by the plugin's routes. */
-  reflex: Reflex | null;
+  /** What the project runs of its profile, replaced whole when it takes the files anew. */
+  loaded: Loaded;
   stops: (() => void)[];
   lastActive: number;
 };
+/** A profile's files as a project runs them: the bundle, its reflex, and the runner that knows its environment. */
+type Loaded = { bundle: Bundle; reflex: Reflex | null; evidence: EvidenceRunner };
+/** A project's own file: its repository, its profile's name, and the hash of the copy of it the project runs. */
+type ProjectFile = { readonly repo: string; readonly profile: string; readonly hash: string };
 type Ready = {
   dir: string;
   host: PaseoHost;
@@ -87,6 +93,21 @@ type Ready = {
   /** Where the reflex asks, by the name the plugin's settings give each route. */
   routes: Readonly<Record<string, Route>>;
 };
+
+/** A project's own file; one attached before a project kept its own copy of its template is attached again. */
+function keptIn(dir: string, id: string): ProjectFile {
+  const kept = JSON.parse(readFileSync(join(dir, "project.json"), "utf8")) as Partial<ProjectFile>;
+  if (kept.repo === undefined || kept.profile === undefined || kept.hash === undefined)
+    throw new Error(
+      `project ${id} was attached before a project kept its own copy of its template: remove it and attach it again`,
+    );
+  return { repo: kept.repo, profile: kept.profile, hash: kept.hash };
+}
+
+function keep(dir: string, kept: ProjectFile): void {
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, "project.json"), JSON.stringify(kept));
+}
 
 /** A project's id: made from where its repository really is, so one repository is one project. */
 const projectIdOf = (real: string) => createHash("sha256").update(real).digest("hex").slice(0, 12);
@@ -208,6 +229,31 @@ export class Plugin {
     return ready;
   }
 
+  /** Takes the installed template's files for a project anew; agents seated from then on are made from them. */
+  async syncTemplate(project: string): Promise<{ ok: true; says: string } | { ok: false; says: string }> {
+    const ready = await this.whenReady();
+    const dir = projectDir(this.root, project);
+    if (!existsSync(join(dir, "project.json"))) return { ok: false, says: `no project ${project} is attached` };
+    const kept = keptIn(dir, project);
+    const pinned = pin(this.root, dir, kept.profile);
+    if (!pinned.ok) return pinned;
+    keep(dir, { ...kept, hash: pinned.hash });
+    const runtime = this.runtimes.get(project);
+    if (runtime) {
+      runtime.loaded = this.load(project, kept.repo, pinnedDir(dir, pinned.hash), ready);
+      runtime.project.use(runtime.loaded.bundle.profile);
+      await this.recordProfile(runtime);
+    }
+    return { ok: true, says: `runs ${kept.profile} as it is installed now (${pinned.hash})` };
+  }
+
+  /** Removes an installed template from this machine; projects run their own copies of it and go on. */
+  removeTemplate(name: string): { ok: true } | { ok: false; says: string } {
+    return removeProfile(this.root, name)
+      ? { ok: true }
+      : { ok: false, says: `no template named ${name} is installed` };
+  }
+
   /** The profiles a project may be attached with: each the Human installed. */
   profiles(): ListedProfile[] {
     return listProfiles(this.root);
@@ -279,8 +325,9 @@ export class Plugin {
     const id = projectIdOf(real);
     const dir = projectDir(this.root, id);
     if (picked.profile !== null) {
-      mkdirSync(dir, { recursive: true });
-      writeFileSync(join(dir, "project.json"), JSON.stringify({ repo: real, profile: picked.profile }));
+      const pinned = pin(this.root, dir, picked.profile);
+      if (!pinned.ok) throw new Error(pinned.says);
+      keep(dir, { repo: real, profile: picked.profile, hash: pinned.hash });
     }
     const runtime = this.open(id, ready);
     const bundle = runtime.wiring.bundle;
@@ -544,9 +591,17 @@ export class Plugin {
   }
 
   /** The Human's view of one project: what they need to know, and the last things that happened. */
-  async view(project: string): Promise<{ human: HumanView; activity: string[]; stuck: string[]; root: string } | null> {
+  async view(project: string): Promise<{
+    human: HumanView;
+    activity: string[];
+    stuck: string[];
+    root: string;
+    template: ProjectTemplate;
+  } | null> {
     const ready = await this.whenReady();
-    if (!existsSync(join(projectDir(this.root, project), "project.json"))) return null;
+    const dir = projectDir(this.root, project);
+    if (!existsSync(join(dir, "project.json"))) return null;
+    const kept = keptIn(dir, project);
     const runtime = this.runtimes.get(project) ?? this.open(project, ready);
     const activity = runtime.store
       .recent(200)
@@ -562,6 +617,7 @@ export class Plugin {
         runtime.wiring.bundle.profile,
       ),
       root: statusText(runtime.project.view, "root", null) ?? "",
+      template: templateOf(this.root, dir, kept.profile, kept.hash),
     };
   }
 
@@ -602,7 +658,7 @@ export class Plugin {
     if (!who || !runtime) return;
     const read = runtime.project.view.actors.get(who.actor)?.seen ?? 0;
     const { items, typed, began, seen } = turnOf(timeline, read, (id) => OURS.test(id));
-    runtime.reflex?.onTurn(who.project, who.actor, items, runtime.project.view);
+    runtime.loaded.reflex?.onTurn(who.project, who.actor, items, runtime.project.view);
     const usage = await ready.host.usage(hostId);
     const result = outcome.kind === "completed" ? "done" : outcome.kind === "failed" ? "failed" : "cancelled";
     for (const text of typed)
@@ -736,37 +792,32 @@ export class Plugin {
     const existing = this.runtimes.get(id);
     if (existing) return existing;
     const dir = projectDir(this.root, id);
-    const kept = JSON.parse(readFileSync(join(dir, "project.json"), "utf8")) as { repo: string; profile?: string };
-    const { repo, profile } = kept;
-    if (profile === undefined)
-      throw new Error(`project ${id} was attached before a project named its profile: remove it and attach it again`);
-    const profileDir = profilePath(this.root, profile);
-    if (profileDir === null)
-      throw new Error(
-        `project ${id} runs the profile ${profile}, which is not installed: install it on the Plugin page`,
-      );
-    // Read each time the project is opened, so what was changed in the profile reaches the agents seated after.
-    const bundle = loadBundle(profileDir);
+    const { repo, profile, hash } = keptIn(dir, id);
+    const loaded = this.load(id, repo, pinnedDir(dir, hash), ready);
     const store = new ProjectStore(join(dir, "ledger.db"));
     let project: Project;
     try {
       store.sweep(Date.now());
-      project = Project.open(id, store, bundle.profile);
+      project = Project.open(id, store, loaded.bundle.profile);
     } catch (error) {
       store.close();
       throw error;
     }
     const workspace = new Workspace(repo, join(dir, "copies"));
     const scratch = scratchFor(this.root, id);
-    mkdirSync(scratch, { recursive: true });
+    // What a profile gives is read through the runtime, so files taken anew reach every effect that follows.
     const wiring: Wiring = {
       project: id,
       workspace,
-      evidence: new EvidenceRunner(repo, join(scratch, "evidence"), bundle.environment),
+      get evidence() {
+        return runtime.loaded.evidence;
+      },
       host: ready.host,
       holds: this.holds,
       profile,
-      bundle,
+      get bundle() {
+        return runtime.loaded.bundle;
+      },
       keys: this.keys,
       team: {
         command: process.execPath,
@@ -783,14 +834,13 @@ export class Plugin {
     };
     const handlers = handlersFor(wiring);
     const dispatcher = new Dispatcher(project, store, handlers, () => this.holds.held());
-    const reflex = this.reflexFor(bundle, ready.routes);
     const runtime: Runtime = {
       project,
       store,
       dispatcher,
       workspace,
       wiring,
-      reflex,
+      loaded,
       stops: [],
       lastActive: Date.now(),
     };
@@ -798,7 +848,7 @@ export class Plugin {
     this.index(id, runtime);
     runtime.stops.push(
       project.onCommitted((events) => {
-        reflex?.onEvents(id, events, project.view);
+        runtime.loaded.reflex?.onEvents(id, events, project.view);
         runtime.lastActive = Date.now();
         this.index(id, runtime);
         dispatcher.kick();
@@ -811,7 +861,31 @@ export class Plugin {
       }),
     );
     dispatcher.kick();
+    void this.recordProfile(runtime).catch((error: unknown) => {
+      daemonLog.error(`seatworks could not record the profile project ${id} runs`, error);
+    });
     return runtime;
+  }
+
+  /** A profile's files loaded for a project from its own copy of them. */
+  private load(id: string, repo: string, dir: string, ready: Ready): Loaded {
+    if (!existsSync(join(dir, "profile.yaml")))
+      throw new Error(`project ${id} has lost its copy of its template at ${dir}: sync it on its page`);
+    const bundle = loadBundle(dir);
+    const scratch = scratchFor(this.root, id);
+    mkdirSync(scratch, { recursive: true });
+    return {
+      bundle,
+      reflex: this.reflexFor(bundle, ready.routes),
+      evidence: new EvidenceRunner(repo, join(scratch, "evidence"), bundle.environment),
+    };
+  }
+
+  /** Says on the record the hash of the files a project runs, when it is not the one the record has. */
+  private async recordProfile(runtime: Runtime): Promise<void> {
+    const hash = runtime.loaded.bundle.hash;
+    if (runtime.project.view.project === null || runtime.project.view.project.profileHash === hash) return;
+    await this.submitAs(runtime, { kind: "bridge" }, { type: "record_profile", profileHash: hash });
   }
 
   /** A profile's reflex, asked by the plugin's own route and key; none when the profile asks nothing. */

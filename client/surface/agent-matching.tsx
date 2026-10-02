@@ -11,9 +11,14 @@ import { problemText } from "../state/problem-text.ts";
 
 type Listed = { readonly profiles: readonly ProfileAgents[]; readonly available: readonly string[] };
 
-/** Matches the agent profiles each profile's roles name to the Human's own; `stamp` changes when one is installed. */
-export function AgentMatching({ theme, stamp }: { theme: PluginTheme; stamp: number }) {
+type Props = { theme: PluginTheme; stamp: number; onRemoved: () => void };
+
+/** Each installed template: its agent profiles matched to the Human's own, and its removal; `stamp` says to read again. */
+export function AgentMatching({ theme, stamp, onRemoved }: Props) {
   const ask = useRpc(RPC.agents);
+  const remove = useRpc(RPC.removeTemplate);
+  /** The template whose removal waits on a second press. */
+  const [removing, setRemoving] = useState<string | null>(null);
   const [listed, setListed] = useState<Listed | null>(null);
   const [said, setSaid] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -47,16 +52,45 @@ export function AgentMatching({ theme, stamp }: { theme: PluginTheme; stamp: num
     void read({ profile: profile.name, matching: runs === null ? matching : { ...matching, [named]: runs } });
   };
 
+  const removed = async (name: string) => {
+    setBusy(true);
+    setRemoving(null);
+    try {
+      const answer = await remove({ name });
+      setSaid(answer.ok ? null : answer.text);
+      if (answer.ok) onRemoved();
+    } catch (failed) {
+      setSaid(problemText(failed));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <>
       <SettingsSection title="Agent profiles">
         <Text style={[muted, said ? { color: theme.colors.statusDanger } : null]}>
           {said ??
-            "Each name a profile's roles give runs on the agent profile of that name in Paseo, or on one of yours that you pick here. It holds for agents seated from then on."}
+            "Each name an installed template's roles give runs on the agent profile of that name in Paseo, or on one of yours that you pick here. It holds for agents seated from then on. Removing a template takes it off this machine; a project that runs it goes on with its own copy."}
         </Text>
       </SettingsSection>
       {(listed?.profiles ?? []).map((profile) => (
-        <SettingsSection key={profile.name} title={profile.title}>
+        <SettingsSection
+          key={profile.name}
+          title={profile.title}
+          trailing={
+            <Button
+              label={removing === profile.name ? "Press again to remove" : "Remove"}
+              theme={theme}
+              tone="quiet"
+              disabled={busy}
+              onPress={() => {
+                if (removing === profile.name) void removed(profile.name);
+                else setRemoving(profile.name);
+              }}
+            />
+          }
+        >
           {profile.problem ? (
             <Text style={[muted, { color: theme.colors.statusDanger }]}>{profile.problem}</Text>
           ) : null}

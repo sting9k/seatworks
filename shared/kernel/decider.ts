@@ -66,6 +66,7 @@ const HANDLERS: Handlers = {
   record_candidate: work.candidateFact,
   record_evidence: work.evidenceFact,
   record_integration: work.integrationFact,
+  record_profile: scopes.profileFact,
   record_publish: work.publishFact,
   record_permission: host.permissionFact,
   record_permission_settled: host.permissionSettledFact,

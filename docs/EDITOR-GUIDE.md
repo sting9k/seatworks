@@ -167,8 +167,13 @@ Before the team can run:
   name in Paseo's settings.
 - Each environment variable its servers read is set where Paseo's daemon runs.
 
-A project keeps the template it was attached with. A template you install again, in place of the one a project runs,
-reaches that project's agents when it is next opened.
+A project keeps the template it was attached with, and runs a copy of its own. Changing the template later does not
+touch a running team: install the new one, then open the project's page, which says the template was changed since
+the project took it, and press **Sync**. Agents seated from then on are made from the new files; an agent already
+seated keeps what it was made with until it is reseated.
+
+To take a template off the machine, press **Remove** beside it under Agent profiles, twice. Projects that run it go
+on with their own copy.
 
 ## If something is off
 

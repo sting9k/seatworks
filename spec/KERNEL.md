@@ -26,8 +26,8 @@ The kernel:
 A profile is data: roles as sets of properties, and what each may call. Another arrangement of the team is another
 profile, with no change to the kernel. A role renamed with its properties kept behaves the same.
 
-A project runs one profile, named when the project is opened and kept on its record with the hash of its files then
-(`TEMPLATE.md`). The kernel reads neither: it is handed the profile's roles. A profile arranges a team and words what
+A project runs one profile, named when the project is opened and kept on its record with the hash of its files then,
+and with the hash of each set of them it takes after (`TEMPLATE.md`, A project's own copy). The kernel reads neither: it is handed the profile's roles. A profile arranges a team and words what
 its agents read; it never gives the kernel a reason to refuse (§1), brings no code, and does not rename a command.
 
 | Property    | Meaning                                                                                   |
@@ -226,7 +226,7 @@ A command is called by an actor and checked against its role's properties and th
 | `hand_back`        | the writer, or the owner of a scope that delegates   | Records a claim at a commit; asks for evidence on it                     |
 | `record_verdict`   | the actor of a reading scope                        | Records its verdict as evidence on its commit                            |
 | `record_evidence`  | the bridge, for a satellite's result                 | Records evidence                                                         |
-| `record_turn`, `record_workspace`, `record_agent`, `record_gone`, `record_delivery`, `record_candidate`, `record_integration`, `record_publish`, `record_permission`, `record_permission_settled`, `record_human_words`, `record_observation` | the bridge, for a fact | Records what a satellite or the agent host reported (`LEDGER.md` §5) |
+| `record_turn`, `record_workspace`, `record_agent`, `record_gone`, `record_delivery`, `record_candidate`, `record_integration`, `record_profile`, `record_publish`, `record_permission`, `record_permission_settled`, `record_human_words`, `record_observation` | the bridge, for a fact | Records what a satellite or the agent host reported (`LEDGER.md` §5) |
 | `set_checks`       | owner of the root, or the Human                      | Sets the project's checks                                                |
 | `run_checks`       | owner of the parent, or the writer                   | Runs the project's checks, or named commands, on a commit of the scope   |
 | `integrate`        | owner of the parent                                 | Brings the scope into its parent (I4)                                    |

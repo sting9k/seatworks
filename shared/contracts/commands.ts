@@ -225,6 +225,7 @@ export const COMMANDS = {
     heldMachine: z.boolean(),
   }),
   record_integration: z.object({ scope: id, result: z.union([z.object({ sha }), z.object({ refused: z.string() })]) }),
+  record_profile: z.object({ profileHash: z.string().min(1).max(100) }),
   record_publish: z.object({
     result: z.union([z.object({ sha }), z.object({ refused: z.string(), at: sha.nullable().default(null) })]),
   }),
@@ -272,6 +273,7 @@ export const FACTS: ReadonlySet<CommandType> = new Set<CommandType>([
   "record_candidate",
   "record_evidence",
   "record_integration",
+  "record_profile",
   "record_publish",
   "record_permission",
   "record_permission_settled",

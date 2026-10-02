@@ -41,7 +41,11 @@ export function PluginPage({
   const [confirming, setConfirming] = useState(false);
   const [results, setResults] = useState<string[]>([]);
   const [problem, setProblem] = useState<string | null>(null);
+  /** Counts each template installed or removed, so both lists of them read again. */
   const [installs, setInstalls] = useState(0);
+  const templatesChanged = () => {
+    setInstalls((count) => count + 1);
+  };
   const muted = { fontSize: FONT.small, color: theme.colors.foregroundMuted };
 
   const scan = async () => {
@@ -115,13 +119,8 @@ export function PluginPage({
           ))}
         </SettingsCard>
       </SettingsSection>
-      <TemplateInstall
-        theme={theme}
-        onInstalled={() => {
-          setInstalls((count) => count + 1);
-        }}
-      />
-      <AgentMatching theme={theme} stamp={installs} />
+      <TemplateInstall theme={theme} stamp={installs} onInstalled={templatesChanged} />
+      <AgentMatching theme={theme} stamp={installs} onRemoved={templatesChanged} />
       <SettingsSection
         title="Clean up"
         trailing={

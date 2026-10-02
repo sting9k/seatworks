@@ -17,8 +17,10 @@ const INSTALLED: Record<Preset["installed"], string> = {
   differs: "Installed, and not as this release brings it: installing it again puts this release's in its place.",
 };
 
+type Props = { theme: PluginTheme; stamp: number; onInstalled: () => void };
+
 /** Installs a template, one that comes with the plugin or a file on this machine: read what it brings, then agree. */
-export function TemplateInstall({ theme, onInstalled }: { theme: PluginTheme; onInstalled: () => void }) {
+export function TemplateInstall({ theme, stamp, onInstalled }: Props) {
   const read = useRpc(RPC.templateOffer);
   const install = useRpc(RPC.installTemplate);
   const list = useRpc(RPC.presets);
@@ -54,7 +56,7 @@ export function TemplateInstall({ theme, onInstalled }: { theme: PluginTheme; on
   }, [list]);
   useEffect(() => {
     void listPresets();
-  }, [listPresets]);
+  }, [listPresets, stamp]);
   const offered = (source: TemplateSource) => {
     setFrom(source);
     act(() => read({ from: source }));
@@ -159,7 +161,6 @@ export function TemplateInstall({ theme, onInstalled }: { theme: PluginTheme; on
                 act(async () => {
                   const made = await install({ from, hash: offer.hash });
                   if (made.ok) onInstalled();
-                  await listPresets();
                   return made;
                 });
               }}

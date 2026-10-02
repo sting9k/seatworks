@@ -127,11 +127,11 @@ machine, through the store.
 Shows the Human the kernel's views and the agents' own words, and takes the Human's commands.
 
 ```text
-views: whatTheHumanNeeds, sinceTheyLooked, chainOfChange, openObligations, status, signals, stuck
+views: whatTheHumanNeeds, sinceTheyLooked, chainOfChange, openObligations, status, signals, stuck, template
 commands: answer_question, send_message, hold_scope, resume_scope, amend_plan (lines of theirs), answer_permission,
           set_checks, publish
-upkeep: attach(repository, profile), profiles, presets, templateOffer(from), installTemplate(from, hash), agents(match), leftovers,
-        clean(picked), checkUpdate
+upkeep: attach(repository, profile), profiles, presets, templateOffer(from), installTemplate(from, hash),
+        removeTemplate(name), syncTemplate(project), agents(match), leftovers, clean(picked), checkUpdate
 ```
 
 - It shows only what the kernel's views and the agents said. It writes no summary of its own.

@@ -282,6 +282,7 @@ the shell and never reaches `decide`.
 | `record_candidate`     | `scope, commit, result: { candidate, parentHead } \| { conflict: paths }` | `candidate_ready` or `candidate_conflict` |
 | `record_evidence`      | `scope, subject, ok, steps, heldMachine`                                | `evidence_recorded`                 |
 | `record_integration`   | `scope, result: { sha } \| { moved } \| { failed: why }`                | `integrated` or `integration_refused` |
+| `record_profile`       | `profileHash`: the files the project now runs                                | `profile_taken`; nothing when it is the hash the record has |
 | `record_publish`       | `result: { sha } \| { refused: why, at? }`                                   | `published` or `publish_refused`    |
 | `record_permission`    | `actor, request, text`                                                  | `permission_asked`, `obligation_opened` |
 | `record_permission_settled` | `actor, request, allow`: answered in the agent's own prompt        | `permission_settled`, `obligation_closed`; nothing when the ledger answered it already |
@@ -295,6 +296,7 @@ Every event, with its payload. `evolve` handles each; an unknown type stops the 
 | Event                 | Payload                                                                                      |
 | --------------------- | -------------------------------------------------------------------------------------------- |
 | `project_opened`      | `base, remote, profile, profileHash, root: ScopeId`: the profile by its name, and the hash of its files then |
+| `profile_taken`       | `profileHash`: the project took its profile's files anew, or was found running others than the record said |
 | `scope_opened`        | `scope: Scope` (as opened)                                                                   |
 | `actor_seated`        | `actor, role, scope, model`                                                                  |
 | `workspace_ready`     | `scope, branch, head`                                                                              |

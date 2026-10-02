@@ -23,7 +23,7 @@ export class Project {
   readonly id: string;
   private state: State;
   private readonly store: ProjectStore;
-  private readonly profile: Profile;
+  private profile: Profile;
   private readonly queue = new KeyedQueue<string>();
   private readonly listeners = new Set<(events: readonly Event[]) => void>();
   private sinceSnapshot = 0;
@@ -49,6 +49,11 @@ export class Project {
     }
     if (batch.length > 0) state = foldCommand(state, batch);
     return new Project(id, store, profile, state);
+  }
+
+  /** Decides by another profile from the next command on: the project took its profile's files anew. */
+  use(profile: Profile): void {
+    this.profile = profile;
   }
 
   get view(): State {

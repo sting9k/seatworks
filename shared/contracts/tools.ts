@@ -74,6 +74,7 @@ export const DESCRIPTIONS: Record<CommandType | ReadName, string> = {
   record_candidate: "",
   record_evidence: "",
   record_integration: "",
+  record_profile: "",
   record_publish: "",
   record_permission: "",
   record_permission_settled: "",

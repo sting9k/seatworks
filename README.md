@@ -140,6 +140,10 @@ its path: you are shown what it brings (its roles, the agent profiles it names, 
 before it is installed. Under Agent profiles on the same page, match each name it gives to an agent profile you
 already have. Attaching a project then asks which template it runs.
 
+A project runs a copy of the template it was attached with, so nothing you change or install later reaches a running
+team until you press Sync on that project's page; agents seated from then on are made from the new files. A template
+can be removed from the machine on the Plugin page, and projects that run it go on.
+
 Rules of your own that should hold whatever the template says, such as how you want code written, go in
 `rules/<template>/` under the plugin's state directory (`~/.local/share/seatworks/rules/slp/` for SLP on Linux and
 macOS): `all.md` for every agent, `<role>.md` for one role (`lead.md`). Each agent made from then on reads them after

@@ -49,6 +49,13 @@ export function openProject(ctx: Of<"open_project">): Refusal | undefined {
   return undefined;
 }
 
+/** The project took its profile's files anew; the hash it already runs is nothing to record. */
+export function profileFact(ctx: Of<"record_profile">): Refusal | undefined {
+  if (ctx.state.project?.profileHash !== ctx.body.profileHash)
+    ctx.emit({ type: "profile_taken", profileHash: ctx.body.profileHash });
+  return undefined;
+}
+
 export function openChild(ctx: Of<"open_scope">): Refusal | undefined {
   const me = ctx.agent();
   if (isRefusal(me)) return me;
