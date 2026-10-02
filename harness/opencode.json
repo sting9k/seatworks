@@ -1,0 +1,24 @@
+{
+  "always": {
+    "modeId": "build",
+    "options": {
+      "permission": {
+        "read": "allow",
+        "external_directory": "allow",
+        "bash": { "paseo *": "deny" },
+        "task": "deny",
+        "question": "deny"
+      }
+    }
+  },
+  "env": {
+    "OPENCODE_CONFIG_CONTENT": {
+      "permissions": [{ "action": "paseo_*", "resource": "*", "effect": "deny" }],
+      "agents": {
+        "build": {
+          "permissions": [{ "action": "paseo_*", "resource": "*", "effect": "deny" }]
+        }
+      }
+    }
+  }
+}

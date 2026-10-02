@@ -7,7 +7,6 @@ import { after, test } from "node:test";
 import { Plugin } from "../../server/bridge/plugin.ts";
 import { agentTools } from "./agent-tools.ts";
 import { fakePaseo } from "./fake-paseo.ts";
-import { mcpClient } from "./mcp-client.ts";
 import { stateRoot } from "./state-root.ts";
 
 const pluginDir = join(import.meta.dirname, "../..");
@@ -126,48 +125,35 @@ test("a Codex agent asks nobody and starts no agent of its own, and only as a wr
   }
 });
 
-test("an Oh My Pi agent is handed no server by Paseo: its home holds the team's server, which started as that file says lists the agent's tools", async () => {
-  const human = mkdtempSync(join(tmpdir(), "sw-omp-human-"));
-  writeFileSync(join(human, "agent.db"), "the Human's logins");
-  process.env.PI_CODING_AGENT_DIR = human;
-  try {
-    const { paseo } = await openedOn("omp");
-    const made = paseo.created[0]!;
-    assert.deepEqual(made.servers, {}, "Paseo refuses an MCP server for Oh My Pi");
-    assert.deepEqual(made.approved, []);
-    assert.deepEqual(made.config, { modeId: "full", options: undefined }, "Paseo takes no options for it either");
-    const home = made.env.PI_CODING_AGENT_DIR!;
-    assert.notEqual(home, human);
-    assert.equal(realpathSync(join(home, "agent.db")), realpathSync(join(human, "agent.db")));
-    const config = JSON.parse(readFileSync(join(home, "config.yml"), "utf8")) as {
-      tools: { approval: Record<string, string> };
-      mcp: { startupTimeoutMs: number };
-    };
-    assert.deepEqual(config.tools.approval, { task: "deny", eval: "deny" }, "the tools that start agents are denied");
-    assert.equal(config.mcp.startupTimeoutMs, 0, "its first turn waits for the team's tools");
+test("an OpenCode agent asks nobody, starts no agent of its own and is shown none of Paseo's tools, when made and when reopened", async () => {
+  const { plugin, paseo, root } = await openedOn("opencode");
+  const made = paseo.created[0]!;
+  assert.ok(made.servers.team && made.approved.includes("team.status"), "OpenCode takes the team's server from Paseo");
+  assert.equal(made.config.modeId, "build", "the agent OpenCode ships for building, whatever the profile names");
+  assert.deepEqual(
+    made.config.options,
+    {
+      permission: {
+        read: "allow",
+        external_directory: "allow",
+        bash: { "paseo *": "deny" },
+        task: "deny",
+        question: "deny",
+      },
+    },
+    "nothing asks, and no subagent, question to the Human or Paseo's command line is left it",
+  );
+  // Paseo's schema for OpenCode's options has no place for a tool by name: the rule is in the config its server reads.
+  const off = { action: "paseo_*", resource: "*", effect: "deny" };
+  const inline = { permissions: [off], agents: { build: { permissions: [off] } } };
+  assert.deepEqual(JSON.parse(made.env.OPENCODE_CONFIG_CONTENT!), inline);
 
-    const { team } = (
-      JSON.parse(readFileSync(join(home, "mcp.json"), "utf8")) as {
-        mcpServers: { team: { command: string; args: string[]; env: Record<string, string> } };
-      }
-    ).mcpServers;
-    // Oh My Pi fills a value that names a variable of its own environment with that variable's value.
-    const filled = Object.fromEntries(
-      Object.entries(team.env).map(([name, value]) => [name, made.env[value] ?? value]),
-    );
-    const server = mcpClient(team.command, team.args, { PATH: process.env.PATH, ...filled });
-    try {
-      const init = await server.initialize();
-      assert.ok(init.result, JSON.stringify(init.error));
-      const listed = (await server.request("tools/list", {})).result as { tools: { name: string }[] };
-      const names = listed.tools.map((tool) => tool.name);
-      assert.ok(names.includes("status") && names.includes("open_scope"), names.join(", "));
-    } finally {
-      server.stop();
-    }
-  } finally {
-    delete process.env.PI_CODING_AGENT_DIR;
-  }
+  await plugin.dispose();
+  const restarted = new Plugin(root);
+  plugins.push(restarted);
+  restarted.saw(paseo.api);
+  const env = await restarted.envFor(made.host, "opencode");
+  assert.deepEqual(JSON.parse(env!.OPENCODE_CONFIG_CONTENT!), inline, "OpenCode's server is started again from it");
 });
 
 test("an agent reopened after a daemon restart gets its whole seat back: the git shim first on its PATH", async () => {

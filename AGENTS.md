@@ -201,6 +201,6 @@ check a fact against the installed `@getpaseo/*` types or Paseo's source, not me
   servers and pre-approved tools for Claude, Codex and OpenCode only, and refuses a create that hands them to another.
 - **The stand-in for Paseo in the tests refuses what Paseo refuses** (`test/bridge/fake-paseo.ts`). When Paseo
   changes what it takes, change the stand-in first and let the tests show what breaks.
-- **Claude Code and Pi were seen on live agents on 2 October 2026; Codex and Oh My Pi have not been.** What the live
+- **Claude Code and Pi were seen on live agents on 2 October 2026; Codex and OpenCode have not been.** What the live
   runs showed is in `spec/HARNESS.md` and `spec/PASEO.md`, Seen on a live Paseo; what only a live one can still show
   is in their To check.

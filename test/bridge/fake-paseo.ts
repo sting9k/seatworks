@@ -23,8 +23,24 @@ type Created = {
   config: { modeId?: string; options?: Record<string, unknown> };
 };
 
-/** The providers Paseo hands MCP servers and pre-approves exact tools for, as its registry has them at 0.10.2. */
+/** The providers Paseo hands MCP servers and pre-approves exact tools for, as its registry has them at 0.10.3. */
 const TAKES_SERVERS = new Set(["claude", "codex", "opencode"]);
+
+/** The permissions Paseo's schema for OpenCode's options names at 0.10.3: it is strict, and has no tool by name. */
+const OPENCODE_PERMISSIONS = new Set(
+  "read edit glob grep list bash task external_directory todowrite question webfetch websearch codesearch repo_clone repo_overview lsp doom_loop skill".split(
+    " ",
+  ),
+);
+
+/** The first key of an OpenCode agent's options that Paseo's schema refuses, if one does. */
+function refusedOption(options: Record<string, unknown>): string | undefined {
+  const outside = Object.keys(options).find((key) => key !== "permission");
+  if (outside !== undefined) return outside;
+  const permission = options.permission;
+  if (typeof permission !== "object" || permission === null) return undefined;
+  return Object.keys(permission).find((key) => !OPENCODE_PERMISSIONS.has(key));
+}
 
 /** The part of Paseo's API the plugin uses, recording what it was asked; `gate` makes creates and reads fail. */
 export function fakePaseo(
@@ -169,6 +185,8 @@ export function fakePaseo(
           );
         if (Object.keys(o.config.mcpServers ?? {}).length > 0 && !TAKES_SERVERS.has(kind))
           return Promise.reject(new Error(`Provider '${kind}' does not support MCP servers`));
+        const refused = kind === "opencode" ? refusedOption(o.config.options ?? {}) : undefined;
+        if (refused !== undefined) return Promise.reject(new Error(`Unrecognized key: "${refused}"`));
         const request = JSON.stringify(o);
         const known = byKey.get(o.idempotencyKey);
         if (known)

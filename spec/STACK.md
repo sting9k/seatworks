@@ -34,7 +34,7 @@ nothing but Paseo, Jev's key and git. Every part is either bundled by Paseo itse
 | Patterns: environment failures, minted names | Regular expressions, as profile data | Code first, before any model is asked                             |
 | Patterns: what looks like a secret | Regular expressions in `shared/contracts/secrets.ts` | The plugin's own, so every profile masks the same               |
 | The reflex's routes               | JSON in `harness/jev.json`          | The plugin's own: where the Human's key is sent is never a profile's to say |
-| Codex's shared settings, Oh My Pi's agent directory | TOML, YAML and JSON files, shipped as they are | Each agent's own format, written once, not generated        |
+| Codex's shared settings, OpenCode's inline config  | TOML and JSON, shipped as they are             | Each agent's own format, written once, not generated        |
 | Evidence steps                    | The project's own commands          | The project decides how it is checked                                      |
 | Template editor                   | TypeScript and React in `editor/`, on React Flow, laid out by dagre, Markdown shown by markdown-it, built by Vite | A web page of its own, outside what Paseo bundles (`EDITOR.md`). It imports `shared/contracts`, so it reads a profile with the schemas the plugin loads it with |
 | Tests                             | `node:test`, with fast-check for the kernel | Random sequences of commands, with every invariant checked after each; the kernel's conformance cases as ordinary tests |
@@ -72,7 +72,7 @@ server/satellites/     store, agent-host, workspace, evidence, delivery, machine
 client/                the surface and its views
 bin/                   the git shim, the team's MCP server, the gallery's build and the template check (`npm run
                        template`), run by Node as their own processes
-harness/               each agent's shipped settings, a file a provider (claude, codex, pi, omp) and pi/extension.ts
+harness/               each agent's shipped settings, a file a provider (claude, codex, pi, opencode) and pi/extension.ts
 templates/slp/         SLP, the template that comes with the plugin; installed by the Human, never run from here
 editor/                the template editor, a web page: `npm run editor` serves it, `npm run editor:build` builds it,
                        each after `npm run gallery` builds the gallery it lists from `templates/`

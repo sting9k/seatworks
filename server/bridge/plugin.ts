@@ -1066,13 +1066,18 @@ async function currentBranch(repo: string): Promise<string> {
 function harnessOf(dir: string, root: string, provider: string, places: Places): Harness | null {
   const file = join(dir, "harness", `${provider}.json`);
   if (!existsSync(file)) return null;
-  const h = JSON.parse(readFileSync(file, "utf8")) as Partial<Harness> & { home?: Home };
+  const h = JSON.parse(readFileSync(file, "utf8")) as Partial<Omit<Harness, "env">> & {
+    home?: Home;
+    env?: Record<string, unknown>;
+  };
   const home = h.home ? layHome(join(root, "homes", provider), h.home, places) : {};
+  // A variable an agent reads its config from is written in the file as that config, and handed over as its JSON.
+  const named = Object.entries(h.env ?? {}).map(([name, v]) => [name, typeof v === "string" ? v : JSON.stringify(v)]);
   return {
     always: h.always ?? {},
     writes: h.writes ?? {},
     reads: h.reads ?? {},
-    env: home,
+    env: { ...(Object.fromEntries(named) as Record<string, string>), ...home },
     servers: h.servers ?? true,
   };
 }

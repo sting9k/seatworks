@@ -1,12 +1,15 @@
 # Harness
 
-How Seatworks runs Claude Code, Codex, Pi and Oh My Pi as members of the team. Read on 29 September 2026 against Claude
-Code 2.1.284, Codex 0.158, Pi 0.87.1, Oh My Pi 18.4.3 and Paseo 0.10.1; Codex and Oh My Pi again on 2 October 2026
-against Paseo 0.10.2's source, Codex 0.154's own list of features and Oh My Pi 18.3.1's documentation.
+How Seatworks runs Claude Code, Codex, Pi and OpenCode as members of the team. Read on 29 September 2026 against Claude
+Code 2.1.284, Codex 0.158, Pi 0.87.1 and Paseo 0.10.1; Codex again on 2 October 2026 against Paseo 0.10.2's source
+and Codex 0.154's own list of features; OpenCode on 3 October 2026 against Paseo 0.10.3's source and OpenCode
+2.0.16's, both as installed.
 
 Built: a harness file for each of the four. Every test runs against a stand-in for Paseo that refuses what Paseo's
 source refuses. Claude Code and Pi were seen on live agents on 2 October 2026 (Seen on a live Paseo, below); Codex and
-Oh My Pi have not been, and what only a live one can show is under To check.
+OpenCode have not been, and what only a live one can show is under To check. Oh My Pi had a harness file until
+3 October 2026: Paseo registers its own tools with an Oh My Pi session itself, where nothing of Seatworks' can switch
+them off, so the file was removed on the owner's word and OpenCode's written.
 
 V1 wrote the same role policy five times, once in each agent's format: 55 harness files, 1,578 lines, and as many
 lines of TypeScript to lay them out, one seat directory per role, agent and project. Seatworks states the policy once and
@@ -17,9 +20,10 @@ reaches it.
 
 A role's properties (`KERNEL.md` §2) are all the harness reads. A harness file per provider, `harness/<provider>.json`,
 holds the settings each property adds (`always`, `writes`, `reads`) and, where the agent needs one, a `home` laid
-out under the plugin's state root and named to the agent through one variable. A string in it may name a place on
-the machine in braces: `{plugin}`, `{node}` (what runs the plugin), `{socket}` (where an agent's tools reach it) in a
-home's files, `{git}` (the repository's git directory) in the settings.
+out under the plugin's state root and named to the agent through one variable, or an `env` of variables its process
+is given: a string as it is, anything else as its JSON, for an agent that reads its config from a variable. A string
+in it may name a place on the machine in braces: `{plugin}`, `{node}` (what runs the plugin), `{socket}` (where an
+agent's tools reach it) in a home's files, `{git}` (the repository's git directory) in the settings.
 
 | Property  | Means for the agent                                                                            |
 | --------- | ---------------------------------------------------------------------------------------------- |
@@ -40,7 +44,7 @@ home's files, `{git}` (the repository's git directory) in the settings.
    branch: commit, merge, reset, rebase, cherry-pick, revert and am. It reads the role's properties from the
    agent's environment, so the five per-agent git deny lists of V1 go.
 
-Rules that match a command's text (Claude's `Bash(git push *)`, Codex's exec policy, Oh My Pi's `bash.patterns`)
+Rules that match a command's text (Claude's `Bash(git push *)`, Codex's exec policy, OpenCode's `shell` rules)
 are passed by `git -C`, an alias or a full path; Seatworks does not rely on them.
 
 ## Paseo's own tools and command line
@@ -56,19 +60,23 @@ can:
 | ----------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------ |
 | Claude Code | `permissions.deny` names `mcp__paseo`: every tool of the server Paseo adds leaves its context | Denied as `Bash(paseo *)`, beside the environment |
 | Codex       | The shared `config.toml` holds a server named `paseo`, switched off; the entry Paseo adds merges into it and stays off, and with none added the entry loads as it is | Forbidden by a rule in the home's `rules/`, beside the environment |
-| Pi          | None reach it: Paseo hands them as an MCP server, and Seatworks' home loads no adapter for one | The environment                                  |
-| Oh My Pi    | Not switched off: Paseo registers them with the session itself, and nothing in its home refuses a tool by where it came from | The environment                                  |
+| Pi          | None reach it: Paseo hands them as an MCP server, and only when a probe it starts with the agent's own environment finds `pi-mcp-adapter`; Seatworks' home loads no extension but its own, so the probe finds none | The environment                                  |
+| OpenCode    | Paseo's plugin registers them with OpenCode's server as `paseo_<tool>`. The config Seatworks hands that server denies `paseo_*` for every resource, which leaves a tool out of what the model is shown. The rule is written twice: for every agent, and last among `build`'s own, since a rule OpenCode reads for one agent comes after every rule for all | Denied as the `shell` rule `paseo *`, beside the environment |
 
 The environment is the guard that holds however the command is called. Every agent's own process is given
 `PASEO_HOST` naming a host that never resolves and an empty `PASEO_HOME`, when it is made and each time its session
 opens, so Paseo's command line finds no daemon and its error names the host, which says why. With both variables set
-its error tells the reader to pass `--home` or `--host`, which is why the home is left empty. The two rules that
+its error tells the reader to pass `--home` or `--host`, which is why the home is left empty. The three rules that
 match the command's text only refuse the usual form sooner, with a reason.
 
-Read against Paseo 0.10.2 as installed, Claude Code's own documentation for 2.1.280 and Codex 0.154.0. Paseo's
-command line was run against a host that does not resolve; Codex's `mcp list` and `execpolicy check` were run on the
-files as the harness writes them, alone and under the servers as Paseo hands them; no provider of Paseo's reads
-either variable. No agent was started for any of it.
+Read against Paseo 0.10.2 and 0.10.3 as installed, Claude Code's own documentation for 2.1.280, Codex 0.154.0, Pi
+0.85.1 and OpenCode 2.0.16. Paseo's command line was run against a host that does not resolve; Codex's `mcp list`
+and `execpolicy check` were run on the files as the harness writes them, alone and under the servers as Paseo hands
+them; Pi was started as Paseo's probe starts it, under Seatworks' home, and listed no command of an adapter's; an
+OpenCode server was started as Paseo starts one, with the config and the rules Paseo's own code builds from the
+harness file, a session made on it, and its agent's rules read back: the last rule for `paseo_*`, a subagent and a
+question is a denial for every resource, and the team's tools, git and a read outside the copy are allowed. No
+provider of Paseo's reads either variable. No agent was started and no model asked for any of it.
 
 ## Outside tool servers
 
@@ -80,10 +88,10 @@ its named tools approved ahead.
   author chose to start. The Human sees each server and its command before a template is installed.
 - **Paseo takes servers for three providers only.** Its registry lets Claude, Codex and OpenCode pre-approve exact
   tools, and refuses a create that carries a tool policy for any other; it refuses MCP servers for a provider that
-  cannot take them, Oh My Pi always and Pi unless the Human has `pi-mcp-adapter`, which the plugin cannot see. A
+  cannot take them, Pi among them unless the Human has `pi-mcp-adapter`, which the plugin cannot see. A
   harness file says so with `servers: false`. Paseo is then handed no server and no tool to approve, the agent's home
   gives it the team's tools, and a role given an outside server is not seated on that provider, the reason naming the
-  server. Pi and Oh My Pi are so marked.
+  server. Pi is so marked.
 - **The team's own server is marked `alwaysLoad`**, so Claude never puts the team's tools behind a tool search,
   however many a server adds beside them.
 
@@ -135,35 +143,45 @@ agent's. So Seatworks gives every Pi agent one home of its own, through `PI_CODI
 | No planted config   | `defaultProjectTrust: "never"`: Pi in RPC mode then skips a copy's `.pi` extensions and settings, so an agent cannot plant one for another |
 | Writer              | Its worktree and the git shim; nothing native confines it                                     |
 
-### Oh My Pi
+### OpenCode
 
-Paseo turns it off by default, refuses it MCP servers, a tool policy and any provider option, and cannot switch off
-its subagents, so everything is in an agent directory of Seatworks', set through `PI_CODING_AGENT_DIR`
-(`harness/omp.json`):
+OpenCode 2, which Paseo runs as a server of OpenCode's own and speaks to over its API. Paseo starts one server for
+an agent alone when the agent has a server of its own or a variable beyond the two Paseo sets, which every agent of
+a team has, so the seat's environment is the server's and its shell's. Everything a team needs is a rule of
+OpenCode's permissions: the last rule that matches decides, a session's rules come after its agent's, and a tool
+whose last rule denies every resource is left out of what the model is shown (`harness/opencode.json`).
 
 | Need                | How                                                                                           |
 | ------------------- | --------------------------------------------------------------------------------------------- |
-| Role prompt         | `systemPrompt`, which Paseo passes as `--append-system-prompt`                                |
-| Team tools          | `mcp.json` in the home, with the team's server: started by `{node}` on `bin/team.ts` with the plugin's socket. The agent's project, actor and key are named in its `env` by the variables that hold them, which Oh My Pi fills from its own environment. Its tools are named `mcp__team_<tool>` there |
-| Tools at the first turn | `mcp.startupTimeoutMs: 0` in `config.yml`: without it Oh My Pi starts a turn 250 ms after it began connecting |
-| No prompts          | `modeId: full`, which Paseo starts as `--approval-mode yolo`                                  |
-| No subagents        | `tools.approval` in `config.yml` denying `task` and `eval` (its cells can start agents and reach a shell); a denial holds in every approval mode |
-| No imported config  | `disabledProviders`: the Claude, Codex, Gemini, OpenCode and Cursor configs it would otherwise read from a copy, servers and hooks among them. `AGENTS.md` and its own `.omp/` stay read |
-| The Human's login   | `agent.db`, its store of logins, linked from their own agent directory                        |
+| Role prompt         | `systemPrompt`, which Paseo keeps as an instruction of the session                            |
+| Team tools          | `mcpServers` and `toolPolicy`: Paseo adds the server for the agent's directory and gives the session an allowing rule for each tool named |
+| The agent           | `modeId: build`, the agent OpenCode ships for building, whatever the Human's profile names: its `plan` denies edits |
+| No prompts          | `options.permission`: `read` and `external_directory` allowed, which OpenCode otherwise asks for a `.env` file and for a path outside the copy. With a tool policy Paseo answers nothing itself, so what a rule of the Human's own still asks goes to the owner above as any permission does |
+| No subagents        | `options.permission.task: deny`, which Paseo writes as OpenCode's `subagent`                  |
+| No question to a screen | `options.permission.question: deny`: a question goes through the team's tools             |
+| Paseo's own tools   | `env.OPENCODE_CONFIG_CONTENT`, the config OpenCode reads last: Paseo's schema for its options is strict and has no place for a tool by name, and it adds its own plugin to that config |
+| The Human's login and config | As they are: no home of Seatworks' own. Their providers, models, servers and plugins reach a team's agent |
+| Writer              | Its worktree and the git shim; nothing native confines it                                     |
 
-`config.yml` is written as JSON, which is YAML. Oh My Pi never confines files or network; its approvals are policy,
-not containment.
+OpenCode reads a copy's own `opencode.json` and `.opencode/`, and a rule there for the agent comes after the
+Human's. Seatworks' rule for `build` is in the config read last, so it still decides for Paseo's tools; the session's
+rules decide for the rest. `OPENCODE_DISABLE_PROJECT_CONFIG` would stop a copy's config being read at all, and with
+it the repository's `AGENTS.md`, so it is not set.
+
+The file is for OpenCode 2. Paseo still runs OpenCode 1 when that is what `opencode --version` says, and hands it
+the same config with its plugin under a key of version 1: a config of both versions is not one Seatworks has read
+OpenCode 1 take.
 
 ## Role prompts
 
-One prompt per role. An agent gets a note of its own only where its base prompt would lead the role wrong, such as
-Oh My Pi's instruction to delete incidental tests. V1's seven near-copies of the same notes go.
+One prompt per role. An agent gets a note of its own only where its base prompt would lead the role wrong; none
+does today. V1's seven near-copies of the same notes go.
 
 ## What V1 did that Seatworks drops
 
 | V1                                                          | Seatworks                                                   |
 | ----------------------------------------------------------- | ---------------------------------------------------- |
-| A seat directory per role, agent and project                | None for Claude; one shared home each for Codex, Oh My Pi and Pi |
+| A seat directory per role, agent and project                | None for Claude and OpenCode; one shared home each for Codex and Pi |
 | Claude's seat-room wrapper and forced flags                 | Paseo's options                                      |
 | Git deny lists in five formats                              | The one shim, reading the role's properties          |
 | A provider per role and agent written into Paseo's config    | None while Paseo's tools stay off, as they are by default |
@@ -194,10 +212,11 @@ Peer on Claude Code under the root.
 
 - On a live Codex: that a writer commits with the repository's git directory among its writable roots, and that
   `features.multi_agent = false` leaves it no tool to start an agent with.
-- On a live Oh My Pi: that the team's server in its home connects before the first turn with the agent's own key,
-  that `agent.db` linked carries the Human's login, and that a copy's own `.omp/` cannot plant an extension or a
-  server for the next agent, as Pi's `defaultProjectTrust` rules out.
+- On a live OpenCode: that the team's server is connected before the first turn, that the shim is first on the
+  `PATH` of its shell, that a writer commits in its worktree, and that nothing asks. Whether a plugin or a server a
+  copy's own `.opencode/` names is loaded for the next agent that works in that worktree.
 - Whether Paseo's fixed `settingSources` let a project's `.claude/settings.json` add hooks or servers to a Claude
   agent, and whether `extraArgs` can narrow them.
-- On a live Paseo with `daemon.mcp.injectIntoAgents` on: that a Claude, a Codex and a Pi agent of a team are shown
-  none of Paseo's tools, and what an Oh My Pi agent is shown, which Seatworks does not switch off.
+- On a live Paseo with `daemon.mcp.injectIntoAgents` on: that a Claude, a Codex, a Pi and an OpenCode agent of a
+  team are shown none of Paseo's tools. None has been seen there; each was read and run as far as it goes with no
+  agent started (Paseo's own tools and command line, above).

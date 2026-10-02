@@ -16,7 +16,7 @@ the team is arranged, and every word its agents read, is a **template**: plain f
 without touching the plugin. **SLP** is the template that comes with it.
 
 > **Status: in testing.** Nothing has shipped. The tests run against a stand-in for Paseo; Claude Code and Pi have
-> been run as real agents, Codex and Oh My Pi have settings shipped and have not. Read
+> been run as real agents, Codex and OpenCode have settings shipped and have not. Read
 > [What to expect](#what-to-expect).
 
 ## SLP, the template that comes with it
@@ -194,9 +194,9 @@ every agent, `<role>.md` for one role. Each agent made from then on reads them a
 ## What to expect
 
 - Agents are real and cost real money. Watch the first lanes, and set an appetite with the Supervisor.
-- **Agents.** Claude Code and Pi have been run in a team. Codex and Oh My Pi have their settings and have not been
-  run. Nothing is shipped for any other: Paseo hands the team's tools to OpenCode, with none of the plugin's guards
-  tuned for it, and refuses to make an agent of any other kind with them.
+- **Agents.** Claude Code and Pi have been run in a team. Codex and OpenCode (version 2) have their settings and
+  have not been run. Nothing is shipped for any other, Oh My Pi among them: Paseo refuses to make an agent of any
+  other kind with the team's tools.
 - **A message never lands inside an agent's turn.** It waits, and everything waiting is delivered as one message
   when the turn ends. Only you can stop a turn, with Paseo's own stop.
 - The plugin makes worktrees with git, not through Paseo's worktree setup, so a copy has no `node_modules` or `.env`

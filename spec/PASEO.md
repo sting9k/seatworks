@@ -134,7 +134,8 @@ from Paseo 0.10.1: the plugin SDK, `@getpaseo/client`, `@getpaseo/protocol`, the
 
 ## What Paseo takes for which provider
 
-Read in Paseo 0.10.2's source (`packages/server/src/server/agent`), and the same at 0.10.1:
+Read in Paseo 0.10.2's source (`packages/server/src/server/agent`), the same at 0.10.1 and, for what is said of
+OpenCode, at 0.10.3:
 
 - **A tool policy** is taken for `claude`, `codex` and `opencode` alone (`provider-registry.ts`, `PROVIDER_CONTRACTS`).
   A create that carries one for any other provider is refused: `cannot preapprove exact MCP tools`.
@@ -142,9 +143,16 @@ Read in Paseo 0.10.2's source (`packages/server/src/server/agent`), and the same
   `requireExternalMcpSupport`): Oh My Pi never does, Pi only with the Human's `pi-mcp-adapter`.
 - **Provider options** are parsed by a strict schema per provider, and refused whole for a provider that has none.
   Claude's and Codex's are in `providers/claude/options.ts` and `providers/codex/options.ts`; Pi and Oh My Pi take
-  none.
+  none. OpenCode's (`providers/opencode/options.ts`) is `permission` alone, over the permissions it lists by name:
+  no tool of a server or a plugin can be named in it.
 - **An agent's environment** given at its create reaches the provider's own process (`CODEX_HOME`,
-  `PI_CODING_AGENT_DIR`), which is how a home of Seatworks' is named to it.
+  `PI_CODING_AGENT_DIR`), which is how a home of Seatworks' is named to it. For OpenCode Paseo starts a server for
+  the agent alone when its environment holds a variable beyond the two Paseo sets or it has a server of its own
+  (`providers/opencode/v2/configuration.ts`, `requiresDedicatedV2Server`), adds its own plugin to that
+  environment's `OPENCODE_CONFIG_CONTENT`, and sets the environment as the session's shell's each time it connects.
+- **OpenCode by its version.** Paseo asks `opencode --version` and speaks to OpenCode 2 through
+  `providers/opencode/v2`, to OpenCode 1 through the older client. With a tool policy it never answers a permission
+  itself, whatever the profile's auto-accept says.
 
 So what Seatworks sends is by provider (`HARNESS.md`), and the stand-in for Paseo in the tests refuses what Paseo does.
 
@@ -174,9 +182,10 @@ On 2 October 2026, Paseo 0.10.2, a daemon run for it with a home of its own (`HA
 ## To check before building on it
 
 - Per-agent control of Paseo's tools: today it is per provider ID (`paseoTools` on a custom provider) and injection
-  is off by default. With it on, a team's Claude and Codex agents have them switched off in their harness
-  (`HARNESS.md`); an Oh My Pi agent keeps them until the Human gives its profile a provider with
-  `paseoTools.enabled: false`. Seatworks writes nothing in Paseo's config.
+  is off by default. With it on, a team's Claude, Codex and OpenCode agents have them switched off in their harness
+  and none reach a Pi agent (`HARNESS.md`). An agent of a provider Seatworks ships no harness file for keeps them
+  until the Human gives its profile a provider with `paseoTools.enabled: false`: Oh My Pi is one, since Paseo
+  registers them with its session itself. Seatworks writes nothing in Paseo's config.
 - Branch names and locking through `workspaces.create`, against what the workspace port needs.
 - That the daemon's `PATH` finds Paseo's command line, so the update check runs; when it does not, the surface says
   so and gives the command to run by hand.
