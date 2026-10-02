@@ -3,6 +3,7 @@ import type { AgentTimelineItem } from "@getpaseo/protocol/agent-types";
 import type { PaseoLink } from "./paseo-link.ts";
 import { TEAM_SERVER } from "../../../shared/contracts/ids.ts";
 import type { Server } from "../../../shared/contracts/profile.ts";
+import { withPlaces } from "../../core/home.ts";
 
 /** What an agent is started with; the agent host's own words, naming nothing of SLP (PORTS.md, Agent host). */
 export type AgentSpec = {
@@ -21,6 +22,8 @@ export type AgentSpec = {
   };
   readonly labels: Readonly<Record<string, string>>;
   readonly writes: boolean;
+  /** The repository's git directory, which a harness file names `{git}`: a writer's sandbox must let it be written. */
+  readonly gitDir: string;
   /** MCP servers beside the team's own, each with the tools of it the agent may call without being asked. */
   readonly servers: readonly {
     readonly name: string;
@@ -35,8 +38,8 @@ export type Harness = {
   reads: Partial<PaseoAgentConfig>;
   /** What the agent's process is given beside the seat's own environment, such as the home Seatworks lays out for it. */
   env: Readonly<Record<string, string>>;
-  /** Whether an agent of this provider can be given an MCP server beside the team's own (HARNESS.md). */
-  outsideServers: boolean;
+  /** Whether Paseo takes MCP servers and pre-approved tools for this provider; if not, its home gives it the team's. */
+  servers: boolean;
 };
 export type Unavailable = { unavailable: true };
 const UNAVAILABLE: Unavailable = { unavailable: true };
@@ -62,7 +65,7 @@ export class PaseoHost {
     if (!profile) return { failed: `no Paseo agent profile named ${spec.profile}: add one in Paseo's settings` };
     const harness = this.harness(profile.provider);
     const outside = spec.servers.map((given) => given.name);
-    if (outside.length > 0 && harness?.outsideServers === false)
+    if (outside.length > 0 && harness?.servers === false)
       return { failed: `an agent of ${profile.provider} cannot be given the outside server ${outside.join(", ")}` };
     const base: Json = {
       provider: profile.model ? `${profile.provider}/${profile.model}` : profile.provider,
@@ -70,31 +73,36 @@ export class PaseoHost {
       ...(profile.thinkingOptionId ? { thinkingOptionId: profile.thinkingOptionId } : {}),
       ...(profile.featureValues ? { featureValues: profile.featureValues } : {}),
     };
-    const shaped = mergeAll(base, harness?.always ?? {}, (spec.writes ? harness?.writes : harness?.reads) ?? {});
+    const added = mergeAll(harness?.always ?? {}, (spec.writes ? harness?.writes : harness?.reads) ?? {});
+    const shaped = mergeAll(base, withPlaces(added, { git: spec.gitDir }) as Json);
     // What a harness file adds is read as it is written; everything Seatworks sets itself is held to Paseo's types.
-    const config: PaseoAgentConfig = {
-      ...(shaped as Pick<PaseoAgentConfig, "provider">),
-      systemPrompt: spec.systemPrompt,
-      mcpServers: {
-        ...Object.fromEntries(spec.servers.map((given) => [given.name, given.server])),
-        // The team's tools are how the record is reached: never behind a tool search, however many a role is given.
-        [TEAM_SERVER]: {
-          type: "stdio",
-          command: spec.tools.command,
-          args: [...spec.tools.args],
-          env: { ...spec.tools.env },
-          alwaysLoad: true,
-        },
-      },
-      toolPolicy: {
-        preapproved: [
-          ...spec.tools.names.map((tool) => ({ kind: "mcp" as const, server: TEAM_SERVER, tool })),
-          ...spec.servers.flatMap((given) =>
-            given.tools.map((tool) => ({ kind: "mcp" as const, server: given.name, tool })),
-          ),
-        ],
-      },
-    };
+    const own = { ...(shaped as Pick<PaseoAgentConfig, "provider">), systemPrompt: spec.systemPrompt };
+    // Paseo refuses a create that hands either to a provider it cannot hand them to: its home has the team's tools.
+    const config: PaseoAgentConfig =
+      harness?.servers === false
+        ? own
+        : {
+            ...own,
+            mcpServers: {
+              ...Object.fromEntries(spec.servers.map((given) => [given.name, given.server])),
+              // The team's tools are how the record is reached: never behind a tool search, however many a role is given.
+              [TEAM_SERVER]: {
+                type: "stdio",
+                command: spec.tools.command,
+                args: [...spec.tools.args],
+                env: { ...spec.tools.env },
+                alwaysLoad: true,
+              },
+            },
+            toolPolicy: {
+              preapproved: [
+                ...spec.tools.names.map((tool) => ({ kind: "mcp" as const, server: TEAM_SERVER, tool })),
+                ...spec.servers.flatMap((given) =>
+                  given.tools.map((tool) => ({ kind: "mcp" as const, server: given.name, tool })),
+                ),
+              ],
+            },
+          };
     try {
       const handle = await api.agents.create({
         idempotencyKey: spec.key,

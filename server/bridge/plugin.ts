@@ -29,7 +29,7 @@ import type {
 import { humanView } from "../../shared/views/human.ts";
 import { statusText } from "../../shared/views/status.ts";
 import { stuckOf } from "../../shared/views/stuck.ts";
-import { type Home, layHome } from "../core/home.ts";
+import { type Home, type Places, layHome } from "../core/home.ts";
 import { Keys } from "../core/keys.ts";
 import { daemonLog } from "../core/logger.ts";
 import { archiveDir, projectDir } from "../core/paths.ts";
@@ -207,7 +207,7 @@ export class Plugin {
     const plugins = (await api.config.get()).config.plugins ?? {};
     const dir = plugins[PLUGIN_ID]?.path;
     if (!dir) throw new Error(`Paseo's config has no plugins.${PLUGIN_ID} with a path`);
-    const host = new PaseoHost(this.link, (provider) => this.harness(dir, provider));
+    const host = new PaseoHost(this.link, (provider) => this.harness(provider));
     const shimDir = installShim(this.root, join(dir, "bin", "git-shim.ts"));
     const socketPath =
       process.platform === "win32"
@@ -725,8 +725,12 @@ export class Plugin {
   }
 
   /** A provider's harness, laid out once per plugin process: a few providers at most. */
-  private harness(dir: string, provider: string): Harness | null {
-    if (!this.harnesses.has(provider)) this.harnesses.set(provider, harnessOf(dir, this.root, provider));
+  private harness(provider: string): Harness | null {
+    const ready = this.readyNow;
+    if (!ready) return null;
+    // What an agent's home names of this machine: the plugin, the Node that runs it, and the socket its tools reach.
+    const places = { plugin: ready.dir, node: process.execPath, socket: ready.socketPath };
+    if (!this.harnesses.has(provider)) this.harnesses.set(provider, harnessOf(ready.dir, this.root, provider, places));
     return this.harnesses.get(provider) ?? null;
   }
 
@@ -746,7 +750,7 @@ export class Plugin {
     const role = actor ? runtime.wiring.bundle.profile.roles.get(actor.role) : undefined;
     if (!actor || !scope || !role) return null;
     const { env } = seatEnv(runtime.wiring, actor.id, scope, role.writes);
-    return { ...withShim(runtime.wiring, env), ...this.harness(ready.dir, provider)?.env };
+    return { ...withShim(runtime.wiring, env), ...this.harness(provider)?.env };
   }
 
   /** Resolves once no project has an effect in flight; for tests and a clean unload. */
@@ -1002,16 +1006,16 @@ async function currentBranch(repo: string): Promise<string> {
 }
 
 /** A provider's harness file (HARNESS.md), with the home it describes laid out under the plugin's state root. */
-function harnessOf(dir: string, root: string, provider: string): Harness | null {
+function harnessOf(dir: string, root: string, provider: string, places: Places): Harness | null {
   const file = join(dir, "harness", `${provider}.json`);
   if (!existsSync(file)) return null;
   const h = JSON.parse(readFileSync(file, "utf8")) as Partial<Harness> & { home?: Home };
-  const env = h.home ? layHome(join(root, "homes", provider), h.home, dir) : {};
+  const home = h.home ? layHome(join(root, "homes", provider), h.home, places) : {};
   return {
     always: h.always ?? {},
     writes: h.writes ?? {},
     reads: h.reads ?? {},
-    env,
-    outsideServers: h.outsideServers ?? true,
+    env: home,
+    servers: h.servers ?? true,
   };
 }

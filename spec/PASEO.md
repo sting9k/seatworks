@@ -121,6 +121,22 @@ from Paseo 0.10.1: the plugin SDK, `@getpaseo/client`, `@getpaseo/protocol`, the
 - Whether a provider takes MCP servers (`supportsMcpServers`) is a capability of an agent once made; the provider
   snapshot the API lists before that carries none. So Seatworks keeps which providers cannot in its harness files.
 
+## What Paseo takes for which provider
+
+Read in Paseo 0.10.2's source (`packages/server/src/server/agent`), and the same at 0.10.1:
+
+- **A tool policy** is taken for `claude`, `codex` and `opencode` alone (`provider-registry.ts`, `PROVIDER_CONTRACTS`).
+  A create that carries one for any other provider is refused: `cannot preapprove exact MCP tools`.
+- **MCP servers** are refused for a provider whose session does not support them (`agent-manager.ts`,
+  `requireExternalMcpSupport`): Oh My Pi never does, Pi only with the Human's `pi-mcp-adapter`.
+- **Provider options** are parsed by a strict schema per provider, and refused whole for a provider that has none.
+  Claude's and Codex's are in `providers/claude/options.ts` and `providers/codex/options.ts`; Pi and Oh My Pi take
+  none.
+- **An agent's environment** given at its create reaches the provider's own process (`CODEX_HOME`,
+  `PI_CODING_AGENT_DIR`), which is how a home of Seatworks' is named to it.
+
+So what Seatworks sends is by provider (`HARNESS.md`), and the stand-in for Paseo in the tests refuses what Paseo does.
+
 ## To check before building on it
 
 - Per-agent control of Paseo's tools: today it is per provider ID (`paseoTools` on a custom provider) and injection

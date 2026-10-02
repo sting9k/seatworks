@@ -1,0 +1,27 @@
+{
+  "always": {
+    "modeId": "auto",
+    "options": {
+      "approval_policy": "never",
+      "features": {
+        "multi_agent_v2": false
+      }
+    }
+  },
+  "writes": {
+    "options": {
+      "sandbox_workspace_write": {
+        "writable_roots": ["{git}"]
+      }
+    }
+  },
+  "reads": {},
+  "home": {
+    "env": "CODEX_HOME",
+    "from": "~/.codex",
+    "link": ["auth.json"],
+    "files": {
+      "config.toml": "[features]\nmulti_agent = false\nmulti_agent_v2 = false\n"
+    }
+  }
+}

@@ -41,6 +41,12 @@ export class Workspace {
     return join(this.copies, safeKey(scope));
   }
 
+  /** The repository's git directory, which every worktree's commits are written into, wherever it is kept. */
+  async gitDir(): Promise<string> {
+    const found = await git(this.repo, ["rev-parse", "--path-format=absolute", "--git-common-dir"]);
+    return found.code === 0 ? found.stdout.trim() : join(this.repo, ".git");
+  }
+
   /** A writer's worktree on a branch of its own, or a reader's detached copy. Asked again, it answers what it made. */
   async create(
     scope: string,

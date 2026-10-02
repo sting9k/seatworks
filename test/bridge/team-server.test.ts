@@ -1,5 +1,4 @@
 import assert from "node:assert/strict";
-import { spawn } from "node:child_process";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { createConnection, createServer } from "node:net";
@@ -13,38 +12,15 @@ import { Project } from "../../server/bridge/project.ts";
 import { ProjectStore } from "../../server/satellites/store/project-store.ts";
 import { parseBody } from "../../shared/contracts/commands.ts";
 import { slpProfile, team } from "../kernel/ledger.ts";
+import { mcpClient } from "./mcp-client.ts";
 
-/** bin/team.ts as Paseo starts it for an agent, spoken to in MCP's JSON-RPC over stdio. */
-function mcp(socket: string, env: Record<string, string>) {
-  const child = spawn(
+/** bin/team.ts as Paseo starts it for an agent. */
+const mcp = (socket: string, env: Record<string, string>) =>
+  mcpClient(
     process.execPath,
     ["--experimental-strip-types", "--no-warnings", join(import.meta.dirname, "../../bin/team.ts"), socket],
-    {
-      env: { ...process.env, ...env },
-      stdio: ["pipe", "pipe", "pipe"],
-    },
+    { ...process.env, ...env },
   );
-  let buffered = "";
-  const answers = new Map<number, (r: { result?: unknown; error?: unknown }) => void>();
-  child.stdout.setEncoding("utf8");
-  child.stdout.on("data", (chunk: string) => {
-    buffered += chunk;
-    for (let nl = buffered.indexOf("\n"); nl >= 0; nl = buffered.indexOf("\n")) {
-      const said = JSON.parse(buffered.slice(0, nl)) as { id?: number; result?: unknown; error?: unknown };
-      buffered = buffered.slice(nl + 1);
-      if (said.id !== undefined) answers.get(said.id)?.(said);
-    }
-  });
-  let id = 0;
-  const request = (method: string, params: unknown) =>
-    new Promise<{ result?: unknown; error?: unknown }>((resolve) => {
-      const n = ++id;
-      answers.set(n, resolve);
-      child.stdin.write(`${JSON.stringify({ jsonrpc: "2.0", id: n, method, params })}\n`);
-    });
-  const notify = (method: string) => child.stdin.write(`${JSON.stringify({ jsonrpc: "2.0", method })}\n`);
-  return { request, notify, stop: () => child.kill() };
-}
 
 test("an agent's tool server lists its role's tools and carries a call to the kernel as that agent", async () => {
   const { ledger, peer } = team();
@@ -71,13 +47,8 @@ test("an agent's tool server lists its role's tools and carries a call to the ke
     SEATWORKS_KEY: keys.keyOf("p", peer),
   });
   try {
-    const init = await server.request("initialize", {
-      protocolVersion: "2025-06-18",
-      capabilities: {},
-      clientInfo: { name: "test", version: "1" },
-    });
+    const init = await server.initialize();
     assert.ok(init.result, JSON.stringify(init.error));
-    server.notify("notifications/initialized");
     const listed = (await server.request("tools/list", {})).result as { tools: { name: string }[] };
     const names = listed.tools.map((t) => t.name).sort();
     assert.ok(names.includes("raise_finding") && names.includes("hand_back") && names.includes("status"));
@@ -121,11 +92,7 @@ test("a tool server with a key that is not its agent's is refused", async () => 
     SEATWORKS_KEY: keys.keyOf("p", peer),
   });
   try {
-    const init = await server.request("initialize", {
-      protocolVersion: "2025-06-18",
-      capabilities: {},
-      clientInfo: { name: "test", version: "1" },
-    });
+    const init = await server.initialize();
     assert.ok(init.error !== undefined || init.result === undefined, "no tools for a borrowed key");
   } finally {
     server.stop();

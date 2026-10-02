@@ -17,7 +17,12 @@ type Created = {
   servers: Record<string, Record<string, unknown>>;
   approved: string[];
   labels: Record<string, string>;
+  /** The whole config the agent was made with, for what a harness file adds: its mode and its provider's options. */
+  config: { modeId?: string; options?: Record<string, unknown> };
 };
+
+/** The providers Paseo hands MCP servers and pre-approves exact tools for, as its registry has them at 0.10.2. */
+const TAKES_SERVERS = new Set(["claude", "codex", "opencode"]);
 
 /** The part of Paseo's API the plugin uses, recording what it was asked; `gate` makes creates and reads fail. */
 export function fakePaseo(pluginDir: string, provider = "claude") {
@@ -134,11 +139,21 @@ export function fakePaseo(pluginDir: string, provider = "claude") {
         config: {
           provider: string;
           systemPrompt: string;
-          toolPolicy: { preapproved: { server: string; tool: string }[] };
+          modeId?: string;
+          options?: Record<string, unknown>;
+          toolPolicy?: { preapproved: { server: string; tool: string }[] };
           mcpServers?: Record<string, { env?: Record<string, string> } & Record<string, unknown>>;
         };
       }) => {
         if (gate.refuse !== null) return Promise.reject(new Error(gate.refuse));
+        // Paseo refuses these for every other provider, and a create that sends them makes no agent.
+        const kind = o.config.provider.split("/")[0]!;
+        if (o.config.toolPolicy && !TAKES_SERVERS.has(kind))
+          return Promise.reject(
+            new Error(`Provider '${kind}' cannot preapprove exact MCP tools for unattended execution`),
+          );
+        if (Object.keys(o.config.mcpServers ?? {}).length > 0 && !TAKES_SERVERS.has(kind))
+          return Promise.reject(new Error(`Provider '${kind}' does not support MCP servers`));
         const request = JSON.stringify(o);
         const known = byKey.get(o.idempotencyKey);
         if (known)
@@ -155,11 +170,12 @@ export function fakePaseo(pluginDir: string, provider = "claude") {
           env: o.env,
           systemPrompt: o.config.systemPrompt,
           provider: o.config.provider,
-          tools: o.config.toolPolicy.preapproved.filter((p) => p.server === "team").map((p) => p.tool),
+          tools: (o.config.toolPolicy?.preapproved ?? []).filter((p) => p.server === "team").map((p) => p.tool),
           teamEnv: o.config.mcpServers?.team?.env,
           servers: o.config.mcpServers ?? {},
-          approved: o.config.toolPolicy.preapproved.map((p) => `${p.server}.${p.tool}`),
+          approved: (o.config.toolPolicy?.preapproved ?? []).map((p) => `${p.server}.${p.tool}`),
           labels: o.labels,
+          config: { modeId: o.config.modeId, options: o.config.options },
         });
         if (gate.loseReplies > 0) {
           gate.loseReplies--;

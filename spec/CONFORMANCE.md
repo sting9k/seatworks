@@ -141,7 +141,9 @@ What the Human's surface shows as stuck: read from the log and the outbox, chang
 
 | Case                                                        | Expect                                                     |
 | ----------------------------------------------------------- | ---------------------------------------------------------- |
-| A Pi agent is seated                                        | Seatworks' home, with the Human's login linked; the extension gives it the team's tools |
+| A Pi agent is seated                                        | Seatworks' home, with the Human's login linked; the extension gives it the team's tools; Paseo is handed no server and no tool to approve, which it refuses for Pi |
+| A Codex agent is seated, in a role that does not write and in one that does | Its mode and options ask nobody and switch its own agents off, with the rest in a config of Seatworks' own home, which links the Human's login and not their config; it takes the team's server from Paseo; only the writer's options name the repository's git directory as a root to write |
+| An Oh My Pi agent is seated                                 | Paseo is handed no server, no tool to approve and no option; Seatworks' home links the Human's logins, denies the tools that start agents, waits for its servers before a turn, and holds the team's server, which started as that file says lists the agent's tools |
 | The Human keeps `rules/slp/all.md` and `rules/slp/lead.md` under the state root | A Lead seated after gets both after its role's prompt; a Supervisor only `all.md` |
 | A rules file edited after one agent was made                | The next agent seated gets the edit                        |
 

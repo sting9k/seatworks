@@ -1,7 +1,11 @@
 # Harness
 
 How Seatworks runs Claude Code, Codex, Pi and Oh My Pi as members of the team. Read on 29 September 2026 against Claude
-Code 2.1.284, Codex 0.158, Pi 0.87.1, Oh My Pi 18.4.3 and Paseo 0.10.1.
+Code 2.1.284, Codex 0.158, Pi 0.87.1, Oh My Pi 18.4.3 and Paseo 0.10.1; Codex and Oh My Pi again on 2 October 2026
+against Paseo 0.10.2's source, Codex 0.154's own list of features and Oh My Pi 18.3.1's documentation.
+
+Built: a harness file for each of the four. Every test runs against a stand-in for Paseo that refuses what Paseo's
+source refuses; none has yet been seen on a live agent, and what only one can show is under To check.
 
 V1 wrote the same role policy five times, once in each agent's format: 55 harness files, 1,578 lines, and as many
 lines of TypeScript to lay them out, one seat directory per role, agent and project. Seatworks states the policy once and
@@ -12,7 +16,9 @@ reaches it.
 
 A role's properties (`KERNEL.md` §2) are all the harness reads. A harness file per provider, `harness/<provider>.json`,
 holds the settings each property adds (`always`, `writes`, `reads`) and, where the agent needs one, a `home` laid
-out under the plugin's state root and named to the agent through one variable.
+out under the plugin's state root and named to the agent through one variable. A string in it may name a place on
+the machine in braces: `{plugin}`, `{node}` (what runs the plugin), `{socket}` (where an agent's tools reach it) in a
+home's files, `{git}` (the repository's git directory) in the settings.
 
 | Property  | Means for the agent                                                                            |
 | --------- | ---------------------------------------------------------------------------------------------- |
@@ -44,9 +50,12 @@ its named tools approved ahead.
 - **It is outside every guard above.** A server is a process of its own: it runs no git through the shim, is confined
   to no copy, and may write where it likes. The guards hold against an agent's mistakes, not against what a template's
   author chose to start. The Human sees each server and its command before a template is installed.
-- **Not every agent takes one.** A harness file says so with `outsideServers: false`, and a role given a server is then
-  not seated on that provider, the reason naming the server. Pi is so marked: Paseo hands it MCP servers only with
-  the Human's `pi-mcp-adapter`, which the plugin cannot see, and drops them without a word otherwise.
+- **Paseo takes servers for three providers only.** Its registry lets Claude, Codex and OpenCode pre-approve exact
+  tools, and refuses a create that carries a tool policy for any other; it refuses MCP servers for a provider that
+  cannot take them, Oh My Pi always and Pi unless the Human has `pi-mcp-adapter`, which the plugin cannot see. A
+  harness file says so with `servers: false`. Paseo is then handed no server and no tool to approve, the agent's home
+  gives it the team's tools, and a role given an outside server is not seated on that provider, the reason naming the
+  server. Pi and Oh My Pi are so marked.
 - **The team's own server is marked `alwaysLoad`**, so Claude never puts the team's tools behind a tool search,
   however many a server adds beside them.
 
@@ -73,12 +82,14 @@ Everything through Paseo; no config directory of Seatworks' own, so the Human's 
 | Need                | How                                                                                           |
 | ------------------- | --------------------------------------------------------------------------------------------- |
 | Role prompt         | `systemPrompt`, sent as `developerInstructions`                                               |
-| Team tools          | `mcpServers` and `toolPolicy`: Codex refuses an MCP call it would have to ask about           |
-| Writer              | `modeId: auto` with `providerOptions.approval_policy: never`; `sandbox_workspace_write.writable_roots` gains the repository's git directory, which Codex keeps read-only inside a worktree otherwise |
+| Team tools          | `mcpServers` and `toolPolicy`: Paseo enables only the tools named and approves each           |
+| No prompts          | `modeId: auto` with the option `approval_policy: never`: its sandbox holds, and nothing asks  |
+| Writer              | `sandbox_workspace_write.writable_roots` gains the repository's git directory (`{git}`), which Codex keeps read-only inside a worktree otherwise, so a commit can be made |
 | Not writing         | The same, in its throwaway copy, without the git directory among its writable roots            |
-| No subagents        | `features.multi_agent_v2: false` through Paseo; `agents.enabled = false` and `features.multi_agent = false` in one `config.toml`, shared by every Seatworks Codex agent through `CODEX_HOME`, since Paseo's options do not take them |
+| No subagents        | `features.multi_agent_v2: false` through Paseo. `features.multi_agent`, which Codex 0.154 has on, is not among the options Paseo takes, so it is switched off in one `config.toml`, shared by every Seatworks Codex agent through `CODEX_HOME` |
 
-The shared `CODEX_HOME` holds that `config.toml` and a link to the Human's `auth.json`, nothing per role.
+The shared `CODEX_HOME` holds that `config.toml` and a link to the Human's `auth.json`, nothing per role. The Human's
+own `config.toml` is not read there: a model provider or a server they set up in it does not reach a team's agent.
 
 ### Pi
 
@@ -90,7 +101,7 @@ agent's. So Seatworks gives every Pi agent one home of its own, through `PI_CODI
 | Need                | How                                                                                           |
 | ------------------- | --------------------------------------------------------------------------------------------- |
 | Role prompt         | `systemPrompt`, appended by Paseo's extension                                                 |
-| Team tools          | `harness/pi/extension.ts`, named in the home's `settings.json`: it asks the plugin's socket for the agent's tools, as `bin/team.ts` does, and registers them with their JSON Schemas, which Pi takes as they are |
+| Team tools          | `harness/pi/extension.ts`, named in the home's `settings.json`: it asks the plugin's socket for the agent's tools, as `bin/team.ts` does, and registers them with their JSON Schemas, which Pi takes as they are. Paseo is handed no server and no tool policy (`servers: false`) |
 | The Human's login   | `auth.json` and `models.json` linked from their own Pi home, so a refreshed login reaches both |
 | No subagents        | Pi has none; the home's settings load no extension or package but Seatworks'                        |
 | No planted config   | `defaultProjectTrust: "never"`: Pi in RPC mode then skips a copy's `.pi` extensions and settings, so an agent cannot plant one for another |
@@ -98,15 +109,22 @@ agent's. So Seatworks gives every Pi agent one home of its own, through `PI_CODI
 
 ### Oh My Pi
 
-Paseo turns it off by default, refuses it external MCP servers and cannot switch off its subagents, so it needs an
-agent directory of Seatworks', set through `PI_CODING_AGENT_DIR`:
+Paseo turns it off by default, refuses it MCP servers, a tool policy and any provider option, and cannot switch off
+its subagents, so everything is in an agent directory of Seatworks', set through `PI_CODING_AGENT_DIR`
+(`harness/omp.json`):
 
-- `mcp.json` with the team's server.
-- `config.yml`: `task.maxRecursionDepth: 0`; `tools.approval` denying `task` and `eval` (its cells can start agents
-  and reach a shell); `disabledProviders` for the Claude, Codex and other configs it would otherwise import from the
-  worktree.
+| Need                | How                                                                                           |
+| ------------------- | --------------------------------------------------------------------------------------------- |
+| Role prompt         | `systemPrompt`, which Paseo passes as `--append-system-prompt`                                |
+| Team tools          | `mcp.json` in the home, with the team's server: started by `{node}` on `bin/team.ts` with the plugin's socket. The agent's project, actor and key are named in its `env` by the variables that hold them, which Oh My Pi fills from its own environment. Its tools are named `mcp__team_<tool>` there |
+| Tools at the first turn | `mcp.startupTimeoutMs: 0` in `config.yml`: without it Oh My Pi starts a turn 250 ms after it began connecting |
+| No prompts          | `modeId: full`, which Paseo starts as `--approval-mode yolo`                                  |
+| No subagents        | `tools.approval` in `config.yml` denying `task` and `eval` (its cells can start agents and reach a shell); a denial holds in every approval mode |
+| No imported config  | `disabledProviders`: the Claude, Codex, Gemini, OpenCode and Cursor configs it would otherwise read from a copy, servers and hooks among them. `AGENTS.md` and its own `.omp/` stay read |
+| The Human's login   | `agent.db`, its store of logins, linked from their own agent directory                        |
 
-Oh My Pi never confines files or network; its approvals are policy, not containment.
+`config.yml` is written as JSON, which is YAML. Oh My Pi never confines files or network; its approvals are policy,
+not containment.
 
 ## Role prompts
 
@@ -126,7 +144,11 @@ Oh My Pi's instruction to delete incidental tests. V1's seven near-copies of the
 
 ## To check before building on it
 
-- Whether `agents.enabled = false` alone keeps Codex 0.158 from starting agents, so the catalog rewrite can go.
+- On a live Codex: that a writer commits with the repository's git directory among its writable roots, and that
+  `features.multi_agent = false` leaves it no tool to start an agent with.
+- On a live Oh My Pi: that the team's server in its home connects before the first turn with the agent's own key,
+  that `agent.db` linked carries the Human's login, and that a copy's own `.omp/` cannot plant an extension or a
+  server for the next agent, as Pi's `defaultProjectTrust` rules out.
+- On a live Pi: that an agent is made at all, since every create before this one carried what Paseo refuses.
 - Whether Paseo's fixed `settingSources` let a project's `.claude/settings.json` add hooks or servers to a Claude
   agent, and whether `extraArgs` can narrow them.
-- Whether Oh My Pi is worth its own directory, or waits until Paseo gives it external MCP.

@@ -144,6 +144,7 @@ export function handlersFor(w: Wiring): Handlers {
         },
         labels: { [PROJECT_LABEL]: w.project, [ACTOR_LABEL]: actor.id, "seatworks.scope": actor.scope },
         writes: role.writes,
+        gitDir: await w.workspace.gitDir(),
         servers: given.grants,
       });
       if ("unavailable" in created) return WAIT;
