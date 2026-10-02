@@ -175,7 +175,12 @@ function apply(s: State, e: Event, at: string): State {
       return parent === null ? done : scope(done, parent, (x) => ({ ...x, head: e.sha }));
     }
     case "integration_refused":
-      return scope(s, e.scope, (x) => ({ ...x, integrating: false, candidate: null }));
+      // Over a parent that moved the candidate is stale; refused for anything else, it is still what would go in.
+      return scope(s, e.scope, (x) => ({
+        ...x,
+        integrating: false,
+        candidate: e.why === "moved" ? null : x.candidate,
+      }));
     case "sent_back":
       return scope(s, e.scope, (x) => ({ ...x, claim: null, candidate: null }));
     case "reseated": {

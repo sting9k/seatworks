@@ -537,6 +537,50 @@ test("with no check set, a hand-back is given no evidence: a run of nothing is n
   for (const t of [chief, maker]) t.close();
 });
 
+test("an integration that could not be made is told to whoever asked: over a base the Human is editing its candidate stands, over one that moved another is made", async () => {
+  const c = await started();
+  const chief = await c.tools(0);
+  const heads: string[] = [];
+  for (const dir of ["a", "b"]) {
+    await did(c, chief, "open_scope", { parent: "root", role: "maker", paths: [`src/${dir}/`], brief: brief(dir) });
+    const copy = c.paseo.created.at(-1)!.cwd;
+    mkdirSync(join(copy, "src", dir), { recursive: true });
+    writeFileSync(join(copy, "src", dir, "x.txt"), `${dir}\n`);
+    git(copy, "add", ".");
+    git(copy, "commit", "-q", "-m", dir);
+    heads.push(git(copy, "rev-parse", "HEAD"));
+  }
+  const step = [{ name: "t", run: ["true"] }];
+  for (const [n, head] of heads.entries()) {
+    await did(c, await c.tools(n + 1), "hand_back", { commit: head, text: `the work of ${n + 1}` });
+    await did(c, chief, "run_checks", { scope: `${n + 1}`, commit: head, steps: step });
+  }
+
+  writeFileSync(join(c.repo, "check.sh"), "the Human is editing this\n");
+  await did(c, chief, "integrate", { scope: "1", evidence: ["e1"] });
+  assert.equal(
+    c.told(0).at(-1),
+    `Scope 1 was not integrated: main is checked out with uncommitted changes. Its candidate ${heads[0]} stands.`,
+  );
+  git(c.repo, "checkout", "check.sh");
+  await did(c, chief, "integrate", { scope: "1", evidence: ["e1"] });
+  assert.equal(git(c.repo, "rev-parse", "main"), heads[0], "the same integrate is taken once the base is clean");
+
+  await did(c, chief, "integrate", { scope: "2", evidence: ["e2"] });
+  assert.match(
+    c.told(0).at(-1) ?? "",
+    /^Scope 2 was not integrated: its parent's branch moved after its candidate was made\. A candidate on the new head is being made\.$/,
+    "whoever asked is told, and woken: nothing else would say the scope is still not in",
+  );
+  const candidate = /candidate ([0-9a-f]{40})/.exec(await status(chief, "2"))?.[1];
+  assert.ok(candidate && candidate !== heads[1], "the candidate is another commit now, with the new head taken in");
+  await refused(chief, "integrate", { scope: "2", evidence: ["e2"] }, new RegExp(`evidence e2 is on ${heads[1]}`));
+  await did(c, chief, "run_checks", { scope: "2", commit: candidate, steps: step });
+  await did(c, chief, "integrate", { scope: "2", evidence: ["e3"] });
+  assert.equal(git(c.repo, "rev-parse", "main"), candidate);
+  chief.close();
+});
+
 test("a scope whose copy could not be made says so, and a reseat asks for the copy again", async () => {
   const c = await started();
   const chief = await c.tools(0);

@@ -235,11 +235,15 @@ export function react(e: Event, s: State): readonly Effect[] {
       add("advance", { kind: "workspace.advance", scope: e.scope, from: e.parentHead, to: e.candidate });
       break;
     case "integration_refused": {
-      const claim = s.scopes.get(e.scope)?.claim;
-      const commit = claim ? s.claims.get(claim)?.commit : undefined;
-      if (e.why === "moved" && commit !== undefined)
+      const x = s.scopes.get(e.scope);
+      const commit = x?.claim ? s.claims.get(x.claim)?.commit : undefined;
+      // Whoever asked is waiting on it: with no word, a scope that is still not in would look integrated to them.
+      let said = e.why;
+      if (e.why === "moved" && commit !== undefined) {
         add("candidate", { kind: "workspace.candidate", scope: e.scope, commit });
-      else tell(parentOwner(e.scope), "note", `Scope ${e.scope} was not integrated: ${e.why}`, true);
+        said = "its parent's branch moved after its candidate was made. A candidate on the new head is being made";
+      } else if (x?.candidate) said = `${e.why}. Its candidate ${x.candidate.candidate} stands`;
+      tell(parentOwner(e.scope), "note", `Scope ${e.scope} was not integrated: ${said}.`, true);
       break;
     }
     case "integrated":

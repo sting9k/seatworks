@@ -294,6 +294,11 @@ test("a scope being integrated cannot be dropped before the merge's result lands
     "state",
     "the merge was already asked for; the record cannot say dropped while the branch holds it",
   );
+  assert.equal(
+    refusedBy(ledger.as(lead, "send_back", { scope: task, reason: "changed my mind" })),
+    "state",
+    "nor sent back: its writer would be told so, and then be let go as integrated",
+  );
   const landed = ledger.must(ledger.fact("record_integration", { scope: task, result: { sha: SHA(7) } }));
   assert.ok(landed.some((e) => e.type === "integrated"));
 });
@@ -456,6 +461,11 @@ test("a finding left open when its scope is integrated stays in memory with its 
   ledger.must(ledger.as(lead, "integrate", { scope: task, evidence: ["e1"] }));
   ledger.must(ledger.fact("record_integration", { scope: task, result: { sha: SHA(2) } }));
   assert.equal(ledger.state.findings.has("f1"), true);
+  assert.equal(
+    refusedBy(ledger.as(lead, "send_back", { scope: task, reason: "too late" })),
+    "state",
+    "what is integrated is not sent back, though the scope is still in memory",
+  );
   ledger.must(
     ledger.as(lead, "classify_finding", {
       finding: "f1",

@@ -237,7 +237,7 @@ agent also settles any open attention about the actors or scopes it names that t
 | `record_verdict`   | `ok, text`                                                                                 | `evidence_recorded`                     |
 | `run_checks`       | `scope, commit, steps?`                                                                    | `evidence_requested`                    |
 | `integrate`        | `scope, evidence, reason?`; refused while the scope has open children                      | `integration_started`                   |
-| `send_back`        | `scope, reason`; by the scope's parent's owner — the Human sends the root's claim back     | `sent_back`, `obligation_closed`        |
+| `send_back`        | `scope, reason`; by the scope's parent's owner — the Human sends the root's claim back; refused for a scope being integrated or closed | `sent_back`, `obligation_closed` |
 | `reseat`           | `scope, reason, model?`                                                                    | `reseated`, `actor_seated`, `obligation_moved`\*, `message_moved`\* |
 | `drop_scope`       | `scope, reason`                                                                            | `scope_dropped`, `obligation_closed`\*  |
 | `hold_scope`, `resume_scope` | `scope, reason`                                                                  | `scope_held`, `scope_resumed`           |
@@ -393,7 +393,7 @@ it was delivered, an attention not settled climbs: `attention_climbed` opens a c
 | `candidate_ready`, when a check is set   | `evidence.run { scope, subject: candidate, steps: checks }` | `<seq>:evidence`         |
 | `evidence_requested`                     | `evidence.run { scope, subject, steps }`                 | `<seq>:evidence`            |
 | `integration_started`                    | `workspace.advance { branch, from: parentHead, to: candidate }` | `<seq>:advance`      |
-| `integration_refused` (moved)            | `workspace.candidate` again on the same commit           | `<seq>:candidate`           |
+| `integration_refused` (moved)            | `workspace.candidate` again on the same commit: the candidate was stale, and the scope has none until it is made | `<seq>:candidate` |
 | `integrated`, `scope_dropped`            | `workspace.remove { scope }`, `agent.archive`; `workspace.create` of each open sibling that waited for it and waits for nothing else open | `<seq>:remove`, `<seq>:archive`, `<seq>:workspace:<scope>` |
 | `actor_released`                         | `agent.archive { host }`                                 | `<seq>:archive`             |
 | `permission_answered`                    | `agent.permission { host, request, allow, reason }`, sent only while the agent still waits on it | `<seq>:permission` |
@@ -425,6 +425,13 @@ Whoever a command changes something for is told, in the tool's own words and not
 | `finding_withdrawn`           | Whoever was to answer it                                         | No    |
 | `brief_amended`, `plan_set`, `plan_amended`, `claim_made`, `integrated`, `scope_dropped` | The owner of each scope the scope `mustTell`: what changed | Yes |
 | `brief_amended` by leave of `mayChange` | The owner of the scope's parent: who amended it, from which scope, and why | Yes |
+| `integration_refused`         | The owner of the scope's parent, who asked: over a parent that moved, that another candidate is being made; for any other reason, the reason and that the candidate stands | Yes |
+
+An integration the workspace refuses for anything but a parent that moved (a base checked out with uncommitted
+changes, or in another working copy) leaves the candidate as it was: the parent's head did not move, so the same
+`integrate` is taken once what stopped it is gone. One refused as moved has no candidate until the new one is made,
+and evidence on the old one does not speak for it (I4). This is the usual case and not a rare one: each landing moves
+the base, by its own commit and by the map the plugin writes after it, under every other candidate made before.
 
 A scope that waited for a sibling gets its copy and its agent when the sibling is integrated or dropped, or when the
 last `after` edge that made it wait is removed (`edge_removed`): no other event would start it. A scope whose copy

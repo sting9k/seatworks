@@ -124,6 +124,8 @@ export function sendBack(ctx: Of<"send_back">): Refusal | undefined {
   if (isRefusal(scope)) return scope;
   if (ownerOfParent(ctx.state, scope) !== ctx.party)
     return refuse("authority", `only the owner of scope ${scope.id}'s parent sends it back`);
+  if (scope.status !== "open") return refuse("state", `scope ${scope.id} is ${scope.status}`);
+  if (scope.integrating) return refuse("state", `scope ${scope.id} is being integrated`);
   if (scope.claim === null) return refuse("state", `scope ${scope.id} has handed nothing back`);
   ctx.emit({ type: "sent_back", scope: scope.id, reason: ctx.body.reason });
   closeAbout(ctx, "claim", scope.claim, "sent back");
