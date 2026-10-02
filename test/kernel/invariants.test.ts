@@ -396,6 +396,18 @@ test("an answer goes to whoever holds the asker's seat now; one to a note of the
   assert.equal(refusedBy(ledger.as(peer, "answer", { replyTo: fromLedger, text: "Noted" })), "state");
 });
 
+test("a message may follow one already read and settled; one that was never sent is refused", () => {
+  const { ledger, lead, peer } = team();
+  const told = ledger.must(ledger.as(lead, "send_message", { to: peer, text: "The base moved" }));
+  const fyi = told.flatMap((e) => (e.type === "message_sent" ? [e.message.id] : []))[0]!;
+  ledger.must(ledger.fact("record_delivery", { to: peer, messages: [fyi] }));
+  assert.equal(ledger.state.messages.has(fyi), false, "read and asking nothing, it is settled and out of memory");
+  const reply = ledger.must(ledger.as(peer, "send_message", { to: lead, text: "Seen, rebasing", replyTo: fyi }));
+  assert.equal(reply.find((e) => e.type === "message_sent")?.message.replyTo, fyi);
+  assert.equal(refusedBy(ledger.as(peer, "send_message", { to: lead, text: "?", replyTo: "m999" })), "unknown");
+  assert.equal(refusedBy(ledger.as(peer, "send_message", { to: lead, text: "?", replyTo: "l1" })), "unknown");
+});
+
 test("a delivery reported late, for a reader that has since left, marks nothing delivered that moved to another", () => {
   const { ledger, lead, peer } = team();
   ledger.must(ledger.as(lead, "send_message", { to: peer, text: "Why int16?", asks: true }));
@@ -457,21 +469,30 @@ test("a profile with every role renamed behaves the same", () => {
   assert.deepEqual(shape(other).slice(0, 6), shape(ledger).slice(0, 6));
 });
 
-test("I7: the Lead carries a direction in by citing, or answering, the copy it was given", () => {
+test("I7: the Lead carries a direction in by citing, or answering, the copy it was given and has read", () => {
   const { ledger, supervisor, lead, peer } = team();
-  const copyTo = () => [...ledger.state.messages.values()].filter((m) => m.to === lead && m.copyOf !== null).at(-1)!;
   const directions = () => [...ledger.state.obligations.values()].filter((o) => o.about.kind === "direction");
-  ledger.must(ledger.as(supervisor, "send_message", { to: peer, text: "Use int8", directs: true }));
+  /** The Supervisor directs the Peer, and the Lead's copy reaches it: the id it reads is the copy's. */
+  const directed = (text: string) => {
+    const sent = ledger.must(ledger.as(supervisor, "send_message", { to: peer, text, directs: true }));
+    const copy = sent.flatMap((e) =>
+      e.type === "message_sent" && e.message.copyOf !== null ? [e.message.id] : [],
+    )[0]!;
+    ledger.must(ledger.fact("record_delivery", { to: lead, messages: [copy] }));
+    return copy;
+  };
+  const first = directed("Use int8");
   ledger.must(
     ledger.as(lead, "amend_brief", {
       scope: "1.1",
-      set: { choices: [{ text: "int8", via: { kind: "message", id: copyTo().id } }] },
+      set: { choices: [{ text: "int8", via: { kind: "message", id: first } }] },
       reason: "the Supervisor's call",
     }),
   );
   assert.equal(directions().length, 0, "carried in through its copy");
+  assert.equal(ledger.state.messages.has(first), false, "and the copy, its direction carried in, leaves memory");
 
-  ledger.must(ledger.as(supervisor, "send_message", { to: peer, text: "Drop protobuf", directs: true }));
-  ledger.must(ledger.as(lead, "answer", { replyTo: copyTo().id, text: "Kept: the server lane shares it" }));
+  const second = directed("Drop protobuf");
+  ledger.must(ledger.as(lead, "answer", { replyTo: second, text: "Kept: the server lane shares it" }));
   assert.equal(directions().length, 0, "declined through its copy");
 });

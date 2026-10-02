@@ -26,7 +26,8 @@ export function prune(s: State): State {
   for (const m of s.messages.values()) {
     const readerLeft = m.to !== HUMAN && s.actors.get(m.to)?.status !== "seated";
     const settled = m.delivered !== null && (!m.asks || m.answered);
-    const owed = owedAbout.has(`message:${m.id}`) || owedAbout.has(`direction:${m.id}`);
+    // A direction's copy is what its owner read and names: it stays for as long as the direction is owed.
+    const owed = owedAbout.has(`message:${m.id}`) || owedAbout.has(`direction:${m.copyOf ?? m.id}`);
     if ((settled || readerLeft) && !owed) messages.delete(m.id);
   }
 

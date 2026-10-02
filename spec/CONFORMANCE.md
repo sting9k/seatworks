@@ -26,7 +26,7 @@ on an implementation without the rule before it is trusted.
 | I6   | A line marked the Human's with no message or answer from them behind it | Written as its caller's                                   |
 | I6   | A term the Human settled is settled again without their word | Refused; accepted citing it                             |
 | I7   | The Supervisor sends a Peer a message that directs                      | The Lead has a copy and an obligation; it closes on carried or declined |
-| I7   | The Lead cites, or answers, the copy of a direction it was given        | The direction's obligation closes                         |
+| I7   | The Lead cites, or answers, the copy of a direction it was given, once the copy has been delivered to it | The direction's obligation closes: the copy is what it read and names, so it stays in memory until then |
 | I7   | The Supervisor asks a Peer an open question                             | The Lead has a copy and no obligation                     |
 | I7   | The Human types into a Peer's chat                                      | The Lead has a copy and an obligation; the Human sees whether it was carried in |
 | I8   | `classify_finding` as `changes` with no change events                   | Refused                                                   |
@@ -105,6 +105,7 @@ on an implementation without the rule before it is trusted.
 | A Peer reseated with three messages queued                  | The new Peer receives the three                          |
 | A question whose asker was reseated, and then gone, before it is answered | The answer goes to the new holder of the asker's seat; with the seat empty, to the owner above |
 | An `answer` to a note of the record's own                   | Refused: nobody reads it                                 |
+| A message sent as following one its sender read, which asked nothing and is settled; one following an id never sent | Taken, saying which it follows; the second refused |
 | A delivery reported after its reader left and its message moved to the owner above | The message is not marked delivered: its new reader still gets it |
 | A queue longer than one delivery holds                      | Several deliveries, the oldest first, the next at the end of the turn the one before began, each saying how many still wait; every message whole |
 | Restart with messages queued                                | All delivered after                            |

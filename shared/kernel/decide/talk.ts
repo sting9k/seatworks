@@ -1,5 +1,5 @@
 import type { CommandBody } from "../../contracts/commands.ts";
-import { BRIDGE, HUMAN, type Party } from "../../contracts/ids.ts";
+import { BRIDGE, HUMAN, ID_PREFIX, type Party } from "../../contracts/ids.ts";
 import type { Message } from "../../contracts/ledger.ts";
 import { fromOutside, maySpeak, ownerOfParent } from "../authority.ts";
 import { type Context, type Refusal, isRefusal, refuse } from "./context.ts";
@@ -16,8 +16,7 @@ export function sendMessage(ctx: Of<"send_message">): Refusal | undefined {
       return refuse("I10", `a ${me.actor.role} does not speak to ${body.to}`);
   } else if (body.to !== HUMAN && ctx.state.actors.get(body.to)?.status !== "seated")
     return refuse("unknown", `${body.to} is not seated`);
-  if (body.replyTo !== null && !ctx.state.messages.has(body.replyTo))
-    return refuse("unknown", `no open message ${body.replyTo}`);
+  if (body.replyTo !== null && !wasSent(ctx, body.replyTo)) return refuse("unknown", `no message ${body.replyTo}`);
   post(ctx, {
     to: body.to,
     text: body.text,
@@ -29,9 +28,21 @@ export function sendMessage(ctx: Of<"send_message">): Refusal | undefined {
   return undefined;
 }
 
+/** Whether a message of that id was ever sent: one read and settled is out of memory, and may be followed all the same. */
+function wasSent(ctx: Context, id: string): boolean {
+  const n = Number(id.slice(ID_PREFIX.message.length));
+  return id.startsWith(ID_PREFIX.message) && Number.isInteger(n) && n >= 1 && n <= ctx.state.counters.message;
+}
+
 export function answer(ctx: Of<"answer">): Refusal | undefined {
   const asked = ctx.state.messages.get(ctx.body.replyTo);
-  if (!asked) return refuse("unknown", `no open message ${ctx.body.replyTo}`);
+  if (!asked)
+    return refuse(
+      "unknown",
+      wasSent(ctx, ctx.body.replyTo)
+        ? `message ${ctx.body.replyTo} asked no answer, or has one: what follows it is a message of your own`
+        : `no message ${ctx.body.replyTo}`,
+    );
   // Answering the copy of a direction answers the direction it copies.
   const about = asked.copyOf ?? asked.id;
   const owed = [...ctx.state.obligations.values()].filter(
