@@ -67,7 +67,8 @@ index.client.tsx       the Human's surface
 shared/kernel/         entities, invariants, commands, events, fold; imports nothing
 shared/contracts/      zod schemas: RPC, tool arguments, profile files
 server/bridge/         Paseo's hooks and API to kernel commands and facts, effects to satellites
-server/satellites/     store, agent-host, workspace, evidence, delivery, machine, reflex, watch, record, code-index
+server/satellites/     store, agent-host, workspace, evidence, delivery, machine, reflex; the watch's eye is in the
+                       bridge, the record's reading in shared/views, and the code index is not built
 client/                the surface and its views
 bin/                   the git shim, the team's MCP server, the gallery's build and the template check (`npm run
                        template`), run by Node as their own processes

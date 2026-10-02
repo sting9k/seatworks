@@ -1,6 +1,6 @@
 ---
 name: satellite
-description: "Builds or changes a satellite behind its port in server/satellites (store, agent-host, workspace, evidence, delivery, machine, reflex, watch, record, code-index), or the bridge that carries effects to it and facts back. Use when work does I/O for the kernel; not for kernel rules, which are pure."
+description: "Builds or changes a satellite behind its port in server/satellites (store, agent-host, workspace, evidence, delivery, machine, reflex), or the bridge that carries effects to it and facts back. Use when work does I/O for the kernel; not for kernel rules, which are pure."
 ---
 
 # Satellite

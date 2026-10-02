@@ -53,7 +53,8 @@ shared/kernel     decide(command, state) -> events | refusal; evolve(state, even
 shared/contracts  zod: commands, events, tool arguments, RPC, profile and template files
 server/bridge     the only place that builds the whole: Paseo hooks and tools -> commands; effects -> satellites; facts -> commands
 server/satellites one job each behind a port (spec/PORTS.md): store, agent-host, workspace, evidence, delivery,
-                  machine, reflex, watch, record, code-index
+                  machine, reflex. The watch's eye is in the bridge, the record's reading in shared/views, and the
+                  code index is a port nothing is built behind yet
 server/profile    a profile's files on disk: loading, installing, a project's own copy, matching agent profiles
 client/           the Human's surface
 bin/              the git shim, the team's MCP server, the gallery's build and the template check: their own Node
