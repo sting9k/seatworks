@@ -1,6 +1,6 @@
 ---
 name: blind-design
-description: "Designs a hard decision two or three times, blind, then brings the designs together. Use when several answers are sound and none is standard (how state replicates in a multiplayer game, how a new domain's service is shaped); not when the answer is settled, small, or only one design is plausible."
+description: "Designs a hard decision two or three times, blind, then brings the designs together. Use when several answers are sound and none is standard; not when the answer is settled, small, or only one design is plausible."
 ---
 
 # Blind design

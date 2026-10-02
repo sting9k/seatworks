@@ -1,6 +1,6 @@
 ---
 name: grilling
-description: "Settles with the Human what new work should do before any lane opens: numbered rounds of questions, each with a recommended answer, until nothing the project does or how it behaves is assumed, and every settled answer is a line of the plan in the Human's words. Use when the Human brings new work or a change the plan does not answer; not for a small change, a question the plan settles, or work already settled."
+description: "Settles with the Human what new work should do before any lane opens: rounds of questions, each with a recommended answer, until nothing they care about is assumed. Use when the Human brings new work or a change the plan does not answer; not for a small change, a question the plan settles, or work already settled."
 ---
 
 # Grilling

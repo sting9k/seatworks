@@ -1,6 +1,6 @@
 ---
 name: domain-docs
-description: "Reads and keeps the project's domain docs: GLOSSARY.md for the words the project is spoken of in, and docs/adr/ for decisions a later reader would otherwise undo. Use before you plan or build in an area, when your work settles a word the glossary lacks, or when you make a decision that is hard to reverse, surprising without its reason, and a real trade-off; not for how a lane is built, which its code and record already say."
+description: "Reads and keeps the project's glossary and its records of decisions. Use before you plan or build in an area, when your work settles a word the glossary lacks, or when you make a decision that is hard to reverse, surprising without its reason, and a real trade-off; not for how a lane is built, which its code and record already say."
 ---
 
 # Domain docs

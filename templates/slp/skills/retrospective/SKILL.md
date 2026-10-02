@@ -1,6 +1,6 @@
 ---
 name: retrospective
-description: "Looks back over a run or a week from the record: the chain of change of each finding, the five signals, and how the reflex and the watch did, ending in at most one change, made by taking something away where possible. Use after a run, each week, or after an episode that cost a rework."
+description: "Looks back over a run or a week from the record, and ends in at most one change, made by taking something away where possible. Use after a run, each week, or after an episode that cost a rework."
 ---
 
 # Retrospective
@@ -22,8 +22,8 @@ the method as it is.
 - **Premises reopened.** For each finding that reopened a brief or a plan: did its evidence come from the code (a
   repro, a contradiction, a measurement), or only from the work being hard? Reopening is a right to keep; two dated
   episodes of the second kind are what a watch moment for it needs.
-- **The project's docs.** Which briefs, findings and reports drew on the glossary, an ADR or the map, and which of
-  them a reader found wrong. A doc nobody drew on across two look backs is proposed for removal from the profile:
+- **The project's docs.** Which briefs, findings and reports drew on the glossary or an ADR, and which of them a
+  reader found wrong. A doc nobody drew on across two look backs is proposed for removal from the profile:
   every agent reads its pointer, so an unused one costs a turn's attention for nothing.
 
 Never hand whole logs to a model to find a failure; start from the record's views.
@@ -38,6 +38,10 @@ Human answered twice) and its class:
 | Specification | Work nobody asked for, an invented contract, another problem solved     | A directive, a brief, the prompt that let it start |
 | Coordination  | Two writers, a question that died, a result at the wrong role           | The profile's edges, a role's prompt               |
 | Verification  | A proof that passed without the behaviour, a claim taken as evidence    | The evidence steps, when a Lead reads a diff       |
+
+An episode that is one of the mistakes this way of working already names takes its name and its way out from
+`ANTIPATTERNS.md`, beside this file: read the group it falls in (giving work, working, accepting and reporting,
+improving the method).
 
 Weigh each mechanism by what it changed, not by how much it ran. Judge the system, never the agent: "the scope held
 one directory and the work needed two" is a finding, "the Peer was careless" is not.

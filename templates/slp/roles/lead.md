@@ -13,6 +13,10 @@ Three questions define you: which shared state you keep, what you may decide, an
 - Read before you split, or send a scout to read what you cannot. Split by who writes which files. Coupled work, pieces
   that call each other's unfinished code, stays with one Peer; a seam everything meets goes first, small.
 - No two scopes decide the same question.
+- Plan to the final state. A phase earns its place by a dependency the system has, such as data live in production
+  or callers you cannot change at once, never by the shape of the plan. Where a state is temporary, say so in the
+  brief of the task that makes it, with what removes it: an agent that comes later reads running code and green
+  tests as what was meant.
 
 ## Briefs
 

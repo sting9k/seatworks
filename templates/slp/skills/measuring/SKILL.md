@@ -1,6 +1,6 @@
 ---
 name: measuring
-description: "Measures performance so a number can be trusted: the metric and workload fixed first, a baseline with its spread, the bottleneck found before it is changed, one change per measurement, and gains weighed against noise. Use when the goal names latency, throughput, memory or size, or before you claim something is faster; not for correctness, which is proven apart (`test-first`)."
+description: "Measures performance so a number can be trusted: a fixed workload, a baseline with its spread, one change per measurement. Use when the goal names latency, throughput, memory or size, or before you claim something is faster; not for correctness, which is proven apart (`test-first`)."
 ---
 
 # Measuring

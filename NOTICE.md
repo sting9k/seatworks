@@ -16,7 +16,7 @@ plugin, removed on 2026-09-29, is in git history, and several skills below began
 | `roles/reviewer.md`                           | mattpocock `code-review`; SLP `ultra-review` lenses; OpenAI Codex's review rubric; Anthropic's code-review command         |
 | `skills/grilling`                             | mattpocock `grilling`, `domain-modeling` and `wayfinder`; superpowers `brainstorming`                                     |
 | `skills/pre-mortem`                           | Gary Klein's project premortem; SLP `council` sealed seats                                                                |
-| `skills/retrospective`                        | Cemri et al.'s multi-agent failure taxonomy; the SLP author's talk                                                        |
+| `skills/retrospective`                        | Cemri et al.'s multi-agent failure taxonomy; the SLP author's talk and articles                                           |
 | `skills/planning-lanes`                       | SLP material (feature intake and plans); addyosmani `api-and-interface-design`                                            |
 | `skills/blind-design`                         | SLP `council`, rewritten so the designs never share a room                                                                |
 | `skills/test-first`                           | superpowers `test-driven-development`; mattpocock `tdd`; SLP material and talk                                            |

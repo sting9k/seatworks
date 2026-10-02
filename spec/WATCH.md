@@ -58,9 +58,9 @@ profile's set, in `templates/slp/watch.yaml` with its questions and thresholds:
 Every moment is watched from the first lane, those above and those counted in code alone, which ask no model
 (`STEERING.md`). A moment's `tell` is earned only at a look back, so until then what the reflex finds goes to the
 Watcher as a candidate and reaches an owner only if the Watcher attends to it. When is each owner's craft, so it is
-data. The anti-pattern list the moments draw on is shared across projects
-(`reference/ANTIPATTERNS.md`); a project adds a moment of its own only when a look back shows its agents keep making
-one mistake. A profile with no moments has no watch, so a team that works another way loses nothing.
+data. The mistakes the moments are drawn from are the ones SLP names
+(`skills/retrospective/ANTIPATTERNS.md`); a project adds a moment of its own only when a look back shows its agents
+keep making one mistake. A profile with no moments has no watch, so a team that works another way loses nothing.
 
 ## The cascade
 

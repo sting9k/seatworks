@@ -1,6 +1,6 @@
 ---
 name: spike
-description: "Answers one question of fact with throwaway code: does the library do X, is this fast enough, what shape does the data really have. Use on a discovery brief, or when your work rests on a fact only running something can give; not for code that will be kept, which is built with `test-first`."
+description: "Answers one question of fact with throwaway code. Use on a discovery brief, or when your work rests on a fact only running something can give; not for code that will be kept, which is built with `test-first`."
 ---
 
 # Spike

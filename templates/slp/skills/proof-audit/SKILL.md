@@ -1,6 +1,6 @@
 ---
 name: proof-audit
-description: "Judges whether a proof proves its claim and whether a test earns its place: what it observes, whether it would fail with the behaviour gone, where its expected values come from, and the patterns that pass with the behaviour broken. Use on the tests you are about to hand back, on a claim a brief names, or when reading a change or a lane's proofs. Not for finding bugs in the code itself, nor for writing a test (`test-first`)."
+description: "Judges whether a proof proves its claim and whether a test earns its place: would it fail with the behaviour gone. Use on the tests you are about to hand back, on a claim a brief names, or when reading a change or a lane's proofs. Not for finding bugs in the code itself, nor for writing a test (`test-first`)."
 ---
 
 # Proof audit

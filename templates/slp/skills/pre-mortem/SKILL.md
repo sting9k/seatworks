@@ -1,6 +1,6 @@
 ---
 name: pre-mortem
-description: "Finds how a lane fails while changing its directive is still free, by stories written in the past tense from a lane that already failed. Use for a lane that is expensive, touches money, credentials or data that cannot be recovered, leaves this machine, or rests on one untested assumption; not for a routine lane."
+description: "Finds how a lane fails while changing its directive is still free. Use for a lane that is expensive, touches money, credentials or data that cannot be recovered, leaves this machine, or rests on one untested assumption; not for a routine lane."
 ---
 
 # Pre-mortem

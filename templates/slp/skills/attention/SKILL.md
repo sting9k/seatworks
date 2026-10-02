@@ -1,6 +1,6 @@
 ---
 name: attention
-description: "What to do with an attention from the watch: whether to step in, and how to ask so the agent spends its attention where it is likely to go wrong, without being framed. Use when an ATTENTION message arrives; not for a Lead's report or a question to the Human."
+description: "What to do with an attention from the watch: whether to step in, and how to ask without framing the agent. Use when an ATTENTION message arrives; not for a Lead's report or a question to the Human."
 ---
 
 # Attention

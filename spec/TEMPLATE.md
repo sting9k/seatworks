@@ -422,5 +422,6 @@ Its cases are in `CONFORMANCE.md`: Editor, Templates and Gallery.
 
 ## To decide
 
-- Whether `templates/slp/reference/ANTIPATTERNS.md`, which no prompt, skill or code points at, goes into a skill or
-  goes. It is SLP's content.
+Nothing open. SLP's list of anti-patterns, which no prompt, skill or code pointed at, lies beside its `retrospective`
+skill, which names an episode by it at a look back; it no longer says what notices each one, since those names are
+the watch's and are kept in one place, the profile's own files.

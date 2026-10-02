@@ -1,6 +1,6 @@
 ---
 name: security-check
-description: "Checks a change for harm untrusted input or a careless caller could cause: where outside data enters, where it is used, who may do what to which object, secrets, what new edge values mean, and how failure behaves, with a failing test per abuse case. Use when a task or a change touches input, auth, secrets, file paths, data exposure or outbound calls. Not for infrastructure or dependency audits nobody asked for."
+description: "Checks a change for harm untrusted input or a careless caller could cause, with a failing test per abuse case. Use when a task or a change touches input, auth, secrets, file paths, data exposure or outbound calls. Not for infrastructure or dependency audits nobody asked for."
 ---
 
 # Security check

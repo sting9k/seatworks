@@ -1,6 +1,6 @@
 ---
 name: appetite
-description: "Sets and holds what work may cost: an appetite chosen from what the outcome is worth, what is cut first when it runs short, and what happens when a lane passes it. Use when new work is settled with the Human, and when a lane passes its appetite; not for a Lead's estimate of a task."
+description: "Sets and holds what work may cost, and what is cut first when it runs short. Use when new work is settled with the Human, and when a lane passes its appetite; not for a Lead's estimate of a task."
 ---
 
 # Appetite

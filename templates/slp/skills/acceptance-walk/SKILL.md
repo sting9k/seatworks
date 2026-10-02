@@ -1,6 +1,6 @@
 ---
 name: acceptance-walk
-description: "Checks a lane as a user or caller meets it before it is reported: the goal turned into clauses someone could observe, each exercised on the lane's head through its real surface, with probes a fake success would not survive. Use before reporting a lane whose goal is behaviour a user or caller sees; not for a lane with no such surface, such as an internal refactor, whose tests are its proof."
+description: "Checks a lane as a user or caller meets it, on its head and through its real surface, before it is reported. Use before reporting a lane whose goal is behaviour a user or caller sees; not for a lane with no such surface, such as an internal refactor, whose tests are its proof."
 ---
 
 # Acceptance walk

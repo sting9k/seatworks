@@ -1,6 +1,6 @@
 ---
 name: lane-portfolio
-description: "Keeps the lanes that run worth their cost: which goes first, how many run at once, who owns what when a premise changes, and when a lane stops. Use when several lanes run, when a finding reaches past its lane, or when a Lead asks to widen its lane; not for how a lane is built, which is its Lead's."
+description: "Keeps the lanes that run worth their cost: which goes first, how many run at once, and when a lane stops. Use when several lanes run, when a finding reaches past its lane, or when a Lead asks to widen its lane; not for how a lane is built, which is its Lead's."
 ---
 
 # Lane portfolio
