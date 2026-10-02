@@ -417,6 +417,8 @@ for it.
 - `status(scope)`: the brief, its children with their state, edges, open obligations on and to its owner, the
   latest claim and its evidence, spend of the scope and its descendants beside its appetite.
 - `record(scope)`: briefs with every version, findings with their chains, reports, attentions with what came of them.
+- An agent's reads (`status`, `record`, `diff`) take its own scope when it names none. Their arguments are parsed at
+  the boundary as a command's are, and one that does not fit is refused, saying which.
 - `obligations(actor)`, `whatTheHumanNeeds`, `sinceTheyLooked(at)`, `chainOfChange(finding)`, `signals(since)`.
 
 The five signals, each `count of total` (`shared/views/record.ts`), in the plainest terms the log supports:

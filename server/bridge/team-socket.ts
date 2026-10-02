@@ -1,7 +1,14 @@
 import { rmSync } from "node:fs";
 import { type Server, type Socket, createServer } from "node:net";
 import { type Command, parseBody } from "../../shared/contracts/commands.ts";
-import { READS, type ReadName, type ToolSpec, toolsFor } from "../../shared/contracts/tools.ts";
+import {
+  READS,
+  type ReadArgs,
+  type ReadName,
+  type ToolSpec,
+  parseRead,
+  toolsFor,
+} from "../../shared/contracts/tools.ts";
 import type { Keys } from "../core/keys.ts";
 import { daemonLog } from "../core/logger.ts";
 import type { Submitted } from "./project.ts";
@@ -18,7 +25,7 @@ export type ProjectPort = {
   roleTools(actor: string): ReadonlySet<string> | null;
   /** A seated actor's role, when the project's profile no longer has it. */
   roleGone(actor: string): string | null;
-  read(actor: string, name: ReadName, args: unknown): Promise<string>;
+  read(actor: string, name: ReadName, args: ReadArgs): Promise<string>;
 };
 
 /** A line longer than this is a broken client, not a tool call: the connection is closed rather than buffered. */
@@ -94,7 +101,18 @@ export class TeamSocket {
           continue;
         }
         if (message.type === "hello") {
-          const project = typeof message.project === "string" ? this.projects(message.project) : undefined;
+          let project: ProjectPort | undefined;
+          try {
+            project = typeof message.project === "string" ? this.projects(message.project) : undefined;
+          } catch (error) {
+            // A project that does not open must not take the socket, and every other agent's tools, down with it.
+            daemonLog.error(`the project of a tool server could not be opened: ${String(message.project)}`, error);
+            write({
+              type: "refused",
+              why: "the plugin could not open this agent's project; why is in Paseo's daemon log",
+            });
+            continue;
+          }
           const actor = typeof message.actor === "string" ? message.actor : "";
           const key = typeof message.key === "string" ? message.key : "";
           const tools = project?.roleTools(actor);
@@ -141,8 +159,11 @@ export class TeamSocket {
     name: string,
     args: unknown,
   ): Promise<{ ok: boolean; text: string }> {
-    if (Object.hasOwn(READS, name))
-      return { ok: true, text: await who.project.read(who.actor, name as ReadName, args ?? {}) };
+    if (Object.hasOwn(READS, name)) {
+      const read = parseRead(name as ReadName, args ?? {});
+      if (!read.ok) return { ok: false, text: `The arguments do not fit ${name}: ${read.says}` };
+      return { ok: true, text: await who.project.read(who.actor, name as ReadName, read.args) };
+    }
     const tools = who.project.roleTools(who.actor);
     const gone = who.project.roleGone(who.actor);
     if (gone !== null)

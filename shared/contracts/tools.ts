@@ -1,14 +1,22 @@
 import { z } from "zod";
 import { COMMANDS, type CommandType, FACTS, HUMAN_ONLY, ReportLines } from "./commands.ts";
 
-/** The reads every agent may be shown besides the commands its role names. */
+/** The reads every agent may be shown besides the commands its role names; a scope left out is the caller's own. */
 export const READS = {
   status: z.object({ scope: z.string().optional() }),
-  record: z.object({ scope: z.string() }),
-  diff: z.object({ scope: z.string(), commit: z.string().optional() }),
+  record: z.object({ scope: z.string().optional() }),
+  diff: z.object({ scope: z.string().optional(), commit: z.string().optional() }),
   look: z.object({ actor: z.string(), last: z.number().int().positive().max(200).default(40) }),
 } as const;
 export type ReadName = keyof typeof READS;
+/** A read's arguments once parsed, whichever read it is. */
+export type ReadArgs = { scope?: string; commit?: string; actor?: string; last?: number };
+
+/** Parses a read's arguments at the boundary, as `parseBody` does a command's. */
+export function parseRead(name: ReadName, args: unknown): { ok: true; args: ReadArgs } | { ok: false; says: string } {
+  const parsed = READS[name].safeParse(args);
+  return parsed.success ? { ok: true, args: parsed.data } : { ok: false, says: z.prettifyError(parsed.error) };
+}
 
 /** Every tool a profile may give a role, by name: the reads, and the commands an agent may send. */
 export const ROLE_TOOLS: ReadonlySet<string> = new Set([
@@ -20,8 +28,9 @@ export const ROLE_TOOLS: ReadonlySet<string> = new Set([
 export const DESCRIPTIONS: Record<CommandType | ReadName, string> = {
   status:
     "Your scope as the record has it: its brief with line ids, its children, what waits on whom, what you owe and are owed, spend beside the appetite. Pass `scope` to see another.",
-  record: "A scope's history: every brief version, its findings with what came of them, its reports.",
-  diff: "A scope's change against its parent branch, at its branch head or a named commit.",
+  record:
+    "A scope's history: every brief version, its findings with what came of them, its reports. Yours, unless you pass `scope`.",
+  diff: "A scope's change against its parent branch, at its branch head or a named commit. Yours, unless you pass `scope`.",
   look: "An agent's recent turns: what it said, thought and ran, newest last.",
   open_project: "Opens the project.",
   open_scope:

@@ -145,6 +145,20 @@ What the Human's surface shows as stuck: read from the log and the outbox, chang
 | The Human keeps `rules/slp/all.md` and `rules/slp/lead.md` under the state root | A Lead seated after gets both after its role's prompt; a Supervisor only `all.md` |
 | A rules file edited after one agent was made                | The next agent seated gets the edit                        |
 
+## Tools
+
+A call as an agent's tool server sends it, the answer read back.
+
+| Case                                                        | Expect                                                     |
+| ----------------------------------------------------------- | ---------------------------------------------------------- |
+| `status`, `record` and `diff` called with no scope named, then with another scope's name | The caller's own scope as the record has it, its history, and its change against its parent's branch; then the other's |
+| `look` at an agent, and at its last two turns               | What it was told, thought and said, newest last; no more turns than asked for, and the newest of them |
+| A read whose arguments do not fit: `look` with no actor, or asking for more turns than it gives; a scope that is no name | Refused, saying which argument; nothing is read |
+| A tool server that says hello for a project the plugin cannot open | Refused, saying so, with the reason in Paseo's log; every other agent's tools go on working |
+| A tool server started before the plugin listens             | It waits, and has its tools once the plugin is there       |
+| A tool server the plugin refuses                            | Not tried again: the refusal is the plugin's answer        |
+| A call made while the plugin is away; then once it is back  | Answered in words that the plugin is not answering and nothing was recorded; then carried |
+
 ## Workspace and evidence
 
 | Case                                                        | Expect                                   |

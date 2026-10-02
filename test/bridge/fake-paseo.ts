@@ -37,6 +37,8 @@ export function fakePaseo(pluginDir: string, provider = "claude") {
   const responded: string[] = [];
   /** The project roots Paseo lists; a test adds the ones the Human opened in Paseo. */
   const projects: string[] = [];
+  /** What each agent's timeline holds, oldest first; a test puts an agent's turns here. */
+  const timelines = new Map<string, unknown[]>();
   const ref = (id: string) => ({
     id,
     refresh: () =>
@@ -63,7 +65,14 @@ export function fakePaseo(pluginDir: string, provider = "claude") {
       pending.get(id)?.delete(o.requestId);
       return Promise.resolve();
     },
-    timeline: { refetch: () => Promise.resolve({ entries: [] }) },
+    // Which end Paseo gives when none is named is not ours to assume: here it is the oldest, unless the tail is asked.
+    timeline: {
+      refetch: (o: { limit?: number; direction?: string } = {}) => {
+        const all = timelines.get(id) ?? [];
+        const page = o.direction === "tail" ? all.slice(-(o.limit ?? all.length)) : all.slice(0, o.limit);
+        return Promise.resolve({ entries: page.map((item) => ({ item })) });
+      },
+    },
   });
   const api = {
     projects: {
@@ -162,5 +171,5 @@ export function fakePaseo(pluginDir: string, provider = "claude") {
       ref,
     },
   };
-  return { api: api as unknown as PaseoApi, created, sent, archived, gate, projects, pending, responded };
+  return { api: api as unknown as PaseoApi, created, sent, archived, gate, projects, pending, responded, timelines };
 }

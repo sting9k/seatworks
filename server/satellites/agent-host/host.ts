@@ -2,6 +2,7 @@ import type { PaseoAgentConfig, PaseoAgentListResult, PaseoApi } from "@getpaseo
 import type { AgentTimelineItem } from "@getpaseo/protocol/agent-types";
 import type { PaseoLink } from "./paseo-link.ts";
 import { TEAM_SERVER } from "../../../shared/contracts/ids.ts";
+import type { Server } from "../../../shared/contracts/profile.ts";
 
 /** What an agent is started with; the agent host's own words, naming nothing of SLP (PORTS.md, Agent host). */
 export type AgentSpec = {
@@ -24,7 +25,7 @@ export type AgentSpec = {
   readonly servers: readonly {
     readonly name: string;
     readonly tools: readonly string[];
-    readonly server: Readonly<Record<string, unknown>>;
+    readonly server: Server;
   }[];
 };
 
@@ -70,8 +71,9 @@ export class PaseoHost {
       ...(profile.featureValues ? { featureValues: profile.featureValues } : {}),
     };
     const shaped = mergeAll(base, harness?.always ?? {}, (spec.writes ? harness?.writes : harness?.reads) ?? {});
-    const config = {
-      ...shaped,
+    // What a harness file adds is read as it is written; everything Seatworks sets itself is held to Paseo's types.
+    const config: PaseoAgentConfig = {
+      ...(shaped as Pick<PaseoAgentConfig, "provider">),
       systemPrompt: spec.systemPrompt,
       mcpServers: {
         ...Object.fromEntries(spec.servers.map((given) => [given.name, given.server])),
@@ -86,11 +88,13 @@ export class PaseoHost {
       },
       toolPolicy: {
         preapproved: [
-          ...spec.tools.names.map((tool) => ({ kind: "mcp", server: TEAM_SERVER, tool })),
-          ...spec.servers.flatMap((given) => given.tools.map((tool) => ({ kind: "mcp", server: given.name, tool }))),
+          ...spec.tools.names.map((tool) => ({ kind: "mcp" as const, server: TEAM_SERVER, tool })),
+          ...spec.servers.flatMap((given) =>
+            given.tools.map((tool) => ({ kind: "mcp" as const, server: given.name, tool })),
+          ),
         ],
       },
-    } as unknown as PaseoAgentConfig;
+    };
     try {
       const handle = await api.agents.create({
         idempotencyKey: spec.key,
@@ -202,7 +206,8 @@ export class PaseoHost {
   async look(host: string, last: number): Promise<string> {
     const api = this.link.current;
     if (!api) return "Paseo is not reachable yet.";
-    const page = await api.agents.ref(host).timeline.refetch({ limit: last });
+    // The end Paseo gives when none is named is its own to change: the newest turns are asked for by name.
+    const page = await api.agents.ref(host).timeline.refetch({ limit: last, direction: "tail" });
     const lines = page.entries.map((e) => lineOf(e.item)).filter((l): l is string => l !== null);
     return lines.length > 0 ? lines.join("\n") : "Nothing in its timeline yet.";
   }

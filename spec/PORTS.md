@@ -212,11 +212,22 @@ on connecting, and the bridge takes the caller from it, never from a tool's argu
 back the key its agent was bound to. It guards against mistakes, not intent, as the git shim does.
 
 Each tool is one kernel command, shown to the roles whose `tools` name it, or a read: `status` (a scope's view),
-`record` (briefs, findings, reports, attentions), `look` (an agent's history between two points, through the agent
-host), `diff` (a scope's change at a commit). A reply is the command's result and the facts it produced, never advice
-on what to do next. A tool's description says what it is for, and `raise_finding`'s names the points of conflict it is
+`record` (briefs, findings, reports, attentions), `look` (an agent's last turns, newest last, through the agent
+host), `diff` (a scope's change at a commit). A read with no scope named is of the caller's own. A reply is the
+command's result and the facts it produced, never advice on what to do next. A tool's description says what it is for, and `raise_finding`'s names the points of conflict it is
 the channel for: a check that cannot pass honestly, a premise the code contradicts, the same failure a third time, a
 layer about to hide a contradiction (`STEERING.md`).
+
+The line between the server and the bridge fails in words, never in silence:
+
+- Every tool's arguments are parsed where the call arrives, a read's as a command's; one that does not fit is refused,
+  saying which argument.
+- A server started before the plugin listens, or calling while the plugin is being loaded again, waits a moment and
+  tries again. A plugin that stays away is said so, with whether anything was recorded. The plugin's own refusal is
+  an answer, and is not tried again.
+- A call whose answer is lost with the connection is sent again under its id, and taken once.
+- Nothing thrown while a server is answered leaves the socket: the server is refused, the reason goes to Paseo's
+  log, and every other agent's tools go on working.
 
 ## Bridge
 

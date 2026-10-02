@@ -200,3 +200,114 @@ test("a call whose answer is lost with the connection is sent again and recorded
     await socket.close();
   }
 });
+
+/** The environment an agent's tool server is started with, set for a line opened in this process. */
+function asAgent(project: string, actor: string, key: string): () => void {
+  const saved = { ...process.env };
+  Object.assign(process.env, { SEATWORKS_PROJECT: project, SEATWORKS_ACTOR: actor, SEATWORKS_KEY: key });
+  return () => {
+    process.env = saved;
+  };
+}
+
+test("a tool server whose project cannot be opened is refused, saying so, and the plugin goes on serving the others", async () => {
+  const { ledger, peer } = team();
+  const root = mkdtempSync(join(tmpdir(), "sw-mcp-"));
+  const keys = new Keys(join(root, "secret"));
+  const port = {
+    view: ledger.state,
+    submit: () => Promise.reject(new Error("never")),
+    report: ledger.profile.report,
+    roleTools: () => new Set(["status"]),
+    roleGone: () => null,
+    read: () => Promise.resolve("status text"),
+  };
+  const socket = new TeamSocket(join(root, "team.sock"), keys, (id) => {
+    if (id === "broken") throw new Error("its log does not fold");
+    return port;
+  });
+  await socket.listen();
+  const restore = asAgent("broken", peer, keys.keyOf("broken", peer));
+  const broken = new Line(join(root, "team.sock"));
+  try {
+    await assert.rejects(broken.open(), /the plugin could not open this agent's project/);
+    Object.assign(process.env, { SEATWORKS_PROJECT: "p", SEATWORKS_KEY: keys.keyOf("p", peer) });
+    const working = new Line(join(root, "team.sock"));
+    assert.deepEqual(await working.call("status", {}), { ok: true, text: "status text" });
+    working.close();
+  } finally {
+    restore();
+    broken.close();
+    await socket.close();
+  }
+});
+
+test("a tool server started before the plugin listens waits and connects once it does; one the plugin refuses is not tried again", async () => {
+  const { ledger, peer } = team();
+  const root = mkdtempSync(join(tmpdir(), "sw-mcp-"));
+  const keys = new Keys(join(root, "secret"));
+  const port = {
+    view: ledger.state,
+    submit: () => Promise.reject(new Error("never")),
+    report: ledger.profile.report,
+    roleTools: () => new Set(["status"]),
+    roleGone: () => null,
+    read: () => Promise.resolve("status text"),
+  };
+  let hellos = 0;
+  const socket = new TeamSocket(join(root, "team.sock"), keys, () => {
+    hellos++;
+    return port;
+  });
+  const restore = asAgent("p", peer, keys.keyOf("p", peer));
+  const early = new Line(join(root, "team.sock"));
+  const stranger = new Line(join(root, "team.sock"));
+  try {
+    const opening = early.open();
+    await socket.listen();
+    assert.deepEqual(
+      (await opening).map((tool) => tool.name),
+      ["status", "record", "diff", "look"],
+      "it was started first, and has its tools all the same",
+    );
+    assert.deepEqual(await early.call("status", {}), { ok: true, text: "status text" });
+
+    hellos = 0;
+    process.env.SEATWORKS_KEY = "not-a-key";
+    await assert.rejects(stranger.open(), /does not belong to a seated agent/);
+    assert.equal(hellos, 1, "a refusal is the plugin's answer, not a plugin that is away");
+  } finally {
+    restore();
+    early.close();
+    stranger.close();
+    await socket.close();
+  }
+});
+
+test("a call made while the plugin is away says so in words, and one made once it is back is carried", async () => {
+  const { ledger, peer } = team();
+  const root = mkdtempSync(join(tmpdir(), "sw-mcp-"));
+  const keys = new Keys(join(root, "secret"));
+  const port = {
+    view: ledger.state,
+    submit: () => Promise.reject(new Error("never")),
+    report: ledger.profile.report,
+    roleTools: () => new Set(["status"]),
+    roleGone: () => null,
+    read: () => Promise.resolve("status text"),
+  };
+  const restore = asAgent("p", peer, keys.keyOf("p", peer));
+  const line = new Line(join(root, "team.sock"));
+  const socket = new TeamSocket(join(root, "team.sock"), keys, () => port);
+  try {
+    const away = await line.call("status", {});
+    assert.equal(away.ok, false);
+    assert.match(away.text, /^The plugin is not answering/);
+    await socket.listen();
+    assert.deepEqual(await line.call("status", {}), { ok: true, text: "status text" });
+  } finally {
+    restore();
+    line.close();
+    await socket.close();
+  }
+});

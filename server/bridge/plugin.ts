@@ -14,7 +14,7 @@ import type { PaseoApi } from "@getpaseo/client";
 import type { AgentTimelineItem } from "@getpaseo/protocol/agent-types";
 import type { Caller, CommandBody } from "../../shared/contracts/commands.ts";
 import { PROJECT_LABEL, ROOT } from "../../shared/contracts/ids.ts";
-import type { ReadName } from "../../shared/contracts/tools.ts";
+import type { ReadArgs, ReadName } from "../../shared/contracts/tools.ts";
 import { activityLine } from "../../shared/views/activity.ts";
 import { type Chain, type Signals, chainOf, scopeRecordText, signalsOf } from "../../shared/views/record.ts";
 import type {
@@ -956,8 +956,7 @@ export class Plugin {
     };
   }
 
-  private async read(runtime: Runtime, actor: string, name: ReadName, args: unknown): Promise<string> {
-    const a = (args ?? {}) as { scope?: string; actor?: string; commit?: string; last?: number };
+  private async read(runtime: Runtime, actor: string, name: ReadName, a: ReadArgs): Promise<string> {
     const view = runtime.project.view;
     const own = view.actors.get(actor)?.scope ?? "root";
     if (name === "status") return statusText(view, a.scope ?? own, actor) ?? `No scope ${a.scope ?? own} is open.`;
