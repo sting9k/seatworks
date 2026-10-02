@@ -7,7 +7,10 @@ import { withPlaces } from "../../core/home.ts";
 
 /** What an agent is started with; the agent host's own words, naming nothing of SLP (PORTS.md, Agent host). */
 export type AgentSpec = {
+  /** Unique for the whole host: one agent is made for it, however often it is asked. */
   readonly key: string;
+  /** The id the first prompt is sent under, which the host gives back on that message in the agent's history. */
+  readonly promptId: string;
   readonly title: string;
   readonly profile: string;
   readonly cwd: string;
@@ -109,7 +112,7 @@ export class PaseoHost {
         cwd: spec.cwd,
         title: spec.title,
         prompt: spec.prompt,
-        clientMessageId: `${spec.key}:prompt`,
+        clientMessageId: spec.promptId,
         env: { ...spec.env, ...harness?.env },
         labels: { ...spec.labels },
         config,

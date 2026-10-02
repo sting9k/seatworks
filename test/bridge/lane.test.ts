@@ -200,7 +200,7 @@ test("the Human's words typed into a Lead's chat reach its Supervisor once, thou
   await plugin.idle();
   const leadAgent = paseo.created[1]!;
   const first = [
-    { type: "user_message" as const, text: leadAgent.prompt, clientMessageId: "7:agent.create:prompt" },
+    { type: "user_message" as const, text: leadAgent.prompt, clientMessageId: leadAgent.promptId },
     { type: "assistant_message" as const, text: "Reading the docs." },
     { type: "user_message" as const, text: "Keep the old anchors", clientMessageId: "app-1" },
     { type: "assistant_message" as const, text: "Keeping them." },
@@ -216,6 +216,11 @@ test("the Human's words typed into a Lead's chat reach its Supervisor once, thou
   await plugin.idle();
   const copies = paseo.sent.filter((s) => s.host === supervisorAgent.host && s.text.includes("Keep the old anchors"));
   assert.equal(copies.length, 1);
+  assert.equal(
+    paseo.sent.filter((s) => s.host === supervisorAgent.host && s.text.includes("You are seated on this scope")).length,
+    0,
+    "the plugin's own first words to the Lead are nobody's typing: its Supervisor is sent no copy of them",
+  );
 
   // Two turns that end one on the other's heels: the second hook arrives while the first is still being taken.
   const typed = { type: "user_message" as const, text: "And the new index", clientMessageId: "app-2" };
@@ -255,7 +260,7 @@ test("a turn the plugin's words began that fails in Paseo gets them again; one t
   await plugin.idle();
   const leadAgent = paseo.created[1]!;
   const failed = { kind: "failed", error: { message: "529 overloaded" } };
-  const first = [{ type: "user_message" as const, text: leadAgent.prompt, clientMessageId: "7:agent:prompt" }];
+  const first = [{ type: "user_message" as const, text: leadAgent.prompt, clientMessageId: leadAgent.promptId }];
   await plugin.turnEnded(leadAgent.host, failed, first);
   await plugin.idle();
   const again = paseo.sent.filter((s) => s.host === leadAgent.host);

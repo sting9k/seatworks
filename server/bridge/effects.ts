@@ -122,6 +122,8 @@ export function handlersFor(w: Wiring): Handlers {
       const created = await w.host.create({
         // Paseo keeps a keyed create for the whole daemon, and every project's log counts from 1.
         key: `${w.project}:${key}`,
+        // Its first words go under the effect's own key, as every delivery does: that is how they are known as ours.
+        promptId: `${key}:prompt`,
         title: `${actor.scope} · ${actor.role}`,
         profile,
         cwd,

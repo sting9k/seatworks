@@ -129,6 +129,7 @@ test("the scope tools: open, amend a brief, handover, hold and resume, reseat, r
     brief: brief("D"),
   });
   assert.match(await status(keeper, "1.3"), /^Waits for: 1\.1$/m);
+  assert.match(await status(keeper), /^- 1\.3 open · a\d+ \(maker\) · src\/d\/ · no agent yet$/m);
   assert.equal(
     c.paseo.created.length,
     made,
@@ -136,6 +137,7 @@ test("the scope tools: open, amend a brief, handover, hold and resume, reseat, r
   );
   await did(c, keeper, "drop_scope", { scope: "1.1", reason: "D goes first after all" });
   assert.equal(c.paseo.created.at(-1)?.title, "1.3 · maker", "and starts once it is");
+  assert.doesNotMatch(await status(keeper), /no agent yet/);
   for (const t of [chief, keeper]) t.close();
 });
 

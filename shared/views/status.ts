@@ -114,6 +114,7 @@ function childLine(state: State, c: Scope): string {
   const bits = [`${c.id} ${c.status}`, owner ? `${owner.id} (${owner.role})` : "nobody seated"];
   if (c.paths.length > 0) bits.push(c.paths.join(", "));
   if (c.workspace === "failed") bits.push("no copy");
+  else if (owner?.status === "seated" && owner.host === null) bits.push("no agent yet");
   if (c.claim) bits.push("handed back");
   if (c.candidate) bits.push(`candidate ${c.candidate.candidate}`);
   if (c.integrating) bits.push("integrating");

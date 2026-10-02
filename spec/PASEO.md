@@ -87,7 +87,10 @@ from Paseo 0.10.1: the plugin SDK, `@getpaseo/client`, `@getpaseo/protocol`, the
   shorter than `seen` is read from its last prompt. The hooks of one agent are taken one at a time, since each reads
   `seen` as the one before left it: two taken at once would both read the same items, and record twice what the Human
   typed. Words the Human typed are the turn's `user_message` items whose
-  `clientMessageId` is none of the plugin's effect keys; rebuilt ones carry none and count as nobody's.
+  `clientMessageId` is none of the plugin's effect keys; rebuilt ones carry none and count as nobody's. An agent's
+  first prompt goes under its effect's key too (`<seq>:agent:prompt`), apart from the key of its create, which names
+  the project as well: under that one the prompt read as words the Human had typed, was copied to the owner above as
+  a direction for every agent seated, and was not sent again when a first turn failed.
 - Every provider maps its thinking to `reasoning` items (Claude, Codex, Pi, Oh My Pi, OpenCode), so the watch reads
   thinking wherever the model returns it; how much it returns is the profile's thinking option.
 - `send(text, { messageId })` becomes the user message's `clientMessageId` (`sendPromptToAgent`). The same id again

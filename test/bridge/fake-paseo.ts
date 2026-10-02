@@ -6,6 +6,8 @@ type Created = {
   cwd: string;
   title: string;
   prompt: string;
+  /** The id the first prompt was sent under, which Paseo gives back on that message in the agent's history. */
+  promptId: string;
   env: Record<string, string>;
   systemPrompt: string;
   /** The provider and model of the agent profile it was made from. */
@@ -146,6 +148,7 @@ export function fakePaseo(
         cwd: string;
         title: string;
         prompt: string;
+        clientMessageId: string;
         env: Record<string, string>;
         labels: Record<string, string>;
         config: {
@@ -180,6 +183,7 @@ export function fakePaseo(
           cwd: o.cwd,
           title: o.title,
           prompt: o.prompt,
+          promptId: o.clientMessageId,
           env: o.env,
           systemPrompt: o.config.systemPrompt,
           provider: o.config.provider,
