@@ -15,6 +15,7 @@ type Tab = {
   readonly files: TemplateFiles;
   readonly future: readonly TemplateFiles[];
   readonly exported: TemplateFiles;
+  readonly opened: TemplateFiles;
 };
 
 const changedIn = (tab: Tab) => tab.files !== tab.exported;
@@ -120,6 +121,7 @@ export function App() {
         <Workspace
           key={tab.id}
           template={read.template}
+          opened={tab.opened}
           changed={changedIn(tab)}
           canUndo={tab.past.length > 0}
           canRedo={tab.future.length > 0}
@@ -143,7 +145,7 @@ export function App() {
         <Gallery
           templates={TEMPLATES}
           onOpen={(files) => {
-            setTabs((all) => [...all, { id: opened, past: [], files, future: [], exported: files }]);
+            setTabs((all) => [...all, { id: opened, past: [], files, future: [], exported: files, opened: files }]);
             setActive(opened);
             setOpened(opened + 1);
           }}

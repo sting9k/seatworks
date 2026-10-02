@@ -2,7 +2,7 @@ import { Handle, type Node, type NodeProps, NodeToolbar, type NodeTypes, Positio
 import { RELATIONS } from "../../shared/contracts/profile.ts";
 import { setProperty, setSpeaks, setTool } from "../template/edits.ts";
 import { type GraphNode, PROPERTIES, type Wire } from "../template/graph.ts";
-import { isMakeable, useEditing } from "./editing.ts";
+import { isMakeable, useEditing, useNotes } from "./editing.ts";
 import { Icon } from "./icons.tsx";
 
 type Of<Kind extends GraphNode["kind"]> = Extract<GraphNode, { kind: Kind }>;
@@ -32,6 +32,16 @@ function Socket({ kind, end, label }: { kind: Wire["kind"]; end: "in" | "out"; l
       <Plug kind={kind} end={end} />
       {label}
     </div>
+  );
+}
+
+/** How many notes are about a node, by its name; what they say is in the side panel. */
+function Noted({ id }: { id: string }) {
+  const notes = useNotes(id);
+  return notes.length === 0 ? null : (
+    <span className="noted-mark" title={notes.map((note) => note.says).join("\n")}>
+      {notes.length}
+    </span>
   );
 }
 
@@ -83,6 +93,7 @@ function Role({ data: { node } }: NodeProps<FlowNode<"role">>) {
       <header>
         <i className="dot kind-role" />
         {node.name}
+        <Noted id={node.id} />
       </header>
       <div className="sockets">
         <div>
@@ -143,6 +154,10 @@ function Role({ data: { node } }: NodeProps<FlowNode<"role">>) {
       <div className="field">
         <span>prompt</span>
         <span className="value">{node.file ?? "none"}</span>
+      </div>
+      <div className="field" title="Its prompt, the description of each of its skills and the team's flow">
+        <span>read every turn</span>
+        <span className="value">{node.alwaysOn.toLocaleString("en")} words</span>
       </div>
       {node.groups.map((group) => (
         <details key={group.id} className="group nodrag">
@@ -216,6 +231,7 @@ function Compact({
         <i className={`dot kind-${node.kind}`} />
         {title}
         {quiet ? <span className="quiet">{quiet}</span> : null}
+        <Noted id={node.id} />
       </header>
     </div>
   );

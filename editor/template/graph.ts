@@ -1,4 +1,5 @@
 import type { Relation, Role } from "../../shared/contracts/profile.ts";
+import { alwaysOnWords } from "./checks.ts";
 import type { Asked, Template } from "./read-template.ts";
 import { TOOL_GROUPS } from "./tool-groups.ts";
 
@@ -12,6 +13,8 @@ type RoleNode = {
   readonly properties: readonly Property[];
   readonly speaks: readonly Relation[];
   readonly models: readonly string[];
+  /** The words it reads on every turn (`checks.ts`). */
+  readonly alwaysOn: number;
   /** The groups its properties bring, each tool ticked when the role is shown it. */
   readonly groups: readonly {
     readonly id: string;
@@ -74,7 +77,7 @@ export function graphOf(template: Template): Graph {
 
   for (const role of roles) {
     const file = template.file.roles[role.name];
-    nodes.push(roleNode(role, file?.prompt ?? null));
+    nodes.push(roleNode(role, file?.prompt ?? null, alwaysOnWords(template, role.name)));
     for (const spawned of role.spawns) wires.push({ kind: "spawns", from: roleId(role.name), to: roleId(spawned) });
     for (const skill of file?.skills ?? [])
       wires.push({ kind: "skill", from: `skill:${skill}`, to: roleId(role.name) });
@@ -136,7 +139,7 @@ export function graphOf(template: Template): Graph {
   return { nodes, wires };
 }
 
-function roleNode(role: Role, prompt: string | null): RoleNode {
+function roleNode(role: Role, prompt: string | null, alwaysOn: number): RoleNode {
   const groups = TOOL_GROUPS.flatMap((group) => {
     if (group.follows === "optional") return [];
     const tools = group.tools.map((name) => ({ name, ticked: role.tools.has(name) }));
@@ -149,6 +152,7 @@ function roleNode(role: Role, prompt: string | null): RoleNode {
     properties: PROPERTIES.filter((property) => role[property]),
     speaks: [...role.speaksTo],
     models: role.models,
+    alwaysOn,
     groups,
     file: prompt,
   };

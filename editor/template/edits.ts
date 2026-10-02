@@ -3,9 +3,9 @@ import { type Step, withAbout, withEditor } from "./about.ts";
 import { flowText } from "./flow.ts";
 import type { Property, Wire } from "./graph.ts";
 import { readTemplate, type Template, type TemplateFiles } from "./read-template.ts";
-import { promptSkeleton, skillSkeleton } from "./skeletons.ts";
+import { momentSkeleton, promptSkeleton, questionSkeleton, skillSkeleton } from "./skeletons.ts";
 import { TOOL_GROUPS, toolsFollowing } from "./tool-groups.ts";
-import { deleteIn, renameKey, setIn, type Value } from "./yaml-patch.ts";
+import { deleteIn, renameKey, setIn, type Value, withItem } from "./yaml-patch.ts";
 
 /**
  * A change to a template: its files in, its files out, or why it is not made. A change touches only the file it
@@ -288,6 +288,52 @@ export function stepIdFor(steps: readonly Step[], name: string): string {
   for (let n = 2; taken.has(id); n++) id = `${base}-${n}`;
   return id;
 }
+
+/** A file's text as a person wrote it, or a file put beside a skill. */
+export const putFile =
+  (path: string, text: string): Edit =>
+  (template) =>
+    new Map(template.files).set(path, text);
+
+/** The models a role may be seated on, the first its default: each names an agent profile of the Human's in Paseo. */
+export const setModels =
+  (name: string, models: readonly string[]): Edit =>
+  (template) =>
+    withFile(template.files, PROFILE, (text) => listed(text, name, "models", models));
+
+type AskedKind = "question" | "moment";
+const ASKED = {
+  question: { key: "questions", skeleton: questionSkeleton },
+  moment: { key: "moments", skeleton: momentSkeleton },
+};
+const askedFile = (template: Template, kind: AskedKind) =>
+  kind === "question" ? template.file.reflex : template.file.watch;
+const askedOf = (template: Template, kind: AskedKind) => (kind === "question" ? template.questions : template.moments);
+
+/** A question or a moment from its skeleton: written, and not asked until its author says so. */
+export const addAsked =
+  (kind: AskedKind, name: string): Edit =>
+  (template) => {
+    const path = askedFile(template, kind);
+    if (path === undefined) return { refused: `this template keeps no file of ${ASKED[kind].key}` };
+    if (!NAME.test(name)) return { refused: `its name is lower-case letters, digits and dashes: ${name} is not` };
+    if (askedOf(template, kind).some((asked) => asked.name === name))
+      return { refused: `there is already one named ${name}` };
+    return withFile(template.files, path, (text) => setIn(text, [ASKED[kind].key, name], ASKED[kind].skeleton));
+  };
+
+export const removeAsked =
+  (kind: AskedKind, name: string): Edit =>
+  (template) =>
+    withFile(template.files, askedFile(template, kind)!, (text) =>
+      deleteIn(withItem(text, ["active"], name, false), [ASKED[kind].key, name]),
+    );
+
+/** Whether a question is asked or a moment watched: its name in its file's `active` list. */
+export const setAsked =
+  (kind: AskedKind, name: string, active: boolean): Edit =>
+  (template) =>
+    withFile(template.files, askedFile(template, kind)!, (text) => withItem(text, ["active"], name, active));
 
 export const addStep =
   (name: string): Edit =>

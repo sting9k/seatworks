@@ -5,7 +5,7 @@ touching the plugin. SLP is the one Seatworks ships. A template is to Seatworks 
 ComfyUI: picked from a gallery, opened as a graph, changed, and run. `EDITOR.md` says how one is opened and changed;
 this says what a template is, what the plugin reads of it, and how it reaches a machine.
 
-Of this, only the editor's reading is built (`EDITOR.md`); the plugin behaves as it did. The order it is built in is at
+Of this, the editor is built (`EDITOR.md`, steps 1 and 2 below); the plugin behaves as it did. The order it is built in is at
 the end. A change it asks of another spec file is listed under What this changes, and is made in the commit that
 builds it, so a spec and the code never disagree.
 

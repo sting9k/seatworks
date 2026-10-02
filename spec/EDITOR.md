@@ -3,11 +3,11 @@
 Where a template is opened as a graph, changed and saved: a web page, after ComfyUI's three screens. `TEMPLATE.md`
 says what a template is; this says how a person makes and changes one. The order it is built in is in `TEMPLATE.md`.
 
-Built so far: a template is picked from the gallery, or opened from a file or a folder of the person's own, and opens
-in a tab. Its graph is drawn and laid out, and the node list finds a node by name. Roles, skills and steps are added,
-renamed and taken away; a role's properties are switched and its tools ticked; wires are drawn and cut; every change
-can be undone. The template is exported as one file. Its files are shown as text and not yet edited, no check is run
-beyond whether it loads, and a question or a moment is not yet added or changed.
+Built: all of this file. A template is picked from the gallery, or opened from a file or a folder of the person's
+own, and opens in a tab. Its graph is drawn and laid out. Roles, skills, steps, questions and moments are added from a
+skeleton, changed and taken away; wires are drawn and cut; a file is written in place and read as Markdown; what a
+machine can see is noted on the node it is about; every change can be undone; and the template is exported as one
+file. What is left is listed under Not built.
 
 ## Decided
 
@@ -16,7 +16,7 @@ beyond whether it loads, and a question or a moment is not yet added or changed.
    a running team is followed. A template is made rarely; a team is followed all day.
 2. **In this repository, in a folder of its own**, with its own tsconfig as `client/` has. It imports
    `shared/contracts`, so what it calls a sound profile is what the plugin calls one: the same `resolveProfile`.
-3. **React Flow** (`@xyflow/react` 12, MIT). A node here is a form: a role has switches, a list of models, lists of
+3. **React Flow** (`@xyflow/react` 12, MIT), and `markdown-it` (MIT) to show a Markdown file as it reads. A node here is a form: a role has switches, a list of models, lists of
    tools to tick. React Flow draws a node as a component, so that is ordinary work. Not taken: LiteGraph, which gives
    ComfyUI's look but draws on a canvas, so every input in a node is drawn by hand; Rete, whose package was last
    changed in June 2025.
@@ -157,30 +157,39 @@ gives no flow to its agents until `TEMPLATE.md`'s step 3 is built.
 
 ## Files
 
-A click on a role opens its prompt; on a skill, its folder. The panel shows the files as a tree, edits Markdown with
-its rendering beside it, and takes a file dropped into a skill's folder.
+The rail opens every file of the template by folder. A click on a role opens its prompt; on a skill, `SKILL.md`; on
+a question or a moment, the file it is written in. The file is written in the panel on the right and set when the
+person leaves it; a Markdown file is also read there as a reader sees it. HTML written in a file is shown as text and
+never run: a template may come from anyone.
+
+A skill's panel lists what is in its folder and takes a file dropped on it, kept beside `SKILL.md`.
 
 A new role, skill, question or moment starts from a skeleton: the five parts of a prompt and the form of a skill
-(`TEMPLATE.md`, Each kind of file); for a question or a moment, the fields `REFLEX.md` asks for, with an outcome to
-describe for each answer.
+(`TEMPLATE.md`, Each kind of file); for a question or a moment, the fields `REFLEX.md` asks for. What a skeleton
+leaves to be written is a line in italics, and one left standing draws a note. A new question or moment is written
+and not asked: it joins its file's `active` list when its author ticks it, in one line of that file.
+
+A question's or a moment's own words are changed in its file. A role's models are set in its panel.
 
 ## Checks
 
-Shown on the node they concern, as the template is changed.
+What a machine can see, each as a note on the node it is about: a count on the node, the words in its panel, and all
+of them in a panel of the rail. A note stops nothing, neither a change nor an export.
 
-- What `resolveProfile` refuses (no root or more than one; a role that spawns but does not delegate; a role with two
-  kinds; a `spawns` that names no role) is never there to show: the change that would bring it is not made (Decided
-  9).
-- **The always-on words of each role**: its prompt, the descriptions of its skills and the flow, counted, beside
-  SLP's own as the mark. This is the cost a template raises without anyone seeing it.
-- A prompt that names, in backticks, a tool its role is not shown.
-- A prompt or a skill that names a role the template no longer has.
+- **The always-on words of each role**: its prompt, the descriptions of its skills and the flow, counted on its node,
+  and in its panel beside the fewest and the most a role of SLP reads. This is the cost a template raises without
+  anyone seeing it.
+- A prompt that names, in backticks, a tool its role is not shown. SLP draws this one note, where its watcher's
+  prompt names a tool that only the owners are shown: a note is something to look at, and that one is as meant.
+- A prompt or a skill that names a role the template has lost since it was opened.
 - A prompt of a watched role that names the watch.
 - A skill whose folder and `name` differ, whose description does not say when to use it, or which points at a file
   that is not beside it.
-- A question whose backticked field is not in its `state`, or which lacks the description of an outcome.
-- A question whose words changed: shown as not yet earned, since its threshold was earned for the old wording
-  (`REFLEX.md`).
+- A question or a moment that asks of a backticked field not in its `state`, or lacks the description of an outcome.
+- A prompt, a skill, a question or a moment that still holds a skeleton's words.
+
+A change `resolveProfile` would refuse (no root or more than one; a role that spawns but does not delegate; a role
+with two kinds; a `spawns` that names no role) is never there to note: it is not made (Decided 9).
 
 ## Easy to use
 
@@ -193,17 +202,14 @@ A template is some five to thirty nodes, so drawing is never slow; what is felt 
 - Undo and redo by the keys a person expects; copy and paste make a second role of the picked one; delete by key
   takes away the picked wire, role, skill or step; and the menu tidies the layout.
 
-## Cases
+## Not built
 
-They join `CONFORMANCE.md` with the step that builds them; those of reading are there already.
-
-| Case                                                                 | Expect                                                           |
-| -------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| A wire dragged to a socket of another kind                           | Not made                                                         |
-| A tool unticked that the role's prompt names in backticks            | A fault on the role, naming the tool                             |
-| A role renamed                                                       | A prompt still naming the old one is a fault                     |
-| A file dropped into a skill's folder that `SKILL.md` does not name   | Kept; no fault                                                   |
-| A question's words changed                                           | Shown as not yet earned                                          |
+- A question whose words changed is not yet shown as having lost what it earned. Its threshold is earned for a hash of
+  its wording (`REFLEX.md`), which the plugin makes with Node's own hashing; the page has no way to make the same
+  hash yet, and SLP's questions have earned none to lose.
+- A wire to an outside tool server: the profile has no place for one until `TEMPLATE.md`'s step 4.
+- The sections of a report as nodes: `TEMPLATE.md`'s last step.
+- Renaming a skill, a question or a moment.
 
 ## To check before building on it
 

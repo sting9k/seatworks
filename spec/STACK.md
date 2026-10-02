@@ -34,11 +34,11 @@ nothing but Paseo, Jev's key and git. Every part is either bundled by Paseo itse
 | Patterns: masks, environment failures, minted names | Regular expressions, as data | Code first, before any model is asked                                |
 | Codex's shared settings, Oh My Pi's agent directory | TOML, YAML and JSON files, shipped as they are | Each agent's own format, written once, not generated        |
 | Evidence steps                    | The project's own commands          | The project decides how it is checked                                      |
-| Template editor                   | TypeScript and React in `editor/`, on React Flow, laid out by dagre, built by Vite | A web page of its own, outside what Paseo bundles (`EDITOR.md`). It imports `shared/contracts`, so it reads a profile with the schemas the plugin loads it with |
+| Template editor                   | TypeScript and React in `editor/`, on React Flow, laid out by dagre, Markdown shown by markdown-it, built by Vite | A web page of its own, outside what Paseo bundles (`EDITOR.md`). It imports `shared/contracts`, so it reads a profile with the schemas the plugin loads it with |
 | Tests                             | `node:test`, with fast-check for the kernel | Random sequences of commands, with every invariant checked after each; the kernel's conformance cases as ordinary tests |
 
 Runtime dependencies, all pure JavaScript and bundled: the MCP SDK, zod, and a YAML parser. No native module, since a
-compiled addon would tie the plugin to one platform and one Node. The editor's packages (React Flow, dagre, React's
+compiled addon would tie the plugin to one platform and one Node. The editor's packages (React Flow, dagre, markdown-it, React's
 DOM renderer, Vite) are development dependencies: a Git install's build installs none, so a user of the plugin never
 gets them.
 

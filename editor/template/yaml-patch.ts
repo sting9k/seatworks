@@ -1,15 +1,15 @@
-import { isMap, isScalar, type Pair, parseDocument, type Range, type YAMLMap } from "yaml";
+import { isMap, isScalar, isSeq, type Pair, parseDocument, type Range, type YAMLMap } from "yaml";
 
 /**
  * Changes to a YAML file made in its source, at the place of the node they change (EDITOR.md, Decided 7): the file
  * is never written whole from what was parsed, so every comment and every line a change does not touch stays as it is.
  */
 
-export type Value = boolean | string | readonly string[] | { readonly [key: string]: Value };
+export type Value = boolean | number | string | readonly string[] | { readonly [key: string]: Value };
 
 const WIDTH = 120;
 const PLAIN = /^[A-Za-z_][A-Za-z0-9_./-]*$/;
-const RESERVED = new Set(["true", "false", "null", "yes", "no", "on", "off"]);
+const RESERVED = new Set(["true", "false", "null"]);
 
 /** The text with the value at `path` set: replaced where it stands, or added as the last key of its map. */
 export function setIn(text: string, path: readonly string[], value: Value): string {
@@ -34,9 +34,33 @@ export function deleteIn(text: string, path: readonly string[]): string {
   if (!pair) return text;
   const from = lineStart(text, rangeOf(pair.key)![0]);
   const to = lineEnd(text, endOf(pair));
-  // A key set apart by blank lines leaves one behind it, not two.
-  const between = text.slice(0, from).endsWith("\n\n") && text[to] === "\n";
-  return splice(text, from, between ? to + 1 : to, "");
+  // A key set apart by blank lines takes one with it: the one after it, or the one before it when it was the last.
+  if (!text.slice(0, from).endsWith("\n\n")) return splice(text, from, to, "");
+  if (text[to] === "\n") return splice(text, from, to + 1, "");
+  return to === text.length ? splice(text, from - 1, to, "") : splice(text, from, to, "");
+}
+
+/**
+ * The text with `item` in the list at `path`, or out of it. A list written a line an item keeps its lines: the item
+ * is added as a line after the last, or its own line taken out.
+ */
+export function withItem(text: string, path: readonly string[], item: string, on: boolean): string {
+  const list: unknown = parseDocument(text).getIn(path, true);
+  if (!isSeq(list)) throw new Error(`no list at ${path.join(".")}`);
+  const items = list.items.flatMap((node) => (isScalar(node) && typeof node.value === "string" ? [node] : []));
+  const there = items.find((node) => node.value === item);
+  if (on === (there !== undefined)) return text;
+  if (list.flow) {
+    const names = items.map((node) => node.value as string);
+    return setIn(text, path, on ? [...names, item] : names.filter((name) => name !== item));
+  }
+  if (there) return splice(text, lineStart(text, there.range![0]), lineEnd(text, there.range![1]), "");
+  const last = items.at(-1);
+  if (!last) throw new Error(`the list at ${path.join(".")} is empty: nothing to add after`);
+  const start = lineStart(text, last.range![0]);
+  const after = lineEnd(text, last.range![1]);
+  const lead = atLineStart(text, after) ? "" : "\n";
+  return splice(text, after, after, `${lead}${text.slice(start, last.range![0])}${scalar(item)}\n`);
 }
 
 /** The text with the key at `path` called `to`, its value untouched. */
@@ -86,7 +110,7 @@ function entry(key: string, value: Value, indent: number): string {
 
 /** A value as the profile's files write one: a list in brackets, broken at 120 columns under its first item. */
 function rendered(value: Value, column: number): string {
-  if (typeof value === "boolean") return String(value);
+  if (typeof value === "boolean" || typeof value === "number") return String(value);
   if (typeof value === "string") return scalar(value);
   if (!Array.isArray(value)) throw new Error("a map is added as a key of its own, never set in place of a value");
   const pad = " ".repeat(column + 1);

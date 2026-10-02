@@ -260,3 +260,9 @@ A template's files in, what a person sees out (`EDITOR.md`).
 | A role added, then taken away                               | Every file as it was, to the byte                                   |
 | A skill added, and another taken away                       | The new one is a node before any role has it; the other's folder is gone and no role has it |
 | Steps set down, given roles and joined                      | `flow.md` holds a line a step in order, each with its role and what follows; only it and `template.json` change |
+| The SLP profile as shipped                                  | One note: its watcher's prompt names a tool that only others are shown |
+| A prompt naming a tool its role is not shown; a prompt naming a role the template lost; a watched role's prompt naming the watch; a prompt, skill or question still holding its skeleton; a skill named otherwise than its folder, not saying when to use it, or pointing at a file not beside it; a question asking of a field not in its state, or with one outcome described | Each a note on the node it is about |
+| A file put beside a skill that points at it                 | Kept in the skill's folder; no note                                 |
+| A skill wired to a role                                     | The role's always-on words rise by the words of the skill's description |
+| A question added, ticked as asked, then taken away          | Written and not asked; asked by one line of its file; taken away, the file is as it was to the byte |
+| A role's models set                                         | In its own line of the profile, no other line touched               |

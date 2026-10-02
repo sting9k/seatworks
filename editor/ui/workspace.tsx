@@ -13,13 +13,16 @@ import {
 } from "@xyflow/react";
 import { type RefObject, useEffect, useMemo, useRef, useState } from "react";
 import { type Point, positioned } from "../template/about.ts";
+import { notesOf } from "../template/checks.ts";
 import {
+  addAsked,
   addRole,
   addSkill,
   addStep,
   applied,
   duplicateRole,
   type Edit,
+  removeAsked,
   removeRole,
   removeSkill,
   removeStep,
@@ -29,16 +32,16 @@ import {
   wired,
 } from "../template/edits.ts";
 import { type Graph, type GraphNode, graphOf, type Wire } from "../template/graph.ts";
-import type { Template } from "../template/read-template.ts";
+import { readTemplate, type Template } from "../template/read-template.ts";
 import { AskName, PickNode } from "./dialogs.tsx";
-import { type Editing, EditingContext, isMakeable, type Makeable } from "./editing.ts";
+import { type Editing, EditingContext, isMakeable, type Makeable, NotesContext } from "./editing.ts";
 import { download } from "./files.ts";
 import { Menu, ZoomTools } from "./floating.tsx";
 import { Icon } from "./icons.tsx";
 import { laidOut } from "./layout.ts";
 import { type FlowNode, type FrameNode, NODE_TYPES } from "./nodes.tsx";
 import { Properties } from "./properties.tsx";
-import { DRAGGED, FilesPanel, nameOf, NodesPanel } from "./sidebar.tsx";
+import { DRAGGED, FilesPanel, nameOf, NodesPanel, NotesPanel } from "./sidebar.tsx";
 
 type Drawn = FlowNode | FrameNode;
 type Size = { readonly width: number; readonly height: number };
@@ -64,6 +67,8 @@ const ASKS: Readonly<Record<Makeable, { readonly title: string; readonly hint: s
   role: { title: "Name the new role", hint: "lower-case letters, digits and dashes" },
   skill: { title: "Name the new skill", hint: "lower-case letters, digits and dashes" },
   step: { title: "Name the new step", hint: "what the step is called" },
+  question: { title: "Name the new question", hint: "lower-case letters, digits and dashes" },
+  moment: { title: "Name the new moment", hint: "lower-case letters, digits and dashes" },
 };
 
 const fileOf = (node: GraphNode) => ("file" in node ? node.file : null);
@@ -71,6 +76,8 @@ const kindOfSocket = (id: string | null | undefined) => (id ?? "").split("-")[0]
 
 type Props = {
   readonly template: Template;
+  /** Its files as they were opened, to tell what has gone from it since. */
+  readonly opened: Template["files"];
   /** Whether it holds a change that has not been exported. */
   readonly changed: boolean;
   readonly canUndo: boolean;
@@ -92,8 +99,12 @@ export function Workspace(props: Props) {
   );
 }
 
-function Opened({ template, changed, canUndo, canRedo, onChange, onUndo, onRedo, onExported, onClose }: Props) {
+function Opened({ template, opened, changed, canUndo, canRedo, onChange, onUndo, onRedo, onExported, onClose }: Props) {
   const graph = useMemo(() => graphOf(template), [template]);
+  const notes = useMemo(() => {
+    const start = readTemplate(opened);
+    return notesOf(template, start.ok ? start.template : template);
+  }, [template, opened]);
   const kept = useMemo(() => new Map(Object.entries(template.about.editor?.positions ?? {})), [template]);
   const flow = useReactFlow<Drawn, WireEdge>();
   const [nodes, setNodes, onNodesChange] = useNodesState<Drawn>([]);
@@ -101,7 +112,7 @@ function Opened({ template, changed, canUndo, canRedo, onChange, onUndo, onRedo,
   const [arranged, setArranged] = useState(false);
   const [pickedId, setPickedId] = useState<string | null>(null);
   const [file, setFile] = useState<string | null>(null);
-  const [side, setSide] = useState<"nodes" | "files" | null>("nodes");
+  const [side, setSide] = useState<"nodes" | "files" | "notes" | null>("nodes");
   const [about, setAbout] = useState(true);
   const [map, setMap] = useState(false);
   const [refused, setRefused] = useState<string | null>(null);
@@ -174,9 +185,13 @@ function Opened({ template, changed, canUndo, canRedo, onChange, onUndo, onRedo,
     setFile(fileOf(node));
   };
   const remove = (node: GraphNode) => {
-    if (node.kind === "role") change(removeRole(node.name));
-    else if (node.kind === "skill") change(removeSkill(node.name));
-    else if (node.kind === "step") change(removeStep(node.id.slice("step:".length)));
+    const edit = removal(node);
+    if (edit) change(edit);
+  };
+  const show = (node: GraphNode) => {
+    pick(node);
+    setNodes((drawn) => drawn.map((other) => ({ ...other, selected: other.id === node.id })));
+    void flow.fitView({ nodes: [{ id: node.id }], duration: 300, maxZoom: 1, padding: 1.2 });
   };
   const duplicate = (node: GraphNode) => {
     if (node.kind !== "role") return;
@@ -187,7 +202,14 @@ function Opened({ template, changed, canUndo, canRedo, onChange, onUndo, onRedo,
   };
   const make = (kind: Makeable, name: string, at: Point, wire?: Pulled) => {
     const id = kind === "step" ? `step:${stepIdFor(template.steps, name)}` : `${kind}:${name}`;
-    const add = kind === "role" ? addRole(name) : kind === "skill" ? addSkill(name) : addStep(name);
+    const add =
+      kind === "role"
+        ? addRole(name)
+        : kind === "skill"
+          ? addSkill(name)
+          : kind === "step"
+            ? addStep(name)
+            : addAsked(kind, name);
     const joined = wire
       ? wired(wire.kind, wire.end === "out" ? wire.node : id, wire.end === "out" ? id : wire.node, true)
       : null;
@@ -220,165 +242,195 @@ function Opened({ template, changed, canUndo, canRedo, onChange, onUndo, onRedo,
 
   return (
     <EditingContext.Provider value={editing}>
-      <div className="workspace">
-        <nav className="rail">
-          <button
-            type="button"
-            className={side === "nodes" ? "on" : ""}
-            title="Nodes"
-            onClick={() => {
-              setSide(side === "nodes" ? null : "nodes");
-            }}
-          >
-            <Icon name="nodes" />
-          </button>
-          <button
-            type="button"
-            className={side === "files" ? "on" : ""}
-            title="Files"
-            onClick={() => {
-              setSide(side === "files" ? null : "files");
-            }}
-          >
-            <Icon name="folder" />
-          </button>
-        </nav>
-        {side === "nodes" ? (
-          <NodesPanel
-            graph={graph}
-            picked={pickedId}
-            onPick={(node) => {
-              pick(node);
-              setNodes((drawn) => drawn.map((other) => ({ ...other, selected: other.id === node.id })));
-              void flow.fitView({ nodes: [{ id: node.id }], duration: 300, maxZoom: 1, padding: 1.2 });
-            }}
-            onMake={(kind) => {
-              setAsking({ make: kind, at: middle() });
-            }}
-          />
-        ) : null}
-        {side === "files" ? <FilesPanel files={template.files} open={file} onOpen={setFile} /> : null}
-        <div
-          ref={canvas}
-          className={arranged ? "canvas" : "canvas arranging"}
-          onDragOver={(event) => {
-            if (!event.dataTransfer.types.includes(DRAGGED)) return;
-            event.preventDefault();
-            event.dataTransfer.dropEffect = "copy";
-          }}
-          onDrop={(event) => {
-            const kind = event.dataTransfer.getData(DRAGGED);
-            if (!isMakeable(kind)) return;
-            event.preventDefault();
-            setAsking({ make: kind, at: flow.screenToFlowPosition({ x: event.clientX, y: event.clientY }) });
-          }}
-        >
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            nodeTypes={NODE_TYPES}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onNodeClick={(_, node) => {
-              if (node.type !== "frame") pick(node.data.node);
-            }}
-            onPaneClick={() => {
-              setPickedId(null);
-            }}
-            onNodeDragStop={() => {
-              onChange(positioned(template.files, places()));
-            }}
-            isValidConnection={(wire) =>
-              wire.source !== wire.target &&
-              kindOfSocket(wire.sourceHandle) === kindOfSocket(wire.targetHandle) &&
-              !edges.some(
-                (edge) =>
-                  edge.source === wire.source &&
-                  edge.target === wire.target &&
-                  edge.data?.kind === kindOfSocket(wire.sourceHandle),
-              )
-            }
-            onConnect={(wire) => {
-              change(wired(kindOfSocket(wire.sourceHandle), wire.source, wire.target, true));
-            }}
-            onConnectEnd={(event, ended) => {
-              if (ended.isValid || ended.toNode || !ended.fromHandle) return;
-              const at = "changedTouches" in event ? event.changedTouches[0]! : event;
-              setPulled({
-                kind: kindOfSocket(ended.fromHandle.id),
-                node: ended.fromNode.id,
-                end: ended.fromHandle.type === "source" ? "out" : "in",
-                at: { x: at.clientX, y: at.clientY },
-              });
-            }}
-            onBeforeDelete={({ nodes: goneNodes, edges: goneEdges }) => {
-              const gone = goneNodes.flatMap((node) =>
-                node.type !== "frame" && isMakeable(node.data.node.kind) ? [node.data.node] : [],
-              );
-              const ids = new Set(gone.map((node) => node.id));
-              const cut = goneEdges.filter((edge) => edge.selected && !ids.has(edge.source) && !ids.has(edge.target));
-              const edits = [
-                ...cut.map((edge) => wired(edge.data!.kind, edge.source, edge.target, false)),
-                ...gone.map((node): Edit =>
-                  node.kind === "role"
-                    ? removeRole(node.name)
-                    : node.kind === "skill"
-                      ? removeSkill(node.name)
-                      : removeStep(node.id.slice("step:".length)),
-                ),
-              ];
-              if (edits.length > 0) change(together(...edits));
-              return Promise.resolve(false);
-            }}
-            minZoom={0.1}
-            colorMode="dark"
-            proOptions={{ hideAttribution: true }}
-          >
-            <Background variant={BackgroundVariant.Dots} gap={22} size={1} />
-            <Wiring canvas={canvas} />
-            {map ? <MiniMap pannable zoomable nodeClassName={(node) => `mini-${node.type ?? ""}`} /> : null}
-          </ReactFlow>
-
-          <div className="bar float top left">
+      <NotesContext.Provider value={notes}>
+        <div className="workspace">
+          <nav className="rail">
             <button
               type="button"
-              className="tool"
-              title="The side panel"
+              className={side === "nodes" ? "on" : ""}
+              title="Nodes"
               onClick={() => {
-                setSide(side === null ? "nodes" : null);
+                setSide(side === "nodes" ? null : "nodes");
               }}
             >
-              <Icon name="panelLeft" />
+              <Icon name="nodes" />
             </button>
-            <Menu
-              label={
-                <>
-                  <Icon name="graph" />
-                  Graph
-                </>
-              }
+            <button
+              type="button"
+              className={side === "files" ? "on" : ""}
+              title="Files"
+              onClick={() => {
+                setSide(side === "files" ? null : "files");
+              }}
             >
+              <Icon name="folder" />
+            </button>
+            <button
+              type="button"
+              className={side === "notes" ? "on" : ""}
+              title="Notes"
+              onClick={() => {
+                setSide(side === "notes" ? null : "notes");
+              }}
+            >
+              <Icon name="info" />
+              {notes.length > 0 ? <b>{notes.length}</b> : null}
+            </button>
+          </nav>
+          {side === "nodes" ? (
+            <NodesPanel
+              graph={graph}
+              picked={pickedId}
+              onPick={show}
+              onMake={(kind) => {
+                setAsking({ make: kind, at: middle() });
+              }}
+            />
+          ) : null}
+          {side === "files" ? <FilesPanel files={template.files} open={file} onOpen={setFile} /> : null}
+          {side === "notes" ? <NotesPanel graph={graph} notes={notes} onPick={show} /> : null}
+          <div
+            ref={canvas}
+            className={arranged ? "canvas" : "canvas arranging"}
+            onDragOver={(event) => {
+              if (!event.dataTransfer.types.includes(DRAGGED)) return;
+              event.preventDefault();
+              event.dataTransfer.dropEffect = "copy";
+            }}
+            onDrop={(event) => {
+              const kind = event.dataTransfer.getData(DRAGGED);
+              if (!isMakeable(kind)) return;
+              event.preventDefault();
+              setAsking({ make: kind, at: flow.screenToFlowPosition({ x: event.clientX, y: event.clientY }) });
+            }}
+          >
+            <ReactFlow
+              nodes={nodes}
+              edges={edges}
+              nodeTypes={NODE_TYPES}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
+              onNodeClick={(_, node) => {
+                if (node.type !== "frame") pick(node.data.node);
+              }}
+              onPaneClick={() => {
+                setPickedId(null);
+              }}
+              onNodeDragStop={() => {
+                onChange(positioned(template.files, places()));
+              }}
+              isValidConnection={(wire) =>
+                wire.source !== wire.target &&
+                kindOfSocket(wire.sourceHandle) === kindOfSocket(wire.targetHandle) &&
+                !edges.some(
+                  (edge) =>
+                    edge.source === wire.source &&
+                    edge.target === wire.target &&
+                    edge.data?.kind === kindOfSocket(wire.sourceHandle),
+                )
+              }
+              onConnect={(wire) => {
+                change(wired(kindOfSocket(wire.sourceHandle), wire.source, wire.target, true));
+              }}
+              onConnectEnd={(event, ended) => {
+                if (ended.isValid || ended.toNode || !ended.fromHandle) return;
+                const at = "changedTouches" in event ? event.changedTouches[0]! : event;
+                setPulled({
+                  kind: kindOfSocket(ended.fromHandle.id),
+                  node: ended.fromNode.id,
+                  end: ended.fromHandle.type === "source" ? "out" : "in",
+                  at: { x: at.clientX, y: at.clientY },
+                });
+              }}
+              onBeforeDelete={({ nodes: goneNodes, edges: goneEdges }) => {
+                const gone = goneNodes.flatMap((node) =>
+                  node.type !== "frame" && isMakeable(node.data.node.kind) ? [node.data.node] : [],
+                );
+                const ids = new Set(gone.map((node) => node.id));
+                const cut = goneEdges.filter((edge) => edge.selected && !ids.has(edge.source) && !ids.has(edge.target));
+                const edits = [
+                  ...cut.map((edge) => wired(edge.data!.kind, edge.source, edge.target, false)),
+                  ...gone.flatMap((node) => removal(node) ?? []),
+                ];
+                if (edits.length > 0) change(together(...edits));
+                return Promise.resolve(false);
+              }}
+              minZoom={0.1}
+              colorMode="dark"
+              proOptions={{ hideAttribution: true }}
+            >
+              <Background variant={BackgroundVariant.Dots} gap={22} size={1} />
+              <Wiring canvas={canvas} />
+              {map ? <MiniMap pannable zoomable nodeClassName={(node) => `mini-${node.type ?? ""}`} /> : null}
+            </ReactFlow>
+
+            <div className="bar float top left">
               <button
                 type="button"
+                className="tool"
+                title="The side panel"
                 onClick={() => {
-                  setAsking({ make: "name" });
+                  setSide(side === null ? "nodes" : null);
                 }}
               >
-                <Icon name="pencil" />
-                Rename
+                <Icon name="panelLeft" />
               </button>
-              <button
-                type="button"
-                onClick={() => {
-                  onChange(positioned(template.files, laidOut(graph, sizesOf(flow.getNodes()))));
-                }}
+              <Menu
+                label={
+                  <>
+                    <Icon name="graph" />
+                    Graph
+                  </>
+                }
               >
-                <Icon name="tidy" />
-                Tidy up
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAsking({ make: "name" });
+                  }}
+                >
+                  <Icon name="pencil" />
+                  Rename
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onChange(positioned(template.files, laidOut(graph, sizesOf(flow.getNodes()))));
+                  }}
+                >
+                  <Icon name="tidy" />
+                  Tidy up
+                </button>
+                <hr />
+                <button
+                  type="button"
+                  onClick={() => {
+                    download(template.about.name, template.files);
+                    onExported();
+                  }}
+                >
+                  <Icon name="download" />
+                  Export
+                </button>
+                <hr />
+                <button type="button" onClick={onClose}>
+                  <Icon name="close" />
+                  Close template
+                </button>
+              </Menu>
+            </div>
+
+            <div className="bar float top right">
+              <button type="button" className="tool" title="Undo" disabled={!canUndo} onClick={onUndo}>
+                <Icon name="undo" />
               </button>
-              <hr />
+              <button type="button" className="tool" title="Redo" disabled={!canRedo} onClick={onRedo}>
+                <Icon name="redo" />
+              </button>
+              <span className={changed ? "state changed" : "state"}>{changed ? "Not exported" : "Exported"}</span>
               <button
                 type="button"
+                className="tool primary"
                 onClick={() => {
                   download(template.about.name, template.files);
                   onExported();
@@ -387,69 +439,43 @@ function Opened({ template, changed, canUndo, canRedo, onChange, onUndo, onRedo,
                 <Icon name="download" />
                 Export
               </button>
-              <hr />
-              <button type="button" onClick={onClose}>
-                <Icon name="close" />
-                Close template
-              </button>
-            </Menu>
-          </div>
-
-          <div className="bar float top right">
-            <button type="button" className="tool" title="Undo" disabled={!canUndo} onClick={onUndo}>
-              <Icon name="undo" />
-            </button>
-            <button type="button" className="tool" title="Redo" disabled={!canRedo} onClick={onRedo}>
-              <Icon name="redo" />
-            </button>
-            <span className={changed ? "state changed" : "state"}>{changed ? "Not exported" : "Exported"}</span>
-            <button
-              type="button"
-              className="tool primary"
-              onClick={() => {
-                download(template.about.name, template.files);
-                onExported();
-              }}
-            >
-              <Icon name="download" />
-              Export
-            </button>
-            <button
-              type="button"
-              className={about ? "tool on" : "tool"}
-              title="About the picked node"
-              onClick={() => {
-                setAbout(!about);
-              }}
-            >
-              <Icon name="panelRight" />
-            </button>
-          </div>
-
-          <ZoomTools
-            map={map}
-            onMap={() => {
-              setMap(!map);
-            }}
-          />
-
-          {refused === null ? null : (
-            <div className="toast" role="alert">
-              Not done: {refused}
               <button
                 type="button"
-                title="Dismiss"
+                className={about ? "tool on" : "tool"}
+                title="About the picked node"
                 onClick={() => {
-                  setRefused(null);
+                  setAbout(!about);
                 }}
               >
-                <Icon name="close" />
+                <Icon name="panelRight" />
               </button>
             </div>
-          )}
+
+            <ZoomTools
+              map={map}
+              onMap={() => {
+                setMap(!map);
+              }}
+            />
+
+            {refused === null ? null : (
+              <div className="toast" role="alert">
+                Not done: {refused}
+                <button
+                  type="button"
+                  title="Dismiss"
+                  onClick={() => {
+                    setRefused(null);
+                  }}
+                >
+                  <Icon name="close" />
+                </button>
+              </div>
+            )}
+          </div>
+          {about ? <Properties template={template} picked={picked} open={file} onOpen={setFile} /> : null}
         </div>
-        {about ? <Properties files={template.files} picked={picked} open={file} /> : null}
-      </div>
+      </NotesContext.Provider>
 
       {pulled ? (
         <PickNode
@@ -498,6 +524,24 @@ function Opened({ template, changed, canUndo, canRedo, onChange, onUndo, onRedo,
       ) : null}
     </EditingContext.Provider>
   );
+}
+
+/** The edit that takes a node away, for the kinds a person may take away. */
+function removal(node: GraphNode): Edit | null {
+  switch (node.kind) {
+    case "role":
+      return removeRole(node.name);
+    case "skill":
+      return removeSkill(node.name);
+    case "step":
+      return removeStep(node.id.slice("step:".length));
+    case "question":
+    case "moment":
+      return removeAsked(node.kind, node.name);
+    case "human":
+    case "tools":
+      return null;
+  }
 }
 
 /**

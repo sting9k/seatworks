@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { Graph, GraphNode } from "../template/graph.ts";
 import type { TemplateFiles } from "../template/read-template.ts";
+import type { Note } from "../template/checks.ts";
 import { MAKEABLE, type Makeable } from "./editing.ts";
 import { Icon } from "./icons.tsx";
 
@@ -14,6 +15,8 @@ const MAKES: Readonly<Record<Makeable, { readonly label: string; readonly says: 
   role: { label: "Role", says: "A seat in the team: what it may do and what it reads" },
   skill: { label: "Skill", says: "A craft a role opens when its moment comes" },
   step: { label: "Step", says: "A step of the team's flow, and what comes after it" },
+  question: { label: "Reflex question", says: "One condition asked of an event of the record" },
+  moment: { label: "Watch moment", says: "One condition asked of what a watched role says and does" },
 };
 /** What a dragged node carries its kind under, for the canvas it is dropped on. */
 export const DRAGGED = "application/x-seatworks-node";
@@ -135,6 +138,49 @@ export function NodesPanel({
           })}
         </>
       )}
+    </nav>
+  );
+}
+
+/** What a machine saw in the template, each note on the node it is about (EDITOR.md, Checks). */
+export function NotesPanel({
+  graph,
+  notes,
+  onPick,
+}: {
+  graph: Graph;
+  notes: readonly Note[];
+  onPick: (node: GraphNode) => void;
+}) {
+  const noted = graph.nodes.filter((node) => notes.some((note) => note.node === node.id));
+  return (
+    <nav className="panel">
+      <h2>Notes</h2>
+      <p className="hint">
+        What a machine can see. A note stops nothing: whether a template makes a team work well is known only by running
+        it.
+      </p>
+      {noted.length === 0 ? <p className="section">Nothing to look at</p> : null}
+      {noted.map((node) => (
+        <div key={node.id} className="noted">
+          <button
+            type="button"
+            onClick={() => {
+              onPick(node);
+            }}
+          >
+            <i className={`dot kind-${node.kind}`} />
+            {nameOf(node)}
+          </button>
+          <ul>
+            {notes
+              .filter((note) => note.node === node.id)
+              .map((note) => (
+                <li key={note.says}>{note.says}</li>
+              ))}
+          </ul>
+        </div>
+      ))}
     </nav>
   );
 }
