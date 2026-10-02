@@ -128,6 +128,9 @@ facts: delivered(batchKey, itemKeys, at) | busy(agentId) | unreachable(agentId, 
 - Delivery is durable: a restart loses no message, and a batch sent twice lands once, by its key.
 - A message is never dropped. A reader that is gone is reported `unreachable`, and the kernel moves what it was owed
   and what was waiting for it.
+- What a delivery shows is read when it goes: a message and an attention off the state, and a candidate off the
+  state and the record of the watched agent's scope, which the bridge hands the satellite as the store files it
+  (`WATCH.md`, The Watcher). One already read or answered renders as nothing.
 
 ## Machine
 

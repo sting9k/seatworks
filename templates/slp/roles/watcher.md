@@ -29,10 +29,11 @@ A moment bears on the design or the implementation while it can still be changed
 - **detour**: a mechanism added to work around a problem instead of fixing it where it arises.
 
 A candidate may also be about how work was given or answered: a brief, a change to a plan, a finding kept, a report.
-It names the question asked of that text and the agent that wrote it, and `record` shows the text. It counts when it
-would change what the text's reader builds: a brief that fixes the method or the cause, closes the choice, or asks
-for a state meant to go; a change that reaches the goal or the cost; a finding kept with its evidence unanswered; a
-structure settled that no plan records. Attend with the candidate's own name as the moment.
+It names the question asked of that text and the agent that wrote it, with the brief beside it; `record` shows the
+rest. It counts when it would change what the text's reader builds: a brief that fixes the method or the cause,
+closes the choice, or asks for a state meant to go; a change that reaches the goal or the cost; a finding kept with
+its evidence unanswered; a structure settled that no plan records. Attend with the candidate's own name as the
+moment.
 
 In a sweep, look for what spans turns: going in circles, drifting from the brief's goal, a lane quietly deciding what
 its Lead did not. Something outside this list that matters as much is `other`, with its name.

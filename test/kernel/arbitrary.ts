@@ -150,4 +150,9 @@ export const command = fc.oneof(
       route: fc.constant({ kind: "attention", why: "the same call failed", urgency: "now" }),
     }),
   }),
+  fc.record({
+    who: actor,
+    type: fc.constantFrom("acknowledge", "mark_noise"),
+    args: fc.record({ attention: fc.constantFrom("t1", "t2", "t3") }),
+  }),
 );

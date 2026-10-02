@@ -133,10 +133,30 @@ nothing and speaks only to the Supervisor; what it attends to reaches the owner 
 - **Woken by** a message listing new candidates, or by the sweep. Messages that arrive while it works go as one, so
   candidates batch themselves.
 - **A candidate** comes with the agent, scope, moment, probability, the item quoted with two items either side, the
-  facts beside it, the scope's brief, and the earlier attentions on that agent and what came of them.
+  facts beside it, the scope's brief, and the earlier attentions on that agent and what came of them. The eye puts
+  the items and the facts it has counted of that agent (a call that keeps failing, turns gone silent) on the
+  observation; the brief and the earlier attentions are read when the candidate goes, the newest six, so it shows
+  what its owner has done since. One attended or passed before it went is not sent.
   One may also come from a question the reflex asks of a brief, a plan's change, a kept finding or a report
-  (`REFLEX.md`): it names the question and the agent that wrote the text. One about what the root's own agent wrote
-  becomes an attention for the Human, shown in their view.
+  (`REFLEX.md`): it names the question and the agent that wrote the text, with the brief of the scope it was asked
+  of. One about what the root's own agent wrote becomes an attention for the Human, shown in their view.
+
+  ```text
+  CANDIDATE v34 · trades-the-goal · 0.95 · a3 (peer, scope 1.1)
+  why: "I'll send the direction as int8 to save bandwidth"
+  before: thought: The goal names aim precision on mobile.
+  before: said: Reading encode.ts.
+  item: thought: I'll send the direction as int8 to save bandwidth
+  after: edit src/net/encode.ts: +const dir = toInt8(angle);
+  after: said: Encoded as int8.
+  facts: the same call failed the same way 2 times
+  Scope 1.1: Brief v1 (discovery)
+  Goal: [l4] Encode directions
+  Must hold:
+  - [l5] int16 precision
+  earlier about a3: t1 (struggling) to a2: acknowledged by a2
+  `attend` or `pass` it with candidate v34.
+  ```
 - **A sweep** is a note that wakes it once `sweep.everyChars` of new work has gathered: each active agent's newest
   items since the last sweep, an equal share each up to `sweep.digestChars`, with a count and `look` for the rest.
   What it sees there it attends to with no candidate.

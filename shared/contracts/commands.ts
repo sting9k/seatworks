@@ -4,6 +4,8 @@ import { z } from "zod";
 
 const id = z.string().min(1).max(64);
 const text = z.string().trim().min(1).max(20_000);
+/** An item of an agent's turn as the watch shows it. */
+const shown = z.string().max(20_000);
 const reason = z.string().trim().min(1).max(4_000);
 const path = z
   .string()
@@ -391,6 +393,10 @@ export const COMMANDS = {
         kind: z.literal("attention"),
         why: text,
         facts: z.array(z.string()).max(20).default([]),
+        around: z
+          .object({ before: z.array(shown).max(2), item: shown, after: z.array(shown).max(2) })
+          .nullable()
+          .default(null),
         urgency: z.enum(["now", "later"]),
       }),
       z.object({

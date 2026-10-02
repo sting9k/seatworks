@@ -177,8 +177,12 @@ type Message = { id: MessageId; from: ActorId | "human"; to: ActorId | "human"; 
                  delivered: string | null };
 type Question = { id: QuestionId; from: ActorId; text: string; about: Ref | null;
                   options: readonly string[]; recommend: string | null };
-type Obligation = { id: ObligationId; owedBy: ActorId | "human"; owedTo: ActorId | "human"; about: Ref2; opened: string };
+type Obligation = { id: ObligationId; owedBy: ActorId | "human"; owedTo: ActorId | "human"; about: Ref2; opened: string;
+                    seen?: SeenMoment };                 // a candidate's, and no other's
 type Ref2 = Ref | { kind: "claim" | "direction" | "candidate" | "permission"; id: string };
+type SeenMoment = { actor: ActorId; scope: ScopeId; moment: string; answer: string; why: string;
+                    around: { before: readonly string[]; item: string; after: readonly string[] } | null;
+                    facts: readonly string[] };
 ```
 
 What closes each obligation:
@@ -388,6 +392,11 @@ the graph and refuses a route outside those four (I12).
 | `consider` | an obligation on the watcher over the scope (a candidate); with no watcher, recorded only | recorded only |
 | `record`   | recorded only                                               | recorded only                                    |
 
+A candidate's obligation holds what was seen of the moment, for whoever weighs it: the actor and the scope it is
+about, the question and its answer, why, and from the `attention` route the item with up to two either side
+(`around`) and the facts the eye counted. It is in the state while the candidate is open, so what a restart gives
+the Watcher again is the same.
+
 An attention's delivery goes with the reader's next batch (`now` wakes it). At the reader's next `turn_ended` after
 it was delivered, an attention not settled climbs: `attention_climbed` opens a copy to `ownerAbove(reader)` with
 `climbedFrom`, unless the reader owns the root, where it stays and the Human's view shows it.
@@ -404,6 +413,7 @@ it was delivered, an attention not settled climbs: `attention_climbed` opens a c
 | `message_sent` (queued)                  | `deliver { to, item }`                                   | `<seq>:deliver:<message>`   |
 | `message_moved`                          | `deliver { to, item }` to its new reader                 | `<seq>:deliver:<message>`   |
 | `attention_opened`                       | `deliver { to, item }`                                   | `<seq>:deliver:<attention>` |
+| `obligation_opened` about a candidate    | `deliver { to: its watcher, item: the candidate, by its obligation }` | `<seq>:candidate:<watcher>` |
 | `claim_made`                             | `workspace.candidate { scope, commit, onto }`            | `<seq>:candidate`           |
 | `candidate_ready`, when a check is set   | `evidence.run { scope, subject: candidate, steps: checks, by: none }` | `<seq>:evidence` |
 | `evidence_requested`                     | `evidence.run { scope, subject, steps, by }`: in its asker's name, which the result gives back, so two runs on one commit are never taken one for the other | `<seq>:evidence` |
@@ -482,7 +492,8 @@ for it.
   (classified, reopened, carried, withdrawn); reports; attentions with what came of them. It reads the log, so it
   answers for a scope that is closed too, and it reads only that scope's part of it: each event is filed, in the
   append that writes it, under the scopes whose record it is read in (a finding's are the scope it was raised in and
-  the one it is about), so the read costs what one scope's history holds, whatever the length of the log.
+  the one it is about; what came of an attention is filed under the scope the attention is about, read off the state
+  before the event that settles it), so the read costs what one scope's history holds, whatever the length of the log.
 - An agent's reads (`status`, `record`, `diff`) take its own scope when it names none. Their arguments are parsed at
   the boundary as a command's are, and one that does not fit is refused, saying which.
 - `obligations(actor)`, `whatTheHumanNeeds`, `sinceTheyLooked(at)`, `chainOfChange(finding)`, `signals(since)`.

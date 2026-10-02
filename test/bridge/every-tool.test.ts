@@ -537,6 +537,9 @@ test("the attention tools: a watcher's attention reaches the owner above the age
 
   await did(c, guard, "attend", { actor: "a3", moment: "going-in-circles", why: "again", urgency: "later" });
   await did(c, keeper, "mark_noise", { attention: "t2" });
+  const kept = (await guard.call("record", { scope: "1.1" })).text;
+  assert.match(kept, / attention t1: acknowledged by a2$/m, "the record keeps what came of each attention");
+  assert.match(kept, / attention t2: its kind marked noise by a2$/m);
   const before = c.told(1).length;
   assert.equal(
     await did(c, guard, "attend", { actor: "a3", moment: "going-in-circles", why: "a third time", urgency: "now" }),

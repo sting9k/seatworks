@@ -93,11 +93,17 @@ export class Project {
     const filed: Filed[] = [];
     let folding = this.state;
     for (const event of events) {
+      // An attention is gone from the state once it is settled, so the scope it is about is read before the event.
+      const before = folding;
       folding = evolve(folding, event);
       effects.push(...react(event, folding));
       const after = folding;
-      for (const scope of recordedIn(event, (finding) => raisedIn(after, finding)))
-        filed.push({ subject: scope, seq: event.seq });
+      const scopes = recordedIn(
+        event,
+        (finding) => raisedIn(after, finding),
+        (attention) => [before.attentions.get(attention)?.about.scope].filter((scope) => scope !== undefined),
+      );
+      for (const scope of scopes) filed.push({ subject: scope, seq: event.seq });
     }
     const appended = this.store.append(events, effects, filed, this.state.seq);
     if (!appended.ok) throw new Error(`project ${this.id}: ${appended.says}`);

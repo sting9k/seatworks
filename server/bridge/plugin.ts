@@ -868,6 +868,7 @@ export class Plugin {
       rules: rulesDir(this.root, profile),
       agents: matchingFile(this.root, profile),
       checkTimeoutMs: CHECK_TIMEOUT_MS,
+      recorded: (scope) => store.about(scope),
     };
     const handlers = handlersFor(wiring);
     const dispatcher = new Dispatcher(project, store, handlers, () => this.holds.held());

@@ -19,7 +19,11 @@ import { type ReflexConfig, wordingOf } from "../satellites/reflex/config.ts";
 import type { Answer, Jev } from "../satellites/reflex/jev.ts";
 
 type Observation = Extract<CommandBody, { type: "record_observation" }>;
+/** An item with up to two either side, as an observation carries it. */
+type Around = NonNullable<Extract<Observation["route"], { kind: "attention" }>["around"]>;
 type Asked = { name: string; spec: QuestionSpec; p: number; label: string | null; model: string };
+/** What a question was asked of, as the watch shows it: its words, the item with those either side, the facts. */
+type Shown = { quoted: string; around: Around | null; facts: string[] };
 /** An event a question is asked on with a subject of its own; a turn's end is asked of its last words instead. */
 type Subject = Extract<Event, { type: Exclude<AskedOn, "turn_ended"> }>;
 const isSubject = (e: Event): e is Subject =>
@@ -104,15 +108,16 @@ export class Reflex {
     const actor = state.actors.get(actorId);
     if (actor?.status !== "seated") return;
     this.circles(project, actorId, actor.scope, items);
-    for (const item of items)
-      if (item.kind === "edit") {
-        this.mints(project, actorId, actor.role, actor.scope, item);
-        this.madeToPass(project, actorId, actor.role, actor.scope, item, state);
-      }
+    for (const [i, item] of items.entries()) {
+      if (item.kind !== "edit") continue;
+      const around = this.around(items, i);
+      this.mints(project, actorId, actor.role, actor.scope, item, around);
+      this.madeToPass(project, actorId, actor.role, actor.scope, item, around, state);
+    }
     this.wordsOnly(project, actorId, actor.scope, items, state);
     this.gather(project, actorId, items, state);
     const kinds = { thought: "thought", said: "said", edit: "edit", ran: null } as const;
-    for (const item of items) {
+    for (const [i, item] of items.entries()) {
       const reads = kinds[item.kind];
       if (reads === null) continue;
       const moments: Record<string, QuestionSpec> = {};
@@ -126,12 +131,43 @@ export class Reflex {
         actor: actorId,
         scope: actor.scope,
       };
+      const shown = {
+        quoted: this.masked(item.text),
+        around: this.around(items, i),
+        facts: this.factsOf(project, actorId),
+      };
       const groups = groupByState(moments, (spec) => stateFor(spec, ctx));
       for (const group of groups)
         this.enqueue(project, () =>
-          this.askAndRecord(project, group.questions, group.values, actor.scope, actorId, null, item.text, ctx),
+          this.askAndRecord(project, group.questions, group.values, actor.scope, actorId, null, shown, ctx),
         );
     }
+  }
+
+  /** An item as the watch shows it: its kind, its path when it has one, its words up to the profile's size, masked. */
+  private shown(item: TurnItem): string {
+    return this.masked(`${item.kind}${item.path ? ` ${item.path}` : ""}: ${item.text.slice(0, this.config.itemChars)}`);
+  }
+
+  /** The item at `i` with up to two either side, oldest first (WATCH.md, The Watcher). */
+  private around(items: readonly TurnItem[], i: number): Around {
+    const show = (item: TurnItem) => this.shown(item);
+    return {
+      before: items.slice(Math.max(0, i - 2), i).map(show),
+      item: show(items[i]!),
+      after: items.slice(i + 1, i + 3).map(show),
+    };
+  }
+
+  /** What the eye has counted of an agent beside what is asked of it: a call that keeps failing, turns gone silent. */
+  private factsOf(project: string, actor: string): string[] {
+    const key = `${project}:${actor}`;
+    const repeats = Math.max(0, ...(this.loops.get(key)?.values() ?? []));
+    const silent = this.silent.get(key) ?? 0;
+    return [
+      ...(repeats > 1 ? [`the same call failed the same way ${repeats} times`] : []),
+      ...(silent > 1 ? [`${silent} turns in a row spent and recorded nothing`] : []),
+    ];
   }
 
   /** A sweep driven by the work, not a clock: a watching agent is woken with a digest once enough has gathered. */
@@ -147,8 +183,8 @@ export class Reflex {
       pile.lines.set(actorId, mine);
       pile.counts.set(actorId, (pile.counts.get(actorId) ?? 0) + items.length);
       for (const item of items) {
-        const line = `${item.kind}${item.path ? ` ${item.path}` : ""}: ${item.text.slice(0, this.config.itemChars)}`;
-        mine.push(this.masked(line));
+        const line = this.shown(item);
+        mine.push(line);
         pile.chars += line.length;
       }
       // Only the newest a digest can hold are kept, so a Watcher that never sweeps holds a bounded pile.
@@ -236,7 +272,7 @@ export class Reflex {
     scope: string,
     actor: string | null,
     commit: string | null,
-    quoted: string | null = null,
+    shown: Shown | null = null,
     ctx: Context | null = null,
   ): Promise<void> {
     const jev = this.jev();
@@ -257,15 +293,12 @@ export class Reflex {
       if (!a) continue;
       const given = spec.against !== undefined && ctx ? valueOf(spec.against, ctx) : null;
       const asked = read(name, spec, a, asking.model, given);
-      await this.submit(
-        project,
-        observationOf(asked, scope, actor, commit, quoted === null ? null : this.masked(quoted)),
-      );
+      await this.submit(project, observationOf(asked, scope, actor, commit, shown));
     }
   }
 
   /** A test that mints an API: names its added lines give the code that nothing settled; only then is Jev asked. */
-  private mints(project: string, actor: string, role: string, scope: string, item: TurnItem): void {
+  private mints(project: string, actor: string, role: string, scope: string, item: TurnItem, around: Around): void {
     const spec = this.config.moments.get("mints-an-api");
     const test = this.config.testPath;
     if (!spec?.watches?.includes(role) || !test || item.path === null || !test.test(item.path)) return;
@@ -289,7 +322,7 @@ export class Reflex {
         scope,
         actor,
         null,
-        `${item.path}: ${unsettled.join(", ")}`,
+        { quoted: this.masked(`${item.path}: ${unsettled.join(", ")}`), around, facts: this.factsOf(project, actor) },
       );
     });
   }
@@ -341,7 +374,15 @@ export class Reflex {
   }
 
   /** A check made to pass: a test file's existing line changed in a scope whose brief asks for no work on tests. */
-  private madeToPass(project: string, actor: string, role: string, scope: string, item: TurnItem, state: State): void {
+  private madeToPass(
+    project: string,
+    actor: string,
+    role: string,
+    scope: string,
+    item: TurnItem,
+    around: Around,
+    state: State,
+  ): void {
     const spec = this.counted("check-made-to-pass");
     const test = this.config.testPath;
     if (!spec?.watches?.includes(role) || !test || item.path === null || !test.test(item.path)) return;
@@ -369,6 +410,7 @@ export class Reflex {
           `${item.path} changed where the brief asks nothing of tests: ${removed.slice(0, 3).join(" ")}`.slice(0, 400),
         ),
         facts: [],
+        around,
         urgency: "now",
       },
     });
@@ -401,6 +443,7 @@ export class Reflex {
         kind: "attention",
         why: `${n} turns in a row spent and recorded nothing: no hand-back, finding, message or question`,
         facts: [],
+        around: null,
         urgency: "later",
       },
     });
@@ -435,6 +478,7 @@ export class Reflex {
           kind: "attention",
           why: this.masked(`${f.id} from ${f.raisedBy} is still unclassified: ${f.text}`.slice(0, 400)),
           facts: [],
+          around: null,
           urgency: "later",
         },
       });
@@ -447,7 +491,7 @@ export class Reflex {
     const key = `${project}:${actor}`;
     const seen = this.loops.get(key) ?? new Map<string, number>();
     this.loops.set(key, seen);
-    for (const item of items) {
+    for (const [i, item] of items.entries()) {
       if (item.signature === null) continue;
       const n = (seen.get(item.signature) ?? 0) + 1;
       seen.delete(item.signature);
@@ -467,6 +511,7 @@ export class Reflex {
           kind: "attention",
           why: this.masked(`the same call failed the same way ${n} times: ${item.text.slice(0, 200)}`),
           facts: [this.masked(item.failed ?? "")],
+          around: this.around(items, i),
           urgency: "now",
         },
       });
@@ -495,6 +540,7 @@ export class Reflex {
           kind: "attention",
           why: `scope ${scope.id} has spent $${after.toFixed(2)}, past the $${usd} its plan's appetite names`,
           facts: [],
+          around: null,
           urgency: "now",
         },
       });
@@ -627,7 +673,7 @@ function observationOf(
   scope: string,
   actor: string | null,
   commit: string | null,
-  quoted: string | null,
+  shown: Shown | null,
 ): Observation {
   const answer = a.label === null ? a.p.toFixed(2) : `${a.label} (${a.p.toFixed(2)})`;
   const text = `${a.name}: ${answer}, asked of ${a.model}: ${a.spec.noul ?? a.spec.choice ?? ""}`;
@@ -648,7 +694,13 @@ function observationOf(
     return {
       ...base,
       level,
-      route: { kind: "attention", why: quoted ? `"${quoted.slice(0, 240)}"` : text, facts: [], urgency: "now" },
+      route: {
+        kind: "attention",
+        why: shown ? `"${shown.quoted.slice(0, 240)}"` : text,
+        facts: shown?.facts ?? [],
+        around: shown?.around ?? null,
+        urgency: "now",
+      },
     };
   if (tells === "root")
     return { ...base, level, route: { kind: "note", to: "root", text, wakes: a.spec.wakes ?? false } };

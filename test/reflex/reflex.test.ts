@@ -1,19 +1,25 @@
 import assert from "node:assert/strict";
 import { join } from "node:path";
 import { test } from "node:test";
+import type { Delivery } from "../../server/bridge/dispatcher.ts";
+import { type Wiring, handlersFor } from "../../server/bridge/effects.ts";
+import { Project } from "../../server/bridge/project.ts";
 import { Reflex } from "../../server/bridge/reflex.ts";
+import type { PaseoHost } from "../../server/satellites/agent-host/host.ts";
 import type { TurnItem } from "../../server/satellites/agent-host/items.ts";
 import { loadReflex } from "../../server/satellites/reflex/config.ts";
 import type { Jev } from "../../server/satellites/reflex/jev.ts";
-import { SHA, brief, plan, team } from "../kernel/ledger.ts";
+import { ProjectStore } from "../../server/satellites/store/project-store.ts";
+import { type Caller, type CommandBody, parseBody } from "../../shared/contracts/commands.ts";
+import { SHA, TEAM_STEPS, brief, plan, slpProfile, team } from "../kernel/ledger.ts";
 
 const config = loadReflex(join(import.meta.dirname, "../../templates/slp"), {
   reflex: "reflex.yaml",
   watch: "watch.yaml",
 })!;
 
-/** Jev answering every question it is asked with the probability the test names. */
-function fakeJev(p: number) {
+/** Jev answering every question it is asked with the probability the test names, or only those `sure` picks. */
+function fakeJev(p: number, sure: (name: string, state: Record<string, string>) => boolean = () => true) {
   const asked: string[][] = [];
   const read: Record<string, string>[] = [];
   const jev = {
@@ -23,18 +29,19 @@ function fakeJev(p: number) {
       const answers = Object.fromEntries(
         Object.entries(questions).map(([name, q]) => {
           const labels = Object.keys(q.labels ?? {});
+          const yes = sure(name, state) ? p : 0.05;
           return [
             name,
             labels.length
               ? {
                   type: "choice",
                   choice: labels[0],
-                  confidence: p,
+                  confidence: yes,
                   probabilities: Object.fromEntries(
-                    labels.map((l, i) => [l, i === 0 ? p : (1 - p) / (labels.length - 1)]),
+                    labels.map((l, i) => [l, i === 0 ? yes : (1 - yes) / (labels.length - 1)]),
                   ),
                 }
-              : { type: "noul", noul: p },
+              : { type: "noul", noul: yes },
           ];
         }),
       );
@@ -162,27 +169,112 @@ test("with no key the reflex asks nothing and raises one standing alarm; the tea
   );
 });
 
-test("a candidate reaches the Watcher as words that wake it, with the moment and the quote", async () => {
-  const { ledger, reflex, supervisor, peer } = wired(0.95);
-  ledger.must(ledger.as(supervisor, "open_scope", { parent: "root", role: "watcher", over: "all" }));
-  reflex.onTurn("p", peer, [thought("I'll send the direction as int8 to save bandwidth")], ledger.state);
-  await settle();
-  const told = ledger.effects.filter(
-    (e) => e.body.kind === "deliver" && e.body.to === "a4" && e.body.item.kind === "note",
-  );
-  const text = told
-    .map((e) => (e.body.kind === "deliver" && e.body.item.kind === "note" ? e.body.item.text : ""))
-    .join("\n");
-  assert.match(text, /CANDIDATE v\d+ · trades-the-goal/);
-  assert.match(text, /int8/);
-});
-
 const edit = (path: string, diff: string): TurnItem => ({
   kind: "edit",
   text: diff,
   failed: null,
   signature: null,
   path,
+});
+const said = (text: string): TurnItem => ({ kind: "said", text, failed: null, signature: null, path: null });
+
+test("a candidate is given to the Watcher with the item and two either side, the facts counted, the scope's brief and what came of each earlier attention on that agent; one already answered is not sent", async () => {
+  const store = new ProjectStore(":memory:");
+  const project = Project.open("p", store, slpProfile());
+  let n = 0;
+  const submit = async (caller: Caller, body: CommandBody) => {
+    const at = new Date(Date.UTC(2026, 8, 29, 0, 0, ++n)).toISOString();
+    const done = await project.submit({ id: `c${n}`, at, caller, body });
+    assert.ok(done.ok, done.ok ? "" : done.refused.says);
+  };
+  const send = (caller: Caller, type: string, args: Record<string, unknown>) => {
+    const parsed = parseBody(type, args);
+    assert.ok(parsed.ok, parsed.ok ? "" : parsed.says);
+    return submit(caller, parsed.body);
+  };
+  const bridge: Caller = { kind: "bridge" };
+  for (const [caller, type, args] of TEAM_STEPS) await send(caller, type, args);
+  await send({ kind: "agent", actor: "a1" }, "open_scope", { parent: "root", role: "watcher", over: "all" });
+  await send(bridge, "record_agent", { actor: "a4", host: "h-watcher" });
+  // An earlier attention about the Peer, which its Lead said needs nothing.
+  await send(bridge, "record_observation", {
+    question: "struggling",
+    actor: "a3",
+    scope: "1.1",
+    source: "code",
+    answer: "unsure",
+    level: "tell",
+    route: { kind: "attention", why: "unsure what a direction is", urgency: "later" },
+  });
+  const earlier = [...project.view.attentions.keys()][0]!;
+  await send({ kind: "agent", actor: "a2" }, "acknowledge", { attention: earlier });
+
+  const { jev } = fakeJev(
+    0.95,
+    (name, state) => name === "trades-the-goal" && /to save bandwidth/.test(state.text ?? ""),
+  );
+  const reflex = new Reflex(
+    config,
+    () => jev,
+    (_project, body) => submit(bridge, body),
+    () => undefined,
+    { settled: () => Promise.resolve(new Set()), diffs: () => Promise.resolve([]) },
+  );
+  for (let i = 0; i < 2; i++) reflex.onTurn("p", "a3", [failing("npm test")], project.view);
+  reflex.onTurn(
+    "p",
+    "a3",
+    [
+      said("Three items before it: not shown."),
+      thought("The goal names aim precision on mobile."),
+      said("Reading encode.ts."),
+      thought("I'll send the direction as int8 to save bandwidth"),
+      edit("src/net/encode.ts", "+const dir = toInt8(angle);"),
+      said("Encoded as int8."),
+      said("Three items after it: not shown."),
+    ],
+    project.view,
+  );
+  await settle();
+
+  const sent: string[] = [];
+  const host = {
+    send: (_host: string, text: string) => {
+      sent.push(text);
+      return Promise.resolve("sent" as const);
+    },
+  } as unknown as PaseoHost;
+  const { deliver } = handlersFor({ host, recorded: (scope: string) => store.about(scope) } as unknown as Wiring);
+  const queued = () =>
+    store
+      .pending()
+      .flatMap((e) => (e.body.kind === "deliver" && e.body.to === "a4" ? [e.body] : [])) satisfies Delivery[];
+  assert.equal((await deliver(queued(), { project: "p", state: project.view, key: "k1" })).status, "done");
+  const text = sent[0] ?? "";
+  const candidate = /^CANDIDATE (v\d+) · trades-the-goal · 0\.95 · a3 \(peer, scope 1\.1\)$/m.exec(text)?.[1];
+  assert.ok(candidate, text);
+  assert.match(
+    text,
+    /before: thought: The goal names aim precision on mobile\.\nbefore: said: Reading encode\.ts\.\nitem: thought: I'll send the direction as int8 to save bandwidth\nafter: edit src\/net\/encode\.ts: \+const dir = toInt8\(angle\);\nafter: said: Encoded as int8\./,
+  );
+  assert.doesNotMatch(text, /not shown/, "only two items either side");
+  assert.match(text, /^facts: the same call failed the same way 2 times$/m);
+  assert.match(text, /^Goal: \[l\d+\] Encode directions$/m, "the scope's brief");
+  assert.match(text, /^- \[l\d+\] int16 precision$/m);
+  assert.match(
+    text,
+    new RegExp(`^earlier about a3: ${earlier} \\(struggling\\) to a2: acknowledged by a2$`, "m"),
+    "what came of the earlier attention",
+  );
+  assert.match(text, new RegExp(`\`attend\` or \`pass\` it with candidate ${candidate}\\.`));
+
+  await send({ kind: "agent", actor: "a4" }, "pass", { candidate, reason: "the brief allows int8 here" });
+  assert.equal(
+    (await deliver(queued(), { project: "p", state: project.view, key: "k2" })).status,
+    "dropped",
+    "a candidate already passed has nothing left to say",
+  );
+  project.dispose();
 });
 
 test("a test that calls only settled names asks nothing; one that invents a field asks whether it uses or fakes it", async () => {

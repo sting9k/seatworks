@@ -190,10 +190,10 @@ an answer, an intervention, a question to the Human, a hand-back waiting on its 
 
 What the reflex answered about an event (`REFLEX.md`): `{ id, question, subject, model, answer, at }`, recorded with
 the bridge as caller. Past its question's threshold it is also delivered as a note along the relation the question
-names, as evidence of kind `judgement`, or as a fact for the actor it concerns (`REFLEX.md`). Between its question's two
-thresholds it is a **candidate** for the actor that `watches` over its scope, and opens an obligation on that actor,
-closed by `attend` or `pass`. An attention, whether the reflex's or an `attend`, is delivered to the owner of the
-watched actor's parent scope (`STEERING.md`).
+names, as evidence of kind `judgement`, or as a fact for the actor it concerns (`REFLEX.md`). Between its question's
+two thresholds it is a **candidate** for the actor that `watches` over its scope, and opens an obligation on that
+actor, which holds what was seen of the moment and is closed by `attend` or `pass`. An attention, whether the reflex's
+or an `attend`, is delivered to the owner of the watched actor's parent scope (`STEERING.md`).
 
 - Its reader has **acted on** it when a command of theirs names the watched actor or its scope after the attention
   arrived: a message to it, a brief amended, a finding raised, a hold, a reseat, a release, `acknowledge` or

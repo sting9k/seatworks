@@ -125,13 +125,9 @@ export function react(e: Event, s: State): readonly Effect[] {
       break;
     case "obligation_opened": {
       const o = e.obligation;
-      if (o.about.kind === "candidate" && o.owedBy !== HUMAN)
-        tell(
-          o.owedBy,
-          "candidate",
-          `CANDIDATE ${o.about.id} · ${o.summary ?? ""}\n\`attend\` or \`pass\` it with candidate ${o.about.id}.`,
-          true,
-        );
+      // Given by its obligation, so what it shows is read off the state when it goes, and nothing once it is answered.
+      if (o.seen !== undefined && o.owedBy !== HUMAN && s.actors.get(o.owedBy)?.status === "seated")
+        add(`candidate:${o.owedBy}`, { kind: "deliver", to: o.owedBy, item: { kind: "candidate", id: o.id } });
       break;
     }
     case "finding_raised":

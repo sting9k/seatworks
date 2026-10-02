@@ -7,7 +7,7 @@ import type { Keys } from "../core/keys.ts";
 import { humanRules } from "../core/rules.ts";
 import { matchingOf, runsOn } from "../profile/agents.ts";
 import type { PaseoHost } from "../satellites/agent-host/host.ts";
-import { renderBatch } from "../satellites/delivery/render.ts";
+import { type Recorded, renderBatch } from "../satellites/delivery/render.ts";
 import type { EvidenceRunner } from "../satellites/evidence/runner.ts";
 import type { MachineHolds } from "../satellites/machine/holds.ts";
 import type { Workspace } from "../satellites/workspace/workspace.ts";
@@ -39,6 +39,8 @@ export type Wiring = {
   /** The file of the Human's matching: which of their agent profiles each name the profile gives runs on. */
   readonly agents: string;
   readonly checkTimeoutMs: number;
+  /** The events on a scope's record, for what a delivery shows of it. */
+  readonly recorded: Recorded;
 };
 
 const WAIT: Handled = { status: "wait" };
@@ -174,6 +176,7 @@ export function handlersFor(w: Wiring): Handlers {
       const rendered = renderBatch(
         batch.map((b) => b.item),
         state,
+        w.recorded,
       );
       if (!rendered) return { status: "dropped", why: "nothing left to say" };
       // What asks nothing waits for a delivery that asks something (COMMUNICATION.md, The mailbox).

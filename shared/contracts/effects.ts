@@ -1,4 +1,4 @@
-import type { ActorId, AttentionId, MessageId, Party, ScopeId } from "./ids.ts";
+import type { ActorId, AttentionId, MessageId, ObligationId, Party, ScopeId } from "./ids.ts";
 import type { Check } from "./ledger.ts";
 
 /** What an event asks the world to do; it names ids, not copies, so what was delivered meanwhile is not sent twice. */
@@ -19,6 +19,7 @@ export type EffectBody =
       item:
         | { kind: "message"; id: MessageId }
         | { kind: "attention"; id: AttentionId }
+        | { kind: "candidate"; id: ObligationId }
         | { kind: "note"; text: string; asks: boolean };
     }
   | { kind: "machine.hold"; actor: ActorId; hold: boolean };

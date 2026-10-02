@@ -1,5 +1,8 @@
 import type { EffectBody } from "../../../shared/contracts/effects.ts";
+import type { Event } from "../../../shared/contracts/events.ts";
 import type { State } from "../../../shared/kernel/state.ts";
+import { attentionsAbout } from "../../../shared/views/record.ts";
+import { briefText } from "../../../shared/views/status.ts";
 
 type Item = Extract<EffectBody, { kind: "deliver" }>["item"];
 /** `taken` is how many of the items, oldest first, the delivery holds or had nothing left to say of. */
@@ -10,10 +13,14 @@ const DELIVERY_CHARS = 60_000;
 /** Room kept for a part's number and for the line that says how many wait. */
 const NUMBER_CHARS = 20;
 const WAITING_CHARS = 80;
+/** Earlier attentions a candidate shows: enough to tell whether its owner already acted; `record` has the rest. */
+const EARLIER = 6;
+/** The events on a scope's record, as the store files them. */
+export type Recorded = (scope: string) => readonly Event[];
 
 /** One delivery: what is queued for a reader, numbered, oldest first, each whole; nothing here ranks, merges or advises. */
-export function renderBatch(items: readonly Item[], state: State): Rendered | null {
-  const parts = items.map((item) => renderItem(item, state));
+export function renderBatch(items: readonly Item[], state: State, recorded: Recorded): Rendered | null {
+  const parts = items.map((item) => renderItem(item, state, recorded));
   const queued = parts.filter((part) => part !== null);
   if (queued.length === 0) return null;
   const held: typeof queued = [];
@@ -44,8 +51,10 @@ export function renderBatch(items: readonly Item[], state: State): Rendered | nu
 function renderItem(
   item: Item,
   state: State,
+  recorded: Recorded,
 ): { text: string; asks: boolean; message?: string; attention?: string } | null {
   if (item.kind === "note") return { text: item.text, asks: item.asks };
+  if (item.kind === "candidate") return renderCandidate(item.id, state, recorded);
   if (item.kind === "message") {
     const m = state.messages.get(item.id);
     if (!m || m.delivered !== null) return null;
@@ -69,6 +78,31 @@ function renderItem(
     `\`look\` for more; \`acknowledge\` ${t.id} if it needs nothing now`,
   ];
   return { text: lines.join("\n"), asks: t.urgency === "now", attention: t.id };
+}
+
+/** A candidate with what its reader weighs it against; nothing once it was attended or passed. */
+function renderCandidate(obligation: string, state: State, recorded: Recorded): { text: string; asks: boolean } | null {
+  const o = state.obligations.get(obligation);
+  const c = o?.seen;
+  if (!o || !c) return null;
+  const brief = state.scopes.get(c.scope)?.brief;
+  const earlier = attentionsAbout(recorded(state.actors.get(c.actor)?.scope ?? c.scope), c.actor);
+  const lines = [
+    `CANDIDATE ${o.about.id} · ${c.moment} · ${c.answer} · ${who(c.actor, state)}`,
+    `why: ${c.why}`,
+    ...(c.around
+      ? [
+          ...c.around.before.map((item) => `before: ${item}`),
+          `item: ${c.around.item}`,
+          ...c.around.after.map((item) => `after: ${item}`),
+        ]
+      : []),
+    ...(c.facts.length > 0 ? [`facts: ${c.facts.join("; ")}`] : []),
+    ...(brief ? [`Scope ${c.scope}: ${briefText(brief)}`] : []),
+    ...earlier.slice(-EARLIER).map((line) => `earlier about ${c.actor}: ${line}`),
+    `\`attend\` or \`pass\` it with candidate ${o.about.id}.`,
+  ];
+  return { text: lines.join("\n"), asks: true };
 }
 
 function who(party: string, state: State): string {

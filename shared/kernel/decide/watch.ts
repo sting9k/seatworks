@@ -106,7 +106,7 @@ export function observation(ctx: Of<"record_observation">): Refusal | undefined 
     const watcher = watcherOver(ctx, b.scope);
     const actor = b.actor === null ? undefined : ctx.state.actors.get(b.actor);
     const above = actor ? ownerAbove(ctx.state, actor) : null;
-    if (watcher !== null && above !== null)
+    if (watcher !== null && actor && above !== null)
       ctx.emit({
         type: "obligation_opened",
         obligation: {
@@ -115,7 +115,15 @@ export function observation(ctx: Of<"record_observation">): Refusal | undefined 
           owedTo: above,
           about: { kind: "candidate", id },
           opened: ctx.at,
-          summary: `${b.question} · ${b.answer} · ${actor?.id ?? "?"} (${actor?.role ?? "?"}, scope ${b.scope}) · ${route.kind === "attention" ? route.why : route.text}`,
+          seen: {
+            actor: actor.id,
+            scope: b.scope,
+            moment: b.question,
+            answer: b.answer,
+            why: route.kind === "attention" ? route.why : route.text,
+            around: route.kind === "attention" ? route.around : null,
+            facts: route.kind === "attention" ? route.facts : [],
+          },
         },
       });
     return undefined;

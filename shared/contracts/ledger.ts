@@ -193,14 +193,28 @@ export type Owed = {
   readonly id: string;
 };
 
+/** An item of an agent's turn with up to two either side, oldest first, as the watch's eye saw them. */
+export type Around = { readonly before: readonly string[]; readonly item: string; readonly after: readonly string[] };
+
+/** A moment as the watch saw it, kept by the candidate that is about it for whoever weighs it. */
+export type SeenMoment = {
+  readonly actor: ActorId;
+  readonly scope: ScopeId;
+  readonly moment: string;
+  readonly answer: string;
+  readonly why: string;
+  readonly around: Around | null;
+  readonly facts: readonly string[];
+};
+
 export type Obligation = {
   readonly id: ObligationId;
   readonly owedBy: Party;
   readonly owedTo: Party;
   readonly about: Owed;
   readonly opened: string;
-  /** What a reader needs to act on it without looking it up, such as a candidate's moment and quote. */
-  readonly summary?: string;
+  /** Held by an obligation about a candidate, and by no other. */
+  readonly seen?: SeenMoment;
 };
 
 export type Urgency = "now" | "later";

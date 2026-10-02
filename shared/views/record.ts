@@ -164,8 +164,12 @@ export function signalsOf(events: Iterable<Event>): Signals {
   };
 }
 
-/** The scopes whose record an event is read in; `ofFinding` gives those a finding was raised in and about. */
-export function recordedIn(e: Event, ofFinding: (finding: string) => readonly string[]): readonly string[] {
+/** The scopes whose record an event is read in; the lookups give those a finding and an attention are about. */
+export function recordedIn(
+  e: Event,
+  ofFinding: (finding: string) => readonly string[],
+  ofAttention: (attention: string) => readonly string[],
+): readonly string[] {
   const carried = "carries" in e && e.carries !== null ? ofFinding(e.carries) : [];
   switch (e.type) {
     case "handed_over":
@@ -196,18 +200,62 @@ export function recordedIn(e: Event, ofFinding: (finding: string) => readonly st
       return ofFinding(e.finding);
     case "attention_opened":
       return [e.attention.about.scope];
+    case "attention_climbed":
+      return [e.to.about.scope];
+    case "attention_acted":
+    case "acknowledged":
+    case "noise_marked":
+      return ofAttention(e.attention);
     default:
       return carried;
   }
+}
+
+/** What came of an attention: its reader acted, said it needs nothing or marked its kind noise, or left it to climb. */
+function cameOf(e: Event): { attention: string; says: string } | null {
+  switch (e.type) {
+    case "attention_acted":
+      return { attention: e.attention, says: `acted on by ${e.by}` };
+    case "acknowledged":
+      return { attention: e.attention, says: `acknowledged by ${e.by}` };
+    case "noise_marked":
+      return { attention: e.attention, says: `its kind marked noise by ${e.by}` };
+    case "attention_climbed":
+      return { attention: e.attention, says: `not acted on, and climbed to ${e.to.to} as ${e.to.id}` };
+    default:
+      return null;
+  }
+}
+
+/** Each attention about an actor in these events, oldest first, with what came of it, to weigh a new one against. */
+export function attentionsAbout(events: Iterable<Event>, actor: string): string[] {
+  const told = new Map<string, string[]>();
+  const lines: string[][] = [];
+  for (const e of events) {
+    if (e.type === "attention_opened" && e.attention.about.actor === actor) {
+      const line = [`${e.attention.id} (${e.attention.moment}) to ${e.attention.to}`];
+      told.set(e.attention.id, line);
+      lines.push(line);
+    }
+    const came = cameOf(e);
+    const line = came ? told.get(came.attention) : undefined;
+    if (!came || !line) continue;
+    line.push(came.says);
+    // A climb goes on as the same attention under a new id.
+    if (e.type === "attention_climbed") told.set(e.to.id, line);
+  }
+  return lines.map(([head, ...came]) => `${head}: ${came.length > 0 ? came.join("; ") : "not yet acted on"}`);
 }
 
 /** A scope's history for the `record` read: its briefs, what was done to it, its hand-backs, findings and reports. */
 export function scopeRecordText(events: Iterable<Event>, scope: string): string {
   const out: string[] = [];
   const findings = new Map<string, string[]>();
+  const attentions = new Set<string>();
   const mine = (finding: string) => (findings.has(finding) ? [scope] : []);
+  const told = (attention: string) => (attentions.has(attention) ? [scope] : []);
   for (const e of events) {
-    if (!recordedIn(e, mine).includes(scope)) continue;
+    if (!recordedIn(e, mine, told).includes(scope)) continue;
     const done = doneTo(e, scope) ?? doneUnder(e, scope);
     if (done !== null) out.push(`${e.at} ${done}`);
     if ((e.type === "brief_issued" || e.type === "brief_amended") && e.scope === scope)
@@ -229,8 +277,13 @@ export function scopeRecordText(events: Iterable<Event>, scope: string): string 
           ...e.sections.map((s) => `  ${s.name}: ${s.lines.map((l) => l.text).join("; ")}`),
         ].join("\n"),
       );
-    if (e.type === "attention_opened" && e.attention.about.scope === scope)
+    if (e.type === "attention_opened" && e.attention.about.scope === scope) {
+      attentions.add(e.attention.id);
       out.push(`${e.at} attention ${e.attention.id} (${e.attention.moment}) to ${e.attention.to}`);
+    }
+    const came = cameOf(e);
+    if (came && attentions.has(came.attention)) out.push(`${e.at} attention ${came.attention}: ${came.says}`);
+    if (e.type === "attention_climbed" && e.to.about.scope === scope) attentions.add(e.to.id);
   }
   for (const lines of findings.values()) out.push(lines.join("\n"));
   return out.length > 0 ? out.join("\n") : `Nothing on the record for scope ${scope}.`;

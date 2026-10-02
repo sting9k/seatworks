@@ -82,7 +82,7 @@ function lineText(l: Line): string {
   return `[${l.id}${l.origin === "human" ? ", the Human's" : ""}] ${l.text}`;
 }
 
-function briefText(b: Brief): string {
+export function briefText(b: Brief): string {
   const section = (name: string, lines: readonly Line[]) =>
     lines.length > 0 ? `${name}:\n${lines.map((l) => `- ${lineText(l)}`).join("\n")}` : "";
   return [
