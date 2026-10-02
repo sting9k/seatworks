@@ -5,7 +5,8 @@ Code 2.1.284, Codex 0.158, Pi 0.87.1, Oh My Pi 18.4.3 and Paseo 0.10.1; Codex an
 against Paseo 0.10.2's source, Codex 0.154's own list of features and Oh My Pi 18.3.1's documentation.
 
 Built: a harness file for each of the four. Every test runs against a stand-in for Paseo that refuses what Paseo's
-source refuses; none has yet been seen on a live agent, and what only one can show is under To check.
+source refuses. Claude Code and Pi were seen on live agents on 2 October 2026 (Seen on a live Paseo, below); Codex and
+Oh My Pi have not been, and what only a live one can show is under To check.
 
 V1 wrote the same role policy five times, once in each agent's format: 55 harness files, 1,578 lines, and as many
 lines of TypeScript to lay them out, one seat directory per role, agent and project. Seatworks states the policy once and
@@ -142,6 +143,25 @@ Oh My Pi's instruction to delete incidental tests. V1's seven near-copies of the
 | Rewriting Codex's model catalog                             | `agents.enabled = false`, if it holds (below)        |
 | Tuning values nobody recorded a reason for                  | Gone until a reason is written down                  |
 
+## Seen on a live Paseo
+
+On 2 October 2026, on Paseo 0.10.2: a daemon of its own with its own home and state root, a throwaway repository with
+a bare remote, SLP as it comes, the Supervisor and the Lead on Claude Code (Opus 5.5, medium) and the Peer and the
+Reviewer on Pi (`zai/glm-5.3-flash`). Three small runs, each landed and published: one Peer under the root; a lane
+with two Peers; a lane with a Peer that raised a finding, a Reviewer, a report and a question to the Human.
+
+- **Claude Code.** Made with the team's server and its tools approved ahead; the server said hello before the first
+  turn; no permission was asked. Its tools went on answering after the plugin was loaded again twice.
+- **Pi.** Made, with no server and no tool handed to Paseo; the extension in Seatworks' home gave it its role's tools.
+  A Peer ran checks of its own, raised a finding and handed back; a Reviewer recorded a verdict. A writer's commits
+  were made through the git shim in its own worktree.
+- **The mailbox.** What the Human sent reached the Supervisor at its turn's end; a Lead was told of a hand-back and
+  of its checks' result in one numbered message.
+- **Not seen.** A Claude writer under its sandbox, since every writer was on Pi; a permission asked; a turn that
+  failed; the reflex, which had no key there.
+- **`look` at an agent whose seat has ended** finds nothing: the record no longer has its agent. Whoever takes a lane
+  in cannot ask its owner anything once it is in.
+
 ## To check before building on it
 
 - On a live Codex: that a writer commits with the repository's git directory among its writable roots, and that
@@ -149,6 +169,5 @@ Oh My Pi's instruction to delete incidental tests. V1's seven near-copies of the
 - On a live Oh My Pi: that the team's server in its home connects before the first turn with the agent's own key,
   that `agent.db` linked carries the Human's login, and that a copy's own `.omp/` cannot plant an extension or a
   server for the next agent, as Pi's `defaultProjectTrust` rules out.
-- On a live Pi: that an agent is made at all, since every create before this one carried what Paseo refuses.
 - Whether Paseo's fixed `settingSources` let a project's `.claude/settings.json` add hooks or servers to a Claude
   agent, and whether `extraArgs` can narrow them.

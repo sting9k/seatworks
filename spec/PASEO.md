@@ -107,7 +107,8 @@ from Paseo 0.10.1: the plugin SDK, `@getpaseo/client`, `@getpaseo/protocol`, the
   key, answers; only a lookup that throws, the connection down, is tried again.
 - `lastUsage.totalCostUsd` is what the agent's session has spent so far: Claude's result `total_cost_usd` over its one
   long query, Pi's and Oh My Pi's session stats, OpenCode's session cost. It starts again when the provider's process
-  does. Tokens are running totals too, but Codex reports only its last model call's, and no cost. Seatworks records the
+  does. Tokens were read as running totals too, which a live Claude agent did not bear out (Seen on a live daemon);
+  Codex reports only its last model call's, and no cost. Seatworks records the
   totals and counts each turn's rise (`KERNEL.md` §4.2), so a Codex agent's money never counts toward an appetite.
 - `toolPolicy.preapproved` names each MCP tool; there is no wildcard.
 - A resumed session is started with no environment but what `before('agent.session_open')` returns: Paseo keeps
@@ -146,6 +147,21 @@ Read in Paseo 0.10.2's source (`packages/server/src/server/agent`), and the same
   `PI_CODING_AGENT_DIR`), which is how a home of Seatworks' is named to it.
 
 So what Seatworks sends is by provider (`HARNESS.md`), and the stand-in for Paseo in the tests refuses what Paseo does.
+
+## Seen on a live daemon
+
+On 2 October 2026, Paseo 0.10.2, a daemon run for it with a home of its own (`HARNESS.md`, Seen on a live Paseo):
+
+- A daemon takes plugins only with `pluginsEnabled` set in its config; agent profiles are kept under `daemon` there.
+- `agent.turn_ended` reached the plugin for every turn, with the whole history; the first prompt carried the
+  `clientMessageId` the create was given, and a delivery the one its send was given.
+- `lastUsage.totalCostUsd` rose turn by turn for Claude and for Pi, as a running total. Its tokens did not for Claude:
+  one agent reported 949, 275, 377, 395, 220, 136 and 1,961 over seven turns, so they are a turn's, or a call's, and
+  not a session's. What a scope spent in dollars is right; what it spent in tokens is not, for a Claude agent.
+- A turn that ends after its agent's seat has ended reaches nobody: the plugin no longer knows the agent, so what
+  that turn spent is counted nowhere. A Peer taken in within seconds of its hand-back, while it was still writing
+  its last words, had none of its spend recorded.
+- The timeline of an archived agent could not be read from the command line.
 
 ## To check before building on it
 
