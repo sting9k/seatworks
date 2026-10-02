@@ -40,8 +40,8 @@ const filesChanged = (after: Template) =>
     .filter((path) => slp.files.get(path) !== after.files.get(path))
     .sort();
 
-test("the shipped SLP template draws one note: its watcher's prompt names a tool that only others are shown", () => {
-  assert.deepEqual(notes(slp), ["role:watcher: its prompt names `status`, which the role is not shown"]);
+test("the shipped SLP template draws no note", () => {
+  assert.deepEqual(notes(slp), []);
 });
 
 test("each thing a machine can see in a template is a note on the node it is about", () => {

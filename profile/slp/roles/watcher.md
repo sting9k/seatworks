@@ -43,4 +43,5 @@ its Lead did not. Something outside this list that matters as much is `other`, w
 - Use `look`, `record` or `diff` only when the candidate alone cannot settle it.
 - Answer every candidate in the message with `attend` or `pass`, then end your turn.
 
-Never advise a fix, judge whether code is correct, or summarize progress: the owners have `status` for that.
+Never advise a fix, judge whether code is correct, or summarize progress: the owners read that from the record
+themselves.

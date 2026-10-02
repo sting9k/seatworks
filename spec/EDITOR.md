@@ -178,8 +178,9 @@ of them in a panel of the rail. A note stops nothing, neither a change nor an ex
 - **The always-on words of each role**: its prompt, the descriptions of its skills and the flow, counted on its node,
   and in its panel beside the fewest and the most a role of SLP reads. This is the cost a template raises without
   anyone seeing it.
-- A prompt that names, in backticks, a tool its role is not shown. SLP draws this one note, where its watcher's
-  prompt names a tool that only the owners are shown: a note is something to look at, and that one is as meant.
+- A prompt that names, in backticks, a tool its role is not shown. It cannot tell a role told to call a tool from
+  one told that others have it, so it is a thing to look at: SLP's watcher once named the owners' `status` so, and
+  was reworded, since a role that reads a tool's name may try to call it.
 - A prompt or a skill that names a role the template has lost since it was opened.
 - A prompt of a watched role that names the watch.
 - A skill whose folder and `name` differ, whose description does not say when to use it, or which points at a file
