@@ -119,6 +119,11 @@ test("the scope tools: open, amend a brief, handover, hold and resume, reseat, r
     / src\/c\/ moved from scope 1\.2 to scope 1\.1: A needs c\n.* brief v2 \(smaller still\): A\n.* held: wait for the design\n.* resumed: the design is in\n.* reseated, a3 to a5: a fresh pair of eyes$/m,
     "a scope's record keeps what its owner above did to it, in order",
   );
+  assert.match(
+    (await chief.call("record", { scope: "1" })).text,
+    / scope 1\.1 opened under it: a maker on src\/a\/\n.* scope 1\.2 opened under it: a maker on src\/b\/, src\/c\/\n.* scope 1\.2 dropped: B is not needed at all$/m,
+    "and a scope's record keeps each scope opened under it and what came of it, which outlasts the child itself",
+  );
 
   const made = c.paseo.created.length;
   await did(c, keeper, "open_scope", {
@@ -185,6 +190,14 @@ test("the work tools: checks a writer runs itself, a hand-back sent back and han
   git(copy, "commit", "-q", "-m", "done");
   const head = git(copy, "rev-parse", "HEAD");
   await did(c, maker, "hand_back", { commit: head, text: "all of it" });
+  assert.match(
+    c.told(0).join("\n"),
+    new RegExp(
+      `^Scope 1 handed back ${head}: all of it\\nThe project's checks run on its candidate now, and you are told their result\\.$`,
+      "m",
+    ),
+    "whoever takes it in reads that a result is on its way, and need not ask for the same checks",
+  );
   const passing = new RegExp(`- (e\\d+) check on ${head}: ok`).exec(await status(chief, "1"))?.[1];
   assert.ok(passing, "the hand-back's own checks ran on the commit handed back");
   assert.match(
@@ -614,6 +627,11 @@ test("with no check set, a hand-back is given no evidence: a run of nothing is n
   const head = git(copy, "rev-parse", "HEAD");
 
   await did(c, maker, "hand_back", { commit: head, text: "all of it" });
+  assert.equal(
+    c.told(0).at(-1),
+    `Scope 1 handed back ${head}: all of it\nNo check is set for the project: nothing is run on it.`,
+    "whoever takes it in reads that no result is on its way",
+  );
   const handed = await status(chief, "1");
   assert.match(
     handed,

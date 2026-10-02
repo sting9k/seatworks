@@ -160,15 +160,17 @@ test("I6: a goal the Human approved changes only on their word, and a line is th
   const said = [...ledger.state.messages.values()].find((m) => m.from === "human")!.id;
   ledger.must(change({ kind: "message", id: said }));
 
+  const own = ledger.must(ledger.as(supervisor, "send_message", { to: "a2", text: "No servers, I think" }));
+  const mine = own.flatMap((e) => (e.type === "message_sent" ? [e.message.id] : []))[0]!;
   ledger.must(
     ledger.as(supervisor, "amend_plan", {
       scope: "root",
-      add: [{ section: "limits", text: "No servers", via: { kind: "message", id: "m999" } }],
+      add: [{ section: "limits", text: "No servers", via: { kind: "message", id: mine } }],
       reason: "r",
     }),
   );
   const limit = ledger.state.scopes.get("root")!.plan!.limits.at(-1)!;
-  assert.equal(limit.origin, supervisor);
+  assert.equal(limit.origin, supervisor, "a message that is not the Human's makes no line theirs");
 
   const settle = (text: string, via?: unknown) =>
     ledger.as(supervisor, "amend_plan", {
@@ -394,6 +396,26 @@ test("an answer goes to whoever holds the asker's seat now; one to a note of the
   ledger.must(ledger.fact("record_observation", { ...seen, route: note }));
   const fromLedger = [...ledger.state.messages.values()].find((m) => m.from === "bridge")!.id;
   assert.equal(refusedBy(ledger.as(peer, "answer", { replyTo: fromLedger, text: "Noted" })), "state");
+});
+
+test("a line comes from something on the record: one whose `via` names nothing that was made is refused", () => {
+  const { ledger, supervisor, lead, peer, lane } = team();
+  ledger.must(ledger.as(peer, "raise_finding", { text: "int16 is too small", default: "go on" }));
+  const amend = (via: { kind: string; id: string }) =>
+    ledger.as(lead, "amend_plan", {
+      scope: lane,
+      add: [{ section: "limits", text: "int8 at most", via }],
+      reason: "so",
+    });
+  const goal = ledger.state.scopes.get(lane)!.brief!.goal.id;
+  assert.equal(refusedBy(amend({ kind: "message", id: goal })), "unknown", "a brief's line is no message");
+  assert.equal(refusedBy(amend({ kind: "finding", id: "f9" })), "unknown", "nor is a finding that was never raised");
+  ledger.must(amend({ kind: "finding", id: "f1" }));
+  const named = {
+    goal: { text: "Ship it", via: { kind: "question", id: "q1" } },
+    appetite: { line: { text: "a day" } },
+  };
+  assert.equal(refusedBy(ledger.as(supervisor, "set_plan", { scope: "root", plan: named })), "unknown");
 });
 
 test("a message may follow one already read and settled; one that was never sent is refused", () => {

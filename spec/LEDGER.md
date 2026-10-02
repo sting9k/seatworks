@@ -124,7 +124,10 @@ type Ref = { kind: "message" | "question" | "finding" | "evidence"; id: string }
 ```
 
 A line's origin is the caller, set by the kernel. A caller may mark a line the Human's only with `via` pointing to
-a message the Human sent or a question the Human answered; the kernel checks it exists and is theirs (I9).
+a message the Human sent or a question the Human answered; the kernel checks it exists and is theirs (I9). A `via`
+names something that was made, of the kind it says: one that names nothing, such as a line's id given as a message's,
+is refused `unknown`, so the record holds no reference to nothing. One that names another's words is taken, and the
+line is its caller's.
 
 ### Actor
 
@@ -437,6 +440,7 @@ Whoever a command changes something for is told, in the tool's own words and not
 | `finding_reopened`            | Whoever answers it: what is new, its new evidence, and what it first said | Yes |
 | `finding_withdrawn`           | Whoever was to answer it                                         | No    |
 | `brief_amended`, `plan_set`, `plan_amended`, `claim_made`, `integrated`, `scope_dropped` | The owner of each scope the scope `mustTell`: what changed | Yes |
+| `claim_made`                  | The owner of the scope's parent: the commit and the claim, and whether the project's checks run on it now or none is set | Yes |
 | `brief_amended` by leave of `mayChange` | The owner of the scope's parent: who amended it, from which scope, and why | Yes |
 | `published`, `publish_refused` | The root's owner: the branch, the remote and the commit, or why it was refused. Whether a landing reached the remote is theirs to know, whoever asked | Yes |
 | `integration_refused`         | The owner of the scope's parent, who asked: over a parent that moved, that another candidate is being made; for any other reason, the reason and that the candidate stands | Yes |
@@ -473,7 +477,9 @@ for it.
   `mayChange` edge at both its ends while both are open, what a watching scope watches over, a hand-back with whether any check is set to run on it, open obligations on and to its owner, a message or direction owed with its words, the
   latest claim and its evidence, spend of the scope and its descendants beside its appetite.
 - `record(scope)`: briefs with every version; what the owner above did to the scope (paths moved, held, resumed,
-  reseated, dropped); each hand-back and what came of it (sent back, integrated); findings with their chains
+  reseated, dropped); each hand-back and what came of it (sent back, integrated); each scope opened under it, with
+  its role and paths, and whether it was integrated or dropped, which is how whoever takes a lane in reads what its
+  owner did with its tasks once they are closed and out of `status`; findings with their chains
   (classified, reopened, carried, withdrawn); reports; attentions with what came of them. It reads the log, so it
   answers for a scope that is closed too, and it reads only that scope's part of it: each event is filed, in the
   append that writes it, under the scopes whose record it is read in (a finding's are the scope it was raised in and

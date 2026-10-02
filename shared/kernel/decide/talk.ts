@@ -1,8 +1,9 @@
 import type { CommandBody } from "../../contracts/commands.ts";
-import { BRIDGE, HUMAN, ID_PREFIX, type Party } from "../../contracts/ids.ts";
+import { BRIDGE, HUMAN, type Party } from "../../contracts/ids.ts";
 import type { Message } from "../../contracts/ledger.ts";
 import { fromOutside, maySpeak, ownerOfParent } from "../authority.ts";
 import { type Context, type Refusal, isRefusal, refuse } from "./context.ts";
+import { wasMade } from "./lines.ts";
 import { askerNow } from "./seats.ts";
 
 type Of<T extends CommandBody["type"]> = Context<Extract<CommandBody, { type: T }>>;
@@ -29,10 +30,7 @@ export function sendMessage(ctx: Of<"send_message">): Refusal | undefined {
 }
 
 /** Whether a message of that id was ever sent: one read and settled is out of memory, and may be followed all the same. */
-function wasSent(ctx: Context, id: string): boolean {
-  const n = Number(id.slice(ID_PREFIX.message.length));
-  return id.startsWith(ID_PREFIX.message) && Number.isInteger(n) && n >= 1 && n <= ctx.state.counters.message;
-}
+const wasSent = (ctx: Context, id: string) => wasMade(ctx, "message", id);
 
 export function answer(ctx: Of<"answer">): Refusal | undefined {
   const asked = ctx.state.messages.get(ctx.body.replyTo);

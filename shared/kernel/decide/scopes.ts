@@ -4,7 +4,7 @@ import type { Brief, Line, Owed, Plan, Scope, ScopeKind } from "../../contracts/
 import { within } from "../paths.ts";
 import { descendants, ownerOfParent } from "../authority.ts";
 import { type Context, type Refusal, isRefusal, refuse } from "./context.ts";
-import { briefFrom, humanWordFor, lineFrom, planFrom } from "./lines.ts";
+import { briefFrom, humanWordFor, lineFrom, planFrom, strayVia } from "./lines.ts";
 import { carriedFinding, closeAskedPermissions, letMachineGo, releaseSeat } from "./seats.ts";
 
 type Of<T extends CommandBody["type"]> = Context<Extract<CommandBody, { type: T }>>;
@@ -86,6 +86,9 @@ export function openChild(ctx: Of<"open_scope">): Refusal | undefined {
       if (!ctx.state.scopes.has(watched)) return refuse("unknown", `no scope ${watched}`);
   const model = body.model ?? role.models[0];
   if (model === undefined) return refuse("state", `role ${role.name} names no model and none was given`);
+  const b = body.brief;
+  const stray = b === null ? null : strayVia(ctx, [b.goal, ...b.constraints, ...b.choices, ...b.context]);
+  if (stray) return stray;
 
   const actor = ctx.next("actor");
   const scope: Scope = {
@@ -118,6 +121,8 @@ export function amendBrief(ctx: Of<"amend_brief">): Refusal | undefined {
   const carried = carriedFinding(ctx, ctx.body.carries);
   if (isRefusal(carried)) return carried;
   const { set } = ctx.body;
+  const stray = strayVia(ctx, [set.goal, ...(set.constraints ?? []), ...(set.choices ?? []), ...(set.context ?? [])]);
+  if (stray) return stray;
   const old = scope.brief;
   const touched: Line[] = [];
   const replace = (key: "constraints" | "choices" | "context", next: readonly { text: string }[] | undefined) => {
@@ -147,7 +152,11 @@ export function setPlan(ctx: Of<"set_plan">): Refusal | undefined {
   if (scope.plan) return refuse("state", `scope ${scope.id} has a plan: amend it`);
   const role = ctx.profile.roles.get(scope.role);
   if (!role?.delegates) return refuse("state", "a plan belongs to a scope that delegates");
-  ctx.emit({ type: "plan_set", scope: scope.id, plan: planFrom(ctx, ctx.body.plan) });
+  const p = ctx.body.plan;
+  const lines = [p.goal, ...p.limits, ...p.unknowns.map((u) => u.line), p.appetite.line, ...p.terms.map((t) => t.line)];
+  const stray = strayVia(ctx, lines);
+  if (stray) return stray;
+  ctx.emit({ type: "plan_set", scope: scope.id, plan: planFrom(ctx, p) });
   return undefined;
 }
 
@@ -161,6 +170,8 @@ export function amendPlan(ctx: Of<"amend_plan">): Refusal | undefined {
   if (isRefusal(carried)) return carried;
   const old = scope.plan;
   const { body } = ctx;
+  const stray = strayVia(ctx, [...body.add, body.goal, body.appetite?.line]);
+  if (stray) return stray;
   const removed: Line[] = [];
   for (const id of body.remove) {
     const line = [...old.limits, ...old.unknowns.map((u) => u.line), ...old.terms.map((t) => t.line)].find(

@@ -1,4 +1,5 @@
 import type { Event } from "../contracts/events.ts";
+import { parentScopeId } from "../contracts/ids.ts";
 import { sameCommit } from "../kernel/commits.ts";
 
 /** The chain of change of one finding (CONCEPT-V2 §10.1), read from the log as it streams past. */
@@ -175,10 +176,16 @@ export function recordedIn(e: Event, ofFinding: (finding: string) => readonly st
     case "scope_resumed":
     case "reseated":
     case "sent_back":
-    case "integrated":
-    case "scope_dropped":
     case "report_made":
       return [e.scope, ...carried];
+    // A scope's record keeps each scope opened under it and what came of it, which outlasts the child in memory.
+    case "scope_opened":
+      return e.scope.parent === null ? [] : [e.scope.parent];
+    case "integrated":
+    case "scope_dropped": {
+      const parent = parentScopeId(e.scope);
+      return parent === null ? [e.scope] : [e.scope, parent];
+    }
     case "claim_made":
       return [e.claim.scope];
     case "finding_raised":
@@ -201,7 +208,7 @@ export function scopeRecordText(events: Iterable<Event>, scope: string): string 
   const mine = (finding: string) => (findings.has(finding) ? [scope] : []);
   for (const e of events) {
     if (!recordedIn(e, mine).includes(scope)) continue;
-    const done = doneTo(e, scope);
+    const done = doneTo(e, scope) ?? doneUnder(e, scope);
     if (done !== null) out.push(`${e.at} ${done}`);
     if ((e.type === "brief_issued" || e.type === "brief_amended") && e.scope === scope)
       out.push(
@@ -227,6 +234,22 @@ export function scopeRecordText(events: Iterable<Event>, scope: string): string 
   }
   for (const lines of findings.values()) out.push(lines.join("\n"));
   return out.length > 0 ? out.join("\n") : `Nothing on the record for scope ${scope}.`;
+}
+
+/** What became of a scope opened under this one, as one line of this one's record. */
+function doneUnder(e: Event, scope: string): string | null {
+  switch (e.type) {
+    case "scope_opened":
+      return e.scope.parent === scope
+        ? `scope ${e.scope.id} opened under it: a ${e.scope.role}${e.scope.paths.length > 0 ? ` on ${e.scope.paths.join(", ")}` : ""}`
+        : null;
+    case "integrated":
+      return parentScopeId(e.scope) === scope ? `scope ${e.scope} integrated into it at ${e.sha}` : null;
+    case "scope_dropped":
+      return parentScopeId(e.scope) === scope ? `scope ${e.scope} dropped: ${e.reason}` : null;
+    default:
+      return null;
+  }
 }
 
 /** What an event did to a scope, as one line of its record; null for an event that is not about it that way. */

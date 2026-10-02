@@ -56,6 +56,13 @@ export function childScopeId(parent: ScopeId, n: number): ScopeId {
   return parent === ROOT ? `${n}` : `${parent}.${n}`;
 }
 
+/** The scope a scope was opened under, read off its id; none for the root. */
+export function parentScopeId(scope: ScopeId): ScopeId | null {
+  if (scope === ROOT) return null;
+  const dot = scope.lastIndexOf(".");
+  return dot < 0 ? ROOT : scope.slice(0, dot);
+}
+
 /** Labels every agent the plugin starts carries, so Paseo itself finds a project's agents and a seat's agent. */
 export const PROJECT_LABEL = "seatworks.project";
 export const ACTOR_LABEL = "seatworks.actor";

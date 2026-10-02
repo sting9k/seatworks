@@ -167,10 +167,15 @@ export function react(e: Event, s: State): readonly Effect[] {
     case "claim_made":
       add("candidate", { kind: "workspace.candidate", scope: e.claim.scope, commit: e.claim.commit });
       mustTell(e.claim.scope, `it handed back ${e.claim.commit}: ${e.claim.text}`);
+      // Whether a result is on its way is said, or whoever takes it in runs the same checks again while they run.
       tell(
         parentOwner(e.claim.scope),
         "note",
-        `Scope ${e.claim.scope} handed back ${e.claim.commit}: ${e.claim.text}`,
+        `Scope ${e.claim.scope} handed back ${e.claim.commit}: ${e.claim.text}\n${
+          (s.project?.checks ?? []).length > 0
+            ? "The project's checks run on its candidate now, and you are told their result."
+            : "No check is set for the project: nothing is run on it."
+        }`,
         true,
       );
       break;
