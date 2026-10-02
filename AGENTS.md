@@ -199,4 +199,12 @@ copy its project took, so an edit here reaches one when the template is installe
 ## Paseo
 
 Read `spec/PASEO.md` and the `paseo-boundary` skill before touching the agent host or the bridge. Paseo ships weekly;
-check a fact against the installed `@getpaseo/*` types or Paseo's source, not memory.
+check a fact against the installed `@getpaseo/*` types or Paseo's source, not memory. Its source is public
+(`getpaseo/paseo`, a tag for each release): what it takes for which provider is not in its published types.
+
+- **What an agent is made with is by provider** (`spec/HARNESS.md`, `harness/<provider>.json`): Paseo takes MCP
+  servers and pre-approved tools for Claude, Codex and OpenCode only, and refuses a create that hands them to another.
+- **The stand-in for Paseo in the tests refuses what Paseo refuses** (`test/bridge/fake-paseo.ts`). When Paseo
+  changes what it takes, change the stand-in first and let the tests show what breaks.
+- **None of the four harnesses has been seen on a live agent.** What only one can show is in `spec/HARNESS.md`, To
+  check.
