@@ -346,6 +346,8 @@ A template's files in, what a person sees out (`EDITOR.md`).
 | A question reworded after its threshold was earned          | Shown as not yet earned, with a note; before the rewording, earned and no note |
 | A skill renamed                                             | Its folder's files, its name in its file and its place in every role that has it follow |
 | A question renamed                                          | Its key and its line in the list of those asked change, each in its place; nothing else |
+| In the editor, the classifier taken away, put back by a route, the route said where it is served, a second added and taken away; a route named wrongly or twice, served over plain http elsewhere, or the last taken alone | No node and no `classifier` in the profile; a node again with that route; its host and model on the node; the files as they were; each refused, saying why |
+| A template with no classifier, in the editor's checks; one with a route still its skeleton; one nothing is asked of | A note on each question and each moment a model would answer, and none on what code counts; a note on the classifier naming the route; a note that nothing is asked of it |
 
 ## Templates
 

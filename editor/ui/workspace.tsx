@@ -17,6 +17,7 @@ import { notesOf } from "../template/checks.ts";
 import {
   addAsked,
   addRole,
+  addRoute,
   addSection,
   addServer,
   addSkill,
@@ -27,6 +28,7 @@ import {
   giveServer,
   removeAsked,
   removeRole,
+  removeClassifier,
   removeSection,
   removeServer,
   removeSkill,
@@ -82,6 +84,10 @@ const ASKS: Readonly<Record<Makeable, { readonly title: string; readonly hint: s
   skill: { title: "Name the new skill", hint: "lower-case letters, digits and dashes" },
   server: { title: "Name the new server", hint: "lower-case letters, digits and dashes" },
   step: { title: "Name the new step", hint: "what the step is called" },
+  classifier: {
+    title: "Name a route it is served by",
+    hint: "the service's name: lower-case letters, digits and dashes",
+  },
   question: { title: "Name the new question", hint: "lower-case letters, digits and dashes" },
   moment: { title: "Name the new moment", hint: "lower-case letters, digits and dashes" },
   section: { title: "Name the new section", hint: "lower-case letters, digits and underscores" },
@@ -228,7 +234,8 @@ function Opened({
     change(duplicateRole(node.name, as), new Map([[`role:${as}`, { x: at.x + 48, y: at.y + 48 }]]));
   };
   const make = (kind: Makeable, name: string, at: Point, wire?: Pulled) => {
-    const id = kind === "step" ? `step:${stepIdFor(template.steps, name)}` : `${kind}:${name}`;
+    const id =
+      kind === "step" ? `step:${stepIdFor(template.steps, name)}` : kind === "classifier" ? kind : `${kind}:${name}`;
     const add = adding(kind, name);
     // A server's wire is drawn afterwards, with the tools it gives: there is none to name before the server is.
     const joined =
@@ -587,6 +594,8 @@ function adding(kind: Makeable, name: string): Edit {
       return addStep(name);
     case "section":
       return addSection(name);
+    case "classifier":
+      return addRoute(name);
     case "question":
     case "moment":
       return addAsked(kind, name);
@@ -606,6 +615,8 @@ function removal(node: GraphNode): Edit | null {
       return removeServer(node.name);
     case "section":
       return removeSection(node.name);
+    case "classifier":
+      return removeClassifier();
     case "question":
     case "moment":
       return removeAsked(node.kind, node.name);

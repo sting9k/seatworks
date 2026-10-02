@@ -1,4 +1,4 @@
-import { type Relation, type Role, variablesNamed } from "../../shared/contracts/profile.ts";
+import { hostOf, type Relation, type Role, variablesNamed } from "../../shared/contracts/profile.ts";
 import { alwaysOnWords } from "./checks.ts";
 import type { Asked, Template } from "./read-template.ts";
 import { TOOL_GROUPS } from "./tool-groups.ts";
@@ -64,6 +64,14 @@ export type GraphNode =
       readonly id: string;
       readonly name: string;
       readonly holds: string;
+      readonly file: string;
+    }
+  | {
+      /** The model the questions and the moments are asked of, with each route it is served by. */
+      readonly kind: "classifier";
+      readonly id: "classifier";
+      readonly name: string;
+      readonly routes: readonly { readonly name: string; readonly host: string; readonly model: string }[];
       readonly file: string;
     }
   | {
@@ -180,6 +188,18 @@ export function graphOf(template: Template): Graph {
     for (const watched of moment.spec.watches ?? [])
       if (template.profile.roles.has(watched)) wires.push({ kind: "watches", from: id, to: roleId(watched) });
   }
+  if (template.file.classifier)
+    nodes.push({
+      kind: "classifier",
+      id: "classifier",
+      name: "Classifier",
+      routes: Object.entries(template.file.classifier).map(([name, route]) => ({
+        name,
+        host: hostOf(route.endpoint) ?? route.endpoint,
+        model: route.model,
+      })),
+      file: "profile.yaml",
+    });
   for (const [name, holds] of template.profile.report)
     nodes.push({ kind: "section", id: `section:${name}`, name, holds, file: "profile.yaml" });
   return { nodes, wires };

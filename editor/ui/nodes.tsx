@@ -257,6 +257,9 @@ const Moment = ({ data: { node } }: NodeProps<FlowNode<"moment">>) => (
   <Compact node={node} title={node.name} plug="watches" {...(node.active ? {} : { quiet: "not watched" })} />
 );
 const Section = ({ data: { node } }: NodeProps<FlowNode<"section">>) => <Compact node={node} title={node.name} />;
+const Classifier = ({ data: { node } }: NodeProps<FlowNode<"classifier">>) => (
+  <Compact node={node} title={`${node.name} · ${node.routes.map((route) => route.model).join(", ")}`} />
+);
 
 const Frame = ({ data }: NodeProps<FrameNode>) => (
   <div className="frame">
@@ -274,5 +277,6 @@ export const NODE_TYPES = {
   moment: Moment,
   step: Step,
   section: Section,
+  classifier: Classifier,
   frame: Frame,
 } satisfies NodeTypes;

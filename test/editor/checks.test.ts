@@ -4,6 +4,7 @@ import { notesOf } from "../../editor/template/checks.ts";
 import {
   addAsked,
   addRole,
+  addRoute,
   addSection,
   addServer,
   giveServer,
@@ -12,9 +13,11 @@ import {
   type Edit,
   putFile,
   removeAsked,
+  removeClassifier,
   renameRole,
   setAsked,
   setModels,
+  setRoute,
   setSection,
   setTool,
   together,
@@ -342,4 +345,29 @@ test("a report section draws a note while it is its skeleton, and none once it s
   const added = changed(slp, addSection("risks"));
   assert.deepEqual(about(added), ["section:risks: it still holds the skeleton's words"]);
   assert.deepEqual(about(changed(added, setSection("risks", "Each risk nobody owns yet."))), []);
+});
+
+test("with no classifier each question and moment a model would answer says it is never asked; a classifier draws a note while a route is its skeleton, and when nothing is asked of it", () => {
+  const never = "it is asked of a model, and the template names no classifier, so it is never asked";
+  const none = changed(slp, removeClassifier());
+  const said = notes(none);
+  assert.ok(said.includes(`question:names-method: ${never}`));
+  assert.ok(said.includes(`moment:big-decision: ${never}`));
+  assert.ok(said.includes(`moment:mints-an-api: ${never}`), "one that asks only once code finds a name, too");
+  assert.ok(!said.some((note) => note.startsWith("moment:going-in-circles")), "what code counts asks no model");
+  const asked = [...slp.questions, ...slp.moments].filter((one) => one.active && one.spec.by !== "code");
+  assert.equal(said.length, asked.length, "one note for each that is asked, and no other");
+
+  const back = changed(none, addRoute("own"));
+  assert.deepEqual(notes(back), ["classifier: its route own still holds the skeleton's words"]);
+  const served = setRoute("own", { endpoint: "https://models.example/v1/systemone", model: "m-1", budget: 8000 });
+  assert.deepEqual(notes(changed(back, served)), []);
+
+  const pair = opened(pairFiles());
+  const unasked = applied(pair, together(addRoute("own"), served));
+  assert.ok(unasked.ok);
+  assert.deepEqual(
+    notesOf(unasked.template, pair).map((note) => `${note.node}: ${note.says}`),
+    ["classifier: no question and no moment is asked of it"],
+  );
 });

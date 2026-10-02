@@ -5,7 +5,8 @@ says what a template is; this says how a person makes and changes one. The order
 
 Built: all of this file. A template is picked from the gallery built beside the page (`TEMPLATE.md`, The gallery), or
 opened from a file or a folder of the person's own, and opens in a tab. Its graph is drawn and laid out. Roles,
-skills, steps, questions, moments and the sections of a report are added from a skeleton, changed and taken away;
+skills, steps, questions, moments, the classifier and the sections of a report are added from a skeleton, changed
+and taken away;
 wires are drawn and cut; a file is written in place and read as Markdown; what a machine can see is noted on the node
 it is about; every change can be undone; and the template is exported as one file.
 
@@ -82,6 +83,7 @@ After ComfyUI's own page, so a person who knows one finds their way in the other
 | Equipment | Skill               | Its folder: `SKILL.md` and the files beside it. A node once the folder is there, wired or not | To each role that has it |
 | Equipment | Outside server      | Its command or address, the variables it names. Set in its panel         | To a role; drawing the wire asks which of its tools the role may call, and the wire says them |
 | Equipment | Optional tool group | Findings; the machine's hold. Always on the graph, to be wired           | To a role                          |
+| Attention | Classifier          | The model the questions and the moments are asked of, by each route it is served at: its endpoint, the model as it is called there, what fits in a call. One to a template, or none | None |
 | Attention | Reflex question     | The events it is asked on, its question, each outcome, its thresholds, whom it tells | None                   |
 | Attention | Watch moment        | Its question, what it reads, its thresholds                              | `watches`, to each role watched    |
 | Flow      | Step                | Its name and a line on what happens in it                                | `then`, to the next; from the role that does it |
@@ -89,6 +91,11 @@ After ComfyUI's own page, so a person who knows one finds their way in the other
 
 No wire joins a section to a role: every role shown `report` is given every section, and none is required of it
 (`TEMPLATE.md`, The report's sections). A section is `report.<name>` in `profile.yaml`, in the order a report is read.
+
+No wire joins the classifier to what is asked of it either: every question, and every moment code does not count, is
+asked of the one a template has (`REFLEX.md`). It is `classifier` in `profile.yaml`. Adding it names its first
+route, and adding it again names another; its panel sets each route and takes one away, the last never alone. Taken
+away, the template asks no model, and each question and moment that would have been asked says so in a note.
 
 ## Wires
 
@@ -169,7 +176,8 @@ A skill's panel lists what is in its folder and takes a file dropped on it, kept
 
 A new role, skill, question, moment or section starts from a skeleton: the five parts of a prompt and the form of a
 skill (`TEMPLATE.md`, Each kind of file); for a question or a moment, the fields `REFLEX.md` asks for; for a section,
-a line to say what it holds. What a skeleton
+a line to say what it holds; for a route of the classifier, a place to say where it is served and what the model is
+called there. What a skeleton
 leaves to be written is a line in italics, and one left standing draws a note. A new question or moment is written
 and not asked: it joins its file's `active` list when its author ticks it, in one line of that file.
 
@@ -207,7 +215,10 @@ of them in a panel of the rail. A note stops nothing, neither a change nor an ex
   know; a moment that watches a role the template does not have; a moment `by: code` under a name the plugin counts
   nothing for. The lists these are held against are the plugin's own (`shared/contracts/reflex.ts`), which the code
   that asks is typed by.
-- A prompt, a skill, a question, a moment, a server or a section that still holds a skeleton's words.
+- A prompt, a skill, a question, a moment, a server, a route of the classifier or a section that still holds a
+  skeleton's words.
+- **What is asked of a model in a template that names no classifier**: each question and each moment code does not
+  count, on its own node, since it would never be asked. And a classifier nothing is asked of.
 - An outside server no role is given; and one whose settings hold what looks like a secret, by the patterns the
   plugin masks before text leaves a machine. A secret is named as a variable, never written.
 - A question or a moment whose words changed since its threshold was earned: it is not yet earned again. A threshold

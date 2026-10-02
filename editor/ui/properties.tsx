@@ -1,14 +1,17 @@
 import { type ReactNode, useState } from "react";
-import type { Server } from "../../shared/contracts/profile.ts";
+import type { Route, Server } from "../../shared/contracts/profile.ts";
 import {
+  addRoute,
   giveServer,
   putFile,
+  removeRoute,
   renameAsked,
   renameRole,
   renameSection,
   renameSkill,
   setAsked,
   setModels,
+  setRoute,
   setSection,
   setServer,
   setStep,
@@ -29,6 +32,7 @@ const KIND: Readonly<Record<GraphNode["kind"], string>> = {
   step: "Step",
   server: "Outside server",
   section: "Report section",
+  classifier: "Classifier",
 };
 
 const EARNED = {
@@ -289,6 +293,31 @@ function About({
           </p>
         </>
       );
+    case "classifier":
+      return (
+        <>
+          <p className="hint">
+            The model the questions and the moments are asked of. Whoever runs the team sets a key for one of these
+            hosts, and the key goes to no other. Taken away, the template asks no model.
+          </p>
+          {Object.entries(template.file.classifier ?? {}).map(([name, route]) => (
+            <RouteFields
+              key={`${name}:${JSON.stringify(route)}`}
+              name={name}
+              route={route}
+              alone={node.routes.length === 1}
+            />
+          ))}
+          <Line
+            key={node.routes.length}
+            label="Another route, by name"
+            value=""
+            onSet={(name) => {
+              if (name !== "") change(addRoute(name));
+            }}
+          />
+        </>
+      );
     case "server": {
       const server = template.file.servers[node.name]!;
       const given = Object.entries(template.file.roles).flatMap(([role, spec]) =>
@@ -321,6 +350,50 @@ function About({
       );
     }
   }
+}
+
+/** One place a classifier is served: where a call goes, the model as it is called there, and what fits in one. */
+function RouteFields({ name, route, alone }: { name: string; route: Route; alone: boolean }) {
+  const { change } = useEditing();
+  const set = (next: Partial<Route>) => {
+    change(setRoute(name, { ...route, ...next }));
+  };
+  return (
+    <>
+      <p className="section">{name}</p>
+      <Line
+        label="Endpoint"
+        value={route.endpoint}
+        onSet={(endpoint) => {
+          if (endpoint !== "") set({ endpoint });
+        }}
+      />
+      <Line
+        label="Model"
+        value={route.model}
+        onSet={(model) => {
+          if (model !== "") set({ model });
+        }}
+      />
+      <Line
+        label="Budget, in tokens"
+        value={String(route.budget)}
+        onSet={(budget) => {
+          if (/^[1-9][0-9]*$/.test(budget)) set({ budget: Number(budget) });
+        }}
+      />
+      {alone ? null : (
+        <button
+          type="button"
+          onClick={() => {
+            change(removeRoute(name));
+          }}
+        >
+          Take this route away
+        </button>
+      )}
+    </>
+  );
 }
 
 const listOf = (text: string, by: string | RegExp) =>

@@ -138,6 +138,9 @@ hr {
 .kind-server {
   background: var(--wire-server);
 }
+.kind-classifier {
+  background: var(--wire-watches);
+}
 
 /* The shell: tabs over everything */
 

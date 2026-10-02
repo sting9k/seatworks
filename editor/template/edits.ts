@@ -1,4 +1,4 @@
-import type { Relation, Role, Server } from "../../shared/contracts/profile.ts";
+import type { Relation, Role, Route, Server } from "../../shared/contracts/profile.ts";
 import { type Step, withAbout, withEditor } from "./about.ts";
 import { flowText } from "./flow.ts";
 import type { Property, Wire } from "./graph.ts";
@@ -7,6 +7,7 @@ import {
   momentSkeleton,
   promptSkeleton,
   questionSkeleton,
+  routeSkeleton,
   sectionSkeleton,
   serverSkeleton,
   skillSkeleton,
@@ -356,6 +357,40 @@ const declared = (template: Template, text: string, name: string, server: Value)
 /** An entry set down under a key of the profile, which the profile gains with its first one. */
 const entered = (text: string, key: string, others: boolean, name: string, value: Value) =>
   others ? setIn(text, [key, name], value) : setIn(deleteIn(text, [key]), [key], { [name]: value });
+
+/** A route a classifier is served by, from its skeleton; the first gives the template its classifier. */
+export const addRoute =
+  (name: string): Edit =>
+  (template) => {
+    if (!NAME.test(name)) return { refused: `a route's name is lower-case letters, digits and dashes: ${name} is not` };
+    const routes = template.file.classifier ?? {};
+    if (Object.hasOwn(routes, name)) return { refused: `there is already a route named ${name}` };
+    return withFile(template.files, PROFILE, (text) =>
+      entered(text, "classifier", Object.keys(routes).length > 0, name, routeSkeleton),
+    );
+  };
+
+/** Where a route is served, the model as it is called there and what fits, written over what was there. */
+export const setRoute =
+  (name: string, route: Route): Edit =>
+  (template) => {
+    const others = Object.keys(template.file.classifier ?? {}).some((other) => other !== name);
+    return withFile(template.files, PROFILE, (text) =>
+      entered(deleteIn(text, ["classifier", name]), "classifier", others, name, route as Value),
+    );
+  };
+
+/** Takes one route away; the last is not taken alone, since a classifier with none is no classifier. */
+export const removeRoute =
+  (name: string): Edit =>
+  (template) =>
+    Object.keys(template.file.classifier ?? {}).length > 1
+      ? withFile(template.files, PROFILE, (text) => deleteIn(text, ["classifier", name]))
+      : { refused: "a classifier is served by at least one route: take the classifier away to ask no model" };
+
+/** Takes the classifier away: the template then asks no model, and what code counts is all that is noticed. */
+export const removeClassifier = (): Edit => (template) =>
+  withFile(template.files, PROFILE, (text) => deleteIn(text, ["classifier"]));
 
 const SECTION = /^[a-z][a-z0-9_]*$/;
 /** Why a section may not take a name: it is an argument an agent writes, and a report has each once. */

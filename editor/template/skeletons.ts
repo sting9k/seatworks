@@ -50,6 +50,13 @@ export const momentSkeleton = {
 /** A section of a report starts as one a person must still say what it holds. */
 export const sectionSkeleton = "_What a line under it should be._";
 
+/** A route of a classifier starts as one a person must still say where it is served and what it is called there. */
+export const routeSkeleton = {
+  endpoint: "https://its-host.invalid/v1/systemone",
+  model: "_the-model-as-this-route-names-it_",
+  budget: 32000,
+} as const;
+
 /** An outside server starts as one a person must still say how to start. */
 export const serverSkeleton = { type: "stdio", command: "_the-command-that-starts-it_" } as const;
 

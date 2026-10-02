@@ -4,6 +4,7 @@ import { SECRETS } from "../../shared/contracts/secrets.ts";
 import { READS } from "../../shared/contracts/tools.ts";
 import type { Asked, Template } from "./read-template.ts";
 import { TOOL_GROUPS } from "./tool-groups.ts";
+import { routeSkeleton } from "./skeletons.ts";
 import { earnedOf } from "./wording.ts";
 
 /** Something a machine saw in a template that a person should look at, on the node it is about; it stops nothing. */
@@ -78,17 +79,29 @@ export function notesOf(template: Template, opened: Template): Note[] {
   for (const [name, holds] of template.profile.report)
     if (SKELETON.test(holds)) notes.push({ node: `section:${name}`, says: "it still holds the skeleton's words" });
 
+  const classifier = template.file.classifier;
+  const asksModel = [...template.questions, ...template.moments].some(asksAModel);
+  for (const [name, route] of Object.entries(classifier ?? {}))
+    if (SKELETON.test(route.model) || route.endpoint === routeSkeleton.endpoint)
+      notes.push({ node: "classifier", says: `its route ${name} still holds the skeleton's words` });
+  if (classifier && !asksModel) notes.push({ node: "classifier", says: "no question and no moment is asked of it" });
+
   for (const [kind, asked] of [
     ["question", template.questions],
     ["moment", template.moments],
   ] as const)
     for (const one of asked) {
       const say = (says: string) => notes.push({ node: `${kind}:${one.name}`, says });
+      if (!classifier && asksAModel(one))
+        say("it is asked of a model, and the template names no classifier, so it is never asked");
       for (const says of askedNotes(one)) say(says);
       for (const says of kind === "question" ? questionNotes(one) : momentNotes(one, template)) say(says);
     }
   return notes;
 }
+
+/** Whether a question or a moment that is asked needs a model to answer it: all but those counted in code. */
+const asksAModel = (one: Asked) => one.active && one.spec.by !== "code";
 
 /** Where a role's properties and tools leave it no way on; each is certain from `profile.yaml` alone. */
 function deadEnds(role: Role): string[] {

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   addRole,
+  addRoute,
   addSection,
   addServer,
   addSkill,
@@ -11,7 +12,9 @@ import {
   removeServer,
   setServer,
   type Edit,
+  removeClassifier,
   removeRole,
+  removeRoute,
   removeSection,
   removeSkill,
   removeStep,
@@ -20,6 +23,7 @@ import {
   renameSection,
   renameSkill,
   setProperty,
+  setRoute,
   setSection,
   setStep,
   setTool,
@@ -310,4 +314,42 @@ test("a report section is added, said what it holds, renamed and taken away leav
   const first = changed(none, addSection("landed"));
   assert.deepEqual(sections(first), ["landed"]);
   assert.match(first.files.get("profile.yaml")!, /^report:\n {2}landed: /m);
+});
+
+test("a classifier taken away leaves a template that asks no model; a route puts it back, is said where it is served, and the last one does not go alone", () => {
+  const routes = (template: Template) =>
+    graphOf(template).nodes.flatMap((node) => (node.kind === "classifier" ? node.routes : []));
+  assert.deepEqual(routes(slp), [
+    { name: "openrouter", host: "openrouter.ai", model: "typesafe/jev-1.13" },
+    { name: "typesafe", host: "api.typesafe.ai", model: "jev-1.13.0" },
+  ]);
+
+  const none = changed(slp, removeClassifier());
+  assert.equal(none.file.classifier, undefined);
+  assert.ok(!graphOf(none).nodes.some((node) => node.kind === "classifier"));
+  assert.deepEqual(filesChanged(slp, none), ["profile.yaml"]);
+
+  const back = changed(none, addRoute("own"));
+  assert.deepEqual(
+    routes(back).map((route) => route.name),
+    ["own"],
+  );
+  const served = changed(
+    back,
+    setRoute("own", { endpoint: "http://localhost:8080/v1/systemone", model: "local-1", budget: 8000 }),
+  );
+  assert.deepEqual(routes(served), [{ name: "own", host: "localhost:8080", model: "local-1" }]);
+  const second = changed(served, addRoute("hosted"));
+  assert.deepEqual(filesChanged(served, changed(second, removeRoute("hosted"))), []);
+
+  for (const [edit, why] of [
+    [addRoute("Own"), /a route's name is lower-case letters, digits and dashes: Own is not/],
+    [addRoute("own"), /there is already a route named own/],
+    [removeRoute("own"), /at least one route: take the classifier away/],
+    [setRoute("own", { endpoint: "http://collects.test/v1", model: "m", budget: 1 }), /over https/],
+  ] as const) {
+    const made = applied(served, edit);
+    assert.ok(!made.ok);
+    assert.match(made.says, why);
+  }
 });

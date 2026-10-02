@@ -19,7 +19,10 @@ type RoleFile = { spawns?: string[]; skills?: string[]; tools?: string[]; humanD
 const files = slpFiles();
 const yaml = (path: string): unknown => parse(files.get(path)!);
 const roles = Object.entries((yaml("profile.yaml") as { roles: Record<string, RoleFile> }).roles);
-const { report } = yaml("profile.yaml") as { report: Record<string, string> };
+const { report, classifier } = yaml("profile.yaml") as {
+  report: Record<string, string>;
+  classifier: Record<string, unknown>;
+};
 const { questions } = yaml("reflex.yaml") as { questions: Record<string, unknown> };
 const { moments } = yaml("watch.yaml") as { moments: Record<string, { watches?: string[] }> };
 
@@ -55,6 +58,11 @@ test("the SLP profile opens as a graph: a node for all its files name and a wire
       .sort(),
   );
   assert.deepEqual(ids(graph, "human"), ["human"]);
+  assert.deepEqual(
+    graph.nodes.flatMap((node) => (node.kind === "classifier" ? node.routes.map((route) => route.name) : [])),
+    Object.keys(classifier),
+    "the classifier, with each route it is served by",
+  );
   assert.deepEqual(
     graph.nodes.flatMap((node) => (node.kind === "section" ? [`${node.name}: ${node.holds}`] : [])),
     Object.entries(report).map(([name, holds]) => `${name}: ${holds}`),
