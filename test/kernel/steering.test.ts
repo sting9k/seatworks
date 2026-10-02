@@ -13,8 +13,8 @@ const seen = (actor: string, scope: string, level: "tell" | "consider", moment =
   route: { kind: "attention", why: '"drop to int8" while the goal names precision', urgency: "now" },
 });
 
-function delivered(ledger: ReturnType<typeof team>["ledger"], attention: string) {
-  ledger.must(ledger.fact("record_delivery", { attentions: [attention] }));
+function delivered(ledger: ReturnType<typeof team>["ledger"], attention: string, to: string) {
+  ledger.must(ledger.fact("record_delivery", { to, attentions: [attention] }));
 }
 
 test("an attention about a Peer goes to its Lead, not the Supervisor, and nothing reaches the Peer", () => {
@@ -37,14 +37,14 @@ test("left past its reader's next turn it climbs, with the silence beside it; pa
   const first = [...ledger.state.attentions.keys()][0]!;
   ledger.must(ledger.fact("record_turn", { actor: lead, outcome: "done", tokensSoFar: 10, usdSoFar: 0, seen: 0 }));
   assert.equal(ledger.state.attentions.has(first), true, "not delivered yet, so not left");
-  delivered(ledger, first);
+  delivered(ledger, first, lead);
   ledger.must(ledger.fact("record_turn", { actor: lead, outcome: "done", tokensSoFar: 10, usdSoFar: 0, seen: 0 }));
   const climbed = [...ledger.state.attentions.values()];
   assert.equal(climbed.length, 1);
   assert.equal(climbed[0]?.to, supervisor);
   assert.match(climbed[0].facts.join(" "), /a2 did not act on it/);
 
-  delivered(ledger, climbed[0].id);
+  delivered(ledger, climbed[0].id, supervisor);
   ledger.must(
     ledger.fact("record_turn", { actor: supervisor, outcome: "done", tokensSoFar: 10, usdSoFar: 0, seen: 0 }),
   );
@@ -63,7 +63,7 @@ test("the Lead acting on the Peer, saying nothing of the attention, settles it; 
   const { ledger, lead, peer, task } = team();
   ledger.must(ledger.fact("record_observation", seen(peer, task, "tell")));
   const first = [...ledger.state.attentions.keys()][0]!;
-  delivered(ledger, first);
+  delivered(ledger, first, lead);
   ledger.must(ledger.as(lead, "send_message", { to: peer, text: "What does the goal promise the player?" }));
   assert.equal(ledger.state.attentions.size, 0);
 
@@ -71,7 +71,7 @@ test("the Lead acting on the Peer, saying nothing of the attention, settles it; 
   const second = [...ledger.state.attentions.keys()][0]!;
   assert.equal(refusedBy(ledger.as(peer, "acknowledge", { attention: second })), "authority");
   ledger.must(ledger.as(lead, "acknowledge", { attention: second }));
-  delivered(ledger, second);
+  delivered(ledger, second, lead);
   ledger.must(ledger.fact("record_turn", { actor: lead, outcome: "done", tokensSoFar: 1, usdSoFar: 0, seen: 0 }));
   assert.equal(ledger.state.attentions.size, 0);
 });

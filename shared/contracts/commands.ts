@@ -331,7 +331,8 @@ export const COMMANDS = {
     seen: z.number().int().nonnegative(),
   }),
   record_gone: z.object({ actor: id, why: reason }),
-  record_delivery: z.object({ messages: z.array(id).default([]), attentions: z.array(id).default([]) }),
+  /** `to` is the reader the batch was sent to: what has since moved to another is not delivered by it. */
+  record_delivery: z.object({ to: id, messages: z.array(id).default([]), attentions: z.array(id).default([]) }),
   record_candidate: z.object({
     scope: id,
     commit: sha,

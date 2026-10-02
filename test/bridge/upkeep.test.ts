@@ -318,3 +318,25 @@ test(
     for (const t of [chief, maker]) t.close();
   },
 );
+
+test("an agent whose seat ended while Paseo was still making it is archived once it is made", async () => {
+  const c = await crew();
+  plugins.push(c.plugin);
+  const chief = await c.tools(0);
+  const making = gateOf();
+  const reached = gateOf();
+  c.paseo.gate.hold = making.opened;
+  c.paseo.gate.reached = reached.open;
+  const brief = { goal: { text: "Make a" }, kind: "verification" };
+  assert.ok((await chief.call("open_scope", { parent: "root", role: "maker", paths: ["src/"], brief })).ok);
+  await reached.opened;
+  assert.ok((await chief.call("drop_scope", { scope: "1", reason: "not needed after all" })).ok);
+  making.open();
+  await c.plugin.idle();
+  assert.equal(c.paseo.created.length, 2, "Paseo made the agent all the same");
+  assert.ok(
+    c.paseo.archived.includes(c.paseo.created[1]!.host),
+    "and it is archived: no agent goes on working for a seat that ended while it was made",
+  );
+  chief.close();
+});

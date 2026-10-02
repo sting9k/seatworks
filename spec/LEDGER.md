@@ -194,6 +194,13 @@ What closes each obligation:
 When an actor is released, reseated or gone, every obligation it owes moves to the new holder of its seat or, with
 no seat left, to the owner of its scope's parent (`obligation_moved`). An obligation owed by the Human never moves.
 
+What a seat owes is a position's, not a person's: a reseat brings to its new holder every obligation that is the
+seat's by the graph, whoever held it while the seat was empty. That is a finding its scope answers (or one that
+climbed to it past empty seats), a claim of one of its children, a direction to an actor one scope below, a
+permission asked from one scope below, and a message read by an actor that sat there and left. Without it the owner
+above went on owing what only the seat's owner may do: a finding it may not classify, a claim it may not take in.
+A message owed that way is moved with its obligation, so it is sent to the new holder, who never read it.
+
 ### Attentions and permissions
 
 ```ts
@@ -242,7 +249,7 @@ agent also settles any open attention about the actors or scopes it names that t
 | `run_checks`       | `scope, commit, steps?`                                                                    | `evidence_requested`                    |
 | `integrate`        | `scope, evidence, reason?`; refused while the scope has open children                      | `integration_started`                   |
 | `send_back`        | `scope, reason`; by the scope's parent's owner — the Human sends the root's claim back; refused for a scope being integrated or closed | `sent_back`, `obligation_closed` |
-| `reseat`           | `scope, reason, model?`                                                                    | `reseated`, `actor_seated`, `obligation_moved`\*, `message_moved`\* |
+| `reseat`           | `scope, reason, model?`; what the seat owes and its mail come to the new actor             | `reseated`, `actor_seated`, `obligation_moved`\*, `message_moved`\* |
 | `drop_scope`       | `scope, reason`                                                                            | `scope_dropped`, `obligation_closed`\*  |
 | `hold_scope`, `resume_scope` | `scope, reason`                                                                  | `scope_held`, `scope_resumed`           |
 | `release`          | `actor, reason`                                                                            | `actor_released`, `obligation_moved`\*  |
@@ -285,7 +292,7 @@ the shell and never reaches `decide`.
 | `record_tools`         | `actor`: its tool server said hello; nothing the second time            | `tools_reached`                     |
 | `record_turn`          | `actor, outcome: done \| failed \| cancelled, why?, began?, tokensSoFar, usdSoFar, seen` | `turn_ended`, `attention_climbed`\* |
 | `record_gone`          | `actor, why`                                                            | `actor_gone`, `obligation_moved`\*, `obligation_closed`\* (its permissions) |
-| `record_delivery`      | `messages, attentions`                                                  | `message_delivered`\*, `attention_delivered`\* |
+| `record_delivery`      | `to, messages, attentions`: the reader the batch was sent to; what has moved to another reader since is not delivered by it | `message_delivered`\*, `attention_delivered`\* |
 | `record_candidate`     | `scope, commit, result: { candidate, parentHead } \| { conflict: paths }` | `candidate_ready` or `candidate_conflict` |
 | `record_evidence`      | `scope, subject, ok, steps, heldMachine`                                | `evidence_recorded`                 |
 | `record_integration`   | `scope, result: { sha } \| { moved } \| { failed: why }`                | `integrated` or `integration_refused` |
@@ -399,7 +406,7 @@ it was delivered, an attention not settled climbs: `attention_climbed` opens a c
 | `integration_started`                    | `workspace.advance { branch, from: parentHead, to: candidate }` | `<seq>:advance`      |
 | `integration_refused` (moved)            | `workspace.candidate` again on the same commit: the candidate was stale, and the scope has none until it is made | `<seq>:candidate` |
 | `integrated`, `scope_dropped`            | `workspace.remove { scope }`, `agent.archive`; `workspace.create` of each open sibling that waited for it and waits for nothing else open | `<seq>:remove`, `<seq>:archive`, `<seq>:workspace:<scope>` |
-| `actor_released`                         | `agent.archive { host }`                                 | `<seq>:archive`             |
+| `actor_released`                         | `agent.archive { host }`; with no host on the record, the agent is looked for by its labels: Paseo may still have been making it | `<seq>:archive` |
 | `permission_answered`                    | `agent.permission { host, request, allow, reason }`, sent only while the agent still waits on it | `<seq>:permission` |
 | `permission_settled`                     | a note to its answerer that nothing is owed             | `<seq>:deliver`             |
 | `turn_ended` with `again`                | `deliver` of the words again to the reader, asking; otherwise, when failed, a note to the owner above | `<seq>:again`, `<seq>:note` |
@@ -456,7 +463,7 @@ Views read the log in SQL, or fold events in memory for what is open. Nothing a 
 for it.
 
 - `status(scope)`: who holds the machine while it is held, that its copy could not be made, the brief, its children with their state, the siblings it waits for, each `mustTell` and
-  `mayChange` edge at both its ends while both are open, what a watching scope watches over, a hand-back with whether any check is set to run on it, open obligations on and to its owner, the
+  `mayChange` edge at both its ends while both are open, what a watching scope watches over, a hand-back with whether any check is set to run on it, open obligations on and to its owner, a message or direction owed with its words, the
   latest claim and its evidence, spend of the scope and its descendants beside its appetite.
 - `record(scope)`: briefs with every version; what the owner above did to the scope (paths moved, held, resumed,
   reseated, dropped); each hand-back and what came of it (sent back, integrated); findings with their chains

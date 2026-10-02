@@ -62,6 +62,11 @@ sent ──► queued ──► delivered ──► answered        (if it asks 
   sent as several in a row, never cut.
 - **Answered.** A message that asks for an answer keeps its obligation open (I11) until the reader answers with
   `answer` and `replyTo`, whoever reads it and however long it takes.
+- **Moved.** What waited unread goes to whoever is reseated, or with the seat left empty to the owner above. A
+  message its reader had read and not answered is owed by the seat still: reseated, its new holder is sent it again,
+  since it owes the answer and never read the question. While the seat is empty the owner above holds the debt, and
+  `status` shows it the words. A delivery that was on its way when its reader left delivers nothing that has moved
+  to another: the new reader still gets it.
 
 **When a reader is woken.**
 

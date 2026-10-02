@@ -34,6 +34,7 @@ on an implementation without the rule before it is trusted.
 | I10  | A Lead calls `ask_human` in the SLP profile                             | Refused                                                   |
 | I10  | A Peer messages another Peer in the SLP profile                         | Refused; accepted in a profile that gives Peers `children` or a Peer edge |
 | I11  | A message asking for an answer; its reader is gone                      | The obligation moves to the owner above; never closed by time |
+| I11  | A Lead that owes an answer to a finding, a claim's taking in, a direction, a permission and a question it read is gone; then its lane is reseated | The owner above holds each meanwhile; the new Lead owes each after, is sent the question, and answers it and the finding |
 | I12  | An observation past its threshold on a finding                          | A note to the relation named; the finding, its obligation and every line unchanged |
 | I12  | A reflex question whose `tells` would classify, integrate or answer     | The profile is refused when loaded                        |
 
@@ -101,6 +102,7 @@ on an implementation without the rule before it is trusted.
 | A check result a Peer asked for with `run_checks`         | Wakes the Peer; the owner above is told without waking          |
 | A delivery refused as busy                                  | Sent again at the next turn's end, once                  |
 | A Peer reseated with three messages queued                  | The new Peer receives the three                          |
+| A delivery reported after its reader left and its message moved to the owner above | The message is not marked delivered: its new reader still gets it |
 | A batch longer than one message allows                      | Several deliveries in a row; nothing cut                 |
 | Restart with messages queued                                | All delivered after                            |
 | A turn the plugin's words began fails on the host's error   | Those words sent again once, saying the turn failed and why; the owner above not told |
@@ -124,6 +126,7 @@ on an implementation without the rule before it is trusted.
 | A listener of committed events throws                              | The command is taken and answered; the listeners after it still hear |
 | What the watch counted is not taken by the record                  | Said in the log; nothing is thrown                |
 | An agent's create loses its reply and is tried after the record moved on | The seat keeps the one agent made; a key Paseo cannot finish is its owner's fact |
+| A scope dropped while Paseo is still making its agent              | The agent is archived once it is made: none works on for a seat that ended |
 | Two projects on one daemon start their first agents                | Each is made: the create's key names its project |
 
 ## Stuck
@@ -174,7 +177,7 @@ A call as an agent's tool server sends it, the answer read back.
 | A publish refused, such as one asked for after a commit of the Human's moved the base | The root's owner is woken with why; asked again, the publish finds the tip |
 | A hand-back in a project with no check set                   | No run is asked for and nothing is evidence: `status` says no check is set; `integrate` has nothing to cite until the owner above runs checks it names, or a reader gives a verdict |
 | The finding tools: raised on a line, kept, reopened on new evidence, carried by the change that answers it, withdrawn | Whoever answers is told each time; a reopening says what is new and its evidence; `changes` is refused until a change carries it (I8); the record keeps the whole chain; a finding about another scope is read in that scope's record too, with the change that carried it, and no other scope's findings are; a withdrawal reaches whoever was to answer, and the finding is answered no more |
-| The talk tools: a message that asks, its answer, a direction from two owners up, a question to the Human and its answer, a report | The message is owed until answered; a role speaks only along its edges (I10); the owner between gets a copy of the direction and owes for it (I7); the question is the Human's to see and its answer wakes the asker; the report is read under its sections |
+| The talk tools: a message that asks, its answer, a direction from two owners up, a question to the Human and its answer, a report | The message is owed until answered; a role speaks only along its edges (I10); the owner between gets a copy of the direction and owes for it (I7); the question is the Human's to see and its answer wakes the asker; the report is read under its sections; `status` shows a message or a direction owed with its words; a new holder of the seat reads in its first words what it owes, and is sent the question the one before it read and left unanswered |
 | The plan tools: set once, amended by line, its goal changed | Each line is read back with its id; a term settled again replaces the old; a second `set_plan` is refused; the goal changes only citing the Human's word (I6), and the line is then theirs |
 | The attention tools: a watcher attends, the owner above acknowledges, marks a kind noise; a permission asked; the machine held | The attention reaches the owner above the agent watched, which is told nothing; a kind marked noise for that agent and scope is not told again, and the watcher's reply says nobody was told; only that owner or the Human answers the permission, and the answer reaches the agent's own prompt; one actor holds the machine at a time, and only it or the Human lets it go; while it is held `status` says who holds it, and a check asked for waits; the holder released, the check runs; the `record` of the scope an attention is about keeps it |
 | A tool server that says hello for a project the plugin cannot open | Refused, saying so, with the reason in Paseo's log; every other agent's tools go on working |

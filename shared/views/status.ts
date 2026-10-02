@@ -1,5 +1,5 @@
 import type { ScopeId } from "../contracts/ids.ts";
-import type { Brief, Line, Plan, Scope } from "../contracts/ledger.ts";
+import type { Brief, Line, Obligation, Plan, Scope } from "../contracts/ledger.ts";
 import type { State } from "../kernel/state.ts";
 
 /** A scope as its agents read it with `status` (KERNEL.md §8): facts from the record, nothing advised. */
@@ -59,8 +59,14 @@ export function statusText(state: State, scopeId: ScopeId, reader: string | null
   if (reader) {
     const owes = [...state.obligations.values()].filter((o) => o.owedBy === reader);
     const owed = [...state.obligations.values()].filter((o) => o.owedTo === reader);
+    // The words an answer or a carrying-in is owed for: whoever came to owe it by a seat left empty never read them.
+    const words = (o: Obligation) => {
+      const text =
+        o.about.kind === "message" || o.about.kind === "direction" ? state.messages.get(o.about.id)?.text : "";
+      return text ? `: ${text.replaceAll("\n", "\n  ")}` : "";
+    };
     if (owes.length > 0)
-      out.push(`You owe:\n${owes.map((o) => `- ${o.about.kind} ${o.about.id} to ${o.owedTo}`).join("\n")}`);
+      out.push(`You owe:\n${owes.map((o) => `- ${o.about.kind} ${o.about.id} to ${o.owedTo}${words(o)}`).join("\n")}`);
     if (owed.length > 0)
       out.push(`Owed to you:\n${owed.map((o) => `- ${o.about.kind} ${o.about.id} by ${o.owedBy}`).join("\n")}`);
     const sent = [...state.messages.values()].filter((m) => m.from === reader && m.copyOf === null);

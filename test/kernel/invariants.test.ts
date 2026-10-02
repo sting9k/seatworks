@@ -321,6 +321,64 @@ test("I11: what a Peer was asked moves to whoever is reseated in its place, and 
   assert.equal(ledger.state.scopes.get(task)?.writer, "a4");
 });
 
+test("I11: what a seat owed while it was empty comes back to whoever is seated in it next, with the words it is owed for", () => {
+  const { ledger, supervisor, lead, peer, lane } = team();
+  ledger.must(ledger.as(peer, "raise_finding", { text: "int16 is too small", default: "go on" }));
+  ledger.must(ledger.as(peer, "hand_back", { commit: SHA(1), text: "done" }));
+  ledger.must(ledger.fact("record_permission", { actor: peer, request: "r1", text: "rm -rf build/" }));
+  ledger.must(ledger.as(supervisor, "send_message", { to: lead, text: "How far is the lane?", asks: true }));
+  const asked = [...ledger.state.messages.values()].find((m) => m.asks)!.id;
+  ledger.must(ledger.fact("record_delivery", { to: lead, messages: [asked] }));
+  ledger.must(ledger.as(supervisor, "send_message", { to: peer, text: "Use int8", directs: true }));
+  const owes = () =>
+    Object.fromEntries([...ledger.state.obligations.values()].map((o) => [o.about.kind, [o.owedBy, o.owedTo]]));
+  assert.deepEqual(owes(), {
+    finding: [lead, peer],
+    claim: [lead, peer],
+    permission: [lead, peer],
+    message: [lead, supervisor],
+    direction: [lead, supervisor],
+  });
+
+  ledger.must(ledger.fact("record_gone", { actor: lead, why: "its agent was archived" }));
+  assert.ok(
+    Object.values(owes()).every(([by]) => by === supervisor),
+    "with the seat empty, the owner above holds what it owed",
+  );
+
+  const reseated = ledger.must(ledger.as(supervisor, "reseat", { scope: lane, reason: "a new owner for the lane" }));
+  const fresh = ledger.state.scopes.get(lane)!.owner!;
+  assert.deepEqual(
+    owes(),
+    {
+      finding: [fresh, peer],
+      claim: [fresh, peer],
+      permission: [fresh, peer],
+      message: [fresh, supervisor],
+      direction: [fresh, supervisor],
+    },
+    "each is owed by whoever may now do it: answer the finding, take the claim in, carry the direction in",
+  );
+  assert.deepEqual(
+    reseated.flatMap((e) => (e.type === "message_moved" ? [[e.message, e.to]] : [])),
+    [[asked, fresh]],
+    "the question the one before it had read is sent to it, since it owes the answer",
+  );
+  ledger.must(ledger.as(fresh, "answer", { replyTo: asked, text: "Half way" }));
+  ledger.must(ledger.as(fresh, "classify_finding", { finding: "f1", verdict: "minor", reason: "int16 holds" }));
+  assert.deepEqual(Object.keys(owes()).sort(), ["claim", "direction", "permission"]);
+});
+
+test("a delivery reported late, for a reader that has since left, marks nothing delivered that moved to another", () => {
+  const { ledger, lead, peer } = team();
+  ledger.must(ledger.as(lead, "send_message", { to: peer, text: "Why int16?", asks: true }));
+  const asked = [...ledger.state.messages.values()].at(-1)!.id;
+  ledger.must(ledger.fact("record_gone", { actor: peer, why: "its agent was archived" }));
+  assert.equal(ledger.state.messages.get(asked)?.to, lead, "it moved to the owner above with the seat left empty");
+  assert.deepEqual(ledger.must(ledger.fact("record_delivery", { to: peer, messages: [asked] })), []);
+  assert.equal(ledger.state.messages.get(asked)?.delivered, null, "and still waits to be read by whoever holds it");
+});
+
 test("I12: an observation past its threshold on a finding changes no finding, line or obligation", () => {
   const { ledger, peer, task } = team();
   ledger.must(ledger.as(peer, "raise_finding", { text: "the API is async", default: "wrap it" }));

@@ -103,12 +103,16 @@ function post(ctx: Context, draft: Draft, from: Party = ctx.party): void {
     });
 }
 
+/** What a reader was sent is delivered while it is still that reader's: what moved on meanwhile waits for its new one. */
 export function delivery(ctx: Of<"record_delivery">): Refusal | undefined {
-  for (const id of ctx.body.messages)
-    if (ctx.state.messages.get(id)?.delivered === null)
-      ctx.emit({ type: "message_delivered", message: id, at: ctx.at });
-  for (const id of ctx.body.attentions)
-    if (ctx.state.attentions.get(id)?.delivered === null)
-      ctx.emit({ type: "attention_delivered", attention: id, at: ctx.at });
+  const { to } = ctx.body;
+  for (const id of ctx.body.messages) {
+    const m = ctx.state.messages.get(id);
+    if (m?.delivered === null && m.to === to) ctx.emit({ type: "message_delivered", message: id, at: ctx.at });
+  }
+  for (const id of ctx.body.attentions) {
+    const t = ctx.state.attentions.get(id);
+    if (t?.delivered === null && t.to === to) ctx.emit({ type: "attention_delivered", attention: id, at: ctx.at });
+  }
   return undefined;
 }

@@ -34,11 +34,21 @@ export function fakePaseo(
   const sent: Sent[] = [];
   const archived: string[] = [];
   const byKey = new Map<string, { host: string; request: string }>();
-  const gate: { loseReplies: number; refuse: string | null; configFails: number; archiveFails: number } = {
+  const gate: {
+    loseReplies: number;
+    refuse: string | null;
+    configFails: number;
+    archiveFails: number;
+    /** A create answers only once this settles, and says through `reached` that it is that far. */
+    hold: Promise<void> | null;
+    reached: () => void;
+  } = {
     loseReplies: 0,
     refuse: null,
     configFails: 0,
     archiveFails: 0,
+    hold: null,
+    reached: () => undefined,
   };
   let down = false;
   /** Permissions each agent's own prompt still waits on, and those answered through the API. */
@@ -179,7 +189,9 @@ export function fakePaseo(
           down = true;
           return Promise.reject(new Error("connection lost"));
         }
-        return Promise.resolve(ref(host));
+        if (gate.hold === null) return Promise.resolve(ref(host));
+        gate.reached();
+        return gate.hold.then(() => ref(host));
       },
       ref,
     },

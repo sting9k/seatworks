@@ -1,6 +1,6 @@
 import type { CommandBody } from "../../contracts/commands.ts";
 import { type ActorId, childScopeId, HUMAN, ROOT } from "../../contracts/ids.ts";
-import type { Brief, Line, Plan, Scope, ScopeKind } from "../../contracts/ledger.ts";
+import type { Brief, Line, Owed, Plan, Scope, ScopeKind } from "../../contracts/ledger.ts";
 import { within } from "../paths.ts";
 import { descendants, ownerOfParent } from "../authority.ts";
 import { type Context, type Refusal, isRefusal, refuse } from "./context.ts";
@@ -342,12 +342,47 @@ export function reseat(ctx: Of<"reseat">): Refusal | undefined {
   );
   if (old !== null) closeAskedPermissions(ctx, old);
   if (old !== null) letMachineGo(ctx, old);
-  for (const o of ctx.state.obligations.values())
-    if (old !== null && o.owedBy === old) ctx.emit({ type: "obligation_moved", obligation: o.id, to: actor });
+  // What the seat owes comes to whoever sits in it: from the one before, or from the owner above who held it meanwhile.
+  const read = new Set<string>();
+  for (const o of ctx.state.obligations.values()) {
+    if (o.owedBy !== old && !owedBySeat(ctx, scope, o.about)) continue;
+    ctx.emit({ type: "obligation_moved", obligation: o.id, to: actor });
+    if (o.about.kind === "message") read.add(o.about.id);
+  }
+  // Its mail too: what waited unread, and what the one before read and left unanswered, which is sent again.
   for (const m of ctx.state.messages.values())
-    if (old !== null && m.to === old && m.delivered === null)
-      ctx.emit({ type: "message_moved", message: m.id, from: old, to: actor });
+    if ((old !== null && m.to === old && m.delivered === null) || (read.has(m.id) && m.to !== actor))
+      ctx.emit({ type: "message_moved", message: m.id, from: m.to, to: actor });
   return undefined;
+}
+
+/** Whether what is owed belongs to a scope's seat by the graph, whoever holds it now: the seat's owner is who can do it. */
+function owedBySeat(ctx: Context, seat: Scope, about: Owed): boolean {
+  const { state } = ctx;
+  const under = (child: string | undefined) => child !== undefined && state.scopes.get(child)?.parent === seat.id;
+  switch (about.kind) {
+    case "finding": {
+      // Its answering scope, or the first above it with anyone seated, once this seat is taken.
+      let at = state.findings.get(about.id)?.answeredBy ?? null;
+      while (at !== null && at !== seat.id && state.scopes.get(at)?.owner === null)
+        at = state.scopes.get(at)?.parent ?? null;
+      return at === seat.id;
+    }
+    case "claim":
+      return under(state.claims.get(about.id)?.scope);
+    case "direction":
+      return under(state.actors.get(state.messages.get(about.id)?.to ?? "")?.scope);
+    case "permission":
+      return under(state.actors.get(state.permissions.get(about.id)?.actor ?? "")?.scope);
+    case "message": {
+      // Read by an actor that sat here and has left; what it had not read moved to the owner above, whose mail it is.
+      const reader = state.actors.get(state.messages.get(about.id)?.to ?? "");
+      return reader?.scope === seat.id && reader.status !== "seated";
+    }
+    case "question":
+    case "candidate":
+      return false;
+  }
 }
 
 export function report(ctx: Of<"report">): Refusal | undefined {

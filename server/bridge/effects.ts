@@ -157,9 +157,13 @@ export function handlersFor(w: Wiring): Handlers {
     },
 
     "agent.archive": async (e) => {
-      if (e.host === null) return { status: "dropped", why: "it never started" };
-      const r = await w.host.archive(e.host);
-      return r === "done" ? done() : WAIT;
+      // With no agent on the record, one may still be there: made while its seat was ending, and found by its labels.
+      const made = e.host === null ? await w.host.labelled({ [PROJECT_LABEL]: w.project, [ACTOR_LABEL]: e.actor }) : [];
+      if ("unavailable" in made) return WAIT;
+      const hosts = e.host === null ? made.map((agent) => agent.host) : [e.host];
+      if (hosts.length === 0) return { status: "dropped", why: "it never started" };
+      for (const host of hosts) if ((await w.host.archive(host)) !== "done") return WAIT;
+      return done();
     },
 
     "agent.permission": async (e) => {
@@ -183,7 +187,8 @@ export function handlersFor(w: Wiring): Handlers {
       const sent = await w.host.send(reader.host, rendered.text, key);
       if (sent === "busy" || typeof sent === "object") return WAIT;
       if (sent === "gone") return { status: "dropped", why: `${reader.id} is gone`, facts: [] };
-      return done({ type: "record_delivery", messages: rendered.messages, attentions: rendered.attentions });
+      const read = { to: reader.id, messages: rendered.messages, attentions: rendered.attentions };
+      return done({ type: "record_delivery", ...read });
     },
 
     "workspace.candidate": async (e, { state }) => {

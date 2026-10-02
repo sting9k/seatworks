@@ -320,7 +320,7 @@ test("the talk tools: a message that asks is owed until answered, a direction fr
     c.told(2).at(-1) ?? "",
     /^m1 from a2 \(keeper, scope 1\) · it asks an answer: `answer` with replyTo m1\nHow far are you\?$/,
   );
-  assert.match(await status(maker), /You owe:\n- message m1 to a2/);
+  assert.match(await status(maker), /You owe:\n- message m1 to a2: How far are you\?$/m);
   await did(c, maker, "answer", { replyTo: "m1", text: "Half way" });
   assert.match(c.told(1).at(-1) ?? "", /^m2 from a3 \(maker, scope 1\.1\) · answering m1\nHalf way$/);
   assert.doesNotMatch(await status(maker), /You owe/);
@@ -333,7 +333,7 @@ test("the talk tools: a message that asks is owed until answered, a direction fr
     /a copy of m3 to a3 \(maker, scope 1\.1\) · it directs\nSwitch to int8$/,
     "the owner between them gets a copy",
   );
-  assert.match(await status(keeper), /You owe:\n- direction m3 to a1/);
+  assert.match(await status(keeper), /You owe:\n- direction m3 to a1: Switch to int8$/m);
 
   await did(c, chief, "ask_human", {
     text: "int8 or int16?",
@@ -351,6 +351,21 @@ test("the talk tools: a message that asks is owed until answered, a direction fr
 
   await did(c, keeper, "report", { unsure: ["The load"], done: ["Half the lane"] });
   assert.match(c.told(0).at(-1) ?? "", /^Report from scope 1\.\ndone:\n- Half the lane\nunsure:\n- The load$/);
+
+  await did(c, chief, "send_message", { to: "a2", text: "Which of the two\ndo you keep?", asks: true });
+  await did(c, chief, "reseat", { scope: "1", reason: "a fresh owner for the lane" });
+  const fresh = c.paseo.created.at(-1)!;
+  assert.match(
+    fresh.prompt,
+    /You owe:\n- direction m3 to a1: Switch to int8\n- message m5 to a1: Which of the two\n {2}do you keep\?/,
+    "a new holder of the seat reads what it owes, in the words it is owed for",
+  );
+  assert.match(
+    c.paseo.sent.filter((s) => s.host === fresh.host).at(-1)?.text ?? "",
+    /^m5 from a1 \(chief, scope root\) · it asks an answer: `answer` with replyTo m5\nWhich of the two\ndo you keep\?$/,
+    "and the question the one before it read and left unanswered is sent to it",
+  );
+
   for (const t of [chief, keeper, maker]) t.close();
 });
 

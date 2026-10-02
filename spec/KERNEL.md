@@ -244,7 +244,7 @@ A command is called by an actor and checked against its role's properties and th
 | `run_checks`       | owner of the parent, or the writer                   | Runs the project's checks, or named commands, on a commit of the scope   |
 | `integrate`        | owner of the parent                                 | Brings the scope into its parent (I4)                                    |
 | `send_back`        | owner of the parent                                 | Does not integrate, and says why                                         |
-| `reseat`           | owner of the parent                                 | A new actor on the same scope, briefed from the record; obligations and undelivered messages move |
+| `reseat`           | owner of the parent                                 | A new actor on the same scope, briefed from the record; what the seat owes and its mail come to it, from the actor before or from the owner above who held them while the seat was empty |
 | `drop_scope`       | owner of the parent                                 | Closes the scope unintegrated, with a reason                             |
 | `hold_scope`, `resume_scope` | owner of the parent, or the Human         | Nothing new is seated in it or integrated from it while held; its owner is told |
 | `report`           | owner of the scope                                  | Lines for its parent's owner, under the sections its profile names       |
