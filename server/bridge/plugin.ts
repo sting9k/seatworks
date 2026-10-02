@@ -30,6 +30,7 @@ import { humanView } from "../../shared/views/human.ts";
 import { statusText } from "../../shared/views/status.ts";
 import { stuckOf } from "../../shared/views/stuck.ts";
 import { type Home, type Places, layHome } from "../core/home.ts";
+import { KeyedQueue } from "../core/keyed-queue.ts";
 import { Keys } from "../core/keys.ts";
 import { daemonLog } from "../core/logger.ts";
 import { archiveDir, projectDir } from "../core/paths.ts";
@@ -128,6 +129,7 @@ export class Plugin {
   private readonly holds: MachineHolds;
   private readonly runtimes = new Map<string, Runtime>();
   private readonly byHost = new Map<string, { project: string; actor: string }>();
+  private readonly turns = new KeyedQueue<string>();
   private ready: Promise<Ready> | null = null;
   private reflexKey: { route: string; key: string } = { route: "openrouter", key: "" };
   private alarmText: string | null = null;
@@ -650,7 +652,16 @@ export class Plugin {
 
   // Paseo's hooks, carried in as facts.
 
-  async turnEnded(
+  /** One agent's turns are taken one at a time: each reads its agent's history from where the one before left it. */
+  turnEnded(
+    hostId: string,
+    outcome: { kind: string; error?: { message: string } },
+    timeline: readonly AgentTimelineItem[],
+  ): Promise<void> {
+    return this.turns.run(hostId, () => this.takeTurn(hostId, outcome, timeline));
+  }
+
+  private async takeTurn(
     hostId: string,
     outcome: { kind: string; error?: { message: string } },
     timeline: readonly AgentTimelineItem[],

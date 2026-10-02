@@ -207,14 +207,27 @@ test("the Human's words typed into a Lead's chat reach its Supervisor once, thou
   ];
   await plugin.turnEnded(leadAgent.host, { kind: "completed" }, first);
   await plugin.idle();
-  await plugin.turnEnded(leadAgent.host, { kind: "completed" }, [
+  const second = [
     ...first,
     { type: "user_message" as const, text: "1 of 1 · a note", clientMessageId: "12:deliver" },
     { type: "assistant_message" as const, text: "Noted." },
-  ]);
+  ];
+  await plugin.turnEnded(leadAgent.host, { kind: "completed" }, second);
   await plugin.idle();
   const copies = paseo.sent.filter((s) => s.host === supervisorAgent.host && s.text.includes("Keep the old anchors"));
   assert.equal(copies.length, 1);
+
+  // Two turns that end one on the other's heels: the second hook arrives while the first is still being taken.
+  const typed = { type: "user_message" as const, text: "And the new index", clientMessageId: "app-2" };
+  const third = [...second, typed, { type: "assistant_message" as const, text: "Adding it." }];
+  const fourth = [...third, { type: "assistant_message" as const, text: "Stopped." }];
+  await Promise.all([
+    plugin.turnEnded(leadAgent.host, { kind: "completed" }, third),
+    plugin.turnEnded(leadAgent.host, { kind: "cancelled" }, fourth),
+  ]);
+  await plugin.idle();
+  const again = paseo.sent.filter((s) => s.host === supervisorAgent.host && s.text.includes("And the new index"));
+  assert.equal(again.length, 1, "each hook reads what the one before it left, so the words are recorded once");
   supervisor.close();
 });
 

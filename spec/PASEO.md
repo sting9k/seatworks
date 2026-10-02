@@ -84,7 +84,9 @@ from Paseo 0.10.1: the plugin SDK, `@getpaseo/client`, `@getpaseo/protocol`, the
 - `agent.turn_ended` carries the turn's outcome and the agent's whole history as the daemon holds it in memory, not
   the turn alone (`timelineStore.getItems`, never trimmed). Each actor keeps how many items it has read (`seen`, on
   `turn_ended`), and the turn is what follows. A daemon restart rebuilds the history from the agent's transcript; one
-  shorter than `seen` is read from its last prompt. Words the Human typed are the turn's `user_message` items whose
+  shorter than `seen` is read from its last prompt. The hooks of one agent are taken one at a time, since each reads
+  `seen` as the one before left it: two taken at once would both read the same items, and record twice what the Human
+  typed. Words the Human typed are the turn's `user_message` items whose
   `clientMessageId` is none of the plugin's effect keys; rebuilt ones carry none and count as nobody's.
 - Every provider maps its thinking to `reasoning` items (Claude, Codex, Pi, Oh My Pi, OpenCode), so the watch reads
   thinking wherever the model returns it; how much it returns is the profile's thinking option.
