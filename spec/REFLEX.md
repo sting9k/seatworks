@@ -166,6 +166,11 @@ questions:
 ```
 
 - `state` maps each field the question names to where the record keeps it. It never holds more.
+- `names` are patterns whose first group is a name the added lines of a test give the code, less those listed under
+  `ignore`. Code looks each up among what is settled, and only when one is left are the questions under `ask` put,
+  with it in `unsettled`. A moment that holds `names` is read this way whatever the profile calls it, and a question
+  that names it, `use: watch.<its name>`, runs the same check on the tests a hand-back brings, its answers going where
+  that question's own `tells` says.
 - `tell` is the probability past which it speaks, and `because` its reason. It holds only for the wording and the model
   named in `for`: the hash of the question and its descriptions, and the version that answered. A question whose wording
   or model no longer matches, or that has never been through a look back, still has every answer recorded, but goes no

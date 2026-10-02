@@ -3,6 +3,7 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { test } from "node:test";
 import { parse } from "yaml";
+import { CODE_MOMENTS } from "../shared/contracts/reflex.ts";
 
 const root = join(import.meta.dirname, "..");
 
@@ -15,10 +16,19 @@ function files(dir: string): string[] {
 
 const code = [...files("shared"), ...files("server"), ...files("bin"), "index.server.ts"];
 
-test("no role of the profile is named in the plugin's code, even in what it says: roles are data, and a renamed profile behaves the same", () => {
-  const roles = Object.keys(
-    (parse(readFileSync(join(root, "templates/slp/profile.yaml"), "utf8")) as { roles: Record<string, unknown> }).roles,
-  );
+/** What a file of the template that comes with the plugin writes. */
+const written = (file: string) => parse(readFileSync(join(root, "templates/slp", file), "utf8")) as unknown;
+
+test("no role, moment or question of the profile is named in the plugin's code, even in what it says: each is data, and a renamed profile behaves the same", () => {
+  const counted: readonly string[] = CODE_MOMENTS;
+  const roles = [
+    ...Object.keys((written("profile.yaml") as { roles: Record<string, unknown> }).roles),
+    ...Object.keys((written("reflex.yaml") as { questions: Record<string, unknown> }).questions),
+    // The moments counted in code are switched on by names the plugin gives them: those are its own.
+    ...Object.keys((written("watch.yaml") as { moments: Record<string, unknown> }).moments).filter(
+      (moment) => !counted.includes(moment),
+    ),
+  ];
   const named = code.flatMap((file) => {
     const text = readFileSync(join(root, file), "utf8")
       .replace(/\/\*[\s\S]*?\*\//g, "")
@@ -34,9 +44,7 @@ test("no role of the profile is named in the plugin's code, even in what it says
 });
 
 test("the Human's surface writes no role's name of its own: it shows the names the project's profile gives", () => {
-  const roles = Object.keys(
-    (parse(readFileSync(join(root, "templates/slp/profile.yaml"), "utf8")) as { roles: Record<string, unknown> }).roles,
-  );
+  const roles = Object.keys((written("profile.yaml") as { roles: Record<string, unknown> }).roles);
   const named = [...files("client"), "index.client.tsx"].flatMap((file) => {
     const text = readFileSync(join(root, file), "utf8")
       .replace(/\/\*[\s\S]*?\*\//g, "")

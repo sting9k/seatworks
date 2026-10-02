@@ -141,6 +141,12 @@ answered it, so a question reworded in a template has not earned its `tell` and 
 `profile.yaml` names the file of each under `reflex` and `watch`, and the plugin reads the file named: a profile
 that names neither asks nothing and watches for nothing.
 
+What either file may name of the plugin's is in `shared/contracts/reflex.ts`, and nothing else is: the kernel's
+events a question is asked `on`, the places of the record its `state` reads (`STATE_PATHS`), whom its answer is for
+(`TELLS`), and the moments counted in code (`CODE_MOMENTS`), each switched on by the name the plugin gives it. Every
+other name in them is the profile's own, and no code names it: a test reads every role, question and moment SLP
+names and finds none in the plugin's code.
+
 ### What a template never chooses
 
 Where the reflex sends its questions, and what is masked before they leave. The routes are the plugin's

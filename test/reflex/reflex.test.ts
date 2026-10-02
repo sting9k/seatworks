@@ -7,13 +7,14 @@ import { Project } from "../../server/bridge/project.ts";
 import { Reflex } from "../../server/bridge/reflex.ts";
 import type { PaseoHost } from "../../server/satellites/agent-host/host.ts";
 import type { TurnItem } from "../../server/satellites/agent-host/items.ts";
-import { loadReflex } from "../../server/satellites/reflex/config.ts";
+import { type ReflexConfig, loadReflex } from "../../server/satellites/reflex/config.ts";
 import type { Jev } from "../../server/satellites/reflex/jev.ts";
 import { ProjectStore } from "../../server/satellites/store/project-store.ts";
 import { type Caller, type CommandBody, parseBody } from "../../shared/contracts/commands.ts";
+import { CODE_MOMENTS } from "../../shared/contracts/reflex.ts";
 import { SHA, TEAM_STEPS, brief, plan, slpProfile, team } from "../kernel/ledger.ts";
 
-const config = loadReflex(join(import.meta.dirname, "../../templates/slp"), {
+const slp = loadReflex(join(import.meta.dirname, "../../templates/slp"), {
   reflex: "reflex.yaml",
   watch: "watch.yaml",
 })!;
@@ -53,7 +54,7 @@ function fakeJev(p: number, sure: (name: string, state: Record<string, string>) 
 
 const settledNames = new Set(["addPoints", "User"]);
 
-function wired(p: number | null) {
+function wired(p: number | null, config: ReflexConfig = slp) {
   const t = team();
   const alarms: (string | null)[] = [];
   const fake = p === null ? null : fakeJev(p);
@@ -214,7 +215,7 @@ test("a candidate is given to the Watcher with the item and two either side, the
     (name, state) => name === "trades-the-goal" && /to save bandwidth/.test(state.text ?? ""),
   );
   const reflex = new Reflex(
-    config,
+    slp,
     () => jev,
     (_project, body) => submit(bridge, body),
     () => undefined,
@@ -318,6 +319,44 @@ test("a hand-back whose tests use a name nobody settled carries judgement eviden
   );
   assert.deepEqual(judged.map((e) => e.summary.split(":")[0]).sort(), ["mints-an-api.fakes", "mints-an-api.uses"]);
   assert.ok(judged.every((e) => !e.ok));
+});
+
+test("a moment and a question under names of the profile's own choosing are read the same: the names a test gives the code are checked on its edit and at its hand-back", async () => {
+  // Every name a profile chooses is changed; the moments counted in code keep theirs, which are the plugin's.
+  const counted: readonly string[] = CODE_MOMENTS;
+  const renamed: ReflexConfig = {
+    ...slp,
+    moments: new Map([...slp.moments].map(([name, spec]) => [counted.includes(name) ? name : `x-${name}`, spec])),
+    questions: new Map(
+      [...slp.questions].map(([name, spec]) => [
+        `x-${name}`,
+        typeof spec.use === "string" ? { ...spec, use: spec.use.replace(/^watch\./, "watch.x-") } : spec,
+      ]),
+    ),
+  };
+  const { ledger, reflex, peer, asked } = wired(0.95, renamed);
+  reflex.onTurn(
+    "p",
+    peer,
+    [edit("test/points.test.ts", "+  const u = new User();\n+  expect(u.points).toBe(5);")],
+    ledger.state,
+  );
+  await settle();
+  assert.deepEqual(asked.find((names) => names.some((n) => n.endsWith(".uses")))?.sort(), [
+    "x-mints-an-api.fakes",
+    "x-mints-an-api.uses",
+  ]);
+
+  reflex.onEvents("p", ledger.must(ledger.as(peer, "hand_back", { commit: SHA(7), text: "points" })), ledger.state);
+  await settle();
+  const judged = [...ledger.state.evidence.values()].filter((e) => e.kind === "judgement" && e.subject === SHA(7));
+  assert.deepEqual(
+    judged
+      .map((e) => e.summary.split(":")[0])
+      .filter((name) => name?.includes("mints"))
+      .sort(),
+    ["x-mints-an-api.fakes", "x-mints-an-api.uses"],
+  );
 });
 
 test("what looks like a secret in an agent's words is masked in what the record keeps", async () => {
@@ -496,7 +535,7 @@ test("what the watch counted and the record did not take is said in the log, and
   process.stderr.write = (text: string) => said.push(text) > 0;
   try {
     const reflex = new Reflex(
-      config,
+      slp,
       () => null,
       () => Promise.reject(new Error("the log is at 9, not 8")),
       () => undefined,

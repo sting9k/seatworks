@@ -82,6 +82,13 @@ const QuestionSchema = z
     matters: z.array(z.string()).optional(),
     /** A choice weighed on every label but the one the record already gives, such as the brief's kind. */
     against: z.string().optional(),
+    /** Patterns whose first group is a name the text gives the code; `ignore` lists those that give it nothing. */
+    names: z.array(z.string()).optional(),
+    ignore: z.array(z.string()).optional(),
+    /** What is asked once code finds such a name nobody settled, each question by a name of its own. */
+    ask: z.record(z.string(), z.object({ noul: z.string(), yes: z.string(), no: z.string() })).optional(),
+    /** The moment of the watch file a question runs at its own event, as `watch.<its name>`. */
+    use: z.string().optional(),
   })
   .loose();
 export type QuestionSpec = z.infer<typeof QuestionSchema>;

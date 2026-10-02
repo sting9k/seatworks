@@ -56,7 +56,7 @@ export class Reflex {
   private readonly unanswered = new Map<string, number>();
   /** Test files each agent changed an existing line of, told once each. */
   private readonly bent = new Set<string>();
-  /** Per Watcher, the work of the agents it watches since its last sweep: a line per item, the newest kept. */
+  /** Per agent that watches, the work of those it watches since its last sweep: a line per item, the newest kept. */
   private readonly unswept = new Map<string, Pile>();
 
   constructor(
@@ -112,7 +112,8 @@ export class Reflex {
     for (const [i, item] of items.entries()) {
       if (item.kind !== "edit") continue;
       const around = this.around(items, i);
-      this.mints(project, actorId, actor.role, actor.scope, item, around);
+      for (const [name, spec] of this.config.moments)
+        if (spec.names) this.mints(project, actorId, actor.role, actor.scope, item, around, name, spec);
       this.madeToPass(project, actorId, actor.role, actor.scope, item, around, state);
     }
     this.wordsOnly(project, actorId, actor.scope, items, state);
@@ -188,7 +189,7 @@ export class Reflex {
         mine.push(line);
         pile.chars += line.length;
       }
-      // Only the newest a digest can hold are kept, so a Watcher that never sweeps holds a bounded pile.
+      // Only the newest a digest can hold are kept, so one that never sweeps holds a bounded pile.
       while (mine.join("\n").length > sweep.digestChars && mine.length > 1) mine.shift();
       if (pile.chars < sweep.everyChars) continue;
       this.unswept.delete(key);
@@ -299,20 +300,27 @@ export class Reflex {
   }
 
   /** A test that mints an API: names its added lines give the code that nothing settled; only then is Jev asked. */
-  private mints(project: string, actor: string, role: string, scope: string, item: TurnItem, around: Around): void {
-    const spec = this.config.moments.get("mints-an-api");
+  private mints(
+    project: string,
+    actor: string,
+    role: string,
+    scope: string,
+    item: TurnItem,
+    around: Around,
+    moment: string,
+    spec: QuestionSpec,
+  ): void {
     const test = this.config.testPath;
-    if (!spec?.watches?.includes(role) || !test || item.path === null || !test.test(item.path)) return;
+    if (!spec.watches?.includes(role) || !test || item.path === null || !test.test(item.path)) return;
     const names = namesIn(item.text, spec);
     if (names.length === 0) return;
     this.enqueue(project, async () => {
       const known = await this.code.settled(project, actor, names);
       const unsettled = names.filter((n) => !known.has(n));
       if (unsettled.length === 0) return;
-      const ask = (spec as { ask?: Record<string, QuestionSpec> }).ask ?? {};
       const questions = Object.fromEntries(
-        Object.entries(ask).map(([k, q]) => [
-          `mints-an-api.${k}`,
+        Object.entries(spec.ask ?? {}).map(([k, q]) => [
+          `${moment}.${k}`,
           { ...q, tell: spec.tell, consider: spec.consider, for: spec.for },
         ]),
       );
@@ -331,13 +339,20 @@ export class Reflex {
   /** A hand-back's diff read hunk by hunk, test files and the rest apart; all go as judgement evidence on it. */
   private handBack(project: string, scope: string, actor: string, commit: string, state: State): void {
     const test = this.config.testPath;
-    const mints = this.config.questions.has("mints-an-api") ? this.config.moments.get("mints-an-api") : undefined;
+    const asked = [...this.config.questions.values()].filter((q) => q.on?.includes("claim_made"));
+    // A question that uses a moment of the watch runs that moment's own check on the tests handed back.
+    const mints = asked.flatMap((q) => {
+      const moment = q.use?.match(/^watch\.(.+)$/)?.[1];
+      const spec = moment === undefined ? undefined : this.config.moments.get(moment);
+      return moment !== undefined && spec?.names ? [{ moment, spec, tells: q.tells }] : [];
+    });
     const byHunk = [...this.config.questions].filter(([, q]) => q.hunks !== undefined && q.on?.includes("claim_made"));
-    if (!test || (!mints && byHunk.length === 0)) return;
+    if (!test || (mints.length === 0 && byHunk.length === 0)) return;
     this.enqueue(project, async () => {
       for (const file of await this.code.diffs(project, scope, commit)) {
         const side = test.test(file.path) ? "test" : "product";
-        if (mints && side === "test") await this.mintsIn(project, scope, actor, commit, file.text, mints);
+        if (side === "test")
+          for (const used of mints) await this.mintsIn(project, scope, actor, commit, file.text, used);
         const asks = Object.fromEntries(byHunk.filter(([, q]) => q.hunks === side));
         for (const hunk of hunksOf(file.text)) {
           const ctx = { event: null, state, item: hunk.slice(0, this.config.itemChars * 2), actor, scope };
@@ -354,15 +369,14 @@ export class Reflex {
     actor: string,
     commit: string,
     diff: string,
-    spec: QuestionSpec,
+    used: { moment: string; spec: QuestionSpec; tells: string | undefined },
   ): Promise<void> {
-    const names = namesIn(diff, spec);
+    const names = namesIn(diff, used.spec);
     const known = await this.code.settled(project, actor, names);
     const unsettled = names.filter((n) => !known.has(n));
     if (unsettled.length === 0) return;
-    const ask = (spec as { ask?: Record<string, QuestionSpec> }).ask ?? {};
     const questions = Object.fromEntries(
-      Object.entries(ask).map(([k, q]) => [`mints-an-api.${k}`, { ...q, tells: "evidence" }]),
+      Object.entries(used.spec.ask ?? {}).map(([k, q]) => [`${used.moment}.${k}`, { ...q, tells: used.tells }]),
     );
     await this.askAndRecord(
       project,
@@ -601,7 +615,7 @@ function added(text: string): string {
     .join("\n");
 }
 
-/** The seated Watchers whose watch scope reaches a scope: `over` all, or a scope it lies within. */
+/** The seated agents whose watch scope reaches a scope: `over` all, or a scope it lies within. */
 function watchersOver(state: State, scope: string): { id: string; scope: string }[] {
   const out: { id: string; scope: string }[] = [];
   for (const s of state.scopes.values()) {
@@ -611,7 +625,7 @@ function watchersOver(state: State, scope: string): { id: string; scope: string 
   return out;
 }
 
-/** One Watcher's gathered work: each agent's newest lines, and how many items it had in all. */
+/** What one agent that watches has gathered: each agent's newest lines, and how many items it had in all. */
 type Pile = { chars: number; lines: Map<string, string[]>; counts: Map<string, number> };
 
 /** A sweep's note: each agent's newest items since the last sweep, an equal share each, with how many were left out. */
@@ -640,11 +654,10 @@ function hunksOf(diff: string): string[] {
 }
 
 function namesIn(text: string, spec: QuestionSpec): string[] {
-  const loose = spec as { names?: string[]; ignore?: string[] };
-  const ignore = new Set(loose.ignore ?? []);
+  const ignore = new Set(spec.ignore ?? []);
   const found = new Set<string>();
   const body = added(text);
-  for (const pattern of loose.names ?? [])
+  for (const pattern of spec.names ?? [])
     for (const m of body.matchAll(new RegExp(pattern, "g"))) {
       const name = m[1];
       if (name && name.length > 1 && !ignore.has(name)) found.add(name);

@@ -20,7 +20,7 @@ export type ReflexConfig = {
   readonly repeatsTold: number;
   readonly silentTurns: number;
   readonly testPath: RegExp | null;
-  /** New work, in characters, that starts a sweep for the Watcher, and how much of it the sweep's note carries. */
+  /** New work, in characters, that starts a sweep for whoever watches, and how much of it the sweep's note carries. */
   readonly sweep: { readonly everyChars: number; readonly digestChars: number } | null;
 };
 

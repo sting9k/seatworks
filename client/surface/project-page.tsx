@@ -33,7 +33,7 @@ export function laneTone(lane: Lane): Tone {
   return lane.held || lane.status === "handed back" ? "wait" : "work";
 }
 
-/** A lane's state, and how much its owner owes when anything is, so a Lead that holds up its lane shows early. */
+/** A lane's state, and how much its owner owes when anything is, so an owner that holds up its lane shows early. */
 export function laneState(lane: Lane): string {
   const state =
     lane.status === "open" ? (lane.held ? "held" : "at work") : lane.status === "integrated" ? "landed" : lane.status;

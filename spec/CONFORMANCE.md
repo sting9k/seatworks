@@ -258,6 +258,7 @@ A call as an agent's tool server sends it, the answer read back.
 | A check fails with a known missing-dependency message       | An environment fact, with no reflex call                   |
 | An instruction file changes                                 | The Supervisor is told to compile the rules again          |
 | A question renamed in `reflex.yaml`                         | Asked under its new name with no code change               |
+| Every moment and question of a profile renamed, the moments counted in code apart | The names a test gives the code are still checked on its edit and at its hand-back, each answer under the new name; no code names a moment or a question of the profile |
 | Each event in REFLEX.md's table                             | Its questions asked, and no other's                        |
 | A brief given one kind, read as the other                   | Weighed on the other kind, not on the first label          |
 | A turn ends in words with no command                        | Its last words asked whether they hand back, ask or wait   |
