@@ -382,3 +382,27 @@ test("a Watcher is woken by a sweep once its agents' new work passes the size th
   assert.match(sweeps()[0]!.text, new RegExp(`${peer} \\(peer, scope 1\\.1\\): \\d+ items`));
   assert.ok(sweeps()[0]!.text.length <= 18_000);
 });
+
+test("what the watch counted and the record did not take is said in the log, and nothing is thrown for it", async () => {
+  const { ledger, peer } = team();
+  const said: string[] = [];
+  const write = process.stderr.write.bind(process.stderr);
+  process.stderr.write = (text: string) => said.push(text) > 0;
+  try {
+    const reflex = new Reflex(
+      config,
+      () => null,
+      () => Promise.reject(new Error("the log is at 9, not 8")),
+      () => undefined,
+      { settled: () => Promise.resolve(new Set()), diffs: () => Promise.resolve([]) },
+    );
+    for (let i = 0; i < 3; i++) reflex.onTurn("p", peer, [failing("npm test")], ledger.state);
+    await settle();
+  } finally {
+    process.stderr.write = write;
+  }
+  assert.match(
+    said.join(""),
+    /project p: what the watch saw of going-in-circles could not be recorded: .*the log is at 9/,
+  );
+});

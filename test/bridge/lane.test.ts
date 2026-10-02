@@ -3,7 +3,7 @@ import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { after, test } from "node:test";
+import { after, mock, test } from "node:test";
 import { Plugin } from "../../server/bridge/plugin.ts";
 import { agentTools } from "./agent-tools.ts";
 import { fakePaseo } from "./fake-paseo.ts";
@@ -15,6 +15,11 @@ const git = (cwd: string, ...args: string[]) =>
     cwd,
     encoding: "utf8",
   }).trim();
+
+/** Waits, a turn of the event loop at a time, until the plugin has done what `done` looks for. */
+async function until(done: () => Promise<boolean>): Promise<void> {
+  while (!(await done())) await new Promise((resolve) => setImmediate(resolve));
+}
 
 const plugins: Plugin[] = [];
 after(async () => {
@@ -272,23 +277,27 @@ test("a create whose reply was lost is tried again after the record moved on, an
   const { project } = await plugin.openProject(repo, "main");
   await plugin.idle();
   const supervisor = await agentTools(socketPath, paseo.created[0]!.env);
-  paseo.gate.loseReplies = 1;
-  const lane = await supervisor.call("open_scope", {
-    parent: "root",
-    role: "lead",
-    paths: ["docs/"],
-    brief: { goal: { text: "Tidy the docs" }, kind: "verification" },
-  });
-  assert.ok(lane.ok, lane.text);
-  await plugin.idle();
-  assert.ok((await plugin.human(project, { type: "hold_scope", scope: "1", reason: "wait for the release" })).ok);
-  await plugin.idle();
-  assert.equal(paseo.created.length, 2);
-  assert.notEqual(
-    await plugin.envFor(paseo.created[1]!.host, "claude"),
-    null,
-    "the Lead's actor holds the agent Paseo made",
-  );
+  // The clock is the test's from here: the create that throws waits out a pause, which only the test ends.
+  mock.timers.enable({ apis: ["setTimeout"] });
+  try {
+    paseo.gate.loseReplies = 1;
+    const lane = await supervisor.call("open_scope", {
+      parent: "root",
+      role: "lead",
+      paths: ["docs/"],
+      brief: { goal: { text: "Tidy the docs" }, kind: "verification" },
+    });
+    assert.ok(lane.ok, lane.text);
+    await until(async () =>
+      (await plugin.view(project))!.stuck.some((l) => /agent\.create\) has thrown 1 time/.test(l)),
+    );
+    assert.ok((await plugin.human(project, { type: "hold_scope", scope: "1", reason: "wait for the release" })).ok);
+    mock.timers.tick(1000);
+    await until(async () => (await plugin.envFor(paseo.created[1]!.host, "claude")) !== null);
+    assert.equal(paseo.created.length, 2, "the Lead's actor holds the agent Paseo made, and no second one was");
+  } finally {
+    mock.timers.reset();
+  }
   supervisor.close();
 });
 

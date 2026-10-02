@@ -13,6 +13,7 @@ import {
 import { isWithin } from "../../shared/kernel/authority.ts";
 import type { State } from "../../shared/kernel/state.ts";
 import { KeyedQueue } from "../core/keyed-queue.ts";
+import { daemonLog } from "../core/logger.ts";
 import type { TurnItem } from "../satellites/agent-host/items.ts";
 import { type ReflexConfig, wordingOf } from "../satellites/reflex/config.ts";
 import type { Answer, Jev } from "../satellites/reflex/jev.ts";
@@ -153,7 +154,7 @@ export class Reflex {
       while (mine.join("\n").length > sweep.digestChars && mine.length > 1) mine.shift();
       if (pile.chars < sweep.everyChars) continue;
       this.unswept.delete(key);
-      void this.submit(project, {
+      this.record(project, {
         type: "record_observation",
         question: "sweep",
         actor: watcher.id,
@@ -181,6 +182,13 @@ export class Reflex {
           this.askAndRecord(project, { [name]: spec }, values, scope, actor, null, null, ctx),
         );
     }
+  }
+
+  /** What code counted goes on the record; one the record does not take is said, since nothing waits on the watch. */
+  private record(project: string, body: Observation): void {
+    this.submit(project, body).catch((error: unknown) => {
+      daemonLog.error(`project ${project}: what the watch saw of ${body.question} could not be recorded`, error);
+    });
   }
 
   /** Lets go of what the reflex keeps for a project that left memory. */
@@ -345,7 +353,7 @@ export class Reflex {
     if (this.bent.has(key)) return;
     this.bent.add(key);
     const assertion = removed.some((l) => /\b(expect|assert|should|toBe|toEqual)\b/.test(l));
-    void this.submit(project, {
+    this.record(project, {
       type: "record_observation",
       question: "check-made-to-pass",
       actor,
@@ -379,7 +387,7 @@ export class Reflex {
     const n = (this.silent.get(key) ?? 0) + 1;
     this.silent.set(key, n);
     if (n !== this.config.silentTurns) return;
-    void this.submit(project, {
+    this.record(project, {
       type: "record_observation",
       question: "silent-without-progress",
       actor: actor.id,
@@ -409,7 +417,7 @@ export class Reflex {
       this.unanswered.set(key, n);
       // The turn it arrived in, then the next: past that, it waits on the answerer.
       if (n !== 2) continue;
-      void this.submit(project, {
+      this.record(project, {
         type: "record_observation",
         question: "findings-waiting",
         actor: actorId,
@@ -441,7 +449,7 @@ export class Reflex {
       seen.set(item.signature, n);
       if (seen.size > MAX_SIGNATURES) seen.delete(seen.keys().next().value ?? "");
       if (n !== this.config.repeats && n !== this.config.repeatsTold) continue;
-      void this.submit(project, {
+      this.record(project, {
         type: "record_observation",
         question: "going-in-circles",
         actor,
@@ -469,7 +477,7 @@ export class Reflex {
       if (!scope || usd === null || scope.owner === null || at === ROOT) continue;
       const after = scope.spent.usd;
       if (after - e.usd >= usd || after < usd) continue;
-      void this.submit(project, {
+      this.record(project, {
         type: "record_observation",
         question: "past-appetite",
         actor: scope.owner,

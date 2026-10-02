@@ -117,6 +117,10 @@ on an implementation without the rule before it is trusted.
 | A tool call retried with the same command id                       | The earlier result; nothing appended            |
 | A tool call whose answer is lost with the connection               | Sent again with its call id on a new line, recorded once |
 | A satellite throws on an effect                                    | Tried again after a pause, with no change to wake it |
+| A satellite throws on an effect, and two commands are taken during its pause | Tried when the pause ends, not at either command |
+| A satellite's fact the record throws on                            | A try that failed: paused, tried again, given up on after its fifth and shown as stuck; never tried again at once |
+| A listener of committed events throws                              | The command is taken and answered; the listeners after it still hear |
+| What the watch counted is not taken by the record                  | Said in the log; nothing is thrown                |
 | An agent's create loses its reply and is tried after the record moved on | The seat keeps the one agent made; a key Paseo cannot finish is its owner's fact |
 | Two projects on one daemon start their first agents                | Each is made: the create's key names its project |
 

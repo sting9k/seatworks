@@ -141,7 +141,9 @@ export class Plugin {
     this.keys = new Keys(join(stateRoot, "secret"));
     this.holds = new MachineHolds(join(stateRoot, "machine.db"));
     this.upkeep = setInterval(() => {
-      void this.tidy(Date.now());
+      this.tidy(Date.now()).catch((error: unknown) => {
+        daemonLog.error("seatworks could not tidy up", error);
+      });
     }, UPKEEP_MS);
     this.upkeep.unref();
     this.link.onReady(() => {

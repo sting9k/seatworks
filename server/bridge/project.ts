@@ -10,6 +10,7 @@ import { INITIAL, type State } from "../../shared/kernel/state.ts";
 import { recordedIn } from "../../shared/views/record.ts";
 import { decode, encode } from "../core/codec.ts";
 import { KeyedQueue } from "../core/keyed-queue.ts";
+import { daemonLog } from "../core/logger.ts";
 import type { Filed, ProjectStore } from "../satellites/store/project-store.ts";
 
 export type Submitted =
@@ -107,7 +108,13 @@ export class Project {
       this.store.putSnapshot(this.state.seq, encode(this.state));
       this.sinceSnapshot = 0;
     }
-    for (const listener of this.listeners) listener(events);
+    // The command is on the record whatever a listener makes of it: one that throws is said, and the rest still hear.
+    for (const listener of this.listeners)
+      try {
+        listener(events);
+      } catch (error) {
+        daemonLog.error(`project ${this.id}: a listener threw on events ${events[0]!.seq} to ${seq}`, error);
+      }
     return { ok: true, events, replayed: false };
   }
 }

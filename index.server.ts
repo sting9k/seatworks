@@ -15,13 +15,13 @@ export default function contribute(server: PluginServerContext) {
   const useSettings = (state: Awaited<ReturnType<typeof settings.read>>) => {
     if (state.status === "ready") plugin.setReflex(state.values.route, state.values.key);
   };
-  void settings.read().then(useSettings);
-  const stopSettings = settings.subscribe(useSettings);
   const guard = (what: string, work: () => Promise<unknown>) => {
     void work().catch((error: unknown) => {
       daemonLog.error(`seatworks: ${what} failed`, error);
     });
   };
+  guard("reading its settings", () => settings.read().then(useSettings));
+  const stopSettings = settings.subscribe(useSettings);
 
   server.on("agent.turn_ended", (event, { paseo }) => {
     plugin.saw(paseo);

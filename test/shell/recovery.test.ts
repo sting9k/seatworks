@@ -198,3 +198,95 @@ test("an effect whose satellite threw is tried again after its pause, with no ch
     mock.timers.reset();
   }
 });
+
+test("an effect whose fact the record throws on is a try that failed: paused, tried again, and given up on after its last", async () => {
+  mock.timers.enable({ apis: ["setTimeout"] });
+  try {
+    const { store } = fresh();
+    const project = Project.open("p", store, profile);
+    let tries = 0;
+    const { handlers } = recordingHandlers((e) => {
+      // Past any count the pauses allow, the copy is said made, so a dispatcher that spins on it ends here.
+      if (e.kind !== "workspace.create" || ++tries > 20) return { status: "done" };
+      // A fact the kernel cannot take, as a fault in it would be: an observation that names no route.
+      const fact = { type: "record_observation", scope: "root", actor: null, level: "tell" };
+      return { status: "done", facts: [fact as never] };
+    });
+    const dispatcher = new Dispatcher(project, store, handlers, () => false);
+    project.onCommitted(() => {
+      dispatcher.kick();
+    });
+    await project.submit(
+      command(human, "open_project", { base: "main", profile: "slp", profileHash: "h", model: "m" }),
+    );
+    await dispatcher.idle();
+    assert.equal(tries, 1, "it is not tried again at once");
+    for (const pause of [1000, 2000, 4000, 8000]) {
+      mock.timers.tick(pause - 1);
+      await dispatcher.idle();
+      mock.timers.tick(1);
+      await dispatcher.idle();
+    }
+    assert.equal(tries, 5, "once after each pause, each twice as long");
+    assert.deepEqual(
+      store.abandoned().map((e) => e.body.kind),
+      ["workspace.create"],
+      "then it is given up on, and shown as stuck",
+    );
+    assert.equal(store.pending().length, 0);
+    dispatcher.dispose();
+    project.dispose();
+  } finally {
+    mock.timers.reset();
+  }
+});
+
+test("an effect that threw is tried when its pause ends, not sooner because something else changed", async () => {
+  mock.timers.enable({ apis: ["setTimeout"] });
+  try {
+    const { store } = fresh();
+    const project = Project.open("p", store, profile);
+    const asked: string[] = [];
+    const { handlers } = recordingHandlers((e) => {
+      asked.push(e.kind);
+      if (e.kind === "workspace.create" && asked.filter((kind) => kind === e.kind).length === 1)
+        throw new Error("connection lost");
+      return { status: "done" };
+    });
+    const dispatcher = new Dispatcher(project, store, handlers, () => false);
+    project.onCommitted(() => {
+      dispatcher.kick();
+    });
+    await project.submit(
+      command(human, "open_project", { base: "main", profile: "slp", profileHash: "h", model: "m" }),
+    );
+    await dispatcher.idle();
+    await project.submit(command(human, "set_checks", { checks: [] }));
+    await project.submit(command(human, "set_checks", { checks: [{ name: "t", run: ["true"] }] }));
+    await dispatcher.idle();
+    assert.deepEqual(asked, ["workspace.create"], "two changes later it still waits out its pause");
+    mock.timers.tick(1000);
+    await dispatcher.idle();
+    assert.deepEqual(asked, ["workspace.create", "workspace.create"]);
+    dispatcher.dispose();
+    project.dispose();
+  } finally {
+    mock.timers.reset();
+  }
+});
+
+test("a listener that throws fails no command, and those after it still hear of it", async () => {
+  const { store } = fresh();
+  const project = Project.open("p", store, profile);
+  const heard: number[] = [];
+  project.onCommitted(() => {
+    throw new Error("a watcher's fault");
+  });
+  project.onCommitted((events) => heard.push(events.length));
+  const taken = await project.submit(
+    command(human, "open_project", { base: "main", profile: "slp", profileHash: "h", model: "m" }),
+  );
+  assert.ok(taken.ok, "the command is on the record");
+  assert.deepEqual(heard, [3]);
+  project.dispose();
+});
