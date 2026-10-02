@@ -102,8 +102,9 @@ fi
 
 say ""
 say "Seatworks is installed. Next:"
-say "  1. In Paseo's settings, add an agent profile for each of: ${profiles:-the names profile/slp/profile.yaml lists under models}."
-say "     Each picks the agent and model that role runs on; Seatworks says which one is missing when it needs it."
+say "  1. Give each of these an agent and a model: ${profiles:-the names profile/slp/profile.yaml lists under models}."
+say "     Add an agent profile of that name in Paseo's settings, or match the name to one you have: open Seatworks,"
+say "     then Plugin, Agent profiles. Seatworks says which one is missing when it needs it."
 say "  2. Open Seatworks in Paseo's sidebar and attach a project, or run \"Open a Seatworks team here\""
 say "     from the command center in a workspace."
 say "  3. Set Jev's key under Settings, Jev, so the watch can tell the Supervisor when to look; without it the"

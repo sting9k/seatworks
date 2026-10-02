@@ -8,6 +8,7 @@ import { Button } from "../kit/button.tsx";
 import { PageHeader } from "../kit/header.tsx";
 import { FONT, SPACE } from "../kit/theme.ts";
 import { problemText } from "../state/problem-text.ts";
+import { AgentMatching } from "./agent-matching.tsx";
 import { TemplateInstall } from "./template-install.tsx";
 
 const KIND: Record<Leftover["kind"], string> = {
@@ -40,6 +41,7 @@ export function PluginPage({
   const [confirming, setConfirming] = useState(false);
   const [results, setResults] = useState<string[]>([]);
   const [problem, setProblem] = useState<string | null>(null);
+  const [installs, setInstalls] = useState(0);
   const muted = { fontSize: FONT.small, color: theme.colors.foregroundMuted };
 
   const scan = async () => {
@@ -113,7 +115,13 @@ export function PluginPage({
           ))}
         </SettingsCard>
       </SettingsSection>
-      <TemplateInstall theme={theme} />
+      <TemplateInstall
+        theme={theme}
+        onInstalled={() => {
+          setInstalls((count) => count + 1);
+        }}
+      />
+      <AgentMatching theme={theme} stamp={installs} />
       <SettingsSection
         title="Clean up"
         trailing={

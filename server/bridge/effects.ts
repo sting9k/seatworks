@@ -116,11 +116,14 @@ export function handlersFor(w: Wiring): Handlers {
       const { cwd, env } = seatEnv(w, actor.id, scope, role.writes);
       const given = filledIn(w.bundle.servers.get(actor.role) ?? [], process.env);
       if (!given.ok) return { status: "failed", why: given.says, facts: [gone(actor.id, given.says)] };
+      const kept = matchingOf(w.agents);
+      if (!kept.ok) return { status: "failed", why: kept.says, facts: [gone(actor.id, kept.says)] };
+      const profile = runsOn(kept.matching, actor.model);
       const created = await w.host.create({
         // Paseo keeps a keyed create for the whole daemon, and every project's log counts from 1.
         key: `${w.project}:${key}`,
         title: `${actor.scope} · ${actor.role}`,
-        profile: runsOn(matchingOf(w.agents), actor.model),
+        profile,
         cwd,
         systemPrompt: systemPromptFor(w.bundle, actor, humanRules(w.rules, actor.role)),
         prompt: firstPrompt(
@@ -144,8 +147,11 @@ export function handlersFor(w: Wiring): Handlers {
         servers: given.grants,
       });
       if ("unavailable" in created) return WAIT;
-      if ("failed" in created)
-        return { status: "failed", why: created.failed, facts: [gone(actor.id, created.failed)] };
+      if ("failed" in created) {
+        // The profile Paseo lacks may be one the template never named: say which name was matched to it.
+        const why = profile === actor.model ? created.failed : `${created.failed} (${actor.model} is matched to it)`;
+        return { status: "failed", why, facts: [gone(actor.id, why)] };
+      }
       return done({ type: "record_agent", actor: actor.id, host: created.host });
     },
 

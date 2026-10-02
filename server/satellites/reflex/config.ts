@@ -24,10 +24,7 @@ export type ReflexConfig = {
   readonly sweep: { readonly everyChars: number; readonly digestChars: number } | null;
 };
 
-/**
- * The profile's active questions and moments, from the files its `profile.yaml` names; one not in its file's `active`
- * list is written but not asked. A profile that names neither file asks nothing.
- */
+/** The active questions and moments, from the files `profile.yaml` names; a profile naming neither asks nothing. */
 export function loadReflex(
   dir: string,
   named: { readonly reflex: string | null; readonly watch: string | null },

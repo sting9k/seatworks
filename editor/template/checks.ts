@@ -88,10 +88,7 @@ export function notesOf(template: Template, opened: Template): Note[] {
   return notes;
 }
 
-/**
- * Where a role's properties and its tools leave it with no way on: what it does can reach nobody, or it is shown a
- * tool the kernel refuses every role like it. Each is certain from `profile.yaml` alone.
- */
+/** Where a role's properties and tools leave it no way on; each is certain from `profile.yaml` alone. */
 function deadEnds(role: Role): string[] {
   const shown = (tool: string) => role.tools.has(tool);
   const lacks: [boolean, string, string][] = [

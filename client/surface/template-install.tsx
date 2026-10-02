@@ -7,7 +7,6 @@ import { Text, View } from "react-native";
 import { RPC, type TemplateOffer } from "../../shared/contracts/rpc.ts";
 import { Button } from "../kit/button.tsx";
 import { Card } from "../kit/card.tsx";
-import { DisclosureList } from "../kit/disclosure.tsx";
 import { FONT, RADIUS, SPACE } from "../kit/theme.ts";
 import { problemText } from "../state/problem-text.ts";
 
@@ -15,14 +14,11 @@ import { problemText } from "../state/problem-text.ts";
  * Installs a template from a file the Human downloaded: they give its path, read what it would bring, and agree.
  * The plugin reads the file where it is and fetches nothing (TEMPLATE.md, Installing).
  */
-export function TemplateInstall({ theme }: { theme: PluginTheme }) {
+export function TemplateInstall({ theme, onInstalled }: { theme: PluginTheme; onInstalled: () => void }) {
   const read = useRpc(RPC.templateOffer);
   const install = useRpc(RPC.installTemplate);
   const [path, setPath] = useState("");
   const [offer, setOffer] = useState<TemplateOffer | null>(null);
-  /** Each agent profile the template names that the Human runs on one of their own. */
-  const [agents, setAgents] = useState<Record<string, string>>({});
-  const [choosing, setChoosing] = useState<string | null>(null);
   const [said, setSaid] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const muted = { fontSize: FONT.small, color: theme.colors.foregroundMuted };
@@ -32,14 +28,6 @@ export function TemplateInstall({ theme }: { theme: PluginTheme }) {
     void work()
       .then((answer) => {
         setOffer(answer.offer ?? null);
-        // What an earlier install matched stays matched, until the Human picks otherwise.
-        setAgents(
-          Object.fromEntries(
-            (answer.offer?.agentProfiles ?? []).flatMap((profile) =>
-              profile.runsOn === null ? [] : [[profile.name, profile.runsOn]],
-            ),
-          ),
-        );
         setSaid(answer.text === "" ? null : { ok: answer.ok, text: answer.text });
       })
       .catch((failed: unknown) => {
@@ -49,11 +37,7 @@ export function TemplateInstall({ theme }: { theme: PluginTheme }) {
         setBusy(false);
       });
   };
-  const missing = offer?.agentProfiles.filter((profile) => !profile.there && agents[profile.name] === undefined) ?? [];
-  const match = (named: string, runs: string | null) => {
-    setAgents(({ [named]: _was, ...rest }) => (runs === null ? rest : { ...rest, [named]: runs }));
-    setChoosing(null);
-  };
+  const missing = offer?.agentProfiles.filter((profile) => !profile.there) ?? [];
   const unset = offer?.variables.filter((variable) => !variable.there) ?? [];
 
   return (
@@ -96,98 +80,53 @@ export function TemplateInstall({ theme }: { theme: PluginTheme }) {
         </View>
       </Card>
       {offer ? (
-        <>
-          <SettingsCard>
-            <SettingsRow label={offer.title} hint={offer.description} />
+        <SettingsCard>
+          <SettingsRow label={offer.title} hint={offer.description} />
+          <SettingsRow
+            label={`Installed as ${offer.name}`}
+            hint={
+              offer.replaces
+                ? "A template of this name is installed already: this one takes its place, for agents seated after."
+                : "A project is attached with it by this name."
+            }
+          />
+          <SettingsRow label="Roles" hint={offer.roles.join(", ")} />
+          <SettingsRow
+            label="Agent profiles its roles name"
+            hint={offer.agentProfiles.map((profile) => profile.name).join(", ") || "None"}
+            error={
+              missing.length > 0
+                ? `Not in Paseo under that name: ${missing.map((profile) => profile.name).join(", ")}. Once it is installed, match each to one of yours under Agent profiles below, or add it in Paseo's settings.`
+                : null
+            }
+          />
+          {offer.servers.length > 0 ? (
             <SettingsRow
-              label={`Installed as ${offer.name}`}
-              hint={
-                offer.replaces
-                  ? "A template of this name is installed already: this one takes its place, for agents seated after."
-                  : "A project is attached with it by this name."
-              }
-            />
-            <SettingsRow label="Roles" hint={offer.roles.join(", ")} />
-            <SettingsRow
-              label="Agent profiles its roles name"
-              hint="Each runs on the agent profile of that name in Paseo, or on one of yours that you pick below."
+              label="Outside tool servers it starts"
+              hint={offer.servers.map((server) => `${server.name}: ${server.runs}`).join("\n")}
               error={
-                missing.length > 0
-                  ? `Not in Paseo and not matched: ${missing.map((profile) => profile.name).join(", ")}. Pick one of yours for each, or add them in Paseo's settings before a role that names one is seated.`
+                unset.length > 0
+                  ? `Not set on this machine: ${unset.map((variable) => `$${variable.name}`).join(", ")}. A role given a server that reads one is not seated until it is.`
                   : null
               }
             />
-          </SettingsCard>
-          <DisclosureList
-            theme={theme}
-            compact
-            open={choosing}
-            onOpen={setChoosing}
-            items={offer.agentProfiles.map((profile) => {
-              const runs = agents[profile.name];
-              return {
-                id: profile.name,
-                title: profile.name,
-                hint:
-                  runs !== undefined
-                    ? `Runs on ${runs}`
-                    : profile.there
-                      ? "Runs on the profile of this name in Paseo"
-                      : "Not in Paseo",
-                body: [
-                  ...offer.available.map((has) => (
-                    <Button
-                      key={has}
-                      label={has}
-                      theme={theme}
-                      tone={runs === has ? "accent" : "outline"}
-                      disabled={busy}
-                      onPress={() => {
-                        match(profile.name, has);
-                      }}
-                    />
-                  )),
-                  runs !== undefined ? (
-                    <Button
-                      key="its own name"
-                      label="The profile of its own name"
-                      theme={theme}
-                      tone="quiet"
-                      disabled={busy}
-                      onPress={() => {
-                        match(profile.name, null);
-                      }}
-                    />
-                  ) : null,
-                ],
-              };
-            })}
-          />
-          <SettingsCard>
-            {offer.servers.length > 0 ? (
-              <SettingsRow
-                label="Outside tool servers it starts"
-                hint={offer.servers.map((server) => `${server.name}: ${server.runs}`).join("\n")}
-                error={
-                  unset.length > 0
-                    ? `Not set on this machine: ${unset.map((variable) => `$${variable.name}`).join(", ")}. A role given a server that reads one is not seated until it is.`
-                    : null
-                }
-              />
-            ) : null}
-            <View style={{ padding: SPACE.md, alignItems: "flex-end" }}>
-              <Button
-                label={busy ? "Installing" : offer.replaces ? "Install in its place" : "Install"}
-                theme={theme}
-                tone="accent"
-                disabled={busy}
-                onPress={() => {
-                  act(() => install({ path: path.trim(), hash: offer.hash, agents }));
-                }}
-              />
-            </View>
-          </SettingsCard>
-        </>
+          ) : null}
+          <View style={{ padding: SPACE.md, alignItems: "flex-end" }}>
+            <Button
+              label={busy ? "Installing" : offer.replaces ? "Install in its place" : "Install"}
+              theme={theme}
+              tone="accent"
+              disabled={busy}
+              onPress={() => {
+                act(async () => {
+                  const made = await install({ path: path.trim(), hash: offer.hash });
+                  if (made.ok) onInstalled();
+                  return made;
+                });
+              }}
+            />
+          </View>
+        </SettingsCard>
       ) : null}
     </SettingsSection>
   );

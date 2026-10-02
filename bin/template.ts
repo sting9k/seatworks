@@ -9,12 +9,7 @@ import { variablesNamed } from "../shared/contracts/profile.ts";
 import { installName } from "../shared/contracts/template.ts";
 import { filesUnder } from "./template-files.ts";
 
-/**
- * Checks a template's directory, and packs it into the one file it is shared as (docs/TEMPLATE-SPEC.md):
- * `template.ts check <dir>` and `template.ts pack <dir> <file>`. A template is loaded as the editor loads it and as
- * the plugin does, so one that passes here installs; what a machine can see beyond that is printed as notes, which
- * stop nothing. For whoever writes a template without the editor, a person or an agent.
- */
+/** `check <dir>` and `pack <dir> <file>`: loads a template as the editor and the plugin do, and prints its notes. */
 
 const USAGE = "usage: template.ts check <dir> | template.ts pack <dir> <file>\n";
 const say = (line: string) => process.stdout.write(`${line}\n`);

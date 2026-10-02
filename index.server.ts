@@ -96,10 +96,17 @@ export default function contribute(server: PluginServerContext) {
   });
   server.handle(RPC.installTemplate, async (input, { paseo }) => {
     plugin.saw(paseo);
-    const made = await plugin.template(input.path, { hash: input.hash, agents: input.agents });
+    const made = await plugin.template(input.path, input.hash);
     return made.ok
       ? { ok: true, text: `${made.offer.title} is installed as ${made.offer.name}. Attach a project to run it.` }
       : { ok: false, text: `Not installed: ${made.says}.` };
+  });
+  server.handle(RPC.agents, async (input, { paseo }) => {
+    plugin.saw(paseo);
+    const read = await plugin.agents(input.match ?? null);
+    return read.ok
+      ? { ok: true, text: "", profiles: read.profiles, available: read.available }
+      : { ok: false, text: `${input.match ? "Not matched" : "Not read"}: ${read.says}.`, profiles: [], available: [] };
   });
   server.handle(RPC.checkUpdate, () => checkUpdate(PLUGIN_ID));
   server.handle(RPC.view, async (input, { paseo }) => {

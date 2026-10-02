@@ -299,8 +299,11 @@ What the plugin reads of a profile that a template adds (`TEMPLATE.md`).
 | A profile whose reflex file names a route of its own, or masks nothing | The reflex has no route but the plugin's, one for each the settings offer; what looks like a secret is still masked |
 | A shared template read from a file on the machine           | What it would bring is said: its name, its roles, each agent profile its roles name and whether Paseo has it; nothing is installed and nothing unpacked is left |
 | The template installed with the hash of what was read       | Under its name, listed to attach a project with; read again, it says it would replace the one there |
-| A template installed with an agent profile it names matched to one the Human has | The offer said the name is not in Paseo and listed the profiles that are; an agent of the role is made from the matched profile; read again, the offer says what the name runs on; installed again with no matching, it runs on nothing but its own name |
-| A matching to an agent profile Paseo does not have, or of a name the template does not give | Refused, saying which; nothing installed, no matching kept |
+| The page of agent profiles read; then a name of the shipped profile matched to an agent profile the Human has | Each name its roles give is listed with what it runs on and whether Paseo has that, beside the Human's own; the root's agent is made from the profile matched |
+| A matching of a profile nobody installed, such as a path out of the profiles; of a name its roles do not give; or to an agent profile Paseo lacks | Refused whole, saying which; nothing kept |
+| A matching whose file does not read                         | The page says so; the agent is not seated, with that reason on its seat, and nothing throws; matched again and reseated, the seat is taken |
+| A name matched to an agent profile the Human has since removed | The page says Paseo lacks it; the agent is not seated, the reason naming the profile and the name matched to it |
+| A template installed again                                  | The matching of its name is as it was                               |
 | A shared file that does not load, names a path outside its own directory, is not a packed template or is not there; and one changed since it was read | Refused, saying which; nothing installed, nothing written outside the state root |
 | A role given an outside server, on an agent that takes one  | Made with the server beside the team's, its named tools approved ahead, each variable it names filled in; the team's server marked always loaded; a role given none has only the team's |
 | A role whose server reads a variable that is not set        | Not seated; the reason names the server and the variable            |

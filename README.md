@@ -72,7 +72,8 @@ sh install.sh --ref <branch|tag|commit>   # install another branch or release
 sh install.sh --dir <path>                # install a checkout on this machine
 ```
 
-Then, in Paseo's settings, create an agent profile for each name the roles use, with the agent and model you want:
+Then give each name the roles use an agent and a model. Either create an agent profile of that name in Paseo's
+settings, or open Seatworks, then Plugin, and under Agent profiles match the name to a profile you already have:
 
 | Profile                        | Used by                                   |
 | ------------------------------ | ----------------------------------------- |
@@ -132,8 +133,8 @@ beside SLP with no change to the plugin's code. Roles are data; nothing in the c
 
 Either way you get one file, `<name>.template.json`. In Paseo, open Seatworks, then Plugin, and under Templates give
 its path: you are shown what it brings (its roles, the agent profiles it names, any outside tool server it starts)
-and match each agent profile it names to one you already have, before it is installed. Attaching a project then asks
-which template it runs.
+before it is installed. Under Agent profiles on the same page, match each name it gives to an agent profile you
+already have. Attaching a project then asks which template it runs.
 
 Rules of your own that should hold whatever the template says, such as how you want code written, go in
 `rules/<template>/` under the plugin's state directory (`~/.local/share/seatworks/rules/slp/` for SLP on Linux and

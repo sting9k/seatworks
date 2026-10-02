@@ -1,10 +1,7 @@
 import { z } from "zod";
 import type { EventType } from "./events.ts";
 
-/**
- * The events of the record a question may be asked on, as its `on` names them. `turn_ended` is asked of a turn's last
- * words, and only when the turn sent the kernel nothing.
- */
+/** The events a question may be asked on; `turn_ended` is asked of a turn's last words, when it called no tool. */
 export const ASKED_ON = [
   "brief_issued",
   "brief_amended",
@@ -97,10 +94,7 @@ const RouteSchema = z.object({
 });
 export type Route = z.infer<typeof RouteSchema>;
 
-/**
- * The routes the reflex asks by, each named as the plugin's settings name it. They are the plugin's own, in
- * `harness/jev.json`: the Human's key goes where the plugin they installed says, never where a profile does.
- */
+/** The routes the reflex asks by, the plugin's own (`harness/jev.json`): a profile never says where the key is sent. */
 export const RoutesFileSchema = z.object({ routes: z.record(z.string(), RouteSchema) }).strict();
 
 /** One named under `active` that the file does not write would never be asked, with nobody told. */

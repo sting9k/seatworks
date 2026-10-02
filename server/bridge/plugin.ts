@@ -17,7 +17,7 @@ import { PROJECT_LABEL, ROOT } from "../../shared/contracts/ids.ts";
 import type { ReadName } from "../../shared/contracts/tools.ts";
 import { activityLine } from "../../shared/views/activity.ts";
 import { type Chain, type Signals, chainOf, scopeRecordText, signalsOf } from "../../shared/views/record.ts";
-import type { HumanView, Leftover, TemplateOffer } from "../../shared/contracts/rpc.ts";
+import type { HumanView, Leftover, ProfileAgents, TemplateOffer } from "../../shared/contracts/rpc.ts";
 import { humanView } from "../../shared/views/human.ts";
 import { statusText } from "../../shared/views/status.ts";
 import { stuckOf } from "../../shared/views/stuck.ts";
@@ -38,7 +38,7 @@ import { loadReflex, loadRoutes } from "../satellites/reflex/config.ts";
 import { Jev } from "../satellites/reflex/jev.ts";
 import { git } from "../satellites/workspace/git.ts";
 import { Workspace } from "../satellites/workspace/workspace.ts";
-import { type Matching, matchingFile } from "../profile/agents.ts";
+import { agentsByProfile, match, type Matching, matchingFile } from "../profile/agents.ts";
 import { type Bundle, loadBundle } from "../profile/bundle.ts";
 import { install, offerOf } from "../profile/install.ts";
 import { listProfiles, type Listed as ListedProfile, profilePath, SHIPPED } from "../profile/profiles.ts";
@@ -79,6 +79,9 @@ type Ready = {
   /** Where the reflex asks, by the name the plugin's settings give each route. */
   routes: Readonly<Record<string, Route>>;
 };
+
+/** What the surface is told when it asks of Paseo's agent profiles before Paseo's API is in hand. */
+const UNREACHED = "Paseo's API has not arrived; try again in a moment";
 
 /** Words a delivery or a first prompt carried: their client message ids are the plugin's effect keys. */
 const OURS = /^\d+:/;
@@ -202,20 +205,30 @@ export class Plugin {
     return listProfiles((await this.whenReady()).dir, this.root);
   }
 
-  /**
-   * What installing the shared template at a path on this machine would bring, or with `agreed`, the hash of the
-   * offer the Human read and their matching of its agent profiles, the template installed under its name. The plugin
-   * reads the file where it is and fetches nothing (TEMPLATE.md, Installing).
-   */
+  /** What installing the template at a path would bring; with `agreed`, the hash of that offer, it is installed. */
   async template(
     path: string,
-    agreed: { readonly hash: string; readonly agents: Matching } | null,
+    agreed: string | null,
   ): Promise<{ ok: true; offer: TemplateOffer } | { ok: false; says: string }> {
     const has = await (await this.whenReady()).host.agentProfiles();
-    if ("unavailable" in has) return { ok: false, says: "Paseo's API has not arrived; try again in a moment" };
+    if ("unavailable" in has) return { ok: false, says: UNREACHED };
     return agreed === null
       ? offerOf(this.root, path, has, process.env)
-      : install(this.root, path, agreed.hash, agreed.agents, has, process.env);
+      : install(this.root, path, agreed, has, process.env);
+  }
+
+  /** What each profile's agent profiles run on here; with `matched`, that profile's matching is kept first. */
+  async agents(
+    matched: { readonly profile: string; readonly matching: Matching } | null,
+  ): Promise<{ ok: true; profiles: ProfileAgents[]; available: string[] } | { ok: false; says: string }> {
+    const ready = await this.whenReady();
+    const has = await ready.host.agentProfiles();
+    if ("unavailable" in has) return { ok: false, says: UNREACHED };
+    if (matched !== null) {
+      const kept = match(ready.dir, this.root, matched.profile, matched.matching, has);
+      if (!kept.ok) return kept;
+    }
+    return { ok: true, profiles: agentsByProfile(ready.dir, this.root, has), available: has.map((p) => p.name) };
   }
 
   /**
@@ -781,10 +794,7 @@ export class Plugin {
     return runtime;
   }
 
-  /**
-   * A profile's reflex, asking by the plugin's own route and the key of its settings; none when the profile asks
-   * nothing. The profile words the questions and never says where they are sent.
-   */
+  /** A profile's reflex, asked by the plugin's own route and key; none when the profile asks nothing. */
   private reflexFor(bundle: Bundle, routes: Readonly<Record<string, Route>>): Reflex | null {
     const config = loadReflex(bundle.dir, bundle.asks);
     if (!config) return null;

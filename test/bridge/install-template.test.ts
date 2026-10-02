@@ -1,5 +1,4 @@
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
 import { existsSync, mkdtempSync, readdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -21,10 +20,9 @@ async function started() {
   const root = mkdtempSync(join(tmpdir(), "sw-root-"));
   const plugin = new Plugin(root);
   plugins.push(plugin);
-  const paseo = fakePaseo(pluginDir);
-  plugin.saw(paseo.api);
+  plugin.saw(fakePaseo(pluginDir).api);
   await plugin.whenReady();
-  return { plugin, root, paseo };
+  return { plugin, root };
 }
 
 /** The shipped template as its editor shares it, under another name and with whatever else a case changes. */
@@ -71,7 +69,7 @@ test("a template the Human agreed to is installed under its name, and listed to 
   const read = await plugin.template(path, null);
   assert.ok(read.ok);
 
-  const made = await plugin.template(path, { hash: read.offer.hash, agents: {} });
+  const made = await plugin.template(path, read.offer.hash);
 
   assert.ok(made.ok, made.ok ? "" : made.says);
   assert.deepEqual(installed(root), ["night-crew"]);
@@ -115,7 +113,7 @@ test("a shared file that would not load, reaches outside its own directory, or c
       new Map([...slpFiles(), ["template.json", JSON.stringify({ name: "Night Crew", description: "Changed." })]]),
     ),
   );
-  const stale = await plugin.template(good, { hash: read.offer.hash, agents: {} });
+  const stale = await plugin.template(good, read.offer.hash);
   assert.ok(!stale.ok);
   assert.match(stale.says, /changed since it was read/);
 
@@ -150,75 +148,4 @@ servers:
     { name: "SW_TEST_UNSET_ONE", there: false },
   ]);
   assert.deepEqual(installed(root), []);
-});
-
-/** A git repository with one commit, for a team to be attached to. */
-function repository(): string {
-  const repo = mkdtempSync(join(tmpdir(), "sw-repo-"));
-  const git = (...args: string[]) =>
-    execFileSync("git", ["-c", "user.name=t", "-c", "user.email=t@t", "-c", "commit.gpgSign=false", ...args], {
-      cwd: repo,
-    });
-  git("init", "-q", "-b", "main");
-  writeFileSync(join(repo, "a.txt"), "a\n");
-  git("add", ".");
-  git("commit", "-q", "-m", "start");
-  return repo;
-}
-
-/** The shared template with its root's role naming an agent profile the Human does not have. */
-const withACaptain = () =>
-  shared((files) => {
-    files.set(
-      "profile.yaml",
-      files.get("profile.yaml")!.replace("models: [slp-supervisor]", "models: [night-captain]"),
-    );
-  });
-
-test("an agent profile a template names is matched, when it is installed, to one the Human has: the role's agent is made on that one", async () => {
-  const { plugin, paseo } = await started();
-  const path = withACaptain();
-  const read = await plugin.template(path, null);
-  assert.ok(read.ok);
-  assert.deepEqual(
-    read.offer.agentProfiles.find((profile) => profile.name === "night-captain"),
-    { name: "night-captain", there: false, runsOn: null },
-  );
-  assert.ok(read.offer.available.includes("slp-supervisor"));
-
-  const agents = { "night-captain": "slp-supervisor" };
-  const made = await plugin.template(path, { hash: read.offer.hash, agents });
-  assert.ok(made.ok, made.ok ? "" : made.says);
-  const opened = await plugin.openProject(repository(), "main", "night-crew");
-  await plugin.idle();
-
-  assert.equal(paseo.created[0]?.provider, "claude/slp-supervisor");
-  assert.deepEqual((await plugin.view(opened.project))?.stuck, []);
-  const again = await plugin.template(path, null);
-  assert.ok(again.ok);
-  assert.equal(again.offer.agentProfiles.find((profile) => profile.name === "night-captain")?.runsOn, "slp-supervisor");
-
-  const unmatched = await plugin.template(path, { hash: again.offer.hash, agents: {} });
-  assert.ok(unmatched.ok);
-  const after = await plugin.template(path, null);
-  assert.ok(after.ok);
-  assert.equal(after.offer.agentProfiles.find((profile) => profile.name === "night-captain")?.runsOn, null);
-});
-
-test("a matching to an agent profile Paseo does not have, or of a name the template does not give, installs nothing", async () => {
-  const { plugin, root } = await started();
-  const path = withACaptain();
-  const read = await plugin.template(path, null);
-  assert.ok(read.ok);
-
-  const lacks = await plugin.template(path, { hash: read.offer.hash, agents: { "night-captain": "no-such" } });
-  assert.ok(!lacks.ok);
-  assert.match(lacks.says, /Paseo has no agent profile named no-such to run night-captain on/);
-  const stray = await plugin.template(path, { hash: read.offer.hash, agents: { "night-owl": "slp-peer" } });
-  assert.ok(!stray.ok);
-  assert.match(stray.says, /night-owl is not an agent profile this template names/);
-
-  assert.deepEqual(installed(root), []);
-  assert.deepEqual(leftAside(root), []);
-  assert.equal(existsSync(join(root, "agents")), false);
 });

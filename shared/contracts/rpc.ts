@@ -78,18 +78,22 @@ const TemplateOfferSchema = z.object({
   hash: z.string(),
   replaces: z.boolean(),
   roles: z.array(z.string()),
-  /**
-   * Each agent profile its roles name: whether Paseo has one of that name, and what an earlier install matched it to.
-   */
-  agentProfiles: z.array(z.object({ name: z.string(), there: z.boolean(), runsOn: z.string().nullable() })),
-  /** The agent profiles the Human has in Paseo, any of which a name may be matched to. */
-  available: z.array(z.string()),
+  agentProfiles: z.array(z.object({ name: z.string(), there: z.boolean() })),
   /** Each outside server it declares, with the command it runs or the address it calls. */
   servers: z.array(z.object({ name: z.string(), runs: z.string() })),
   /** Each environment variable its servers read, and whether this machine has it set. */
   variables: z.array(z.object({ name: z.string(), there: z.boolean() })),
 });
 export type TemplateOffer = z.infer<typeof TemplateOfferSchema>;
+
+/** A profile's agent profiles as they stand on this machine (`server/profile/agents.ts`). */
+const ProfileAgentsSchema = z.object({
+  name: z.string(),
+  title: z.string(),
+  problem: z.string().nullable(),
+  agents: z.array(z.object({ name: z.string(), runsOn: z.string(), there: z.boolean() })),
+});
+export type ProfileAgents = z.infer<typeof ProfileAgentsSchema>;
 
 /** The Human's surface calls these (PORTS.md, Human surface); shaped as Paseo's plugin RPC contracts. */
 export const RPC = {
@@ -165,18 +169,26 @@ export const RPC = {
     input: z.object({ path: z.string().min(1) }),
     output: z.object({ ok: z.boolean(), text: z.string(), offer: TemplateOfferSchema.nullable() }),
   },
-  /**
-   * Installs the template the Human read the offer of: `hash` is that offer's, and no other file is installed.
-   * `agents` matches an agent profile the template names to one of the Human's own that it is to run on.
-   */
+  /** Installs the template the Human read the offer of: `hash` is that offer's, and no other file is installed. */
   installTemplate: {
     name: "seatworks.install_template",
-    input: z.object({
-      path: z.string().min(1),
-      hash: z.string().min(1),
-      agents: z.record(z.string(), z.string().min(1)).default({}),
-    }),
+    input: z.object({ path: z.string().min(1), hash: z.string().min(1) }),
     output: z.object({ ok: z.boolean(), text: z.string() }),
+  },
+  /** What each profile's agent profiles run on here; with `match`, that profile's whole matching is kept first. */
+  agents: {
+    name: "seatworks.agents",
+    input: z.object({
+      match: z
+        .object({ profile: z.string().min(1), matching: z.record(z.string().min(1), z.string().min(1)) })
+        .optional(),
+    }),
+    output: z.object({
+      ok: z.boolean(),
+      text: z.string(),
+      profiles: z.array(ProfileAgentsSchema),
+      available: z.array(z.string()),
+    }),
   },
   checkUpdate: {
     name: "seatworks.check_update",

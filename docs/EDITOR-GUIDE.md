@@ -155,10 +155,10 @@ To keep working on it another day, open that file again with **Open a file**.
 2. Under **Templates**, give the path of the file you exported, and press **Read**.
 3. Read what it brings: the name it installs as, its roles, the agent profiles its roles name, each outside server
    and what it runs, each variable it reads and whether it is set.
-4. **Match its agent profiles to yours.** Each name the template gives is listed. Open one and pick the agent profile
-   of yours it should run on. A name you match to nothing runs on the profile of that very name, if Paseo has one;
-   the card says which names have neither.
-5. Press **Install**. A template of the same name is replaced; what you matched before is offered again.
+4. Press **Install**. A template of the same name is replaced.
+5. **Match its agent profiles to yours**, under **Agent profiles** on the same page. Each name the template's roles
+   give is listed. Open one and pick the agent profile of yours it should run on. A name you match to nothing runs on
+   the profile of that very name, and the list says when Paseo has none. SLP's own names are matched the same way.
 6. Attach a project. With more than one template installed, attaching asks which.
 
 Before the team can run:

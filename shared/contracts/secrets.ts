@@ -1,7 +1,4 @@
-/**
- * What looks like a secret, as patterns: replaced before any text leaves the machine or is kept on the record
- * (REFLEX.md, Running it). They are the plugin's and not a profile's, so no template can leave one out.
- */
+/** What looks like a secret, masked before text leaves or is recorded; the plugin's, so no profile leaves one out. */
 export const SECRETS: readonly string[] = [
   "AKIA[0-9A-Z]{16}",
   "-----BEGIN [A-Z ]*PRIVATE KEY-----",
