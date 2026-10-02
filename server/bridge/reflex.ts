@@ -12,6 +12,7 @@ import {
 } from "../../shared/contracts/reflex.ts";
 import { isWithin } from "../../shared/kernel/authority.ts";
 import type { State } from "../../shared/kernel/state.ts";
+import { resultText } from "../../shared/views/status.ts";
 import { KeyedQueue } from "../core/keyed-queue.ts";
 import { daemonLog } from "../core/logger.ts";
 import type { TurnItem } from "../satellites/agent-host/items.ts";
@@ -817,7 +818,7 @@ function valueOf(path: string, ctx: Context): string | null {
       if (!f) return null;
       const shown = f.evidence.flatMap((id) => {
         const ev = state.evidence.get(id);
-        return ev ? [`${ev.kind} on ${ev.subject.slice(0, 8)}: ${ev.ok ? "ok" : "failing"}. ${ev.summary}`] : [];
+        return ev ? [`${ev.kind} on ${ev.subject.slice(0, 8)}: ${resultText(ev.ok)}. ${ev.summary}`] : [];
       });
       return [`The finding: ${f.text}`, ...shown].join("\n");
     }

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { HUMAN } from "../../shared/contracts/ids.ts";
 import { humanView } from "../../shared/views/human.ts";
+import { statusText } from "../../shared/views/status.ts";
 import { Ledger, SHA, brief, refusedBy, slpProfile, team } from "./ledger.ts";
 
 test("one lane end to end: hand back, candidate, checks, integrate, land; then only the root stays in memory", () => {
@@ -563,6 +564,39 @@ test("a Reviewer's verdict on the candidate is still citable once its reading sc
   assert.equal(ledger.state.scopes.get(task)?.integrating, true);
   ledger.must(ledger.fact("record_integration", { scope: task, result: { sha: SHA(2) } }));
   assert.equal(ledger.state.evidence.size, 0, "once nothing may cite it any more, it leaves memory with the rest");
+});
+
+test("a reader asked a question records its answer with no verdict: evidence that neither passes nor fails, told as an answer, with no reason owed for it at integration", () => {
+  const { ledger, lead, peer, task, lane } = team();
+  ledger.must(ledger.as(peer, "hand_back", { commit: SHA(1), text: "encoded" }));
+  ledger.must(
+    ledger.fact("record_candidate", { scope: task, commit: SHA(1), result: { candidate: SHA(2), parentHead: SHA(3) } }),
+  );
+  const question = brief("Would an int16 direction survive the delta encoder as it stands?");
+  ledger.must(
+    ledger.as(lead, "open_scope", { parent: lane, role: "reviewer", paths: [], commit: SHA(2), brief: question }),
+  );
+  ledger.must(ledger.fact("record_workspace", { scope: "1.2", ok: true, branch: null }));
+  assert.throws(
+    () => ledger.as("a4", "record_verdict", { text: "No." }),
+    /ok/,
+    "whether it is a verdict is said, never left out",
+  );
+
+  ledger.must(ledger.as("a4", "record_verdict", { text: "No: wire.ts:41 truncates it to 8 bits.", ok: null }));
+  const answer = [...ledger.state.evidence.values()].find((e) => e.kind === "verdict")!;
+  assert.equal(answer.ok, null);
+  const told = ledger.effects.flatMap((e) =>
+    e.body.kind === "deliver" && e.body.to === lead && e.body.item.kind === "note" ? [e.body.item.text] : [],
+  );
+  assert.match(told.at(-1) ?? "", new RegExp(`^Answer on ${SHA(2)} from scope 1\\.2 \\(${answer.id}\\)\\. No: wire`));
+  assert.match(
+    statusText(ledger.state, "1.2", lead) ?? "",
+    new RegExp(`- ${answer.id} verdict by a4 on ${SHA(2)}: an answer · No:`),
+  );
+
+  ledger.must(ledger.as(lead, "integrate", { scope: task, evidence: [answer.id] }));
+  assert.equal(ledger.state.scopes.get(task)?.integrating, true, "an answer is no failing result");
 });
 
 test("a scope opened after its sibling gets no copy and no agent until that sibling is integrated", () => {

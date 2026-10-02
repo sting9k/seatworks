@@ -156,7 +156,8 @@ export type Evidence = {
   readonly scope: ScopeId;
   readonly kind: EvidenceKind;
   readonly subject: string;
-  readonly ok: boolean;
+  /** Null for a reader's answer to a question, which judges no commit. */
+  readonly ok: boolean | null;
   readonly by: Party;
   readonly summary: string;
   readonly steps: readonly Step[];

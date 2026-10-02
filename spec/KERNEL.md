@@ -211,7 +211,7 @@ The kernel MUST refuse a command that would break one of these, and MUST NOT ref
 | I1  | A scope has at most one writer; paths move between sibling scopes only through a handover event, so a path is never written from two scopes at once. | §4.2       |
 | I2  | An actor that delegated a scope does not write the paths its open children hold.                                    | §4.2       |
 | I3  | Open sibling scopes whose paths overlap are ordered by `after`, so two never write the same path at once; `after` makes no cycle, since a cycle would leave each waiting for ever. | §4.2 |
-| I4  | Integrating a scope cites evidence whose subject is the commit being integrated. A failing result is integrated only with a reason. A run of no checks is no evidence: with none set, none is asked for. | §8.3, N1 |
+| I4  | Integrating a scope cites evidence whose subject is the commit being integrated. A failing result is integrated only with a reason; an answer with no verdict is not one. A run of no checks is no evidence: with none set, none is asked for. | §8.3, N1 |
 | I5  | Only a scope's writer changes its paths; only its parent's owner its brief, or the owner of a scope that owner gave `mayChange` over it; only its owner its plan. | §4.2, §4.3 |
 | I6  | A change to the goal or appetite, or to a line whose origin is the Human, cites the Human's answer.                   | §7.3, §9   |
 | I7  | A message to an actor from outside its own scope and its parent's owner (the Human counts as the root's) gives that owner a copy; one that `directs` also opens an obligation on the owner, closed when it is carried in or declined with a reason. | §7.2, §9.4 |
@@ -238,7 +238,7 @@ A command is called by an actor and checked against its role's properties and th
 | `withdraw_finding` | the raiser                                          |                                                                          |
 | `reopen_finding`   | the raiser                                          | Reopens a kept finding with new evidence                                 |
 | `hand_back`        | the writer, or the owner of a scope that delegates   | Records a claim at a commit; asks for evidence on it                     |
-| `record_verdict`   | the actor of a reading scope                        | Records its verdict as evidence on its commit, and tells whoever seated it |
+| `record_verdict`   | the actor of a reading scope                        | Records its verdict as evidence on its commit, or its answer to a question as evidence with no verdict, and tells whoever seated it |
 | `record_evidence`  | the bridge, for a satellite's result                 | Records evidence                                                         |
 | `record_turn`, `record_workspace`, `record_agent`, `record_tools`, `record_gone`, `record_delivery`, `record_candidate`, `record_integration`, `record_profile`, `record_publish`, `record_permission`, `record_permission_settled`, `record_human_words`, `record_observation` | the bridge, for a fact | Records what a satellite or the agent host reported (`LEDGER.md` §5) |
 | `set_checks`       | owner of the root, or the Human                      | Sets the project's checks                                                |

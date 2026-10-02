@@ -247,8 +247,11 @@ export const COMMANDS = {
       .describe("Each behaviour asked for, beside what proves it."),
   }),
   record_verdict: z.object({
-    ok: z.boolean().describe("Whether the commit stands."),
     text: text.describe("What you found, and where."),
+    ok: z
+      .boolean()
+      .nullable()
+      .describe("Whether the commit stands; null when your brief asked a question and no verdict on the commit."),
   }),
   run_checks: z.object({
     scope: id.describe("The scope the commit is of."),

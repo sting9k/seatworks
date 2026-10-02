@@ -212,7 +212,9 @@ export function react(e: Event, s: State): readonly Effect[] {
         tell(
           parentOwner(x.scope),
           "note",
-          `Verdict on ${x.subject} from scope ${x.scope}: ${x.ok ? "it stands" : "it does not stand"} (${x.id}). ${x.summary}`,
+          x.ok === null
+            ? `Answer on ${x.subject} from scope ${x.scope} (${x.id}). ${x.summary}`
+            : `Verdict on ${x.subject} from scope ${x.scope}: ${x.ok ? "it stands" : "it does not stand"} (${x.id}). ${x.summary}`,
           true,
         );
       break;

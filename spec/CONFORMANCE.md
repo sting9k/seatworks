@@ -47,6 +47,7 @@ on an implementation without the rule before it is trusted.
 | A scope integrated with no reading scope ever opened         | Accepted                                       |
 | A scope handed back while a scope under it is still open     | Taken: its reply and the note to the owner above both name the scope still open, which is what will refuse its taking in |
 | A verdict of changes on a commit                             | Recorded as evidence; nothing held or sent back by it |
+| A reader asked a question records its answer with no verdict | Evidence that neither passes nor fails; whoever seated it is told it as an answer; no reason is owed for it at integration; what leaves out whether it is a verdict is not taken |
 | A permission asked by a Peer                                 | Answerable by its Lead or the Human, not by another Peer |
 | A Peer's permission open when its Lead is reseated or released | Owed by the new Lead, or by whoever released it, who answers it; the Peer still waits |
 | A permission whose asker leaves its seat                     | Closed: nothing is owed to it                  |

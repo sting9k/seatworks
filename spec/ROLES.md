@@ -76,7 +76,10 @@ The Reviewer is a kind of Peer (CONCEPT-V2 §3.2): seated by its Lead on one com
 back from, it returns a verdict that is evidence and decides nothing. It is worth its cost only when it changes the
 work, and the look back counts how often it does. The concept's Architect and Auditor (A3.8¶4) are uses of it, not
 roles: the Lead asks a Reviewer one design question, or seats it on the lane's head to read the lane whole. Either
-becomes a role only when a look back shows a Reviewer's brief cannot carry it.
+becomes a role only when a look back shows a Reviewer's brief cannot carry it. A question's answer carries no verdict
+on the commit: a pass or a fail asked of an open question is the frame of a pre-solved brief (A3.3¶1), and a "no"
+would stand as a failing result on a commit it never judged. What was found is said before the verdict, so the
+verdict sums up the finding rather than the finding arguing for a verdict already given.
 
 ## Models per role
 

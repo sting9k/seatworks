@@ -63,7 +63,8 @@ export const DESCRIPTIONS: Record<CommandType | ReadName, string> = {
   withdraw_finding: "Withdraws your finding, with a reason.",
   hand_back:
     "Hands your work back at a commit, with each behaviour beside what proves it. The project's checks run on it.",
-  record_verdict: "Records your verdict on the commit you read, as evidence.",
+  record_verdict:
+    "Records what you found on the commit you read, as evidence: a verdict on a change, or the answer to a question.",
   run_checks: "Runs the project's checks, or commands you name, on a commit of a scope; the result is evidence.",
   integrate:
     "Integrates a child scope's candidate commit, citing evidence on that very commit; a failing result needs a reason.",

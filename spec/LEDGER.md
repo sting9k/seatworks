@@ -156,7 +156,8 @@ type Finding = { id: FindingId; scope: ScopeId; raisedBy: ActorId; disputes: Lin
 type Claim = { id: ClaimId; scope: ScopeId; by: ActorId; commit: string; text: string;
                behaviours: readonly { behaviour: string; proof: string }[] };
 type Evidence = { id: EvidenceId; scope: ScopeId; kind: "check" | "verdict" | "measurement" | "judgement" | "human";
-                  subject: string; ok: boolean; by: ActorId | "bridge" | "human"; summary: string;
+                  subject: string; ok: boolean | null;   // null: a reader's answer to a question, which judges no commit
+                  by: ActorId | "bridge" | "human"; summary: string;
                   steps: readonly { name: string; exit: number; seconds: number; cause: "environment" | "code" | null }[];
                   heldMachine: boolean };
 ```
@@ -253,7 +254,7 @@ agent also settles any open attention about the actors or scopes it names that t
 | `classify_finding` | `finding, verdict, reason`                                                                 | `finding_classified`, `obligation_closed` |
 | `withdraw_finding` | `finding, reason`                                                                          | `finding_withdrawn`, `obligation_closed` |
 | `hand_back`        | `commit, text, behaviours`; by the writer, or the owner of a scope that delegates (a lane's head) | `claim_made`, `obligation_opened` (and closes the scope's previous claim's) |
-| `record_verdict`   | `ok, text`                                                                                 | `evidence_recorded`                     |
+| `record_verdict`   | `text, ok`: `ok` is said every time, and is null for the answer to a question              | `evidence_recorded`                     |
 | `run_checks`       | `scope, commit, steps?`                                                                    | `evidence_requested`                    |
 | `integrate`        | `scope, evidence, reason?`; refused while the scope has open children                      | `integration_started`                   |
 | `send_back`        | `scope, reason`; by the scope's parent's owner — the Human sends the root's claim back; refused for a scope being integrated or closed | `sent_back`, `obligation_closed` |

@@ -34,4 +34,5 @@ the work is its call, not yours.
 Read what it needs, answer it directly, say what you did not read, and keep your own view. An answer that bends
 toward the one the question seems to want is worthless.
 
-`record_verdict` once, on the commit you were given, then end your turn.
+`record_verdict` once, on the commit you were given, then end your turn. The answer to a question carries no verdict
+on the commit.

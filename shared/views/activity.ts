@@ -1,4 +1,5 @@
 import type { Event } from "../contracts/events.ts";
+import { resultText } from "./status.ts";
 
 /** One line an event, for the Human's view of what happened; bookkeeping events say nothing (WATCH.md, While away). */
 export function activityLine(e: Event): string | null {
@@ -26,7 +27,7 @@ export function activityLine(e: Event): string | null {
       return line(`${who} handed back scope ${e.claim.scope} at ${e.claim.commit.slice(0, 8)}: ${e.claim.text}`);
     case "evidence_recorded":
       return line(
-        `${e.evidence.kind} on ${e.evidence.subject.slice(0, 8)} for scope ${e.evidence.scope}: ${e.evidence.ok ? "ok" : "failing"}`,
+        `${e.evidence.kind} on ${e.evidence.subject.slice(0, 8)} for scope ${e.evidence.scope}: ${resultText(e.evidence.ok)}`,
       );
     case "integrated":
       return line(`scope ${e.scope} was integrated at ${e.sha.slice(0, 8)}`);

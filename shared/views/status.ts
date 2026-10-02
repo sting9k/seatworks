@@ -2,6 +2,9 @@ import { BRIDGE, type ScopeId } from "../contracts/ids.ts";
 import type { Brief, Line, Obligation, Plan, Scope } from "../contracts/ledger.ts";
 import type { State } from "../kernel/state.ts";
 
+/** What a piece of evidence says of its commit, in a word; a reader's answer to a question says nothing of it. */
+export const resultText = (ok: boolean | null): string => (ok === null ? "an answer" : ok ? "ok" : "failing");
+
 /** A scope as its agents read it with `status` (KERNEL.md §8): facts from the record, nothing advised. */
 export function statusText(state: State, scopeId: ScopeId, reader: string | null): string | null {
   const scope = state.scopes.get(scopeId);
@@ -51,7 +54,7 @@ export function statusText(state: State, scopeId: ScopeId, reader: string | null
   const evidence = [...state.evidence.values()].filter((e) => e.scope === scope.id);
   if (evidence.length > 0)
     out.push(
-      `Evidence:\n${evidence.map((e) => `- ${e.id} ${e.kind}${e.by === BRIDGE ? "" : ` by ${e.by}`} on ${e.subject}: ${e.ok ? "ok" : "failing"} · ${e.summary.split("\n")[0] ?? ""}`).join("\n")}`,
+      `Evidence:\n${evidence.map((e) => `- ${e.id} ${e.kind}${e.by === BRIDGE ? "" : ` by ${e.by}`} on ${e.subject}: ${resultText(e.ok)} · ${e.summary.split("\n")[0] ?? ""}`).join("\n")}`,
     );
   const findings = [...state.findings.values()].filter((f) => f.scope === scope.id || f.answeredBy === scope.id);
   if (findings.length > 0)

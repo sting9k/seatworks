@@ -106,7 +106,9 @@ export function integrate(ctx: Of<"integrate">): Refusal | undefined {
         `evidence ${id} is on ${e.subject}, not on ${candidate.candidate}, the commit being integrated`,
       );
   }
-  const failing = [...ctx.state.evidence.values()].find((e) => sameCommit(e.subject, candidate.candidate) && !e.ok);
+  const failing = [...ctx.state.evidence.values()].find(
+    (e) => sameCommit(e.subject, candidate.candidate) && e.ok === false,
+  );
   if (failing && ctx.body.reason === null)
     return refuse("I4", `a failing result is integrated only with a reason: ${failing.id} failed on this commit`);
   ctx.emit({
