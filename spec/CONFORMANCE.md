@@ -103,7 +103,7 @@ on an implementation without the rule before it is trusted.
 | A delivery refused as busy                                  | Sent again at the next turn's end, once                  |
 | A Peer reseated with three messages queued                  | The new Peer receives the three                          |
 | A delivery reported after its reader left and its message moved to the owner above | The message is not marked delivered: its new reader still gets it |
-| A batch longer than one message allows                      | Several deliveries in a row; nothing cut                 |
+| A queue longer than one delivery holds                      | Several deliveries, the oldest first, the next at the end of the turn the one before began, each saying how many still wait; every message whole |
 | Restart with messages queued                                | All delivered after                            |
 | A turn the plugin's words began fails on the host's error   | Those words sent again once, saying the turn failed and why; the owner above not told |
 | The turn they began fails too                               | A fact to the owner above; nothing sent again  |

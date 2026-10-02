@@ -58,8 +58,10 @@ sent ──► queued ──► delivered ──► answered        (if it asks 
 - **Queued.** In the reader's mailbox, in the order the log recorded them. Nothing is ranked, merged or dropped.
 - **Delivered.** When the reader is between turns, everything queued for it goes as one message, numbered, oldest
   first, with each item's sender, what it asks, and what the record knows of it. The key the agent host sends with
-  it is made from the keys it carries, so a delivery tried twice lands once. A batch too long for one message is
-  sent as several in a row, never cut.
+  it is made from the keys it carries, so a delivery tried twice lands once. One delivery holds 60,000 characters:
+  a queue past that goes as several, the oldest first, the next at the end of the turn the one before began, each
+  saying how many still wait. A message is never cut, and one longer than a delivery goes alone. A reader long idle
+  under a busy team would otherwise be woken with its whole backlog in one message, past what its context holds.
 - **Answered.** A message that asks for an answer keeps its obligation open (I11) until the reader answers with
   `answer` and `replyTo`, whoever reads it and however long it takes.
 - **Moved.** What waited unread goes to whoever is reseated, or with the seat left empty to the owner above. A

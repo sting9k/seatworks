@@ -7,7 +7,8 @@ import type { Project } from "./project.ts";
 
 /** What a satellite made of an effect. `wait` leaves it pending with no attempt counted: a busy reader, a held machine. */
 export type Handled =
-  | { status: "done"; facts?: readonly CommandBody[] }
+  /** `taken`: of a batch, how many of its effects were done, oldest first; the rest stay pending. All, when left out. */
+  | { status: "done"; facts?: readonly CommandBody[]; taken?: number }
   | { status: "dropped"; why: string }
   | { status: "wait" }
   | { status: "failed"; why: string; facts?: readonly CommandBody[] };
@@ -128,7 +129,8 @@ export class Dispatcher {
         if (!outcome.ok)
           daemonLog.error(`project ${this.project.id}: fact for ${effect.key} refused: ${outcome.refused.says}`);
       }
-      for (const e of batch)
+      const settled = handled.status === "done" ? batch.slice(0, handled.taken) : batch;
+      for (const e of settled)
         this.store.settle(e.key, handled.status, handled.status === "done" ? null : handled.why, at);
     } catch (error) {
       if (this.disposed) return;

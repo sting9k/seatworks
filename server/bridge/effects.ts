@@ -188,7 +188,7 @@ export function handlersFor(w: Wiring): Handlers {
       if (sent === "busy" || typeof sent === "object") return WAIT;
       if (sent === "gone") return { status: "dropped", why: `${reader.id} is gone`, facts: [] };
       const read = { to: reader.id, messages: rendered.messages, attentions: rendered.attentions };
-      return done({ type: "record_delivery", ...read });
+      return { status: "done", facts: [{ type: "record_delivery", ...read }], taken: rendered.taken };
     },
 
     "workspace.candidate": async (e, { state }) => {

@@ -42,6 +42,8 @@ export function fakePaseo(
     /** A create answers only once this settles, and says through `reached` that it is that far. */
     hold: Promise<void> | null;
     reached: () => void;
+    /** With turns on, an agent made or sent words is inside a turn until the test ends it, as Paseo's are. */
+    turns: boolean;
   } = {
     loseReplies: 0,
     refuse: null,
@@ -49,7 +51,9 @@ export function fakePaseo(
     archiveFails: 0,
     hold: null,
     reached: () => undefined,
+    turns: false,
   };
+  const inTurn = new Set<string>();
   let down = false;
   /** Permissions each agent's own prompt still waits on, and those answered through the API. */
   const pending = new Map<string, Set<string>>();
@@ -64,7 +68,7 @@ export function fakePaseo(
       Promise.resolve({
         agent: {
           id,
-          activeTurn: null,
+          activeTurn: inTurn.has(id) ? { id: "turn" } : null,
           archivedAt: archived.includes(id) ? "now" : null,
           pendingPermissions: [...(pending.get(id) ?? [])].map((request) => ({ id: request })),
           lastUsage: { inputTokens: 100, outputTokens: 20, totalCostUsd: 0.01 },
@@ -72,6 +76,7 @@ export function fakePaseo(
       }),
     send: (text: string, options: { messageId: string }) => {
       sent.push({ host: id, text, messageId: options.messageId });
+      if (gate.turns) inTurn.add(id);
       return Promise.resolve();
     },
     archive: () => {
@@ -168,6 +173,7 @@ export function fakePaseo(
             ? Promise.resolve(ref(known.host))
             : Promise.reject(new Error("agent_request_key_conflict"));
         const host = `host-${created.length + 1}`;
+        if (gate.turns) inTurn.add(host);
         byKey.set(o.idempotencyKey, { host, request });
         created.push({
           host,
@@ -196,5 +202,18 @@ export function fakePaseo(
       ref,
     },
   };
-  return { api: api as unknown as PaseoApi, created, sent, archived, gate, projects, pending, responded, timelines };
+  /** The agent's turn is over, as far as Paseo knows; the test tells the plugin with the hook Paseo would send. */
+  const endTurn = (host: string) => inTurn.delete(host);
+  return {
+    api: api as unknown as PaseoApi,
+    created,
+    sent,
+    archived,
+    gate,
+    projects,
+    pending,
+    responded,
+    timelines,
+    endTurn,
+  };
 }
