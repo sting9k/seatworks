@@ -160,11 +160,13 @@ export function signalsOf(events: Iterable<Event>): Signals {
   };
 }
 
-/** A scope's history for the `record` read: every brief version, its findings with what came of them, its reports. */
+/** A scope's history for the `record` read: its briefs, what was done to it, its hand-backs, findings and reports. */
 export function scopeRecordText(events: Iterable<Event>, scope: string): string {
   const out: string[] = [];
   const findings = new Map<string, string[]>();
   for (const e of events) {
+    const done = doneTo(e, scope);
+    if (done !== null) out.push(`${e.at} ${done}`);
     if ((e.type === "brief_issued" || e.type === "brief_amended") && e.scope === scope)
       out.push(
         `${e.at} brief v${e.brief.version}${e.type === "brief_amended" ? ` (${e.reason})` : ""}: ${e.brief.goal.text}`,
@@ -189,4 +191,29 @@ export function scopeRecordText(events: Iterable<Event>, scope: string): string 
   }
   for (const lines of findings.values()) out.push(lines.join("\n"));
   return out.length > 0 ? out.join("\n") : `Nothing on the record for scope ${scope}.`;
+}
+
+/** What an event did to a scope, as one line of its record; null for an event that is not about it that way. */
+function doneTo(e: Event, scope: string): string | null {
+  switch (e.type) {
+    case "handed_over":
+      return e.from === scope || e.to === scope
+        ? `${e.paths.join(", ")} moved from scope ${e.from} to scope ${e.to}: ${e.reason}`
+        : null;
+    case "scope_held":
+    case "scope_resumed":
+      return e.scope === scope ? `${e.type === "scope_held" ? "held" : "resumed"}: ${e.reason}` : null;
+    case "reseated":
+      return e.scope === scope ? `reseated, ${e.from ?? "nobody"} to ${e.to}: ${e.reason}` : null;
+    case "claim_made":
+      return e.claim.scope === scope ? `handed back ${e.claim.commit}: ${e.claim.text}` : null;
+    case "sent_back":
+      return e.scope === scope ? `sent back: ${e.reason}` : null;
+    case "integrated":
+      return e.scope === scope ? `integrated at ${e.sha}` : null;
+    case "scope_dropped":
+      return e.scope === scope ? `dropped: ${e.reason}` : null;
+    default:
+      return null;
+  }
 }

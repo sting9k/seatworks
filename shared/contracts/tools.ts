@@ -37,7 +37,7 @@ export const DESCRIPTIONS: Record<CommandType | ReadName, string> = {
   status:
     "Your scope as the record has it: its brief with line ids, its children, what waits on whom, what you owe and are owed, spend beside the appetite. Pass `scope` to see another.",
   record:
-    "A scope's history: every brief version, its findings with what came of them, its reports. Yours, unless you pass `scope`.",
+    "A scope's history: every brief version, what its owner above did to it, each hand-back and what came of it, its findings and its reports. Yours, unless you pass `scope`.",
   diff: "A scope's change against its parent branch, at its branch head or a named commit. Yours, unless you pass `scope`.",
   look: "An agent's recent turns: what it said, thought and ran, newest last.",
   open_project: "Opens the project.",

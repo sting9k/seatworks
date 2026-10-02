@@ -191,7 +191,12 @@ export class TeamSocket {
 
 function recorded(events: readonly { type: string; [k: string]: unknown }[]): string {
   if (events.length === 0) return "Nothing changed.";
-  return `Recorded: ${events.map((e) => e.type.replace(/_/g, " ")).join("; ")}.`;
+  // An attention its reader marked noise opens nothing, and whoever watches would otherwise go on sending its kind.
+  const said = (e: { type: string; [k: string]: unknown }) =>
+    e.type === "attended" && e.attention === null
+      ? "attended, and nobody was told: this kind is marked noise for that agent and scope"
+      : e.type.replace(/_/g, " ");
+  return `Recorded: ${events.map(said).join("; ")}.`;
 }
 
 function refusedText(r: Refusal, standing: readonly string[]): string {

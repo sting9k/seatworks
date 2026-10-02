@@ -122,6 +122,28 @@ test("the scope tools: open, amend a brief, edges, handover, hold and resume, re
   assert.ok(c.paseo.archived.includes(c.paseo.created[3]!.host));
   await did(c, keeper, "drop_scope", { scope: "1.2", reason: "B is not needed at all" });
   assert.doesNotMatch(await status(keeper), /1\.2/, "a dropped scope is no longer among its parent's children");
+
+  assert.match(
+    (await keeper.call("record", { scope: "1.1" })).text,
+    / src\/c\/ moved from scope 1\.2 to scope 1\.1: A needs c\n.* brief v2 \(smaller still\): A\n.* held: wait for the design\n.* resumed: the design is in\n.* reseated, a3 to a5: a fresh pair of eyes$/m,
+    "a scope's record keeps what its owner above did to it, in order",
+  );
+
+  const made = c.paseo.created.length;
+  await did(c, keeper, "open_scope", {
+    parent: "1",
+    role: "maker",
+    paths: ["src/d/"],
+    after: ["1.1"],
+    brief: brief("D"),
+  });
+  assert.equal(c.paseo.created.length, made, "a scope that waits for a sibling has no agent yet");
+  await did(c, keeper, "remove_edge", { scope: "1.3", edge: "after", target: "1.1", reason: "D need not wait" });
+  assert.equal(
+    c.paseo.created.at(-1)?.title,
+    "1.3 · maker",
+    "with its last wait gone it starts: nothing else would start it",
+  );
   for (const t of [chief, keeper]) t.close();
 });
 
@@ -192,6 +214,14 @@ test("the work tools: checks a writer runs itself, a hand-back sent back and han
   assert.equal(git(c.repo, "rev-parse", "main"), head, "the base holds the commit");
   assert.ok(c.paseo.archived.includes(c.paseo.created[1]!.host), "and its writer's agent is let go");
   await refused(chief, "send_back", { scope: "1", reason: "too late" }, /no scope 1/);
+  assert.match(
+    (await chief.call("record", { scope: "1" })).text,
+    new RegExp(
+      ` handed back ${half}: half of it\\n.* sent back: the check fails\\n.* handed back ${head}: all of it\\n.* integrated at ${head}$`,
+      "m",
+    ),
+    "a scope's record keeps each hand-back and what came of it, after the scope is closed too",
+  );
 
   await did(c, chief, "publish", { remote: "origin" });
   assert.equal(git(c.remote, "rev-parse", "main"), head);
@@ -411,7 +441,7 @@ test("the attention tools: a watcher's attention reaches the owner above the age
   const before = c.told(1).length;
   assert.equal(
     await did(c, guard, "attend", { actor: "a3", moment: "going-in-circles", why: "a third time", urgency: "now" }),
-    "Recorded: attended.",
+    "Recorded: attended, and nobody was told: this kind is marked noise for that agent and scope.",
   );
   assert.equal(c.told(1).length, before, "a kind marked noise for that agent and scope is not told again");
   await refused(guard, "pass", { candidate: "o9", reason: "nothing" }, /no candidate o9 waiting on you/);
