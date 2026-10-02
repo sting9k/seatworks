@@ -43,7 +43,7 @@ export function activityLine(e: Event): string | null {
       return line(`${who} ${e.type === "scope_held" ? "held" : "resumed"} scope ${e.scope}: ${e.reason}`);
     case "report_made":
       return line(
-        `${who} reported on scope ${e.scope}: ${e.decided.length} decided, ${e.assumed.length} assumed, ${e.open.length} open`,
+        `${who} reported on scope ${e.scope}: ${e.sections.map((s) => `${s.lines.length} ${s.name}`).join(", ") || "nothing"}`,
       );
     case "question_asked":
       return line(`${who} asked you: ${e.question.text}`);

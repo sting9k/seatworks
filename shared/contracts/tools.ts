@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { COMMANDS, type CommandType, FACTS, HUMAN_ONLY } from "./commands.ts";
+import { COMMANDS, type CommandType, FACTS, HUMAN_ONLY, ReportLines } from "./commands.ts";
 
 /** The reads every agent may be shown besides the commands its role names. */
 export const READS = {
@@ -51,8 +51,7 @@ export const DESCRIPTIONS: Record<CommandType | ReadName, string> = {
   hold_scope: "Holds a scope: nothing new is seated in it or integrated from it.",
   resume_scope: "Lifts a hold.",
   release: "Ends an agent's seat; its scope stays.",
-  report:
-    "Reports to whoever owns your scope's parent: what was decided, what was assumed unchecked, what is still open.",
+  report: "Reports to whoever owns your scope's parent: lines under each section you have something for.",
   send_message:
     "Sends a message along the edges you have; `asks` keeps it owed until answered, `directs` marks it as changing what the reader is to do.",
   answer: "Answers a message you were sent.",
@@ -84,14 +83,21 @@ export const DESCRIPTIONS: Record<CommandType | ReadName, string> = {
 
 export type ToolSpec = { name: string; description: string; inputSchema: Record<string, unknown> };
 
-/** The tools an agent of a role is shown: the reads, and the commands its role names. */
-export function toolsFor(names: ReadonlySet<string>): ToolSpec[] {
+/** The tools an agent of a role is shown: the reads and its role's commands, a report by its profile's sections. */
+export function toolsFor(names: ReadonlySet<string>, report: ReadonlyMap<string, string>): ToolSpec[] {
   const specs: ToolSpec[] = [];
   for (const name of Object.keys(READS) as ReadName[]) if (names.has(name)) specs.push(spec(name, READS[name]));
   for (const name of Object.keys(COMMANDS) as CommandType[])
-    if (names.has(name) && DESCRIPTIONS[name] !== "") specs.push(spec(name, COMMANDS[name]));
+    if (names.has(name) && DESCRIPTIONS[name] !== "")
+      specs.push(spec(name, name === "report" ? sectioned(report) : COMMANDS[name]));
   return specs;
 }
+
+/** A report's arguments as an agent is shown them: each section its profile names, with what it holds. */
+const sectioned = (report: ReadonlyMap<string, string>) =>
+  z.strictObject(
+    Object.fromEntries([...report].map(([name, holds]) => [name, ReportLines.optional().describe(holds)])),
+  );
 
 function spec(name: CommandType | ReadName, schema: z.ZodType): ToolSpec {
   return {

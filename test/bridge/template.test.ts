@@ -178,6 +178,65 @@ test("a role taken out of a profile, and the project synced, while an agent sits
   lead.close();
 });
 
+test("a profile names the sections its reports have: an agent is shown those alone, its report is read under their names, and another section is refused", async () => {
+  const root = rootWith("crew", (dir) => {
+    rewrite(join(dir, "profile.yaml"), (text) =>
+      text.replace(
+        /\nreport:\n( {2}.*\n)+/,
+        "\nreport:\n  landed: What is now on the lane's head.\n  doubts: What nobody has checked yet.\n  later: What you left for another lane.\n",
+      ),
+    );
+  });
+  const { plugin, paseo, socketPath } = await started(root);
+  const { project } = await plugin.openProject(repository(), "main", "crew");
+  await plugin.idle();
+  const owner = await agentTools(socketPath, paseo.created[0]!.env);
+  const brief = { goal: { text: "Hold sessions in the gateway" }, kind: "discovery" };
+  assert.ok((await owner.call("open_scope", { parent: "root", role: "lead", paths: ["src/"], brief })).ok);
+  await plugin.idle();
+  const lead = await agentTools(socketPath, paseo.created[1]!.env);
+
+  const shown = (lead.welcome.tools as { name: string; inputSchema: { properties: Record<string, unknown> } }[]).find(
+    (tool) => tool.name === "report",
+  );
+  assert.deepEqual(
+    Object.entries(shown?.inputSchema.properties ?? {}).map(
+      ([name, holds]) => `${name}: ${(holds as { description: string }).description}`,
+    ),
+    [
+      "landed: What is now on the lane's head.",
+      "doubts: What nobody has checked yet.",
+      "later: What you left for another lane.",
+    ],
+  );
+
+  const slps = await lead.call("report", { decided: ["Sessions live in the gateway"] });
+  assert.equal(slps.ok, false);
+  assert.match(slps.text, /a report here has no section decided: it has landed, doubts, later/);
+  assert.doesNotMatch((await lead.call("record", { scope: "1" })).text, /report/, "nothing of it is on the record");
+
+  const made = await lead.call("report", {
+    doubts: ["No load was measured"],
+    landed: ["Sessions live in the gateway", "The old cache is gone"],
+  });
+  assert.ok(made.ok, made.text);
+  await plugin.idle();
+  const told = paseo.sent
+    .filter((s) => s.host === paseo.created[0]!.host)
+    .map((s) => s.text)
+    .join("\n");
+  assert.match(
+    told,
+    /Report from scope 1\.\nlanded:\n- Sessions live in the gateway\n- The old cache is gone\ndoubts:\n- No load was measured$/m,
+  );
+  assert.match(
+    (await owner.call("record", { scope: "1" })).text,
+    / report:\n {2}landed: Sessions live in the gateway; The old cache is gone\n {2}doubts: No load was measured$/m,
+  );
+  assert.match((await plugin.view(project))!.activity.join("\n"), /2 landed, 1 doubts$/m);
+  for (const t of [owner, lead]) t.close();
+});
+
 const TICKETS = `
 servers:
   tickets:

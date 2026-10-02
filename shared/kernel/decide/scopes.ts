@@ -338,13 +338,18 @@ export function reseat(ctx: Of<"reseat">): Refusal | undefined {
 export function report(ctx: Of<"report">): Refusal | undefined {
   const me = ctx.agent();
   if (isRefusal(me)) return me;
-  const lines = (texts: readonly string[]) => texts.map((text) => ctx.line(text));
+  const given = ctx.body.sections;
+  const has = [...ctx.profile.report.keys()];
+  const stray = Object.keys(given).find((name) => !ctx.profile.report.has(name));
+  if (stray !== undefined)
+    return refuse("unknown", `a report here has no section ${stray}: it has ${has.join(", ") || "none"}`);
   ctx.emit({
     type: "report_made",
     scope: me.actor.scope,
-    decided: lines(ctx.body.decided),
-    assumed: lines(ctx.body.assumed),
-    open: lines(ctx.body.open),
+    sections: has.flatMap((name) => {
+      const lines = Object.hasOwn(given, name) ? given[name]! : [];
+      return lines.length > 0 ? [{ name, lines: lines.map((text) => ctx.line(text)) }] : [];
+    }),
   });
   return undefined;
 }

@@ -177,7 +177,10 @@ export function scopeRecordText(events: Iterable<Event>, scope: string): string 
       findings.get(e.carries)?.push(`  carried by ${e.type.replace(/_/g, " ")} (${e.by})`);
     if (e.type === "report_made" && e.scope === scope)
       out.push(
-        `${e.at} report: decided ${e.decided.map((l) => l.text).join("; ") || "nothing"}; assumed ${e.assumed.map((l) => l.text).join("; ") || "nothing"}; open ${e.open.map((l) => l.text).join("; ") || "nothing"}`,
+        [
+          `${e.at} report:${e.sections.length > 0 ? "" : " nothing"}`,
+          ...e.sections.map((s) => `  ${s.name}: ${s.lines.map((l) => l.text).join("; ")}`),
+        ].join("\n"),
       );
     if (e.type === "attention_opened" && e.attention.about.scope === scope)
       out.push(`${e.at} attention ${e.attention.id} (${e.attention.moment}) to ${e.attention.to}`);

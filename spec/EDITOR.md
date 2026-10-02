@@ -189,8 +189,8 @@ of them in a panel of the rail. A note stops nothing, neither a change nor an ex
   with no prompt. One whose properties need a tool it is not shown: a writer without `hand_back`, a reader without
   `record_verdict`, a watching role without `attend`, a role that seats others without `open_scope` or without
   `integrate`. And one shown a tool the kernel refuses every role like it: `ask_human` without `humanDoor`, `attend`
-  without `watches`, `open_scope` with nobody to seat. Each is certain from `profile.yaml` alone, and each would
-  otherwise show only as a team that stalls.
+  without `watches`, `open_scope` with nobody to seat. And one shown `report` in a template that names no section a
+  report has. Each is certain from `profile.yaml` alone, and each would otherwise show only as a team that stalls.
 - A prompt or a skill that names a role the template has lost since it was opened.
 - A prompt of a watched role that names the watch.
 - A skill whose folder and `name` differ, whose description does not say when to use it, or which points at a file

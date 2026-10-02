@@ -157,7 +157,7 @@ upkeep: attach(repository, profile), profiles, presets, templateOffer(from), ins
 - The update check reads Paseo's own and installs nothing.
 - The project's docs go with its repository and stay when the team is gone: `GLOSSARY.md`, whose block between the
   plugin's markers holds the words settled in the root's plan, and `docs/seatworks/MAP.md`, the map (destination,
-  what must hold, what is not yet known, each lane landed with what it decided, assumed and left open, and what is
+  what must hold, what is not yet known, each lane landed with what its owner reported under each section, and what is
   still in dispute). Both are written from the log on `docs.write`, whole each time, as a commit of that file alone,
   so one left behind is written the next time. The docs a team keeps by hand, such as the ADRs in `docs/adr/`, are written by
   the agent whose commit they explain; the plugin only points every agent at them. The paths are the profile's:

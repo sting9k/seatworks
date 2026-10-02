@@ -43,9 +43,8 @@ A template arranges a team and words what its agents read. Four rules hold for e
    finding, evidence, hand-back), are fixed. If your team calls a brief a ticket, say so in a prompt.
 4. **Roles are data.** Name them as you like; nothing in the plugin knows a role by name.
 
-Also fixed, and not a template's to set: the settings each kind of agent runs with, the sections of a report
-(decided, assumed, still open), the fields of a plan and a brief, where the small model that watches is reached, what
-is masked as a secret, and the Human's pages in Paseo.
+Also fixed, and not a template's to set: the settings each kind of agent runs with, the fields of a plan and a
+brief, where the small model that watches is reached, what is masked as a secret, and the Human's pages in Paseo.
 
 ## The team's shape
 
@@ -139,6 +138,8 @@ roles:
     servers: { <server>: [<tool>, <tool>] }
 
 servers: {} # outside tool servers, below
+report: # the sections a report has, below; leave it out and a report has none
+  <section>: <what a line under it should be>
 reflex: reflex.yaml # leave the line out and nothing is asked
 watch: watch.yaml # leave the line out and nothing is watched for
 flow: flow.md # leave the line out and no flow is given
@@ -190,6 +191,8 @@ It does not load, and the check says which, when:
 - `like` names something that is not a role, or goes round in a circle.
 - `tools` names something that is not a tool of the list below.
 - A role is given a server the profile does not declare, or a server is named `team`.
+- A section of `report` is named with anything but lower-case letters, digits and underscores, or says nothing of
+  what it holds.
 - A file it names is not in the template: a prompt, a skill's `SKILL.md`, the flow, the project's note, the reflex or
   the watch file.
 - A key is not one of those above.
@@ -228,7 +231,7 @@ attends, only the owner of a scope's parent amends its brief or integrates it.
 | `answer_permission` | Allows or refuses what an agent's harness asked leave to do                                | Roles that delegate           |
 | `hand_back`         | Hands its work back at a commit, with each behaviour beside what proves it                 | Roles that write; a role that delegates and has a parent |
 | `run_checks`        | Runs the project's checks, or named commands, on a commit; the result is evidence          | Roles that write or delegate  |
-| `report`            | Reports to the owner above: what was decided, assumed unchecked, still open                | Roles that delegate and have a parent |
+| `report`            | Reports to the owner above, as lines under the sections `profile.yaml` names               | Roles that delegate and have a parent |
 | `ask_human`         | Puts a question to the Human, with options and a recommendation                            | The role with `humanDoor`     |
 | `set_checks`        | Sets the project's checks: named commands                                                  | The root                      |
 | `publish`           | Pushes the landed base branch to a remote, never forced                                    | The root                      |
@@ -241,6 +244,29 @@ attends, only the owner of a scope's parent amends its brief or integrates it.
 | `hold_machine`      | Holds the machine while it measures; nothing that loads the machine starts meanwhile       | Roles that measure            |
 
 A good start for a role: every tool whose last column fits it. Then take away what its way of working never uses.
+
+### The report's sections
+
+A role given `report` tells the owner above what came of its scope, as lines under sections. The sections are yours
+to name, under `report` in `profile.yaml`. SLP's:
+
+```yaml
+report:
+  decided: Each decision a reader could question, as "X because Y".
+  assumed: Each assumption nobody checked, as "X, unchecked".
+  open: Each disagreement still open.
+```
+
+- A name is lower-case letters, digits and underscores, starting with a letter. The words after it are what an agent
+  is shown as that section's meaning when it reports, so say what a line there should be.
+- The order they are written in is the order a report is read in.
+- A section holds lines of text and nothing else. None is required: an agent fills those it has something for. A
+  report that names a section the profile does not have is refused, with the list of those it has.
+- A report is read under its sections' names by the owner above, in the scope's record, in the project's map, and by
+  a question whose state reads `report.lines`.
+- A report is a claim. Nothing in it is evidence, and nothing is integrated on it.
+- Leave `report` out and a report has no section; give no role the tool then. The check notes a role shown `report`
+  in a template that names none.
 
 ### Agent profiles
 
@@ -423,7 +449,7 @@ which is asked of a turn's last words and only when the turn called no tool.
 | `plan.lines`                                                     | The nearest plan above the scope, as lines                  |
 | `event.text`                                                     | The text of a finding raised, a plan amended, a brief amended |
 | `finding.evidence`, `finding.reason`                             | On `finding_classified`: the finding with its evidence; the reason given |
-| `report.lines`                                                   | On `report_made`: what was decided and assumed              |
+| `report.lines`                                                   | On `report_made`: each section given, under its name        |
 | `handback.text`                                                  | On `claim_made`: the claim and its behaviours               |
 | `hunk`                                                           | One hunk of a hand-back's diff, for a question with `hunks` |
 | `permission.text`                                                | On `permission_asked`: what the agent asked leave to do     |

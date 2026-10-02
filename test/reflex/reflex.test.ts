@@ -15,9 +15,11 @@ const config = loadReflex(join(import.meta.dirname, "../../templates/slp"), {
 /** Jev answering every question it is asked with the probability the test names. */
 function fakeJev(p: number) {
   const asked: string[][] = [];
+  const read: Record<string, string>[] = [];
   const jev = {
-    ask: (_state: Record<string, string>, questions: Record<string, { labels?: Record<string, string> }>) => {
+    ask: (state: Record<string, string>, questions: Record<string, { labels?: Record<string, string> }>) => {
       asked.push(Object.keys(questions));
+      read.push(state);
       const answers = Object.fromEntries(
         Object.entries(questions).map(([name, q]) => {
           const labels = Object.keys(q.labels ?? {});
@@ -39,7 +41,7 @@ function fakeJev(p: number) {
       return Promise.resolve({ ok: true as const, model: "jev-1.13.0", answers, tokens: 100 });
     },
   } as unknown as Jev;
-  return { jev, asked };
+  return { jev, asked, read };
 }
 
 const settledNames = new Set(["addPoints", "User"]);
@@ -67,7 +69,7 @@ function wired(p: number | null) {
         ]),
     },
   );
-  return { ...t, reflex, alarms, observed, asked: fake?.asked ?? [] };
+  return { ...t, reflex, alarms, observed, asked: fake?.asked ?? [], read: fake?.read ?? [] };
 }
 
 const settle = () => new Promise((resolve) => setTimeout(resolve, 20));
@@ -238,7 +240,7 @@ test("what looks like a secret in an agent's words is masked in what the record 
 });
 
 test("each use in REFLEX.md's table is asked on its own event, and only there", async () => {
-  const { ledger, reflex, supervisor, lead, peer, lane, asked } = wired(0.1);
+  const { ledger, reflex, supervisor, lead, peer, lane, asked, read } = wired(0.1);
   const on = async (events: Parameters<typeof reflex.onEvents>[1]) => {
     const from = asked.length;
     reflex.onEvents("p", events, ledger.state);
@@ -268,9 +270,13 @@ test("each use in REFLEX.md's table is asked on its own event, and only there", 
     await on(ledger.must(ledger.as(lead, "classify_finding", { finding, verdict: "minor", reason: "keep it" }))),
     ["kept-without-answer"],
   );
-  assert.deepEqual(await on(ledger.must(ledger.as(lead, "report", { decided: ["Sessions live in the gateway"] }))), [
-    "unrecorded-structure",
-  ]);
+  const reported = { open: ["Who owns the cache"], decided: ["Sessions live in the gateway"] };
+  assert.deepEqual(await on(ledger.must(ledger.as(lead, "report", reported))), ["unrecorded-structure"]);
+  assert.equal(
+    read.at(-1)?.report,
+    "decided:\n- Sessions live in the gateway\nopen:\n- Who owns the cache",
+    "a report is read whole, each section under its name",
+  );
   assert.deepEqual(await on(ledger.must(ledger.as(peer, "hand_back", { commit: SHA(9), text: "done" }))), [
     "bends-product",
     "claim-gap",

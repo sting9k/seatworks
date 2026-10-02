@@ -940,6 +940,9 @@ export class Plugin {
         return runtime.project.view;
       },
       submit: (command) => runtime.project.submit(command),
+      get report() {
+        return runtime.wiring.bundle.profile.report;
+      },
       roleTools: (actor) => {
         const a = runtime.project.view.actors.get(actor);
         if (a?.status !== "seated") return null;

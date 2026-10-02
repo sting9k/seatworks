@@ -58,6 +58,7 @@ test("an agent's tool server lists its role's tools and carries a call to the ke
       const { type, ...args } = command.body;
       return Promise.resolve(ledger.send(command.caller, type, args) as never);
     },
+    report: ledger.profile.report,
     roleTools: (actor: string) => ledger.profile.roles.get(ledger.state.actors.get(actor)?.role ?? "")?.tools ?? null,
     roleGone: () => null,
     read: () => Promise.resolve("status text"),
@@ -107,6 +108,7 @@ test("a tool server with a key that is not its agent's is refused", async () => 
   const port = {
     view: ledger.state,
     submit: () => Promise.reject(new Error("never")),
+    report: ledger.profile.report,
     roleTools: () => new Set(["status"]),
     roleGone: () => null,
     read: () => Promise.resolve(""),
@@ -151,6 +153,7 @@ test("a call whose answer is lost with the connection is sent again and recorded
       return project.view;
     },
     submit: (command: Command) => project.submit(command),
+    report: profile.report,
     roleTools: (actor: string) => profile.roles.get(project.view.actors.get(actor)?.role ?? "")?.tools ?? null,
     roleGone: () => null,
     read: () => Promise.resolve(""),

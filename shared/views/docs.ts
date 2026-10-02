@@ -27,16 +27,9 @@ export function glossaryText(plan: Plan | null): string | null {
 
 type Weighed = { id: string; text: string; by: string; verdict: string | null; reason: string | null };
 
-type Landed = {
-  scope: string;
-  goal: string;
-  sha: string;
-  at: string;
-  decided: string[];
-  assumed: string[];
-  open: string[];
-  weighed: Weighed[];
-};
+type Reported = readonly { readonly name: string; readonly lines: readonly string[] }[];
+
+type Landed = { scope: string; goal: string; sha: string; at: string; reported: Reported; weighed: Weighed[] };
 
 /** How the owner above weighed a finding, in words a reader outside the team follows. */
 const VERDICT: Record<string, string> = {
@@ -51,7 +44,7 @@ export function mapText(events: Iterable<Event>, state: State): string | null {
   if (!plan) return null;
   const goals = new Map<string, string>();
   const parents = new Map<string, string | null>();
-  const reports = new Map<string, { decided: string[]; assumed: string[]; open: string[] }>();
+  const reports = new Map<string, Reported>();
   const findings = new Map<string, Weighed & { scope: string }>();
   const landed: Landed[] = [];
   const laneOf = (scope: string): string | null => {
@@ -63,11 +56,10 @@ export function mapText(events: Iterable<Event>, state: State): string | null {
     if (e.type === "scope_opened") parents.set(e.scope.id, e.scope.parent);
     if (e.type === "brief_issued" || e.type === "brief_amended") goals.set(e.scope, e.brief.goal.text);
     if (e.type === "report_made")
-      reports.set(e.scope, {
-        decided: e.decided.map((l) => l.text),
-        assumed: e.assumed.map((l) => l.text),
-        open: e.open.map((l) => l.text),
-      });
+      reports.set(
+        e.scope,
+        e.sections.map((s) => ({ name: s.name, lines: s.lines.map((l) => l.text) })),
+      );
     if (e.type === "finding_raised")
       findings.set(e.finding.id, {
         id: e.finding.id,
@@ -95,7 +87,7 @@ export function mapText(events: Iterable<Event>, state: State): string | null {
         goal: goals.get(e.scope) ?? "",
         sha: e.sha.slice(0, 12),
         at: e.at.slice(0, 10),
-        ...(reports.get(e.scope) ?? { decided: [], assumed: [], open: [] }),
+        reported: reports.get(e.scope) ?? [],
         weighed: [...findings.values()].filter((f) => laneOf(f.scope) === e.scope),
       });
   }
@@ -130,11 +122,8 @@ export function mapText(events: Iterable<Event>, state: State): string | null {
           `### ${l.scope}: ${l.goal}`,
           "",
           `Landed ${l.sha} on ${l.at}.`,
-          ...(l.decided.length > 0
-            ? ["", "Decided by its owner, open to question on evidence:", ...list(l.decided)]
-            : []),
-          ...(l.assumed.length > 0 ? ["", "Assumed, not yet checked:", ...list(l.assumed)] : []),
-          ...(l.open.length > 0 ? ["", "Left open:", ...list(l.open)] : []),
+          ...(l.reported.length > 0 ? ["", "Reported by its owner, open to question on evidence:"] : []),
+          ...l.reported.flatMap((s) => ["", `${s.name}:`, ...list(s.lines)]),
           ...(l.weighed.length > 0
             ? [
                 "",

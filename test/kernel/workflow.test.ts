@@ -166,7 +166,7 @@ test("a hand-back from the root owes the Human, who sends it back or publishes o
   const roles = new Map(slp.roles);
   const handed = { ...sup, tools: new Set([...sup.tools, "hand_back"]) };
   roles.set("supervisor", handed);
-  const profile = { roles, root: slp.root.name === "supervisor" ? handed : slp.root };
+  const profile = { ...slp, roles, root: slp.root.name === "supervisor" ? handed : slp.root };
   const claimsOnHuman = (ledger: Ledger) =>
     [...ledger.state.obligations.values()].filter((o) => o.owedBy === HUMAN && o.about.kind === "claim");
 

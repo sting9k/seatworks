@@ -7,8 +7,8 @@ this says what a template is, what the plugin reads of it, and how it reaches a 
 
 Built: the editor (`EDITOR.md`), what the plugin reads of a template and how one reaches a machine, outside tool
 servers, the gallery's build and the page that reads one, and the check a template written without the editor is put
-through. Not built: the gallery's own repository, which is the owner's to make, and the report's sections. The order
-is at the end.
+through, and the report's sections as the profile's. Not built: the gallery's own repository, which is the owner's to
+make, and the sections as nodes of the editor. The order is at the end.
 
 **Two files are written for whoever makes a template**, in `docs/`, apart from these spec files, which are for
 whoever builds Seatworks:
@@ -364,16 +364,24 @@ agent profile the Human already has, for every profile installed.
   missing agent profile always did; the page says the same. Matched again, the seat is taken by a reseat. Nothing
   throws where an agent is made: that would leave a seat with no agent and nobody told.
 
-## Later: the report's sections
+## The report's sections
 
-`report` takes three sections the kernel knows by name: decided, assumed, still open. They are SLP's, and the kernel
-has no rule on any of them. They become the profile's, each a name and a description: SLP declares its three, another
-template its own. Three limits:
+A report is lines under sections, and the sections are the profile's: each a name and what it holds, under `report`
+in `profile.yaml`, in the order they are read. SLP names three (`decided`, `assumed`, `open`); another template names
+its own. The kernel has no rule on any of them, and knows none by name.
 
-- A section is a list of lines, not a shape of the template's choosing, so every line keeps its origin (I9) and the
-  surface has one thing to draw.
-- What an agent writes of its own work is a claim, never evidence: `integrate` cites none of it (N5).
-- No section is required (rule 1).
+- **An agent given `report` is shown the profile's sections and no other**, each with the words the profile gives it.
+  A report that names another section is refused, saying which a report has: lines dropped in silence would be worse.
+  No section is required (rule 1), and one left out is not on the record at all.
+- **A section is a list of lines**, not a shape of the template's choosing, so every line keeps its origin (I9) and
+  every reader has one thing to draw.
+- **A report is read under its sections' names** wherever it is read: by the owner above, in the scope's record, in
+  the project's map, and by a question asked on it (`report.lines`). The event keeps each name, so a report made
+  before the project took other sections reads as it was made.
+- **What an agent writes of its own work is a claim, never evidence**: `integrate` cites none of it (N5), and the map
+  says so over every report.
+- A profile that names no section loads; a role shown `report` there draws a note, since its reports would say
+  nothing (`EDITOR.md`, Checks).
 
 The plan's and the brief's fields stay as they are until a second template is written and meets them. The kernel's
 own rules read only `goal`, `appetite`, `terms` and the verdict `changes`.
@@ -384,7 +392,7 @@ Each is made in the commit that builds it.
 
 | File             | Change                                                                                             |
 | ---------------- | -------------------------------------------------------------------------------------------------- |
-| `KERNEL.md`      | Later, §4 and §6: `report`'s sections are the profile's                                            |
+| `KERNEL.md`      | §2 and §6: `report`'s sections are the profile's; `LEDGER.md` its arguments and its event          |
 
 ## Order
 
@@ -397,7 +405,7 @@ Each is made in the commit that builds it.
 | 4     | Outside tool servers                                                                   | Yes         | Yes   |
 | 5     | The gallery's build and its page; the gallery's own repository                         | None        | The build and the page |
 | 6     | The check from a terminal, the spec for whoever writes a template, the editor's guide  | Yes         | Yes   |
-| Later | The report's sections                                                                  | Yes         | No    |
+| 7     | The report's sections                                                                  | Yes         | The plugin; not yet as nodes |
 
 Its cases are in `CONFORMANCE.md`: Editor, Templates and Gallery.
 

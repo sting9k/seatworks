@@ -67,6 +67,8 @@ export const ProfileFileSchema = z
     servers: z.record(z.string().regex(/^[a-z][a-z0-9-]*$/), ServerSchema).default({}),
     reflex: z.string().optional(),
     watch: z.string().optional(),
+    /** The sections a report has, each a name and what it holds, in the order they are read (TEMPLATE.md). */
+    report: z.record(z.string().regex(/^[a-z][a-z0-9_]*$/), z.string().min(1)).default({}),
     /** The team's flow, a passage every role is given after its own prompt (TEMPLATE.md). */
     flow: z.string().min(1).optional(),
     /** What every agent in an attached project reads: the note in `file`, the docs written from the record, `docs`. */
@@ -100,7 +102,12 @@ export type Role = {
   readonly models: readonly string[];
 };
 
-export type Profile = { readonly roles: ReadonlyMap<string, Role>; readonly root: Role };
+export type Profile = {
+  readonly roles: ReadonlyMap<string, Role>;
+  readonly root: Role;
+  /** A report's sections in the order the profile names them, each with what it holds. */
+  readonly report: ReadonlyMap<string, string>;
+};
 
 /** Resolves a profile file into roles, or says what is wrong with it. */
 export function resolveProfile(file: ProfileFile): { ok: true; profile: Profile } | { ok: false; says: string } {
@@ -161,7 +168,7 @@ export function resolveProfile(file: ProfileFile): { ok: true; profile: Profile 
     for (const server of Object.keys(spec.servers ?? {}))
       if (!Object.hasOwn(file.servers, server))
         return { ok: false, says: `role ${name} is given the server ${server}, which the profile does not declare` };
-  return { ok: true, profile: { roles: resolved, root } };
+  return { ok: true, profile: { roles: resolved, root, report: new Map(Object.entries(file.report)) } };
 }
 
 /** A skill's `description` from its frontmatter: what an agent is told of the skill on every turn. */

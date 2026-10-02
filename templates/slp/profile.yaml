@@ -54,6 +54,13 @@ roles:
     models: [slp-watcher]
     tools: [look, record, diff, attend, pass]
 
+# The sections a report has, each a list of lines and none required. An agent given `report` is shown each with these
+# words; whoever reads the report reads its lines under the section's name.
+report:
+  decided: Each decision a reader could question, as "X because Y".
+  assumed: Each assumption nobody checked, as "X, unchecked".
+  open: Each disagreement still open.
+
 reflex: reflex.yaml
 watch: watch.yaml
 # Kept in an attached project's instruction file, committed on its base, so every agent there knows the team is there.

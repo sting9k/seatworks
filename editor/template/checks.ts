@@ -34,6 +34,8 @@ export function notesOf(template: Template, opened: Template): Note[] {
           : "it names no agent profile, so whoever seats it must name one each time",
       );
     for (const says of deadEnds(role)) say(says);
+    if (role.tools.has("report") && template.profile.report.size === 0)
+      say("it is shown `report`, and the template names no section a report has, so its reports say nothing");
     const prompt = template.file.roles[role.name]?.prompt;
     const text = prompt === undefined ? undefined : template.files.get(prompt);
     if (text === undefined) {

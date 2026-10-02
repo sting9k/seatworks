@@ -83,7 +83,12 @@ export type EventBody =
   | { type: "reseated"; scope: ScopeId; from: ActorId | null; to: ActorId; reason: string }
   | { type: "scope_dropped"; scope: ScopeId; reason: string }
   | { type: "scope_held" | "scope_resumed"; scope: ScopeId; reason: string }
-  | { type: "report_made"; scope: ScopeId; decided: readonly Line[]; assumed: readonly Line[]; open: readonly Line[] }
+  | {
+      type: "report_made";
+      scope: ScopeId;
+      /** Each section given, by the name its profile had for it then, in the profile's order. */
+      sections: readonly { readonly name: string; readonly lines: readonly Line[] }[];
+    }
   | { type: "message_sent"; message: Message }
   | { type: "message_delivered"; message: MessageId; at: string }
   | { type: "message_moved"; message: MessageId; from: Party; to: Party }

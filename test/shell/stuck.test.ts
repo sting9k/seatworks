@@ -62,8 +62,8 @@ test("an empty seat in an open scope, and words queued for an agent that never s
 test("an actor seated in a role the project's profile no longer has shows as stuck, by its seat", () => {
   const { ledger, lead } = team();
   const without = {
+    ...ledger.profile,
     roles: new Map([...ledger.profile.roles].filter(([name]) => name !== "lead")),
-    root: ledger.profile.root,
   };
 
   assert.deepEqual(stuckOf(ledger.state, [], [], ledger.profile), []);

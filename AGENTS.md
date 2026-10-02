@@ -152,9 +152,10 @@ The skills hold the recipes. The rules:
 - **One live contract, hard cut**: no dual path, fallback, shim, legacy parser or read-time upgrade. Change every
   producer and consumer together. The log has no format number before 3.0.0; until then its shape changes with no
   upgrade step.
-- **Code owns only the concept.** Agents, models, tools, thresholds, questions and moments are profile data. A role,
-  agent or server name in `shared/`, `server/` or `client/` is a defect, and a test finds it. What a template must
-  never choose is the plugin's: where the reflex sends its questions, and what is masked as a secret.
+- **Code owns only the concept.** Agents, models, tools, thresholds, questions, moments and a report's sections are
+  profile data. A role, agent or server name in `shared/`, `server/` or `client/` is a defect, and a test finds it.
+  What a template must never choose is the plugin's: where the reflex sends its questions, and what is masked as a
+  secret.
 - **Comments are few**: a docstring is one line, saying why, and none restates the code. The reasons for a change
   are in its commit message and the spec.
 - **Formatting**: Prettier at 120 columns. Commit subjects are one imperative sentence on the change in behaviour,

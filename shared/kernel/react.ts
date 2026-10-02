@@ -134,17 +134,8 @@ export function react(e: Event, s: State): readonly Effect[] {
       break;
     }
     case "report_made": {
-      const lines = (label: string, xs: readonly { text: string }[]) =>
-        xs.length ? `${label}:\n${xs.map((x) => `- ${x.text}`).join("\n")}` : "";
-      const text = [
-        `Report from scope ${e.scope}.`,
-        lines("Decided", e.decided),
-        lines("Assumed, unchecked", e.assumed),
-        lines("Open", e.open),
-      ]
-        .filter(Boolean)
-        .join("\n");
-      tell(parentOwner(e.scope), "note", text, true);
+      const sections = e.sections.map((s) => `${s.name}:\n${s.lines.map((l) => `- ${l.text}`).join("\n")}`);
+      tell(parentOwner(e.scope), "note", [`Report from scope ${e.scope}.`, ...sections].join("\n"), true);
       break;
     }
     case "sent_back":

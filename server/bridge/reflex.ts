@@ -760,7 +760,7 @@ function valueOf(path: string, ctx: Context): string | null {
       return event?.type === "finding_classified" ? event.reason : null;
     case "report.lines":
       return event?.type === "report_made"
-        ? [`Decided:\n${linesText(event.decided)}`, `Assumed:\n${linesText(event.assumed)}`].join("\n")
+        ? event.sections.map((s) => `${s.name}:\n${linesText(s.lines)}`).join("\n") || "(none)"
         : null;
     case "handback.text":
       return event?.type === "claim_made"

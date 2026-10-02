@@ -142,7 +142,7 @@ test("one lane end to end: a Supervisor, a Lead and a Peer land a change on main
   const map = git(repo, "show", "main:docs/seatworks/MAP.md");
   assert.match(
     map,
-    /### 1: Encode directions\n\nLanded [0-9a-f]{12} on [\d-]{10}\.\n\nDecided by its owner, open to question on evidence:\n- Directions are int16\n\nAssumed, not yet checked:\n- No client sends more than 8 directions\n\nFindings raised in it:\n- f\d+ by a\d+: int16 overflows past 8 directions → not worth stopping for: no client sends more/,
+    /### 1: Encode directions\n\nLanded [0-9a-f]{12} on [\d-]{10}\.\n\nReported by its owner, open to question on evidence:\n\ndecided:\n- Directions are int16\n\nassumed:\n- No client sends more than 8 directions\n\nFindings raised in it:\n- f\d+ by a\d+: int16 overflows past 8 directions → not worth stopping for: no client sends more/,
     "the map lists the lane landed: its owner's report, and every finding raised in it as it was weighed",
   );
   assert.equal(git(repo, "status", "--porcelain"), "", "and the checkout stays clean");

@@ -45,6 +45,9 @@ its agents read; it never gives the kernel a reason to refuse (§1), brings no c
 
 Prompts, skills, models and harness choices are in the profile too, but the kernel does not read them.
 
+The profile also names the sections a report has, each with what it holds (`TEMPLATE.md`, The report's sections).
+The kernel reads their names to keep a report to them, and has no rule on what any holds.
+
 The SLP profile, from CONCEPT-V2 §3, is `templates/slp/profile.yaml`. The properties the kernel reads from it:
 
 | Role       | Properties                                                                                   |
@@ -234,7 +237,7 @@ A command is called by an actor and checked against its role's properties and th
 | `reseat`           | owner of the parent                                 | A new actor on the same scope, briefed from the record; obligations and undelivered messages move |
 | `drop_scope`       | owner of the parent                                 | Closes the scope unintegrated, with a reason                             |
 | `hold_scope`, `resume_scope` | owner of the parent, or the Human         |                                                                          |
-| `report`           | owner of the scope                                  | Lines for its parent's owner: decided, assumed, still open               |
+| `report`           | owner of the scope                                  | Lines for its parent's owner, under the sections its profile names       |
 | `send_message`     | any actor, along `speaksTo`                         | Records the message; delivery carries it (I7)                            |
 | `answer`           | whoever an obligation is owed by                    | Answers a message or question                                            |
 | `ask_human`        | a role with `humanDoor`                             | Opens a question                                                         |

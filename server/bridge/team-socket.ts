@@ -12,6 +12,8 @@ import type { Refusal } from "../../shared/kernel/decide/context.ts";
 export type ProjectPort = {
   readonly view: State;
   submit(command: Command): Promise<Submitted>;
+  /** The sections a report has in the project's profile, as an agent is shown them. */
+  readonly report: ReadonlyMap<string, string>;
   /** The tools a seated actor's role names; none for a role the profile no longer has; null when it is not seated. */
   roleTools(actor: string): ReadonlySet<string> | null;
   /** A seated actor's role, when the project's profile no longer has it. */
@@ -101,7 +103,8 @@ export class TeamSocket {
             continue;
           }
           who = { project, actor };
-          write({ type: "welcome", tools: toolsFor(new Set([...tools, ...Object.keys(READS)])) satisfies ToolSpec[] });
+          const shown = toolsFor(new Set([...tools, ...Object.keys(READS)]), project.report);
+          write({ type: "welcome", tools: shown satisfies ToolSpec[] });
         } else if (message.type === "call" && who) {
           const id = message.id;
           const call = typeof message.call === "string" && message.call.length <= 100 ? message.call : null;

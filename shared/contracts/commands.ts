@@ -17,6 +17,9 @@ const check = z.object({ name: z.string().trim().min(1).max(200), run: z.array(z
 const briefLines = z.array(lineInput).max(100);
 const briefKind = z.enum(["verification", "discovery"]);
 
+/** One section of a report: lines, and no shape of a profile's choosing, so each keeps its origin (I9). */
+export const ReportLines = z.array(text).max(100);
+
 export const BriefInput = z.object({
   goal: lineInput,
   constraints: briefLines.default([]),
@@ -149,11 +152,8 @@ export const COMMANDS = {
   hold_scope: z.object({ scope: id, reason }),
   resume_scope: z.object({ scope: id, reason }),
   release: z.object({ actor: id, reason }),
-  report: z.object({
-    decided: z.array(text).max(100).default([]),
-    assumed: z.array(text).max(100).default([]),
-    open: z.array(text).max(100).default([]),
-  }),
+  // An agent names its sections side by side; the kernel reads them as one map, apart from a command's own fields.
+  report: z.record(z.string().max(64), ReportLines).transform((sections) => ({ sections })),
   send_message: z.object({
     to: id,
     text,

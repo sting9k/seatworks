@@ -142,6 +142,11 @@ test("where a template leaves a role, a question or a moment with no way on, a n
       setTool("peer", "open_scope", true),
       "role:peer: it is shown `open_scope`, which it is always refused: it seats no role",
     ],
+    [
+      "a role shown the report in a template that names no section of one",
+      rewritten("profile.yaml", (text) => text.replace(/\nreport:\n( {2}.*\n)+/, "\n")),
+      "role:lead: it is shown `report`, and the template names no section a report has, so its reports say nothing",
+    ],
     ["a role nobody seats", addRole("planner"), "role:planner: no role seats it, so it never joins the team"],
     [
       "a role with no agent profile",

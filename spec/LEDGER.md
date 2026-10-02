@@ -47,7 +47,7 @@ type Refusal = { invariant: "I1" | "I2" | ... | "I12" | "authority" | "unknown" 
 ```
 
 `authority` is a caller whose role or relation does not allow the command (I5, I10 and the table in `KERNEL.md` §6);
-`unknown` names an id that does not exist; `state` is a move the entity's lifecycle does not have (a finding
+`unknown` names an id that does not exist, or a section of a report the profile does not name; `state` is a move the entity's lifecycle does not have (a finding
 classified twice). Each says what failed in a sentence the caller can act on.
 
 `standing` is what the record shows of where the caller stands, read off the scope graph the refusal was checked
@@ -240,7 +240,7 @@ agent also settles any open attention about the actors or scopes it names that t
 | `drop_scope`       | `scope, reason`                                                                            | `scope_dropped`, `obligation_closed`\*  |
 | `hold_scope`, `resume_scope` | `scope, reason`                                                                  | `scope_held`, `scope_resumed`           |
 | `release`          | `actor, reason`                                                                            | `actor_released`, `obligation_moved`\*  |
-| `report`           | `decided, assumed, open`                                                                   | `report_made`                           |
+| `report`           | lines under each section the profile names, none required; another section is refused `unknown` | `report_made`                      |
 | `send_message`     | `to, text, asks, directs, replyTo?`                                                        | `message_sent` (and a copy, I7), `obligation_opened`\* |
 | `answer`           | `replyTo, text`                                                                            | `message_sent`, `obligation_closed`     |
 | `ask_human`        | `text, about?, options?, recommend?`                                                       | `question_asked`, `obligation_opened`, `finding_waiting`? |
@@ -326,7 +326,7 @@ Every event, with its payload. `evolve` handles each; an unknown type stops the 
 | `reseated`            | `scope, from: ActorId \| null, to: ActorId, reason`                                          |
 | `scope_dropped`       | `scope, reason`                                                                              |
 | `scope_held`, `scope_resumed` | `scope, reason`                                                                      |
-| `report_made`         | `scope, decided: Line[], assumed: Line[], open: Line[]`                                      |
+| `report_made`         | `scope, sections: { name, lines: Line[] }[]`: those given, in the profile's order            |
 | `message_sent`        | `message: Message`                                                                           |
 | `message_delivered`   | `message, at`                                                                                |
 | `message_moved`       | `message, from, to`                                                                          |

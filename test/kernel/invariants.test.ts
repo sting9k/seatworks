@@ -357,7 +357,7 @@ test("a profile with every role renamed behaves the same", () => {
       { ...role, name: `x-${name}`, spawns: new Set([...role.spawns].map((s) => `x-${s}`)) },
     ]),
   );
-  const profile = { roles: renamed, root: renamed.get("x-supervisor")! };
+  const profile = { ...base.profile, roles: renamed, root: renamed.get("x-supervisor")! };
   const other = new Ledger(profile);
   other.must(other.human("open_project", { base: "main", profile: "slp", profileHash: "p1", model: "m" }));
   other.must(other.fact("record_workspace", { scope: "root", ok: true, branch: "main" }));
