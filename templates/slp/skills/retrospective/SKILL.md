@@ -13,8 +13,10 @@ the method as it is.
 
 - **Chains of change.** For each finding: what the brief said when the work was given, how long until it was
   classified, the evidence, which owners the change reached, what was integrated after it.
-- **The five signals, as ratios:** conflicts that recur; questions to the Human that led to a change; checks whose
-  result led to a send-back; interventions that came too late; messages followed by no change.
+- **The five signals, as ratios:** findings on a line or scope that already had one; questions to the Human whose
+  answer changed a plan or a brief; verdicts and failing checks followed by a send-back or an amended brief;
+  attentions left until they climbed; messages that asked for an answer and got none. A review that seldom comes
+  before a change has to show why it is still asked for.
 - **The reflex and the watch.** For each question: its shape (decisive, weak, noisy) and how many answers past it
   were acted on. Set or move a threshold only from these, for its wording and model. Remove a question that never
   led to a change.

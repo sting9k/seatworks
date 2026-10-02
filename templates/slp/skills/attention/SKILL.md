@@ -29,16 +29,30 @@ please you; an open one leaves it free to say all is well.
 - Never name an anti-pattern, quote the attention, or say that anything watches: an agent that knows plays to it.
 - Point at what it is likely to get wrong: the contract, the goal, the premise.
 
+About a Lead:
+
 | Moment                  | A question that opens                                                                  |
 | ----------------------- | -------------------------------------------------------------------------------------- |
-| mints-an-api            | What does this test assume about the interface it calls, and where was that settled?   |
-| trades-the-goal         | Does this change what the goal promised anyone, and who should weigh it?               |
 | big-decision            | What else will build on this, and who should settle it with you before it does?        |
 | struggling              | What would you need to know to be sure what it means, and who could tell you?          |
 | turning                 | What did the first approach fail to handle?                                            |
 | admits-wrong            | What else rested on that?                                                              |
+| going-in-circles        | What has each attempt told you about the cause?                                        |
+| silent-without-progress | Where does the lane stand, and what is in the way?                                     |
+| findings-waiting        | What does the open finding in your lane change, if anything?                           |
+
+`past-appetite` is weighed with `appetite`.
+
+About a Peer, which reaches you for one you seated yourself, or when its Lead left it:
+
+| Moment                  | A question that opens                                                                  |
+| ----------------------- | -------------------------------------------------------------------------------------- |
+| mints-an-api            | What does this test assume about the interface it calls, and where was that settled?   |
+| trades-the-goal         | Does this change what the goal promised anyone, and who should weigh it?               |
 | obeys-against-judgement | If it were your call, what would you do, and why?                                      |
 | builds-a-stand-in       | What does the stand-in stand for, and when does the real part arrive?                  |
+| detour                  | What is this working around, and who owns the place it comes from?                     |
+| check-made-to-pass      | What would this check show if the behaviour were still missing?                        |
 
 Not: "Are you breaking the mint-API rule?", "Did you forget the contract?", "I noticed you seem stuck." Each tells
 the agent what answer you want.

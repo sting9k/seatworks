@@ -62,8 +62,10 @@ From CONCEPT-V2 §3.1. The prompt is built to answer them and nothing else.
 ## Peer
 
 - **Owns** one task and the engineering judgement inside it.
-- **May question** anything in its brief but the goal: a constraint with evidence that it cannot hold, a choice
-  whenever the code shows it does not fit. Offered A or B when C is right, it says C.
+- **May question** anything in its brief but the outcome its goal names: a constraint with evidence that it cannot
+  hold, a choice whenever the code shows it does not fit, and a method or design written into the goal, which is a
+  choice wherever it is filed (§5.3: the parachute may be asked about unless the work is a trial of parachutes).
+  Offered A or B when C is right, it says C.
 - **A right, not a duty.** Agreement the evidence supports is a real answer. A Peer told to find fault finds some.
 - **Returns** evidence to its Lead: a commit and what was run on it, and a finding with the evidence that raised it.
 - **Takes to its Lead** a decision bigger than the task before building on it: a contract others will build on, or a

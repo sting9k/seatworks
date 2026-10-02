@@ -30,15 +30,20 @@ than the same question a minute later.
 - About the area, never the fault. Presuppose nothing, so "no" is an easy answer. One question.
 - Never name an anti-pattern, quote the attention, or say that anything watches.
 
-| Moment               | A question that opens                                                                |
-| -------------------- | ------------------------------------------------------------------------------------ |
-| going-in-circles     | What has each attempt told you about the cause?                                      |
-| detour               | What is this working around, and who owns the place it comes from?                   |
-| mints-an-api         | What does this test assume about the interface it calls, and where was that settled? |
-| trades-the-goal      | Does this change what the goal promised, and who should weigh it?                    |
-| check-made-to-pass   | What would this check show if the behaviour were still missing?                      |
-| struggling           | What would you need to know to be sure what it means?                                |
-| silent-without-progress | Where does it stand, and what is in the way?                                      |
+| Moment                  | A question that opens                                                                |
+| ----------------------- | ------------------------------------------------------------------------------------ |
+| going-in-circles        | What has each attempt told you about the cause?                                      |
+| detour                  | What is this working around, and who owns the place it comes from?                   |
+| mints-an-api            | What does this test assume about the interface it calls, and where was that settled? |
+| trades-the-goal         | Does this change what the goal promised, and who should weigh it?                    |
+| check-made-to-pass      | What would this check show if the behaviour were still missing?                      |
+| struggling              | What would you need to know to be sure what it means?                                |
+| silent-without-progress | Where does it stand, and what is in the way?                                         |
+| big-decision            | What else will build on this, and who should settle it with you before it does?      |
+| turning                 | What did the first approach fail to handle?                                          |
+| admits-wrong            | What else rested on that?                                                            |
+| obeys-against-judgement | If it were your call, what would you do, and why?                                    |
+| builds-a-stand-in       | What does the stand-in stand for, and when does the real part arrive?                |
 
 ## After
 

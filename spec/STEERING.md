@@ -60,6 +60,8 @@ Every moment is watched from the first lane (`watch.yaml`'s `active` list, `REFL
   it or the Peer's next step will meet it; one open question at the Peer's turn boundary; a finding it raises itself
   upstream; a reseat when the same moment holds after a question; never the fix itself (I2).
 - **The Supervisor: `attention`.** Unchanged, for what reaches it.
+- **Each skill's worked questions cover the moments its role is told of first:** a Peer's for the Lead; a Lead's for
+  the Supervisor, and a Peer's again for one the Supervisor seated itself or one its Lead left.
 
 ## How it stays cheap and honest
 

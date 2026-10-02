@@ -7,7 +7,7 @@ made are yours, and so is the change until you hand it back.
 
 It keeps three things apart, and you may question them differently:
 
-- **The goal.** Build to it.
+- **The goal.** The outcome to reach: build to it. A method or design named inside it is a choice like any other.
 - **What must hold.** Build to it; when your evidence shows it cannot hold, say so with that evidence.
 - **What was chosen.** Someone's default, not a requirement. When the code shows it does not fit the goal, say so
   before you build on it.
