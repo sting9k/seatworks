@@ -49,8 +49,12 @@ test("the scope tools: open, amend a brief, handover, hold and resume, reseat, r
     parent: "1",
     role: "maker",
     paths: ["src/a/"],
+    commit: git(c.repo, "rev-parse", "main"),
     brief: brief("A", { constraints: [{ text: "Stay small" }] }),
   });
+  const opened = await status(keeper, "1.1");
+  assert.match(opened, /^Branch: sw\/[0-9a-f]+\/1\.1$/m, "a writer works on a branch of its own");
+  assert.doesNotMatch(opened, /Reads commit/, "a commit named for it is no seat: only a reader is seated on one");
   await did(c, keeper, "open_scope", { parent: "1", role: "maker", paths: ["src/b/", "src/c/"], brief: brief("B") });
   assert.match(
     await status(keeper),
@@ -70,6 +74,12 @@ test("the scope tools: open, amend a brief, handover, hold and resume, reseat, r
   assert.match(c.told(2).join("\n"), moved, "the writer that gained the paths is told");
   assert.match(c.told(3).join("\n"), moved, "and so is the one that lost them");
 
+  await refused(
+    keeper,
+    "amend_brief",
+    { scope: "1.1", set: {}, reason: "nothing" },
+    /^The arguments do not fit amend_brief: .*an amendment changes one section at least/s,
+  );
   await did(c, keeper, "amend_brief", {
     scope: "1.1",
     set: { constraints: [{ text: "Stay tiny" }] },
@@ -421,6 +431,12 @@ test("the plan tools: a plan set once, then amended line by line; its goal chang
     "amend_plan",
     { scope: "root", goal: { text: "Ship it twice" }, reason: "more" },
     /^Refused \(I6\)/,
+  );
+  await refused(
+    chief,
+    "amend_plan",
+    { scope: "root", reason: "nothing" },
+    /^The arguments do not fit amend_plan: .*an amendment changes one line at least/s,
   );
 
   const said = {

@@ -68,6 +68,7 @@ test("each read answers from the record, the repository or Paseo: an agent's own
     "its own scope's change against its parent's branch",
   );
   assert.match((await lead.call("diff", { scope: "1.1" })).text, /\+int16/, "its owner reads the same by name");
+  assert.equal((await lead.call("diff", { scope: "1.9" })).text, "No scope 1.9 is open.");
 
   paseo.timelines.set(peerAgent.host, [
     { type: "user_message", text: "Scope 1.1 is yours" },

@@ -3,7 +3,7 @@ import { HUMAN, type ScopeId } from "../../contracts/ids.ts";
 import type { Finding } from "../../contracts/ledger.ts";
 import { type Context, type Refusal, isRefusal, refuse } from "./context.ts";
 import { briefLines, planLines } from "./lines.ts";
-import { answererOf, answeringScope } from "./seats.ts";
+import { answererOf, answeringScope, askerNow } from "./seats.ts";
 
 type Of<T extends CommandBody["type"]> = Context<Extract<CommandBody, { type: T }>>;
 
@@ -157,7 +157,8 @@ export function askHuman(ctx: Of<"ask_human">): Refusal | undefined {
 export function answerQuestion(ctx: Of<"answer_question">): Refusal | undefined {
   const question = ctx.state.questions.get(ctx.body.question);
   if (!question) return refuse("unknown", `no open question ${ctx.body.question}`);
-  ctx.emit({ type: "question_answered", question: question.id, text: ctx.body.text, asker: question.from });
+  const asker = askerNow(ctx, question.from);
+  ctx.emit({ type: "question_answered", question: question.id, text: ctx.body.text, asker });
   closeAbout(ctx, "question", question.id, "answered");
   for (const f of ctx.state.findings.values())
     if (f.status === "waiting" && f.question === question.id) ctx.emit({ type: "finding_resumed", finding: f.id });

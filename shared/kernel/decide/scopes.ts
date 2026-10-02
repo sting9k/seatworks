@@ -95,7 +95,8 @@ export function openChild(ctx: Of<"open_scope">): Refusal | undefined {
     writer: role.writes ? actor : null,
     paths: body.paths,
     after: body.after,
-    commit: body.commit,
+    // Only a reader is seated on a commit: on a writer it would make its copy a detached one, its work on no branch.
+    commit: kind === "reading" ? body.commit : null,
     over: kind === "watch" ? body.over : [],
     workspace: kind === "watch" ? "none" : "pending",
   };

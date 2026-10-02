@@ -94,8 +94,9 @@ a stop is the Human's.
 a message from the Human (`KERNEL.md` §4.7). What the Human sends from their surface goes through the mailbox like
 anyone's.
 
-**What the sender sees.** `status` shows each of its messages as queued, delivered or answered, and when. A sender
-never has to poll: an answer is a message that asks, so it wakes the sender.
+**What the sender sees.** `status` shows each of its messages that still waits: queued, or delivered and waiting for
+an answer. One that was delivered and asks nothing, or was answered, is settled and no longer listed. A sender never
+has to poll: an answer is a message that asks, so it wakes the sender, or whoever holds the sender's seat by then.
 
 ## What the plugin does not do
 

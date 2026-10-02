@@ -234,10 +234,10 @@ agent also settles any open attention about the actors or scopes it names that t
 
 | Command            | Arguments                                                                                  | →                                       |
 | ------------------ | ------------------------------------------------------------------------------------------ | --------------------------------------- |
-| `open_scope`       | `parent, role, kind, paths, after, brief, commit?, over?, model?`                          | `scope_opened`, `actor_seated`, `brief_issued` |
-| `amend_brief`      | `scope, set: { goal?, constraints?, choices?, context?, kind? }, reason, carries?, cites?`    | `brief_amended`                         |
+| `open_scope`       | `parent, role, kind, paths, after, brief, commit?, over?, model?`; `commit` is a reader's seat and is left out of any other scope, `over` a watcher's | `scope_opened`, `actor_seated`, `brief_issued` |
+| `amend_brief`      | `scope, set: { goal?, constraints?, choices?, context?, kind? }, reason, carries?, cites?`; one section at least | `brief_amended`              |
 | `set_plan`         | `scope, plan`                                                                              | `plan_set`                              |
-| `amend_plan`       | `scope, remove: LineId[], add: { section, text, check?, term?, avoid?, via? }[], appetite?, reason, carries?, cites?`; a term added under a word the plan holds replaces it | `plan_amended` |
+| `amend_plan`       | `scope, remove: LineId[], add: { section, text, check?, term?, avoid?, via? }[], appetite?, reason, carries?, cites?`; a term added under a word the plan holds replaces it; one change at least, since one that changes nothing would carry a finding with no change behind it (I8) | `plan_amended` |
 | `add_edge`, `remove_edge` | `scope, edge: after \| mayChange \| mustTell, target, reason, carries?`             | `edge_added`, `edge_removed`            |
 | `handover`         | `from, to, paths, reason, carries?`                                                        | `handed_over`                           |
 | `raise_finding`    | `disputes?, about?, text, evidence, default`                                               | `finding_raised`, `obligation_opened`   |
@@ -346,7 +346,7 @@ Every event, with its payload. `evolve` handles each; an unknown type stops the 
 | `message_delivered`   | `message, at`                                                                                |
 | `message_moved`       | `message, from, to`                                                                          |
 | `question_asked`      | `question: Question`                                                                         |
-| `question_answered`   | `question, text, asker`                                                                      |
+| `question_answered`   | `question, text, asker`: who is told, the one who asked or, once it left its seat, whoever holds it |
 | `obligation_opened`   | `obligation: Obligation`                                                                     |
 | `obligation_closed`   | `obligation, how`                                                                            |
 | `obligation_moved`    | `obligation, to`                                                                             |

@@ -387,10 +387,19 @@ test("a permission moves with the seat that answers it, and closes when the agen
   assert.equal(ledger.state.permissions.size, 0);
 });
 
-test("the Human may reseat the Supervisor: they stand as the root's parent", () => {
-  const { ledger } = team();
+test("the Human may reseat the Supervisor: they stand as the root's parent, and their answer goes to who holds the seat", () => {
+  const { ledger, supervisor } = team();
+  ledger.must(ledger.as(supervisor, "ask_human", { text: "int8 or int16?" }));
   ledger.must(ledger.human("reseat", { scope: "root", reason: "compacted too often" }));
   assert.equal(ledger.state.scopes.get("root")?.owner, "a4");
+  const answered = ledger.must(ledger.human("answer_question", { question: "q1", text: "int16" }));
+  assert.deepEqual(
+    ledger.effects.flatMap((e) =>
+      e.key.startsWith(`${answered[0]!.seq}:`) && e.body.kind === "deliver" ? [e.body.to] : [],
+    ),
+    ["a4"],
+    "the one who asked has left its seat: the answer is read by whoever sits there now",
+  );
 });
 
 test("a held scope seats nobody new until it is resumed", () => {

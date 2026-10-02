@@ -990,8 +990,9 @@ export class Plugin {
     if (name === "record") return scopeRecordText(runtime.store.about(a.scope ?? own), a.scope ?? own);
     if (name === "diff") {
       const scope = view.scopes.get(a.scope ?? own);
-      const parent = scope?.parent ? view.scopes.get(scope.parent) : undefined;
-      if (!scope || !parent?.branch) return `Scope ${a.scope ?? own} has no parent branch to compare with.`;
+      if (!scope) return `No scope ${a.scope ?? own} is open.`;
+      const parent = scope.parent ? view.scopes.get(scope.parent) : undefined;
+      if (!parent?.branch) return `Scope ${scope.id} has no parent branch to compare with.`;
       const tip = a.commit ?? scope.branch ?? scope.commit;
       if (!tip) return `Scope ${scope.id} has no branch or commit.`;
       return runtime.workspace.diff(parent.branch, tip);

@@ -3,7 +3,7 @@ import { BRIDGE, HUMAN, type Party } from "../../contracts/ids.ts";
 import type { Message } from "../../contracts/ledger.ts";
 import { fromOutside, maySpeak, ownerOfParent } from "../authority.ts";
 import { type Context, type Refusal, isRefusal, refuse } from "./context.ts";
-import { answererOf } from "./seats.ts";
+import { askerNow } from "./seats.ts";
 
 type Of<T extends CommandBody["type"]> = Context<Extract<CommandBody, { type: T }>>;
 
@@ -52,13 +52,6 @@ export function answer(ctx: Of<"answer">): Refusal | undefined {
   });
   for (const o of owed) ctx.emit({ type: "obligation_closed", obligation: o.id, how: "answered" });
   return undefined;
-}
-
-/** Who reads an answer to what `from` asked: `from` while it is seated, then whoever holds its seat, or the owner above. */
-function askerNow(ctx: Context, from: Party): Party {
-  const asker = ctx.state.actors.get(from);
-  if (!asker || asker.status === "seated") return from;
-  return answererOf(ctx, asker.scope) ?? from;
 }
 
 export function humanWords(ctx: Of<"record_human_words">): Refusal | undefined {

@@ -18,6 +18,13 @@ export function answererOf(ctx: Context, scope: string): Party | null {
   return answeringScope(ctx, scope)?.answerer ?? null;
 }
 
+/** Who reads an answer to what `from` asked: `from` while it is seated, then whoever holds its seat, or the owner above. */
+export function askerNow(ctx: Context, from: Party): Party {
+  const asker = ctx.state.actors.get(from);
+  if (!asker || asker.status === "seated") return from;
+  return answererOf(ctx, asker.scope) ?? from;
+}
+
 /** The scope whose owner answers, climbed past empty seats, with the answerer; the root answers through the Human when its seat is empty. */
 export function answeringScope(ctx: Context, scope: string): { scope: string; answerer: Party } | null {
   for (let at: string | null = scope; at !== null; at = ctx.state.scopes.get(at)?.parent ?? null) {

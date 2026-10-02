@@ -147,6 +147,7 @@ export const COMMANDS = {
         context: briefSections.context.optional(),
         kind: briefSections.kind.optional(),
       })
+      .refine((set) => Object.keys(set).length > 0, "an amendment changes one section at least")
       .describe("Only the sections that change, each whole; one left out stays as it is."),
     reason: why,
     carries,
@@ -156,31 +157,37 @@ export const COMMANDS = {
     scope: id.describe("The scope the plan is of: one you own."),
     plan: PlanInput.describe("The plan."),
   }),
-  amend_plan: z.object({
-    scope: id.describe("The scope whose plan changes: one you own."),
-    remove: z.array(id).max(100).default([]).describe("Lines to take out, by their ids."),
-    add: z
-      .array(
-        z
-          .object({
-            section: z.enum(["limits", "unknowns", "terms"]).describe("The section it joins."),
-            text: text.describe("The line."),
-            check: text.optional().describe("For an unknown: how it will be found out."),
-            term: term.optional().describe("For a term: the word it defines; one the plan holds is replaced."),
-            avoid: z.array(term).max(20).default([]).describe("For a term: words not to use for it."),
-            via: via.describe("What the line comes from, as `{ kind, id }`."),
-          })
-          .refine((a) => a.section !== "terms" || a.term !== undefined, "a term added names the word it defines"),
-      )
-      .max(100)
-      .default([])
-      .describe("Lines to add."),
-    goal: lineInput.optional().describe("A new goal, in place of the old."),
-    appetite: appetite.optional().describe("A new appetite, in place of the old."),
-    reason: why,
-    carries,
-    cites,
-  }),
+  amend_plan: z
+    .object({
+      scope: id.describe("The scope whose plan changes: one you own."),
+      remove: z.array(id).max(100).default([]).describe("Lines to take out, by their ids."),
+      add: z
+        .array(
+          z
+            .object({
+              section: z.enum(["limits", "unknowns", "terms"]).describe("The section it joins."),
+              text: text.describe("The line."),
+              check: text.optional().describe("For an unknown: how it will be found out."),
+              term: term.optional().describe("For a term: the word it defines; one the plan holds is replaced."),
+              avoid: z.array(term).max(20).default([]).describe("For a term: words not to use for it."),
+              via: via.describe("What the line comes from, as `{ kind, id }`."),
+            })
+            .refine((a) => a.section !== "terms" || a.term !== undefined, "a term added names the word it defines"),
+        )
+        .max(100)
+        .default([])
+        .describe("Lines to add."),
+      goal: lineInput.optional().describe("A new goal, in place of the old."),
+      appetite: appetite.optional().describe("A new appetite, in place of the old."),
+      reason: why,
+      carries,
+      cites,
+    })
+    // An amendment that changes nothing would carry a finding with no change behind it (I8).
+    .refine(
+      (a) => a.remove.length > 0 || a.add.length > 0 || a.goal !== undefined || a.appetite !== undefined,
+      "an amendment changes one line at least",
+    ),
   add_edge: z.object({
     scope: id.describe("The scope the edge starts from."),
     edge,
