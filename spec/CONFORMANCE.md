@@ -291,3 +291,5 @@ What the plugin reads of a profile that a template adds (`TEMPLATE.md`).
 | A role given an outside server, on an agent that cannot take one | Not seated; the reason names the server                        |
 | A profile that gives a role a server it does not declare, or names one as the team's own | Does not load, saying which                |
 | A shared template that declares an outside server           | What it runs is said, and each variable it reads with whether it is set, before anything is installed |
+| In the editor, an outside server declared, said how to reach, given to a role with two tools, one tool taken back, then the server taken away | A node, then a wire carrying the tools; a wire with no tool named is not drawn; taking a tool back changes one line; with the server gone every file is as it was to the byte |
+| In the editor, an outside server fresh from its skeleton and given to no role; then one with a secret written in it | A note for each of the first two; a note that a secret belongs in a variable for the last |

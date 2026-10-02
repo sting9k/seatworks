@@ -79,7 +79,7 @@ After ComfyUI's own page, so a person who knows one finds their way in the other
 | Team      | Role                | Its name, its properties as switches, its tool groups as ticked lists, its prompt, its models | `spawns`, in and out |
 | Team      | Human               | One, fixed                                                               | From each role that may ask or message the Human |
 | Equipment | Skill               | Its folder: `SKILL.md` and the files beside it. A node once the folder is there, wired or not | To each role that has it |
-| Equipment | Outside server      | Its command or address, the variables it names                           | To a role; the tools are picked on the wire |
+| Equipment | Outside server      | Its command or address, the variables it names. Set in its panel         | To a role; drawing the wire asks which of its tools the role may call, and the wire says them |
 | Equipment | Optional tool group | Findings; the machine's hold. Always on the graph, to be wired           | To a role                          |
 | Attention | Reflex question     | The events it is asked on, its question, each outcome, its thresholds, whom it tells | None                   |
 | Attention | Watch moment        | Its question, what it reads, its thresholds                              | `watches`, to each role watched    |
@@ -104,6 +104,8 @@ A wire has a kind, a socket takes only its own kind, and every kind says what it
   wires and as a wire to the Human.
 - **The wire to the Human is `human` in the role's `speaksTo`.** Cutting it also switches `humanDoor` off: a role that
   may not speak to the Human does not ask them either.
+- **A server's wire carries tools.** Paseo approves an outside tool by its name, so a wire with no tool named gives
+  nothing: drawing one asks for the names, the wire shows them, and the server's panel changes them role by role.
 - **Nor is whom a question tells.** `tells` names a relation (`root`, `parent`, `evidence`, `answerer`, `self`), never
   a role, so it is a field in the question's node and no wire leaves it.
 - **`then` is soft.** It makes words an agent reads, and nothing the kernel refuses (`TEMPLATE.md`, rule 1). A hard
@@ -167,7 +169,8 @@ A new role, skill, question or moment starts from a skeleton: the five parts of 
 leaves to be written is a line in italics, and one left standing draws a note. A new question or moment is written
 and not asked: it joins its file's `active` list when its author ticks it, in one line of that file.
 
-A question's or a moment's own words are changed in its file. A role's models are set in its panel. A role, a
+A question's or a moment's own words are changed in its file. A role's models are set in its panel, and so is how an
+outside server is started or reached: its kind, its command or address, and its environment or headers. A role, a
 skill, a step, a question and a moment are each renamed in their panel, and everything that named them follows.
 
 ## Checks
@@ -186,7 +189,9 @@ of them in a panel of the rail. A note stops nothing, neither a change nor an ex
 - A skill whose folder and `name` differ, whose description does not say when to use it, or which points at a file
   that is not beside it.
 - A question or a moment that asks of a backticked field not in its `state`, or lacks the description of an outcome.
-- A prompt, a skill, a question or a moment that still holds a skeleton's words.
+- A prompt, a skill, a question, a moment or a server that still holds a skeleton's words.
+- An outside server no role is given; and one whose settings hold what looks like a secret, by the patterns the
+  template's own reflex masks before text leaves a machine. A secret is named as a variable, never written.
 - A question or a moment whose words changed since its threshold was earned: it is not yet earned again. A threshold
   is earned for a hash of the wording (`REFLEX.md`). The plugin makes that hash with Node's own SHA-256, which a page
   has only by waiting on it, so the page makes the same hash in plain code, held to Node's and to the plugin's by
@@ -208,7 +213,6 @@ A template is some five to thirty nodes, so drawing is never slow; what is felt 
 
 ## Not built
 
-- A wire to an outside tool server: the profile has no place for one until `TEMPLATE.md`'s step 4.
 - The sections of a report as nodes: `TEMPLATE.md`'s last step.
 
 ## To check before building on it

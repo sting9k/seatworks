@@ -1,3 +1,4 @@
+import { settingsOf } from "../../shared/contracts/profile.ts";
 import type { Asked, Template } from "./read-template.ts";
 import { TOOL_GROUPS } from "./tool-groups.ts";
 import { earnedOf } from "./wording.ts";
@@ -47,6 +48,16 @@ export function notesOf(template: Template, opened: Template): Note[] {
     for (const [, path] of text.matchAll(/\]\(([^)#\s]+)\)/g))
       if (!path!.includes("://") && !path!.startsWith("/") && !template.files.has(folder + path!))
         say(`it points at ${path!}, which is not beside it`);
+  }
+
+  const secret = template.mask.map((pattern) => new RegExp(pattern));
+  for (const [name, server] of Object.entries(template.file.servers)) {
+    const say = (says: string) => notes.push({ node: `server:${name}`, says });
+    const settings = settingsOf(server);
+    if (settings.some((text) => SKELETON.test(text))) say("it still holds the skeleton's words");
+    if (settings.some((text) => secret.some((pattern) => pattern.test(text))))
+      say("its settings hold what looks like a secret: name a variable as $NAME, and keep the secret on the machine");
+    if (!Object.values(template.file.roles).some((role) => role.servers?.[name])) say("no role is given it");
   }
 
   for (const [kind, asked] of [

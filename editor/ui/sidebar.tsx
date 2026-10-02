@@ -7,13 +7,14 @@ import { Icon } from "./icons.tsx";
 
 const FAMILIES: readonly { readonly name: string; readonly kinds: readonly GraphNode["kind"][] }[] = [
   { name: "Team", kinds: ["role", "human"] },
-  { name: "Equipment", kinds: ["skill", "tools"] },
+  { name: "Equipment", kinds: ["skill", "tools", "server"] },
   { name: "Attention", kinds: ["moment", "question"] },
   { name: "Flow", kinds: ["step"] },
 ];
 const MAKES: Readonly<Record<Makeable, { readonly label: string; readonly says: string }>> = {
   role: { label: "Role", says: "A seat in the team: what it may do and what it reads" },
   skill: { label: "Skill", says: "A craft a role opens when its moment comes" },
+  server: { label: "Outside server", says: "Tools from an MCP server that is not the team's" },
   step: { label: "Step", says: "A step of the team's flow, and what comes after it" },
   question: { label: "Reflex question", says: "One condition asked of an event of the record" },
   moment: { label: "Watch moment", says: "One condition asked of what a watched role says and does" },

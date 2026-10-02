@@ -1,9 +1,9 @@
-import type { Relation, Role } from "../../shared/contracts/profile.ts";
+import type { Relation, Role, Server } from "../../shared/contracts/profile.ts";
 import { type Step, withAbout, withEditor } from "./about.ts";
 import { flowText } from "./flow.ts";
 import type { Property, Wire } from "./graph.ts";
 import { readTemplate, type Template, type TemplateFiles } from "./read-template.ts";
-import { momentSkeleton, promptSkeleton, questionSkeleton, skillSkeleton } from "./skeletons.ts";
+import { momentSkeleton, promptSkeleton, questionSkeleton, serverSkeleton, skillSkeleton } from "./skeletons.ts";
 import { TOOL_GROUPS, toolsFollowing } from "./tool-groups.ts";
 import { deleteIn, renameItem, renameKey, setIn, type Value, withItem } from "./yaml-patch.ts";
 
@@ -130,6 +130,8 @@ export const wired =
         const tools = group.tools.reduce<string[]>((kept, tool) => having(kept, tool, on), [...role.tools]);
         return withFile(template.files, PROFILE, (text) => listed(text, role.name, "tools", tools));
       }
+      case "server":
+        return { refused: "a server is given with the tools of it the role may call: say which" };
       case "human": {
         const role = roles.get(nameIn(from))!;
         const told = setSpeaks(role.name, "human", on);
@@ -309,6 +311,72 @@ export function stepIdFor(steps: readonly Step[], name: string): string {
   for (let n = 2; taken.has(id); n++) id = `${base}-${n}`;
   return id;
 }
+
+/** An outside server from its skeleton, declared and given to no role yet. */
+export const addServer =
+  (name: string): Edit =>
+  (template) => {
+    if (!NAME.test(name))
+      return { refused: `a server's name is lower-case letters, digits and dashes: ${name} is not` };
+    if (Object.hasOwn(template.file.servers, name)) return { refused: `there is already a server named ${name}` };
+    return withFile(template.files, PROFILE, (text) => declared(template, text, name, serverSkeleton));
+  };
+
+/** How a server is started or reached, written over what was there; the roles given it keep it. */
+export const setServer =
+  (name: string, server: Server): Edit =>
+  (template) =>
+    withFile(template.files, PROFILE, (text) =>
+      declared(template, deleteIn(text, ["servers", name]), name, written(server)),
+    );
+
+/** A server's settings as its file keeps them: an empty list or map is left out. */
+function written(server: Server): Value {
+  const some = (values: Readonly<Record<string, string>>) => (Object.keys(values).length > 0 ? values : undefined);
+  const kept =
+    server.type === "stdio"
+      ? {
+          type: server.type,
+          command: server.command,
+          args: server.args.length > 0 ? server.args : undefined,
+          env: some(server.env),
+        }
+      : { type: server.type, url: server.url, headers: some(server.headers) };
+  return Object.fromEntries(Object.entries(kept).filter(([, value]) => value !== undefined)) as Value;
+}
+
+/** A server set down under `servers`, which the profile gains with its first one. */
+function declared(template: Template, text: string, name: string, server: Value): string {
+  const others = Object.keys(template.file.servers).filter((other) => other !== name);
+  return others.length > 0
+    ? setIn(text, ["servers", name], server)
+    : setIn(deleteIn(text, ["servers"]), ["servers"], { [name]: server });
+}
+
+/** Gives a role a server with the tools of it the role may call, or takes it away when none is named. */
+export const giveServer =
+  (role: string, server: string, tools: readonly string[]): Edit =>
+  (template) => {
+    const given = Object.keys(template.file.roles[role]!.servers ?? {}).filter((other) => other !== server);
+    return withFile(template.files, PROFILE, (text) => {
+      const path = ["roles", role, "servers"];
+      if (tools.length === 0) return given.length > 0 ? deleteIn(text, [...path, server]) : deleteIn(text, path);
+      return given.length > 0 || template.file.roles[role]!.servers?.[server]
+        ? setIn(text, [...path, server], tools)
+        : setIn(text, path, { [server]: tools });
+    });
+  };
+
+/** Takes a server away: its settings, and itself out of every role that was given it. */
+export const removeServer =
+  (name: string): Edit =>
+  (template) => {
+    const roles = Object.keys(template.file.roles).filter((role) => template.file.roles[role]!.servers?.[name]);
+    const taken = together(...roles.map((role) => giveServer(role, name, [])))(template);
+    if ("refused" in taken) return taken;
+    const last = Object.keys(template.file.servers).length === 1;
+    return withFile(taken, PROFILE, (text) => deleteIn(text, last ? ["servers"] : ["servers", name]));
+  };
 
 /** A file's text as a person wrote it, or a file put beside a skill. */
 export const putFile =

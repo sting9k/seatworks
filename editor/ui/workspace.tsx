@@ -17,13 +17,16 @@ import { notesOf } from "../template/checks.ts";
 import {
   addAsked,
   addRole,
+  addServer,
   addSkill,
   addStep,
   applied,
   duplicateRole,
   type Edit,
+  giveServer,
   removeAsked,
   removeRole,
+  removeServer,
   removeSkill,
   removeStep,
   renameTemplate,
@@ -48,7 +51,11 @@ type Size = { readonly width: number; readonly height: number };
 type WireEdge = Edge<{ readonly kind: Wire["kind"] }>;
 /** A socket a wire was pulled from: its kind, its node, and which end of the wire the node is. */
 type Pulled = { readonly kind: Wire["kind"]; readonly node: string; readonly end: "in" | "out" };
-type Asking = { readonly make: Makeable; readonly at: Point; readonly wire?: Pulled } | { readonly make: "name" };
+type Asking =
+  | { readonly make: Makeable; readonly at: Point; readonly wire?: Pulled }
+  | { readonly make: "name" }
+  /** A server being given to a role, which is done with the tools of it the role may call. */
+  | { readonly make: "give"; readonly server: string; readonly role: string };
 
 const QUESTIONS = "frame:questions";
 const FRAME = { pad: 14, title: 34 };
@@ -58,6 +65,7 @@ const ENDS: Readonly<Record<Wire["kind"], { readonly out: GraphNode["kind"]; rea
   spawns: { out: "role", in: "role" },
   skill: { out: "skill", in: "role" },
   tools: { out: "tools", in: "role" },
+  server: { out: "server", in: "role" },
   watches: { out: "moment", in: "role" },
   human: { out: "role", in: "human" },
   does: { out: "role", in: "step" },
@@ -66,6 +74,7 @@ const ENDS: Readonly<Record<Wire["kind"], { readonly out: GraphNode["kind"]; rea
 const ASKS: Readonly<Record<Makeable, { readonly title: string; readonly hint: string }>> = {
   role: { title: "Name the new role", hint: "lower-case letters, digits and dashes" },
   skill: { title: "Name the new skill", hint: "lower-case letters, digits and dashes" },
+  server: { title: "Name the new server", hint: "lower-case letters, digits and dashes" },
   step: { title: "Name the new step", hint: "what the step is called" },
   question: { title: "Name the new question", hint: "lower-case letters, digits and dashes" },
   moment: { title: "Name the new moment", hint: "lower-case letters, digits and dashes" },
@@ -207,13 +216,23 @@ function Opened({ template, opened, changed, canUndo, canRedo, onChange, onUndo,
         ? addRole(name)
         : kind === "skill"
           ? addSkill(name)
-          : kind === "step"
-            ? addStep(name)
-            : addAsked(kind, name);
-    const joined = wire
-      ? wired(wire.kind, wire.end === "out" ? wire.node : id, wire.end === "out" ? id : wire.node, true)
-      : null;
+          : kind === "server"
+            ? addServer(name)
+            : kind === "step"
+              ? addStep(name)
+              : addAsked(kind, name);
+    // A server's wire is drawn afterwards, with the tools it gives: there is none to name before the server is.
+    const joined =
+      wire && wire.kind !== "server"
+        ? wired(wire.kind, wire.end === "out" ? wire.node : id, wire.end === "out" ? id : wire.node, true)
+        : null;
     change(joined ? together(add, joined) : add, new Map([[id, at]]));
+  };
+  /** Joins two nodes by a wire of a kind; a server's asks first which of its tools the role may call. */
+  const join = (kind: Wire["kind"], from: string, to: string) => {
+    if (kind === "server")
+      setAsking({ make: "give", server: from.slice("server:".length), role: to.slice("role:".length) });
+    else change(wired(kind, from, to, true));
   };
   const editing: Editing = {
     change,
@@ -330,7 +349,7 @@ function Opened({ template, opened, changed, canUndo, canRedo, onChange, onUndo,
                 )
               }
               onConnect={(wire) => {
-                change(wired(kindOfSocket(wire.sourceHandle), wire.source, wire.target, true));
+                join(kindOfSocket(wire.sourceHandle), wire.source, wire.target);
               }}
               onConnectEnd={(event, ended) => {
                 if (ended.isValid || ended.toNode || !ended.fromHandle) return;
@@ -349,7 +368,11 @@ function Opened({ template, opened, changed, canUndo, canRedo, onChange, onUndo,
                 const ids = new Set(gone.map((node) => node.id));
                 const cut = goneEdges.filter((edge) => edge.selected && !ids.has(edge.source) && !ids.has(edge.target));
                 const edits = [
-                  ...cut.map((edge) => wired(edge.data!.kind, edge.source, edge.target, false)),
+                  ...cut.map((edge) =>
+                    edge.data!.kind === "server"
+                      ? giveServer(edge.target.slice("role:".length), edge.source.slice("server:".length), [])
+                      : wired(edge.data!.kind, edge.source, edge.target, false),
+                  ),
                   ...gone.flatMap((node) => removal(node) ?? []),
                 ];
                 if (edits.length > 0) change(together(...edits));
@@ -487,7 +510,7 @@ function Opened({ template, opened, changed, canUndo, canRedo, onChange, onUndo,
             join: (other) => {
               setPulled(null);
               const [from, to] = pulled.end === "out" ? [pulled.node, other] : [other, pulled.node];
-              change(wired(pulled.kind, from, to, true));
+              join(pulled.kind, from, to);
             },
             make: (kind) => {
               setPulled(null);
@@ -496,7 +519,23 @@ function Opened({ template, opened, changed, canUndo, canRedo, onChange, onUndo,
           })}
         />
       ) : null}
-      {asking?.make === "name" ? (
+      {asking?.make === "give" ? (
+        <AskName
+          title={`Which tools of ${asking.server} may ${asking.role} call?`}
+          hint="their names, separated by commas"
+          onClose={() => {
+            setAsking(null);
+          }}
+          onName={(names) => {
+            setAsking(null);
+            const tools = names
+              .split(",")
+              .map((tool) => tool.trim())
+              .filter((tool) => tool !== "");
+            change(giveServer(asking.role, asking.server, tools));
+          }}
+        />
+      ) : asking?.make === "name" ? (
         <AskName
           title="Rename the template"
           hint="its name in the gallery"
@@ -535,6 +574,8 @@ function removal(node: GraphNode): Edit | null {
       return removeSkill(node.name);
     case "step":
       return removeStep(node.id.slice("step:".length));
+    case "server":
+      return removeServer(node.name);
     case "question":
     case "moment":
       return removeAsked(node.kind, node.name);
@@ -673,7 +714,10 @@ function framed(
   ];
 }
 
-/** A wire that gives a role only part of a group says how much of it, since the group's node lists it whole. */
+/**
+ * A wire that gives a role only part of a group says how much of it, since the group's node lists it whole; a
+ * server's wire says the tools it gives, since nothing else on the graph does.
+ */
 function edgesOf(graph: Graph): WireEdge[] {
   const groupSize = new Map(
     graph.nodes.flatMap((node) => (node.kind === "tools" ? [[node.id, node.tools.length]] : [])),
@@ -688,6 +732,8 @@ function edgesOf(graph: Graph): WireEdge[] {
     data: { kind: wire.kind },
     ...(wire.kind === "tools" && wire.tools.length < groupSize.get(wire.from)!
       ? { label: `${wire.tools.length} of ${groupSize.get(wire.from)!}` }
-      : {}),
+      : wire.kind === "server"
+        ? { label: wire.tools.join(", ") }
+        : {}),
   }));
 }

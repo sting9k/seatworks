@@ -50,6 +50,9 @@ export const momentSkeleton = {
   consider: 0.5,
 } as const;
 
+/** An outside server starts as one a person must still say how to start. */
+export const serverSkeleton = { type: "stdio", command: "_the-command-that-starts-it_" } as const;
+
 export const skillSkeleton = (skill: string) => `---
 name: ${skill}
 description: "_What it does. Use when it applies; not for what it does not cover._"

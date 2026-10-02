@@ -100,6 +100,7 @@ function Role({ data: { node } }: NodeProps<FlowNode<"role">>) {
           <Socket kind="spawns" end="in" label="seated by" />
           <Socket kind="skill" end="in" label="skills" />
           <Socket kind="tools" end="in" label="more tools" />
+          <Socket kind="server" end="in" label="servers" />
           <Socket kind="watches" end="in" label="moments" />
         </div>
         <div>
@@ -246,6 +247,9 @@ const Skill = ({ data: { node } }: NodeProps<FlowNode<"skill">>) => (
 const Tools = ({ data: { node } }: NodeProps<FlowNode<"tools">>) => (
   <Compact node={node} title={`${node.name} · ${node.tools.length}`} plug="tools" />
 );
+const Server = ({ data: { node } }: NodeProps<FlowNode<"server">>) => (
+  <Compact node={node} title={node.name} plug="server" />
+);
 const Question = ({ data: { node } }: NodeProps<FlowNode<"question">>) => (
   <Compact node={node} title={node.name} {...(node.active ? {} : { quiet: "not asked" })} />
 );
@@ -264,6 +268,7 @@ export const NODE_TYPES = {
   human: Human,
   skill: Skill,
   tools: Tools,
+  server: Server,
   question: Question,
   moment: Moment,
   step: Step,

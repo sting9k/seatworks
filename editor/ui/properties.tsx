@@ -1,6 +1,17 @@
 import { type ReactNode, useState } from "react";
 import { TEMPLATES } from "../gallery/templates.ts";
-import { putFile, renameAsked, renameRole, renameSkill, setAsked, setModels, setStep } from "../template/edits.ts";
+import type { Server } from "../../shared/contracts/profile.ts";
+import {
+  giveServer,
+  putFile,
+  renameAsked,
+  renameRole,
+  renameSkill,
+  setAsked,
+  setModels,
+  setServer,
+  setStep,
+} from "../template/edits.ts";
 import { type GraphNode, graphOf } from "../template/graph.ts";
 import { readTemplate, type Template } from "../template/read-template.ts";
 import { useEditing, useNotes } from "./editing.ts";
@@ -15,6 +26,7 @@ const KIND: Readonly<Record<GraphNode["kind"], string>> = {
   question: "Reflex question",
   moment: "Watch moment",
   step: "Step",
+  server: "Outside server",
 };
 
 const EARNED = {
@@ -253,7 +265,117 @@ function About({
     }
     case "step":
       return <StepFields node={node} />;
+    case "server": {
+      const server = template.file.servers[node.name]!;
+      const given = Object.entries(template.file.roles).flatMap(([role, spec]) =>
+        spec.servers?.[node.name] ? [{ role, tools: spec.servers[node.name]! }] : [],
+      );
+      return (
+        <>
+          <ServerFields
+            key={JSON.stringify(server)}
+            server={server}
+            onSet={(next) => {
+              change(setServer(node.name, next));
+            }}
+          />
+          <p className="hint">
+            A secret is never written here: name a variable as $NAME and keep the secret on the machine.
+            {node.variables.length > 0 ? ` It reads ${node.variables.map((name) => `$${name}`).join(", ")}.` : ""}
+          </p>
+          {given.map(({ role, tools }) => (
+            <Line
+              key={role}
+              label={role}
+              value={tools.join(", ")}
+              onSet={(names) => {
+                change(giveServer(role, node.name, listOf(names, ",")));
+              }}
+            />
+          ))}
+        </>
+      );
+    }
   }
+}
+
+const listOf = (text: string, by: string | RegExp) =>
+  text
+    .split(by)
+    .map((part) => part.trim())
+    .filter((part) => part !== "");
+/** `KEY=VALUE` lines as the map they write, and back. */
+const pairsOf = (text: string) =>
+  Object.fromEntries(
+    listOf(text, "\n").flatMap((line) =>
+      line.includes("=") ? [[line.slice(0, line.indexOf("=")).trim(), line.slice(line.indexOf("=") + 1).trim()]] : [],
+    ),
+  );
+const linesOf = (pairs: Readonly<Record<string, string>>) =>
+  Object.entries(pairs)
+    .map(([key, value]) => `${key}=${value}`)
+    .join("\n");
+
+/** How a server is started or reached, set when the person leaves a field. */
+function ServerFields({ server, onSet }: { server: Server; onSet: (server: Server) => void }) {
+  const [pairs, setPairs] = useState(linesOf(server.type === "stdio" ? server.env : server.headers));
+  const kept = pairsOf(pairs);
+  return (
+    <>
+      <div className="tabs">
+        {(["stdio", "http", "sse"] as const).map((type) => (
+          <button
+            key={type}
+            type="button"
+            className={server.type === type ? "on" : ""}
+            onClick={() => {
+              if (type === server.type) return;
+              onSet(
+                type === "stdio"
+                  ? { type, command: "_the-command-that-starts-it_", args: [], env: {} }
+                  : { type, url: server.type === "stdio" ? "_its-address_" : server.url, headers: kept },
+              );
+            }}
+          >
+            {type}
+          </button>
+        ))}
+      </div>
+      {server.type === "stdio" ? (
+        <Line
+          label="Command"
+          value={[server.command, ...server.args].join(" ")}
+          onSet={(text) => {
+            const [command, ...args] = listOf(text, /\s+/);
+            if (command !== undefined) onSet({ ...server, command, args });
+          }}
+        />
+      ) : (
+        <Line
+          label="Address"
+          value={server.url}
+          onSet={(url) => {
+            if (url !== "") onSet({ ...server, url });
+          }}
+        />
+      )}
+      <label className="line tall">
+        <span>{server.type === "stdio" ? "Environment" : "Headers"}, a line each as NAME=value</span>
+        <textarea
+          value={pairs}
+          rows={3}
+          spellCheck={false}
+          onChange={(event) => {
+            setPairs(event.target.value);
+          }}
+          onBlur={() => {
+            if (pairs === linesOf(server.type === "stdio" ? server.env : server.headers)) return;
+            onSet(server.type === "stdio" ? { ...server, env: kept } : { ...server, headers: kept });
+          }}
+        />
+      </label>
+    </>
+  );
 }
 
 function StepFields({ node }: { node: Extract<GraphNode, { kind: "step" }> }) {

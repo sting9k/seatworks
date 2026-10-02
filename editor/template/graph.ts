@@ -1,4 +1,4 @@
-import type { Relation, Role } from "../../shared/contracts/profile.ts";
+import { type Relation, type Role, variablesNamed } from "../../shared/contracts/profile.ts";
 import { alwaysOnWords } from "./checks.ts";
 import type { Asked, Template } from "./read-template.ts";
 import { TOOL_GROUPS } from "./tool-groups.ts";
@@ -57,7 +57,16 @@ export type GraphNode =
       readonly active: boolean;
       readonly file: string;
     }
-  | { readonly kind: "step"; readonly id: string; readonly name: string; readonly text: string };
+  | { readonly kind: "step"; readonly id: string; readonly name: string; readonly text: string }
+  | {
+      readonly kind: "server";
+      readonly id: string;
+      readonly name: string;
+      /** The command it runs, or the address it calls. */
+      readonly runs: string;
+      readonly variables: readonly string[];
+      readonly file: string;
+    };
 
 export type Wire =
   | {
@@ -65,7 +74,13 @@ export type Wire =
       readonly from: string;
       readonly to: string;
     }
-  | { readonly kind: "tools"; readonly from: string; readonly to: string; readonly tools: readonly string[] };
+  | {
+      /** A group of the team's tools, or an outside server, with the tools of it the role is given. */
+      readonly kind: "tools" | "server";
+      readonly from: string;
+      readonly to: string;
+      readonly tools: readonly string[];
+    };
 
 export type Graph = { readonly nodes: readonly GraphNode[]; readonly wires: readonly Wire[] };
 
@@ -103,6 +118,22 @@ export function graphOf(template: Template): Graph {
     for (const role of roles) {
       const tools = group.tools.filter((tool) => role.tools.has(tool));
       if (tools.length > 0) wires.push({ kind: "tools", from: id, to: roleId(role.name), tools });
+    }
+  }
+
+  for (const [name, server] of Object.entries(template.file.servers)) {
+    const id = `server:${name}`;
+    nodes.push({
+      kind: "server",
+      id,
+      name,
+      runs: server.type === "stdio" ? [server.command, ...server.args].join(" ") : server.url,
+      variables: variablesNamed([server]),
+      file: "profile.yaml",
+    });
+    for (const [role, spec] of Object.entries(template.file.roles)) {
+      const tools = spec.servers?.[name];
+      if (tools) wires.push({ kind: "server", from: id, to: roleId(role), tools });
     }
   }
 

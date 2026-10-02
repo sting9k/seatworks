@@ -29,6 +29,21 @@ const ServerSchema = z.discriminatedUnion("type", [
 ]);
 export type Server = z.infer<typeof ServerSchema>;
 
+/** A variable named in a server's settings, as a profile writes one: `$NAME`. */
+export const VARIABLE = /\$([A-Za-z_][A-Za-z0-9_]*)/g;
+
+/** Every text of a server's settings that a variable may be named in, or a secret wrongly written. */
+export const settingsOf = (server: Server): string[] =>
+  server.type === "stdio"
+    ? [server.command, ...server.args, ...Object.values(server.env)]
+    : [server.url, ...Object.values(server.headers)];
+
+/** Every environment variable the servers name, for the Human to see what a profile reads of their machine. */
+export function variablesNamed(servers: readonly Server[]): string[] {
+  const texts = servers.flatMap(settingsOf);
+  return [...new Set(texts.flatMap((text) => [...text.matchAll(VARIABLE)].map((found) => found[1]!)))].sort();
+}
+
 const RoleSchema = z
   .object({
     root: z.boolean().optional(),

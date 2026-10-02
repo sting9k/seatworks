@@ -4,6 +4,9 @@ import { notesOf } from "../../editor/template/checks.ts";
 import {
   addAsked,
   addRole,
+  addServer,
+  giveServer,
+  setServer,
   applied,
   type Edit,
   putFile,
@@ -187,4 +190,30 @@ test("a question reworded after its threshold was earned is shown as not yet ear
       "question:names-method: its words changed since its threshold was earned, so it is not yet earned",
     ),
   );
+});
+
+test("an outside server draws a note while it is its skeleton, while no role is given it, and when a secret is written in it", () => {
+  const about = (template: Template) => notes(template).filter((note) => note.startsWith("server:tickets"));
+  const declared = changed(slp, addServer("tickets"));
+  assert.deepEqual(about(declared), [
+    "server:tickets: it still holds the skeleton's words",
+    "server:tickets: no role is given it",
+  ]);
+
+  const named = changed(
+    declared,
+    together(
+      setServer("tickets", { type: "stdio", command: "npx", args: ["tickets"], env: { TOKEN: "$TICKETS_TOKEN" } }),
+      giveServer("lead", "tickets", ["search"]),
+    ),
+  );
+  assert.deepEqual(about(named), []);
+
+  const written = changed(
+    named,
+    setServer("tickets", { type: "stdio", command: "npx", args: ["tickets"], env: { TOKEN: "AKIAABCDEFGHIJKLMNOP" } }),
+  );
+  assert.deepEqual(about(written), [
+    "server:tickets: its settings hold what looks like a secret: name a variable as $NAME, and keep the secret on the machine",
+  ]);
 });

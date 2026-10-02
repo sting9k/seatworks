@@ -1,12 +1,12 @@
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { variablesNamed } from "../../shared/contracts/profile.ts";
 import type { TemplateOffer } from "../../shared/contracts/rpc.ts";
 import { unpacked } from "../../shared/contracts/template.ts";
 import { loadReflex } from "../satellites/reflex/config.ts";
 import { type Bundle, loadBundle } from "./bundle.ts";
 import { profilesDir } from "./profiles.ts";
-import { variablesNamed } from "./servers.ts";
 
 /**
  * What installing a shared template would bring to this machine, for the Human to read before it is theirs. Its

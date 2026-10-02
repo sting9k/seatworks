@@ -2,9 +2,13 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   addRole,
+  addServer,
   addSkill,
   addStep,
   applied,
+  giveServer,
+  removeServer,
+  setServer,
   type Edit,
   removeRole,
   removeSkill,
@@ -235,4 +239,39 @@ test("a question renamed keeps its place in its file and in the list of those as
   );
   const node = graphOf(after).nodes.find((candidate) => candidate.id === "question:states-a-cause");
   assert.ok(node?.kind === "question" && node.active);
+});
+
+test("an outside server is declared, said how to reach, given to a role with the tools it may call, and taken away leaving every file as it was", () => {
+  const declared = changed(slp, addServer("tickets"));
+  assert.ok(graphOf(declared).nodes.some((node) => node.id === "server:tickets"));
+  assert.deepEqual(filesChanged(slp, declared), ["profile.yaml"]);
+
+  const reached = changed(
+    declared,
+    setServer("tickets", {
+      type: "http",
+      url: "https://tickets.example/mcp",
+      headers: { Authorization: "Bearer $TICKETS_TOKEN" },
+    }),
+  );
+  const node = graphOf(reached).nodes.find((candidate) => candidate.id === "server:tickets");
+  assert.ok(node?.kind === "server");
+  assert.equal(node.runs, "https://tickets.example/mcp");
+  assert.deepEqual(node.variables, ["TICKETS_TOKEN"]);
+
+  const drawn = applied(reached, wired("server", "server:tickets", "role:lead", true));
+  assert.ok(!drawn.ok);
+  assert.match(drawn.says, /say which/);
+  const given = changed(reached, giveServer("lead", "tickets", ["search", "create_issue"]));
+  assert.deepEqual(
+    graphOf(given).wires.filter((wire) => wire.kind === "server"),
+    [{ kind: "server", from: "server:tickets", to: "role:lead", tools: ["search", "create_issue"] }],
+  );
+  assert.ok(ticked(graphOf(given), "lead").length > 0);
+
+  const fewer = changed(given, giveServer("lead", "tickets", ["search"]));
+  assert.deepEqual(linesChanged(given, fewer, "profile.yaml"), ["      tickets: [search]"]);
+
+  const gone = changed(fewer, removeServer("tickets"));
+  assert.deepEqual(filesChanged(slp, gone), []);
 });

@@ -26,6 +26,6 @@ export const NotesContext = createContext<readonly Note[]>([]);
 export const useNotes = (node: string) => useContext(NotesContext).filter((note) => note.node === node);
 
 /** The kinds of node a person adds and takes away; the others are fixed parts of every template. */
-export const MAKEABLE = ["role", "skill", "step", "question", "moment"] as const;
+export const MAKEABLE = ["role", "skill", "server", "step", "question", "moment"] as const;
 export type Makeable = (typeof MAKEABLE)[number];
 export const isMakeable = (kind: string): kind is Makeable => (MAKEABLE as readonly string[]).includes(kind);

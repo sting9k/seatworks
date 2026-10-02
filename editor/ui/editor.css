@@ -22,6 +22,7 @@
   --wire-tools: #74a9ff;
   --wire-watches: #b592f7;
   --wire-does: #e8d24a;
+  --wire-server: #6fd3e8;
   --wire-then: #ff8a5c;
   --wire-none: #8d8d94;
   font:
@@ -133,6 +134,9 @@ hr {
 }
 .kind-step {
   background: var(--wire-then);
+}
+.kind-server {
+  background: var(--wire-server);
 }
 
 /* The shell: tabs over everything */
@@ -353,6 +357,12 @@ hr {
 }
 .cover .stroke-does {
   stroke: var(--wire-does);
+}
+.cover .stroke-server {
+  stroke: var(--wire-server);
+}
+.cover .fill-server {
+  fill: var(--wire-server);
 }
 .cover .stroke-then {
   stroke: var(--wire-then);
@@ -1100,6 +1110,9 @@ details[open] > summary.section > .icon:first-child {
 .plug.wire-does {
   background: var(--wire-does);
 }
+.plug.wire-server {
+  background: var(--wire-server);
+}
 .plug.wire-then {
   background: var(--wire-then);
 }
@@ -1114,6 +1127,7 @@ details[open] > summary.section > .icon:first-child {
 .canvas[data-wiring="tools"] .plug.wire-tools,
 .canvas[data-wiring="watches"] .plug.wire-watches,
 .canvas[data-wiring="does"] .plug.wire-does,
+.canvas[data-wiring="server"] .plug.wire-server,
 .canvas[data-wiring="then"] .plug.wire-then {
   opacity: 1;
   scale: 1.35;
@@ -1147,6 +1161,9 @@ details[open] > summary.section > .icon:first-child {
 }
 .react-flow__edge.wire-does .react-flow__edge-path {
   stroke: var(--wire-does);
+}
+.react-flow__edge.wire-server .react-flow__edge-path {
+  stroke: var(--wire-server);
 }
 .react-flow__edge.wire-then .react-flow__edge-path {
   stroke: var(--wire-then);

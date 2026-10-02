@@ -1,18 +1,5 @@
-import type { Server } from "../../shared/contracts/profile.ts";
+import { VARIABLE, variablesNamed } from "../../shared/contracts/profile.ts";
 import type { Grant } from "./bundle.ts";
-
-/** A variable named in a server's settings, as a profile writes one: `$NAME`. */
-const NAMED = /\$([A-Za-z_][A-Za-z0-9_]*)/g;
-
-/** Every environment variable the servers name, for the Human to see what a profile reads of their machine. */
-export function variablesNamed(servers: readonly Server[]): string[] {
-  const texts = servers.flatMap((server) =>
-    server.type === "stdio"
-      ? [server.command, ...server.args, ...Object.values(server.env)]
-      : [server.url, ...Object.values(server.headers)],
-  );
-  return [...new Set(texts.flatMap((text) => [...text.matchAll(NAMED)].map((found) => found[1]!)))].sort();
-}
 
 /**
  * A role's servers with each variable they name filled in from the environment, or the first one that names a
@@ -27,7 +14,7 @@ export function filledIn(
     const missing = variablesNamed([grant.server]).find((name) => (env[name] ?? "") === "");
     if (missing !== undefined)
       return { ok: false, says: `the outside server ${grant.name} reads $${missing}, which is not set` };
-    const fill = (text: string) => text.replace(NAMED, (_, name: string) => env[name]!);
+    const fill = (text: string) => text.replace(VARIABLE, (_, name: string) => env[name]!);
     const each = (values: Readonly<Record<string, string>>) =>
       Object.fromEntries(Object.entries(values).map(([key, value]) => [key, fill(value)]));
     const { server } = grant;

@@ -6,8 +6,8 @@ ComfyUI: picked from a gallery, opened as a graph, changed, and run. `EDITOR.md`
 this says what a template is, what the plugin reads of it, and how it reaches a machine.
 
 Built so far: the editor (`EDITOR.md`, steps 1 and 2 below), step 3, what the plugin reads of a template and how
-one reaches a machine, and of step 4 the plugin's part: a role is given outside tool servers. The editor does not
-draw one yet, and the gallery and the report's sections are not built. The order it is built in
+one reaches a machine, and step 4, outside tool servers, in the plugin and in the editor. The gallery and the
+report's sections are not built. The order it is built in
 is at the end. A change it asks of another spec file is listed under What this changes, and is made in the commit that
 builds it, so a spec and the code never disagree.
 
