@@ -65,7 +65,12 @@ export function Home({ listed, problem, attaching, theme, onProject, onAttach, o
         )}
       </SettingsSection>
       <SettingsSection title="Attach a project">
-        {!listed ? null : unattached.length > 0 ? (
+        {!listed ? null : profiles.length === 0 ? (
+          <Text style={muted}>
+            No template is installed yet, and a team works by one. Open Plugin below and install one under Templates:
+            one comes with Seatworks.
+          </Text>
+        ) : unattached.length > 0 ? (
           <DisclosureList
             theme={theme}
             open={choosing}

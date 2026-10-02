@@ -87,7 +87,7 @@ type Props = {
   readonly template: Template;
   /** Its files as they were opened, to tell what has gone from it since. */
   readonly opened: Template["files"];
-  /** The fewest and the most words a role of the shipped template reads every turn, when the gallery has it. */
+  /** The fewest and the most words a role of SLP reads every turn, when the gallery has it. */
   readonly mark: Mark | null;
   /** Whether it holds a change that has not been exported. */
   readonly changed: boolean;

@@ -1,13 +1,12 @@
 import { existsSync, statSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { alwaysOnWords, notesOf } from "../editor/template/checks.ts";
-import { packed } from "../editor/template/pack.ts";
 import { readTemplate } from "../editor/template/read-template.ts";
 import { loadBundle } from "../server/profile/bundle.ts";
 import { loadReflex } from "../server/satellites/reflex/config.ts";
 import { variablesNamed } from "../shared/contracts/profile.ts";
-import { installName } from "../shared/contracts/template.ts";
-import { filesUnder } from "./template-files.ts";
+import { installName, packed } from "../shared/contracts/template.ts";
+import { filesUnder } from "../server/profile/template-files.ts";
 
 /** `check <dir>` and `pack <dir> <file>`: loads a template as the editor and the plugin do, and prints its notes. */
 

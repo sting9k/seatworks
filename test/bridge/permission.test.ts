@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { after, test } from "node:test";
 import { Plugin } from "../../server/bridge/plugin.ts";
 import { fakePaseo } from "./fake-paseo.ts";
+import { stateRoot } from "./state-root.ts";
 
 const pluginDir = join(import.meta.dirname, "../..");
 const plugins: Plugin[] = [];
@@ -23,7 +24,7 @@ test("a permission answered in the agent's own prompt leaves nothing waiting, an
   writeFileSync(join(repo, "a.txt"), "a\n");
   git("add", ".");
   git("commit", "-q", "-m", "start");
-  const plugin = new Plugin(mkdtempSync(join(tmpdir(), "sw-root-")));
+  const plugin = new Plugin(stateRoot());
   plugins.push(plugin);
   const paseo = fakePaseo(pluginDir);
   plugin.saw(paseo.api);

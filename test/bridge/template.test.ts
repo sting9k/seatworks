@@ -9,20 +9,21 @@ import { PROJECT_LABEL } from "../../shared/contracts/ids.ts";
 import { loadBundle } from "../../server/profile/bundle.ts";
 import { agentTools } from "./agent-tools.ts";
 import { fakePaseo } from "./fake-paseo.ts";
+import { stateRoot } from "./state-root.ts";
 
 // Each case is a row of spec/CONFORMANCE.md, Templates.
 
 const pluginDir = join(import.meta.dirname, "../..");
-const shipped = join(pluginDir, "profile", "slp");
+const slp = join(pluginDir, "templates", "slp");
 const plugins: Plugin[] = [];
 after(async () => {
   for (const p of plugins) await p.dispose();
 });
 
-/** A copy of the shipped profile to change, in a directory of its own. */
+/** A copy of SLP to change, in a directory of its own. */
 function profileCopy(): string {
   const dir = mkdtempSync(join(tmpdir(), "sw-profile-"));
-  cpSync(shipped, dir, { recursive: true });
+  cpSync(slp, dir, { recursive: true });
   return dir;
 }
 
@@ -58,11 +59,11 @@ function repository(): string {
   return repo;
 }
 
-/** A state root with one profile installed under `name`: the shipped one, changed. */
+/** A state root with SLP installed, and SLP again, changed, under `name`: in its place when the name is its own. */
 function rootWith(name: string, change: (dir: string) => void): string {
-  const root = mkdtempSync(join(tmpdir(), "sw-root-"));
+  const root = stateRoot();
   const dir = join(root, "profiles", name);
-  cpSync(shipped, dir, { recursive: true });
+  cpSync(slp, dir, { recursive: true });
   change(dir);
   return root;
 }
@@ -112,19 +113,25 @@ test("two projects attached with different profiles each run their own, and the 
   const { plugin, paseo } = await started(root);
 
   assert.deepEqual(
-    (await plugin.profiles()).map((profile) => `${profile.name}: ${profile.title}`),
+    plugin.profiles().map((profile) => `${profile.name}: ${profile.title}`),
     ["crew: Crew", "slp: SLP"],
   );
-  const shippedOne = await plugin.openProject(repository(), "main");
-  const crewOne = await plugin.openProject(repository(), "main", "crew");
+  const unnamed = plugin.attaching(repository(), undefined);
+  assert.ok(!unnamed.ok);
+  assert.match(unnamed.says, /more than one template is installed: attach from Seatworks' page, which asks which/);
+  const slpOne = await plugin.openProject(repository(), "main", "slp");
+  const crewRepo = repository();
+  const crewOne = await plugin.openProject(crewRepo, "main", "crew");
   await plugin.idle();
 
   const promptOf = (project: string) => paseo.created.find((agent) => agent.labels[PROJECT_LABEL] === project)!;
-  assert.match(promptOf(shippedOne.project).systemPrompt, /^# Supervisor/);
-  assert.doesNotMatch(promptOf(shippedOne.project).systemPrompt, /Keep the deck clear/);
+  assert.match(promptOf(slpOne.project).systemPrompt, /^# Supervisor/);
+  assert.doesNotMatch(promptOf(slpOne.project).systemPrompt, /Keep the deck clear/);
   assert.match(promptOf(crewOne.project).systemPrompt, /^# Captain of the crew[\s\S]*Keep the deck clear\./);
 
   await assert.rejects(plugin.openProject(repository(), "main", "no-such"), /no profile named no-such/);
+  const again = await plugin.openProject(crewRepo, "main");
+  assert.equal(again.project, crewOne.project, "one attached already is opened again with no profile named");
 });
 
 test("a role taken out of a profile while an agent sits in it: the project runs on, the agent is told why its tools are refused, and the Human sees it", async () => {
@@ -171,7 +178,7 @@ servers:
     args: [-y, some-ticket-server]
     env: { TOKEN: $SW_TEST_TICKETS_TOKEN, REGION: eu }
 `;
-/** The shipped profile with an outside server declared and given to the root, with two of its tools. */
+/** SLP with an outside server declared and given to the root, with two of its tools. */
 const withTickets = (dir: string) => {
   rewrite(
     join(dir, "profile.yaml"),

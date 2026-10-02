@@ -7,6 +7,7 @@ import { after, test } from "node:test";
 import { Plugin } from "../../server/bridge/plugin.ts";
 import { agentTools } from "./agent-tools.ts";
 import { fakePaseo } from "./fake-paseo.ts";
+import { stateRoot } from "./state-root.ts";
 
 const pluginDir = join(import.meta.dirname, "../..");
 const git = (cwd: string, ...args: string[]) =>
@@ -30,7 +31,7 @@ test("the Human attaches a Paseo project, clears what a dropped task left, and r
   git(repo, "commit", "-q", "-m", "start");
   writeFileSync(join(repo, "b.txt"), "the Human's own, staged\n");
   git(repo, "add", "b.txt");
-  const root = mkdtempSync(join(tmpdir(), "sw-root-"));
+  const root = stateRoot();
   const plugin = new Plugin(root);
   plugins.push(plugin);
   const paseo = fakePaseo(pluginDir);
@@ -157,7 +158,7 @@ function repoWith(name: string) {
 
 test("a removal that stops part way leaves the project attached with its note, and trying again removes it", async () => {
   const repo = repoWith("halfway");
-  const root = mkdtempSync(join(tmpdir(), "sw-root-"));
+  const root = stateRoot();
   const plugin = new Plugin(root);
   plugins.push(plugin);
   const paseo = fakePaseo(pluginDir);
@@ -185,7 +186,7 @@ test("a removal that stops part way leaves the project attached with its note, a
 test("removing a project whose repository is gone lets it go from memory, and frees the machine it held", async () => {
   const gone = repoWith("gone");
   const other = repoWith("other");
-  const root = mkdtempSync(join(tmpdir(), "sw-root-"));
+  const root = stateRoot();
   const plugin = new Plugin(root);
   plugins.push(plugin);
   const paseo = fakePaseo(pluginDir);

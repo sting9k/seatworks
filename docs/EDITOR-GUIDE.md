@@ -21,7 +21,7 @@ export.
 
 ## The gallery
 
-The first tab, **Templates**, lists the templates there are. SLP, the one Seatworks ships, is always there.
+The first tab, **Templates**, lists the templates there are. SLP, the one that comes with Seatworks, is always there.
 
 - **Open** on a card opens that template in a tab of its own.
 - **Open a file** opens a template someone shared with you, a `.template.json` file.

@@ -43,7 +43,7 @@ const filesChanged = (after: Template) =>
     .filter((path) => slp.files.get(path) !== after.files.get(path))
     .sort();
 
-test("the shipped SLP template draws no note", () => {
+test("SLP as it comes draws no note", () => {
   assert.deepEqual(notes(slp), []);
 });
 

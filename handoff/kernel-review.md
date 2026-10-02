@@ -69,7 +69,7 @@ The kernel suite passes (36/36), but I found 13 real defects. Every "ran" findin
 - **LEDGER §3 closes a permission when "the asking actor gone";** the code does not.
 - **Argument and effect shapes differ from LEDGER:** `publish_requested`'s effect lacks `expectedSha`; LEDGER names `amend_brief`'s argument `via`, the code `cites`; LEDGER gives `attend` a `scope` argument, the code has none.
 - **`HumanViewSchema.lanes.owes` says it counts attentions** (`rpc.ts`); `human.ts:154` counts obligations only.
-- **No role in `profile/slp/profile.yaml` has `reopen_finding`,** so the kept → raised move in KERNEL §4.4 is unreachable.
+- **No role in `templates/slp/profile.yaml` has `reopen_finding`,** so the kept → raised move in KERNEL §4.4 is unreachable.
 
 ### Unverified
 

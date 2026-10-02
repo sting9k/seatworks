@@ -41,20 +41,20 @@ export const namedBy = (bundle: Bundle): string[] =>
   [...new Set([...bundle.profile.roles.values()].flatMap((role) => role.models))].sort();
 
 /** The names a listed profile's roles give; only a listed name is joined into a path, since it comes from the surface. */
-function namedIn(pluginDir: string, stateRoot: string, profile: string): { ok: true; named: string[] } | Refused {
-  if (!listProfiles(pluginDir, stateRoot).some((listed) => listed.name === profile))
+function namedIn(stateRoot: string, profile: string): { ok: true; named: string[] } | Refused {
+  if (!listProfiles(stateRoot).some((listed) => listed.name === profile))
     return { ok: false, says: `no profile named ${profile} is installed` };
   try {
-    return { ok: true, named: namedBy(loadBundle(profilePath(pluginDir, stateRoot, profile)!)) };
+    return { ok: true, named: namedBy(loadBundle(profilePath(stateRoot, profile)!)) };
   } catch (error) {
     return { ok: false, says: `${profile} does not load: ${error instanceof Error ? error.message : String(error)}` };
   }
 }
 
 /** Every profile a project may be attached with, each with what its agent profiles run on here. */
-export function agentsByProfile(pluginDir: string, stateRoot: string, has: readonly Has[]): ProfileAgents[] {
-  return listProfiles(pluginDir, stateRoot).map(({ name, title }) => {
-    const read = namedIn(pluginDir, stateRoot, name);
+export function agentsByProfile(stateRoot: string, has: readonly Has[]): ProfileAgents[] {
+  return listProfiles(stateRoot).map(({ name, title }) => {
+    const read = namedIn(stateRoot, name);
     if (!read.ok) return { name, title, problem: read.says, agents: [] };
     const kept = matchingOf(matchingFile(stateRoot, name));
     const agents = read.named.map((agent) => {
@@ -67,13 +67,12 @@ export function agentsByProfile(pluginDir: string, stateRoot: string, has: reado
 
 /** Keeps the Human's matching for a profile in place of the one before, or refuses it whole and keeps nothing. */
 export function match(
-  pluginDir: string,
   stateRoot: string,
   profile: string,
   matching: Matching,
   has: readonly Has[],
 ): { readonly ok: true } | Refused {
-  const read = namedIn(pluginDir, stateRoot, profile);
+  const read = namedIn(stateRoot, profile);
   if (!read.ok) return read;
   for (const [agent, runs] of Object.entries(matching)) {
     if (!read.named.includes(agent)) return { ok: false, says: `${agent} is not an agent profile ${profile} names` };

@@ -103,7 +103,11 @@ function hashOf(dir: string): string {
     )) {
       const path = within === "" ? entry.name : `${within}/${entry.name}`;
       if (entry.isDirectory()) walk(path);
-      else if (!UNREAD.has(path)) hash.update(`${path}\0`).update(readFileSync(join(dir, path))).update("\0");
+      else if (!UNREAD.has(path))
+        hash
+          .update(`${path}\0`)
+          .update(readFileSync(join(dir, path)))
+          .update("\0");
     }
   };
   walk("");

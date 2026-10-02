@@ -159,7 +159,7 @@ test("publish names the head the record last saw on the base; a moved tip is rec
 });
 
 test("a hand-back from the root owes the Human, who sends it back or publishes over it", () => {
-  // The shipped SLP profile does not give the root's role hand_back; the contract must hold for a profile that does.
+  // SLP does not give the root's role hand_back; the contract must hold for a profile that does.
   const slp = slpProfile();
   const sup = slp.roles.get("supervisor");
   assert.ok(sup);

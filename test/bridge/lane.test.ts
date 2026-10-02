@@ -7,6 +7,7 @@ import { after, test } from "node:test";
 import { Plugin } from "../../server/bridge/plugin.ts";
 import { agentTools } from "./agent-tools.ts";
 import { fakePaseo } from "./fake-paseo.ts";
+import { stateRoot } from "./state-root.ts";
 
 const pluginDir = join(import.meta.dirname, "../..");
 const git = (cwd: string, ...args: string[]) =>
@@ -27,7 +28,7 @@ test("one lane end to end: a Supervisor, a Lead and a Peer land a change on main
   git(repo, "add", ".");
   git(repo, "commit", "-q", "-m", "start");
 
-  const plugin = new Plugin(mkdtempSync(join(tmpdir(), "sw-root-")));
+  const plugin = new Plugin(stateRoot());
   plugins.push(plugin);
   const paseo = fakePaseo(pluginDir);
   plugin.saw(paseo.api);
@@ -154,7 +155,7 @@ test("a project idle past a day leaves memory, and its next command folds it bac
   writeFileSync(join(repo, "a.txt"), "a\n");
   git(repo, "add", ".");
   git(repo, "commit", "-q", "-m", "start");
-  const plugin = new Plugin(mkdtempSync(join(tmpdir(), "sw-root-")));
+  const plugin = new Plugin(stateRoot());
   plugins.push(plugin);
   plugin.saw(fakePaseo(pluginDir).api);
   const { project } = await plugin.openProject(repo, "main");
@@ -175,7 +176,7 @@ test("the Human's words typed into a Lead's chat reach its Supervisor once, thou
   writeFileSync(join(repo, "a.txt"), "a\n");
   git(repo, "add", ".");
   git(repo, "commit", "-q", "-m", "start");
-  const plugin = new Plugin(mkdtempSync(join(tmpdir(), "sw-root-")));
+  const plugin = new Plugin(stateRoot());
   plugins.push(plugin);
   const paseo = fakePaseo(pluginDir);
   plugin.saw(paseo.api);
@@ -218,7 +219,7 @@ test("a turn the plugin's words began that fails in Paseo gets them again; one t
   writeFileSync(join(repo, "a.txt"), "a\n");
   git(repo, "add", ".");
   git(repo, "commit", "-q", "-m", "start");
-  const plugin = new Plugin(mkdtempSync(join(tmpdir(), "sw-root-")));
+  const plugin = new Plugin(stateRoot());
   plugins.push(plugin);
   const paseo = fakePaseo(pluginDir);
   plugin.saw(paseo.api);
@@ -263,7 +264,7 @@ test("a create whose reply was lost is tried again after the record moved on, an
   writeFileSync(join(repo, "a.txt"), "a\n");
   git(repo, "add", ".");
   git(repo, "commit", "-q", "-m", "start");
-  const plugin = new Plugin(mkdtempSync(join(tmpdir(), "sw-root-")));
+  const plugin = new Plugin(stateRoot());
   plugins.push(plugin);
   const paseo = fakePaseo(pluginDir);
   plugin.saw(paseo.api);
@@ -297,7 +298,7 @@ test("a create Paseo refuses is a failed start the record shows, not a seat left
   writeFileSync(join(repo, "a.txt"), "a\n");
   git(repo, "add", ".");
   git(repo, "commit", "-q", "-m", "start");
-  const plugin = new Plugin(mkdtempSync(join(tmpdir(), "sw-root-")));
+  const plugin = new Plugin(stateRoot());
   plugins.push(plugin);
   const paseo = fakePaseo(pluginDir);
   paseo.gate.refuse = 'Expected config.provider in "provider/model" format';
@@ -315,7 +316,7 @@ test("a start that failed is tried again, and a project whose log cannot be read
   writeFileSync(join(repo, "a.txt"), "a\n");
   git(repo, "add", ".");
   git(repo, "commit", "-q", "-m", "start");
-  const root = mkdtempSync(join(tmpdir(), "sw-root-"));
+  const root = stateRoot();
   const first = new Plugin(root);
   plugins.push(first);
   const paseo = fakePaseo(pluginDir);
@@ -346,7 +347,7 @@ test("two projects on one daemon each get their own first agent", async () => {
     git(repo, "commit", "-q", "-m", "start");
     return repo;
   });
-  const plugin = new Plugin(mkdtempSync(join(tmpdir(), "sw-root-")));
+  const plugin = new Plugin(stateRoot());
   plugins.push(plugin);
   const paseo = fakePaseo(pluginDir);
   plugin.saw(paseo.api);

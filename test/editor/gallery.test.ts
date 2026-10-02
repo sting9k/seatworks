@@ -90,7 +90,7 @@ test("a page says why when there is no gallery beside it, when the index is wron
 
 test("the build command writes a gallery from a directory of template directories, and fails naming a template that does not load", () => {
   const sources = mkdtempSync(join(tmpdir(), "sw-gallery-src-"));
-  cpSync(join(repo, "profile", "slp"), join(sources, "slp"), { recursive: true });
+  cpSync(join(repo, "templates", "slp"), join(sources, "slp"), { recursive: true });
   const out = join(mkdtempSync(join(tmpdir(), "sw-gallery-out-")), "gallery");
   const command = ["--experimental-strip-types", "--no-warnings=ExperimentalWarning", join(repo, "bin", "gallery.ts")];
 

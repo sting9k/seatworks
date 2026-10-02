@@ -12,7 +12,7 @@ shortcut becomes the house style. Write what you want copied.
 
 - A name says what a thing is in the concept's words: `scope`, `brief`, `finding`, `obligation`, `evidence`,
   `effect`. The spec's glossary is the vocabulary; never a synonym for a word it already has.
-- In `shared/` and `server/`, never a role's name: `supervisor`, `lead`, `peer` appear only in `profile/`.
+- In `shared/` and `server/`, never a role's name: `supervisor`, `lead`, `peer` appear only in `templates/`.
 - A function is a verb for what it does (`openScope`, `foldLog`, `settleEffect`); a predicate reads as a question
   (`isOpen`, `mayAmend`); a type is a noun. No `Manager`, `Helper`, `Util`, `Data`, `Info`, `Handler` without what it
   handles.

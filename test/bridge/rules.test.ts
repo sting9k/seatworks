@@ -7,6 +7,7 @@ import { after, test } from "node:test";
 import { Plugin } from "../../server/bridge/plugin.ts";
 import { agentTools } from "./agent-tools.ts";
 import { fakePaseo } from "./fake-paseo.ts";
+import { stateRoot } from "./state-root.ts";
 
 const pluginDir = join(import.meta.dirname, "../..");
 const plugins: Plugin[] = [];
@@ -24,7 +25,7 @@ test("the Human's own rules follow their role's prompt, read when each agent is 
   writeFileSync(join(repo, "a.txt"), "a\n");
   git("add", ".");
   git("commit", "-q", "-m", "start");
-  const root = mkdtempSync(join(tmpdir(), "sw-root-"));
+  const root = stateRoot();
   mkdirSync(join(root, "rules", "slp"), { recursive: true });
   writeFileSync(join(root, "rules", "slp", "all.md"), "Write commit subjects in the imperative.\n");
   writeFileSync(join(root, "rules", "slp", "lead.md"), "Split no scope smaller than a day.\n");

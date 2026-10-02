@@ -9,7 +9,7 @@ concept notes) shared with the owner, with no stated license and used with the o
 talk" is their recorded community session; its mechanisms are borrowed, not its words. The first version of this
 plugin, removed on 2026-09-29, is in git history, and several skills below began there.
 
-## What agents read: `profile/slp/`
+## What agents read: `templates/slp/`
 
 | File                                          | Draws on                                                                                                                  |
 | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |

@@ -86,26 +86,13 @@ else
   paseo plugin install "$SOURCE"
 fi
 
-# The Paseo agent profiles the shipped profile's roles run on, read from where Paseo put the plugin.
-dir="$( (paseo plugin ls "$PLUGIN_ID" --json 2>/dev/null || true) | node -e '
-let s = "";
-process.stdin.on("data", (d) => (s += d)).on("end", () => {
-  try {
-    const listed = JSON.parse(s);
-    process.stdout.write((Array.isArray(listed) ? listed[0] : listed)?.path ?? "");
-  } catch {}
-});')"
-profiles=""
-if [ -f "$dir/profile/slp/profile.yaml" ]; then
-  profiles="$(sed -n 's/^ *models: *\[\(.*\)\].*$/\1/p' "$dir/profile/slp/profile.yaml" | tr ',' '\n' | tr -d ' ' | sort -u | tr '\n' ' ' | sed 's/ $//')"
-fi
-
 say ""
 say "Seatworks is installed. Next:"
-say "  1. Give each of these an agent and a model: ${profiles:-the names profile/slp/profile.yaml lists under models}."
-say "     Add an agent profile of that name in Paseo's settings, or match the name to one you have: open Seatworks,"
-say "     then Plugin, Agent profiles. Seatworks says which one is missing when it needs it."
-say "  2. Open Seatworks in Paseo's sidebar and attach a project, or run \"Open a Seatworks team here\""
-say "     from the command center in a workspace."
-say "  3. Set Jev's key under Settings, Jev, so the watch can tell the Supervisor when to look; without it the"
-say "     team still works, less watched."
+say "  1. Open Seatworks in Paseo's sidebar, then Plugin. Under Templates, install the way of working your team"
+say "     runs: SLP comes with Seatworks."
+say "  2. Under Agent profiles on that page, match each name the template gives to an agent profile of yours,"
+say "     or add one of that name in Paseo's settings."
+say "  3. Attach a project on Seatworks' page, or run \"Open a Seatworks team here\" from the command center"
+say "     in a workspace."
+say "  4. Set Jev's key under Settings, Jev, so the watch can tell an owner when to look; without it the team"
+say "     still works, less watched."

@@ -1,9 +1,10 @@
 import assert from "node:assert/strict";
-import { existsSync, mkdtempSync, readdirSync, writeFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { appendFileSync, existsSync, mkdtempSync, readdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, test } from "node:test";
-import { packed } from "../../editor/template/pack.ts";
+import { packed } from "../../shared/contracts/template.ts";
 import { Plugin } from "../../server/bridge/plugin.ts";
 import { slpFiles } from "../editor/slp.ts";
 import { fakePaseo } from "./fake-paseo.ts";
@@ -20,12 +21,13 @@ async function started() {
   const root = mkdtempSync(join(tmpdir(), "sw-root-"));
   const plugin = new Plugin(root);
   plugins.push(plugin);
-  plugin.saw(fakePaseo(pluginDir).api);
+  const paseo = fakePaseo(pluginDir);
+  plugin.saw(paseo.api);
   await plugin.whenReady();
-  return { plugin, root };
+  return { plugin, root, paseo };
 }
 
-/** The shipped template as its editor shares it, under another name and with whatever else a case changes. */
+/** SLP as its editor shares it, under another name and with whatever else a case changes. */
 function shared(change: (files: Map<string, string>) => void = () => undefined): string {
   const files = new Map(slpFiles());
   files.set("template.json", JSON.stringify({ name: "Night Crew", description: "A crew for the night shift." }));
@@ -41,7 +43,7 @@ test("a shared template is read before it is installed: what it would bring is l
   const { plugin, root } = await started();
   const path = shared();
 
-  const read = await plugin.template(path, null);
+  const read = await plugin.template({ path }, null);
 
   assert.ok(read.ok, read.ok ? "" : read.says);
   assert.equal(read.offer.name, "night-crew");
@@ -57,28 +59,25 @@ test("a shared template is read before it is installed: what it would bring is l
   assert.deepEqual(read.offer.variables, []);
   assert.deepEqual(installed(root), []);
   assert.deepEqual(leftAside(root), []);
-  assert.deepEqual(
-    (await plugin.profiles()).map((profile) => profile.name),
-    ["slp"],
-  );
+  assert.deepEqual(plugin.profiles(), []);
 });
 
 test("a template the Human agreed to is installed under its name, and listed to attach a project with", async () => {
   const { plugin, root } = await started();
   const path = shared();
-  const read = await plugin.template(path, null);
+  const read = await plugin.template({ path }, null);
   assert.ok(read.ok);
 
-  const made = await plugin.template(path, read.offer.hash);
+  const made = await plugin.template({ path }, read.offer.hash);
 
   assert.ok(made.ok, made.ok ? "" : made.says);
   assert.deepEqual(installed(root), ["night-crew"]);
   assert.deepEqual(leftAside(root), []);
   assert.deepEqual(
-    (await plugin.profiles()).map((profile) => `${profile.name}: ${profile.title}`),
-    ["night-crew: Night Crew", "slp: SLP"],
+    plugin.profiles().map((profile) => `${profile.name}: ${profile.title}`),
+    ["night-crew: Night Crew"],
   );
-  const again = await plugin.template(path, null);
+  const again = await plugin.template({ path }, null);
   assert.ok(again.ok && again.offer.replaces);
 });
 
@@ -99,13 +98,13 @@ test("a shared file that would not load, reaches outside its own directory, or c
     [notATemplate, /not a packed template/],
     [join(root, "no-such-file.json"), /there is no file at/],
   ] as const) {
-    const read = await plugin.template(path, null);
+    const read = await plugin.template({ path }, null);
     assert.ok(!read.ok, path);
     assert.match(read.says, why);
   }
 
   const good = shared();
-  const read = await plugin.template(good, null);
+  const read = await plugin.template({ path: good }, null);
   assert.ok(read.ok);
   writeFileSync(
     good,
@@ -113,7 +112,7 @@ test("a shared file that would not load, reaches outside its own directory, or c
       new Map([...slpFiles(), ["template.json", JSON.stringify({ name: "Night Crew", description: "Changed." })]]),
     ),
   );
-  const stale = await plugin.template(good, read.offer.hash);
+  const stale = await plugin.template({ path: good }, read.offer.hash);
   assert.ok(!stale.ok);
   assert.match(stale.says, /changed since it was read/);
 
@@ -139,7 +138,7 @@ servers:
     );
   });
 
-  const read = await plugin.template(path, null);
+  const read = await plugin.template({ path }, null);
 
   assert.ok(read.ok, read.ok ? "" : read.says);
   assert.deepEqual(read.offer.servers, [{ name: "tickets", runs: "https://tickets.example/mcp" }]);
@@ -148,4 +147,69 @@ servers:
     { name: "SW_TEST_UNSET_ONE", there: false },
   ]);
   assert.deepEqual(installed(root), []);
+});
+
+/** A git repository with one commit, for a team to be attached to. */
+function repository(): string {
+  const repo = mkdtempSync(join(tmpdir(), "sw-repo-"));
+  const git = (...args: string[]) =>
+    execFileSync("git", ["-c", "user.name=t", "-c", "user.email=t@t", "-c", "commit.gpgSign=false", ...args], {
+      cwd: repo,
+    });
+  git("init", "-q", "-b", "main");
+  writeFileSync(join(repo, "a.txt"), "a\n");
+  git("add", ".");
+  git("commit", "-q", "-m", "start");
+  return repo;
+}
+const slp = async (plugin: Plugin) => (await plugin.presets()).find((preset) => preset.name === "slp");
+
+test("nothing is installed at first: the template that comes with the plugin is listed, no project attaches until one is installed, and then it does", async () => {
+  const { plugin, root, paseo } = await started();
+  assert.deepEqual(await plugin.presets(), [
+    { name: "slp", title: "SLP", description: (await slp(plugin))!.description, installed: "no" },
+  ]);
+  const repo = repository();
+  const unattached = plugin.attaching(repo, undefined);
+  assert.ok(!unattached.ok);
+  assert.match(unattached.says, /no template is installed: install one on Seatworks' Plugin page/);
+  await assert.rejects(plugin.openProject(repo, "main"), /no template is installed/);
+
+  const read = await plugin.template({ preset: "slp" }, null);
+  assert.ok(read.ok, read.ok ? "" : read.says);
+  assert.equal(read.offer.name, "slp");
+  assert.deepEqual(installed(root), []);
+  assert.ok((await plugin.template({ preset: "slp" }, read.offer.hash)).ok);
+
+  assert.equal((await slp(plugin))?.installed, "same");
+  assert.deepEqual(installed(root), ["slp"]);
+  assert.ok((await plugin.openProject(repo, "main")).outcome.ok);
+  await plugin.idle();
+  assert.match(paseo.created[0]?.systemPrompt ?? "", /^# Supervisor/);
+});
+
+test("an installed copy that is not as the plugin's own comes is said to differ, and is left alone until it is installed again", async () => {
+  const { plugin, root } = await started();
+  const read = await plugin.template({ preset: "slp" }, null);
+  assert.ok(read.ok);
+  assert.ok((await plugin.template({ preset: "slp" }, read.offer.hash)).ok);
+
+  appendFileSync(join(root, "profiles", "slp", "roles", "peer.md"), "\nKeep commits small.\n");
+  assert.equal((await slp(plugin))?.installed, "differs");
+  const offered = await plugin.template({ preset: "slp" }, null);
+  assert.ok(offered.ok && offered.offer.replaces);
+
+  assert.ok((await plugin.template({ preset: "slp" }, offered.offer.hash)).ok);
+  assert.equal((await slp(plugin))?.installed, "same");
+});
+
+test("a name that is no template of the plugin's, such as a path out of them, is read from nowhere", async () => {
+  const { plugin, root } = await started();
+
+  for (const preset of ["../templates/slp", "night-crew"]) {
+    const read = await plugin.template({ preset }, null);
+    assert.ok(!read.ok, preset);
+    assert.match(read.says, /^no template named .* comes with Seatworks$/);
+  }
+  assert.deepEqual(leftAside(root), []);
 });

@@ -60,7 +60,7 @@ on an implementation without the rule before it is trusted.
 | A search of the kernel and satellites for any role name in the profile     | None found                    |
 | A search of the Human's surface for any role name in the profile           | None found: the agent the Human works with is shown by the name its profile gives the root's role |
 | A profile with no `humanDoor` role                                         | Loads; `ask_human` is shown to no one |
-| The small template `docs/TEMPLATE-SPEC.md` gives, which shares no role with the shipped one, attached to a project | Its root is seated with its own prompt and flow and the project's note is its own; the root seats a writer, takes its work in on evidence and lands it; a tool a role is not given is refused; the Human's view names the root by its role |
+| The small template `docs/TEMPLATE-SPEC.md` gives, which shares no role with SLP, attached to a project | Its root is seated with its own prompt and flow and the project's note is its own; the root seats a writer, takes its work in on evidence and lands it; a tool a role is not given is refused; the Human's view names the root by its role |
 | A profile that gives a role a tool the team does not have: one misspelt, or one only the Human sends | Does not load, saying which role and which tool |
 
 ## Workflow
@@ -264,7 +264,7 @@ A template's files in, what a person sees out (`EDITOR.md`).
 | A role added, then taken away                               | Every file as it was, to the byte                                   |
 | A skill added, and another taken away                       | The new one is a node before any role has it; the other's folder is gone and no role has it |
 | Steps set down, given roles and joined; then taken away      | `flow.md` holds a line a step in order, each with its role and what follows, and `profile.yaml` gains the one line that names it; with the last step gone, the file and that line are gone |
-| The SLP profile as shipped                                  | No note                                                             |
+| SLP as it comes with the plugin                             | No note                                                             |
 | A prompt naming a tool its role is not shown; a prompt naming a role the template lost; a watched role's prompt naming the watch; a prompt, skill or question still holding its skeleton; a skill named otherwise than its folder, not saying when to use it, or pointing at a file not beside it; a question asking of a field not in its state, or with one outcome described | Each a note on the node it is about |
 | A writer not shown `hand_back`, a reader not shown `record_verdict`, a watching role not shown `attend`, a role that seats others not shown `open_scope` or `integrate`; a role shown `ask_human`, `attend` or `open_scope` that the kernel always refuses it; a role nobody seats, one with no agent profile, one with no prompt | Each a note on the role |
 | A question asked on what is no event of the record, reading a state the record does not have, or telling whom the plugin does not know; a moment watching a role the template lacks, or counted in code under a name the plugin does not count | Each a note on the question or the moment |
@@ -297,9 +297,13 @@ What the plugin reads of a profile that a template adds (`TEMPLATE.md`).
 | The check command on a directory that does not load         | Fails, saying why, and prints nothing else                          |
 | The pack command                                            | The one file a template is shared as, holding the directory's very files; nothing is written for a template that does not load |
 | A profile whose reflex file names a route of its own, or masks nothing | The reflex has no route but the plugin's, one for each the settings offer; what looks like a secret is still masked |
+| A plugin just installed, with nothing of the Human's yet     | The template that comes with it is listed as not installed; no project is attached, the reason saying to install one; installed from the plugin's own, it is listed as installed as it comes and a project attaches with it |
+| An installed copy changed since, or a release that brings another | Said to differ, and left as it is until it is installed again, which the offer says replaces it |
+| A name that is no template of the plugin's, such as a path out of them | Read from nowhere, saying so; nothing unpacked is left     |
+| More than one profile installed and none named at attach; a project attached already opened again with none named | The first is refused, saying the page asks which; the second opens |
 | A shared template read from a file on the machine           | What it would bring is said: its name, its roles, each agent profile its roles name and whether Paseo has it; nothing is installed and nothing unpacked is left |
 | The template installed with the hash of what was read       | Under its name, listed to attach a project with; read again, it says it would replace the one there |
-| The page of agent profiles read; then a name of the shipped profile matched to an agent profile the Human has | Each name its roles give is listed with what it runs on and whether Paseo has that, beside the Human's own; the root's agent is made from the profile matched |
+| The page of agent profiles read; then a name of an installed profile matched to an agent profile the Human has | Each name its roles give is listed with what it runs on and whether Paseo has that, beside the Human's own; the root's agent is made from the profile matched |
 | A matching of a profile nobody installed, such as a path out of the profiles; of a name its roles do not give; or to an agent profile Paseo lacks | Refused whole, saying which; nothing kept |
 | A matching whose file does not read                         | The page says so; the agent is not seated, with that reason on its seat, and nothing throws; matched again and reseated, the seat is taken |
 | A name matched to an agent profile the Human has since removed | The page says Paseo lacks it; the agent is not seated, the reason naming the profile and the name matched to it |

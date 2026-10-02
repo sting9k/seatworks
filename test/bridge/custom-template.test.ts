@@ -9,7 +9,7 @@ import { specExample } from "../spec-example.ts";
 import { agentTools } from "./agent-tools.ts";
 import { fakePaseo } from "./fake-paseo.ts";
 
-// A row of spec/CONFORMANCE.md, The profile is data: a template that shares no role with the shipped one, run through
+// A row of spec/CONFORMANCE.md, The profile is data: a template that shares no role with SLP, run through
 // the plugin as it is written in the spec an agent writes one from.
 
 const pluginDir = join(import.meta.dirname, "../..");
@@ -27,7 +27,7 @@ after(async () => {
 /** The agent profiles the stand-in for Paseo has, in place of those the example names. */
 const RUNS_ON = { "pair-navigator": "slp-supervisor", "pair-driver": "slp-peer", "pair-checker": "slp-reviewer" };
 
-test("a template with no role of the shipped one runs a task end to end: its root seats a writer, takes the work in and lands it, and the Human is shown its own names", async () => {
+test("a template with no role of SLP runs a task end to end: its root seats a writer, takes the work in and lands it, and the Human is shown its own names", async () => {
   const root = mkdtempSync(join(tmpdir(), "sw-root-"));
   for (const [path, text] of specExample()) {
     const file = join(root, "profiles", "pair", path);

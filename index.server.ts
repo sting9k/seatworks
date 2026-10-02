@@ -57,9 +57,8 @@ export default function contribute(server: PluginServerContext) {
     const inside = await git(input.cwd, ["rev-parse", "--is-inside-work-tree"]);
     if (inside.stdout.trim() !== "true")
       return { project: "", ok: false, text: `${input.cwd} is not a git repository, and a team works on one.` };
-    const named = input.profile;
-    if (named !== undefined && !(await plugin.profiles()).some((profile) => profile.name === named))
-      return { project: "", ok: false, text: `No profile named ${named} is installed.` };
+    const picked = plugin.attaching(input.cwd, input.profile);
+    if (!picked.ok) return { project: "", ok: false, text: `Not attached: ${picked.says}.` };
     const { project, outcome, note } = await plugin.openProject(input.cwd, input.base, input.profile);
     const said = [outcome.ok ? `Project ${project} is open.` : outcome.refused.says, note].filter(Boolean).join(" ");
     return { project, ok: outcome.ok, text: said };
@@ -77,7 +76,7 @@ export default function contribute(server: PluginServerContext) {
   });
   server.handle(RPC.projects, async (_input, { paseo }) => {
     plugin.saw(paseo);
-    return { projects: plugin.projects(), unattached: await plugin.unattached(), profiles: await plugin.profiles() };
+    return { projects: plugin.projects(), unattached: await plugin.unattached(), profiles: plugin.profiles() };
   });
   server.handle(RPC.leftovers, async (_input, { paseo }) => {
     plugin.saw(paseo);
@@ -89,17 +88,21 @@ export default function contribute(server: PluginServerContext) {
   });
   server.handle(RPC.templateOffer, async (input, { paseo }) => {
     plugin.saw(paseo);
-    const read = await plugin.template(input.path, null);
+    const read = await plugin.template(input.from, null);
     return read.ok
       ? { ok: true, text: "", offer: read.offer }
       : { ok: false, text: `Not a template to install: ${read.says}.`, offer: null };
   });
   server.handle(RPC.installTemplate, async (input, { paseo }) => {
     plugin.saw(paseo);
-    const made = await plugin.template(input.path, input.hash);
+    const made = await plugin.template(input.from, input.hash);
     return made.ok
       ? { ok: true, text: `${made.offer.title} is installed as ${made.offer.name}. Attach a project to run it.` }
       : { ok: false, text: `Not installed: ${made.says}.` };
+  });
+  server.handle(RPC.presets, async (_input, { paseo }) => {
+    plugin.saw(paseo);
+    return { presets: await plugin.presets() };
   });
   server.handle(RPC.agents, async (input, { paseo }) => {
     plugin.saw(paseo);

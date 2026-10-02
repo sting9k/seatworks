@@ -70,7 +70,23 @@ export const UpdateCheckSchema = z.object({
 });
 export type UpdateCheck = z.infer<typeof UpdateCheckSchema>;
 
-/** What installing a shared template would bring to this machine (`server/profile/install.ts`). */
+/** Where a template to install is read from: a shared file on this machine, or one that comes with the plugin. */
+const TemplateSourceSchema = z.union([
+  z.object({ path: z.string().min(1) }).strict(),
+  z.object({ preset: z.string().min(1) }).strict(),
+]);
+export type TemplateSource = z.infer<typeof TemplateSourceSchema>;
+
+/** A template that comes with the plugin, and whether it is installed as it comes, otherwise, or not at all. */
+const PresetSchema = z.object({
+  name: z.string(),
+  title: z.string(),
+  description: z.string(),
+  installed: z.enum(["no", "same", "differs"]),
+});
+export type Preset = z.infer<typeof PresetSchema>;
+
+/** What installing a template would bring to this machine (`server/profile/install.ts`). */
 const TemplateOfferSchema = z.object({
   name: z.string(),
   title: z.string(),
@@ -99,7 +115,7 @@ export type ProfileAgents = z.infer<typeof ProfileAgentsSchema>;
 export const RPC = {
   openProject: {
     name: "seatworks.open_project",
-    /** `profile` names the profile a project is attached with; none is the shipped one. */
+    /** `profile` names the profile a project is attached with; with none, it is the only one installed. */
     input: z.object({
       cwd: z.string().min(1),
       base: z.string().min(1).optional(),
@@ -122,7 +138,7 @@ export const RPC = {
     output: z.object({
       projects: z.array(z.object({ id: z.string(), repo: z.string(), open: z.boolean() })),
       unattached: z.array(z.object({ name: z.string(), root: z.string() })),
-      /** The profiles a project may be attached with: the shipped one and each installed. */
+      /** The profiles a project may be attached with: each the Human installed. */
       profiles: z.array(z.object({ name: z.string(), title: z.string(), description: z.string() })),
     }),
   },
@@ -163,16 +179,22 @@ export const RPC = {
     input: z.object({ ids: z.array(z.string().min(1)).min(1).max(500) }),
     output: z.object({ results: z.array(z.object({ id: z.string(), ok: z.boolean(), text: z.string() })) }),
   },
-  /** Reads a shared template from a file on this machine and says what it would bring; nothing is installed. */
+  /** The templates that come with the plugin, for the Human to install one. */
+  presets: {
+    name: "seatworks.presets",
+    input: z.object({}),
+    output: z.object({ presets: z.array(PresetSchema) }),
+  },
+  /** Reads a template from where it is and says what it would bring; nothing is installed. */
   templateOffer: {
     name: "seatworks.template_offer",
-    input: z.object({ path: z.string().min(1) }),
+    input: z.object({ from: TemplateSourceSchema }),
     output: z.object({ ok: z.boolean(), text: z.string(), offer: TemplateOfferSchema.nullable() }),
   },
   /** Installs the template the Human read the offer of: `hash` is that offer's, and no other file is installed. */
   installTemplate: {
     name: "seatworks.install_template",
-    input: z.object({ path: z.string().min(1), hash: z.string().min(1) }),
+    input: z.object({ from: TemplateSourceSchema, hash: z.string().min(1) }),
     output: z.object({ ok: z.boolean(), text: z.string() }),
   },
   /** What each profile's agent profiles run on here; with `match`, that profile's whole matching is kept first. */

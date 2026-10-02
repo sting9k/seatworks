@@ -17,7 +17,14 @@ import { PROJECT_LABEL, ROOT } from "../../shared/contracts/ids.ts";
 import type { ReadName } from "../../shared/contracts/tools.ts";
 import { activityLine } from "../../shared/views/activity.ts";
 import { type Chain, type Signals, chainOf, scopeRecordText, signalsOf } from "../../shared/views/record.ts";
-import type { HumanView, Leftover, ProfileAgents, TemplateOffer } from "../../shared/contracts/rpc.ts";
+import type {
+  HumanView,
+  Leftover,
+  Preset,
+  ProfileAgents,
+  TemplateOffer,
+  TemplateSource,
+} from "../../shared/contracts/rpc.ts";
 import { humanView } from "../../shared/views/human.ts";
 import { statusText } from "../../shared/views/status.ts";
 import { stuckOf } from "../../shared/views/stuck.ts";
@@ -41,7 +48,8 @@ import { Workspace } from "../satellites/workspace/workspace.ts";
 import { agentsByProfile, match, type Matching, matchingFile } from "../profile/agents.ts";
 import { type Bundle, loadBundle } from "../profile/bundle.ts";
 import { install, offerOf } from "../profile/install.ts";
-import { listProfiles, type Listed as ListedProfile, profilePath, SHIPPED } from "../profile/profiles.ts";
+import { listPresets } from "../profile/presets.ts";
+import { listProfiles, type Listed as ListedProfile, profilePath } from "../profile/profiles.ts";
 import { Dispatcher } from "./dispatcher.ts";
 import { type Wiring, branchesOf, handlersFor, scratchFor, seatEnv, withShim } from "./effects.ts";
 import { type Kept, leftoverId, leftoversOf, projectLeftover, refOf } from "./leftovers.ts";
@@ -79,6 +87,9 @@ type Ready = {
   /** Where the reflex asks, by the name the plugin's settings give each route. */
   routes: Readonly<Record<string, Route>>;
 };
+
+/** A project's id: made from where its repository really is, so one repository is one project. */
+const projectIdOf = (real: string) => createHash("sha256").update(real).digest("hex").slice(0, 12);
 
 /** What the surface is told when it asks of Paseo's agent profiles before Paseo's API is in hand. */
 const UNREACHED = "Paseo's API has not arrived; try again in a moment";
@@ -197,53 +208,79 @@ export class Plugin {
     return ready;
   }
 
-  /** The profiles a project may be attached with: the one shipped, and each the Human installed. */
-  async profiles(): Promise<ListedProfile[]> {
-    return listProfiles((await this.whenReady()).dir, this.root);
+  /** The profiles a project may be attached with: each the Human installed. */
+  profiles(): ListedProfile[] {
+    return listProfiles(this.root);
   }
 
-  /** What installing the template at a path would bring; with `agreed`, the hash of that offer, it is installed. */
+  /** The templates that come with the plugin, each with whether it is installed as it comes. */
+  async presets(): Promise<Preset[]> {
+    return listPresets((await this.whenReady()).dir, this.root);
+  }
+
+  /** What installing a template would bring; with `agreed`, the hash of that offer, it is installed. */
   async template(
-    path: string,
+    from: TemplateSource,
     agreed: string | null,
   ): Promise<{ ok: true; offer: TemplateOffer } | { ok: false; says: string }> {
-    const has = await (await this.whenReady()).host.agentProfiles();
+    const ready = await this.whenReady();
+    const has = await ready.host.agentProfiles();
     if ("unavailable" in has) return { ok: false, says: UNREACHED };
-    return agreed === null
-      ? offerOf(this.root, path, has, process.env)
-      : install(this.root, path, agreed, has, process.env);
+    const where = { pluginDir: ready.dir, stateRoot: this.root, env: process.env };
+    return agreed === null ? offerOf(where, from, has) : install(where, from, agreed, has);
   }
 
   /** What each profile's agent profiles run on here; with `matched`, that profile's matching is kept first. */
   async agents(
     matched: { readonly profile: string; readonly matching: Matching } | null,
   ): Promise<{ ok: true; profiles: ProfileAgents[]; available: string[] } | { ok: false; says: string }> {
-    const ready = await this.whenReady();
-    const has = await ready.host.agentProfiles();
+    const has = await (await this.whenReady()).host.agentProfiles();
     if ("unavailable" in has) return { ok: false, says: UNREACHED };
     if (matched !== null) {
-      const kept = match(ready.dir, this.root, matched.profile, matched.matching, has);
+      const kept = match(this.root, matched.profile, matched.matching, has);
       if (!kept.ok) return kept;
     }
-    return { ok: true, profiles: agentsByProfile(ready.dir, this.root, has), available: has.map((p) => p.name) };
+    return { ok: true, profiles: agentsByProfile(this.root, has), available: has.map((p) => p.name) };
+  }
+
+  /** The profile a repository would be attached with: the one named, or the only one installed; null once attached. */
+  attaching(
+    repo: string,
+    named: string | undefined,
+  ): { ok: true; profile: string | null } | { ok: false; says: string } {
+    if (existsSync(join(projectDir(this.root, projectIdOf(realpathSync(repo))), "project.json")))
+      return { ok: true, profile: null };
+    const installed = listProfiles(this.root).map((listed) => listed.name);
+    if (named !== undefined)
+      return installed.includes(named)
+        ? { ok: true, profile: named }
+        : { ok: false, says: `no profile named ${named} is installed` };
+    if (installed.length === 1) return { ok: true, profile: installed[0]! };
+    return {
+      ok: false,
+      says:
+        installed.length === 0
+          ? "no template is installed: install one on Seatworks' Plugin page, under Templates"
+          : "more than one template is installed: attach from Seatworks' page, which asks which",
+    };
   }
 
   /** Opens a project with the profile named and starts its root's agent; one already attached keeps its profile. */
   async openProject(
     repo: string,
     base: string | undefined,
-    profile: string = SHIPPED,
+    named?: string,
   ): Promise<{ project: string; outcome: Submitted; note: string | null }> {
     const ready = await this.whenReady();
     const real = realpathSync(repo);
     const branch = base ?? (await currentBranch(real));
-    const id = createHash("sha256").update(real).digest("hex").slice(0, 12);
+    const picked = this.attaching(real, named);
+    if (!picked.ok) throw new Error(picked.says);
+    const id = projectIdOf(real);
     const dir = projectDir(this.root, id);
-    if (!existsSync(join(dir, "project.json"))) {
-      if (profilePath(ready.dir, this.root, profile) === null)
-        throw new Error(`no profile named ${profile} is installed`);
+    if (picked.profile !== null) {
       mkdirSync(dir, { recursive: true });
-      writeFileSync(join(dir, "project.json"), JSON.stringify({ repo: real, profile }));
+      writeFileSync(join(dir, "project.json"), JSON.stringify({ repo: real, profile: picked.profile }));
     }
     const runtime = this.open(id, ready);
     const bundle = runtime.wiring.bundle;
@@ -703,8 +740,11 @@ export class Plugin {
     const { repo, profile } = kept;
     if (profile === undefined)
       throw new Error(`project ${id} was attached before a project named its profile: remove it and attach it again`);
-    const profileDir = profilePath(ready.dir, this.root, profile);
-    if (profileDir === null) throw new Error(`project ${id} runs the profile ${profile}, which is no longer installed`);
+    const profileDir = profilePath(this.root, profile);
+    if (profileDir === null)
+      throw new Error(
+        `project ${id} runs the profile ${profile}, which is not installed: install it on the Plugin page`,
+      );
     // Read each time the project is opened, so what was changed in the profile reaches the agents seated after.
     const bundle = loadBundle(profileDir);
     const store = new ProjectStore(join(dir, "ledger.db"));

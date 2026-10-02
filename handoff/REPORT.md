@@ -131,7 +131,7 @@ Also from `readiness-review.md` (gaps, not bugs):
 
 ## Owner decisions, not bugs
 
-- **Jev route.** `profile/slp/reflex.yaml` uses OpenRouter's `/api/v1/systemone`. `spec/REFLEX.md` says to keep V1's
+- **Jev route.** `templates/slp/reflex.yaml` uses OpenRouter's `/api/v1/systemone`. `spec/REFLEX.md` says to keep V1's
   `/api/alpha/decisions` until `data_collection: deny` is shown to hold on the new route. This decides where the
   agents' words are sent.
 - **Evidence on a lane's head.** A Lead cannot `run_checks` on its own lane: only a scope's writer or its parent's

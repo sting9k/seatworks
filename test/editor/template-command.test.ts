@@ -18,10 +18,10 @@ const run = (...args: string[]) =>
     { encoding: "utf8" },
   );
 
-/** The shipped template's directory, copied to be changed; `change` rewrites one of its files. */
+/** SLP's directory, copied to be changed; `change` rewrites one of its files. */
 function copyOf(change: Record<string, (text: string) => string> = {}): string {
   const dir = join(mkdtempSync(join(tmpdir(), "sw-template-")), "night-crew");
-  cpSync(join(repo, "profile", "slp"), dir, { recursive: true });
+  cpSync(join(repo, "templates", "slp"), dir, { recursive: true });
   writeFileSync(join(dir, "template.json"), JSON.stringify({ name: "Night Crew", description: "For the night." }));
   for (const [path, rewrite] of Object.entries(change))
     writeFileSync(join(dir, path), rewrite(readFileSync(join(dir, path), "utf8")));

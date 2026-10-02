@@ -34,7 +34,7 @@ const EARNED = {
   "not yet": "not yet earned: its answer goes no further than a candidate",
 } as const;
 
-/** The fewest and the most words a role of the shipped template reads every turn: the mark another's are set beside. */
+/** The fewest and the most words a role of SLP reads every turn: the mark another's are set beside. */
 export type Mark = { readonly name: string; readonly least: number; readonly most: number };
 
 /** What the picked node says of itself and lets be set, above the file that is open. */

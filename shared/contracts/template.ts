@@ -13,6 +13,12 @@ export const installName = (name: string): string =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
 
+/** A template's files as the one file it is shared as, which `unpacked` reads back. */
+export function packed(files: ReadonlyMap<string, string>): string {
+  const byPath = Object.fromEntries([...files].sort(([a], [b]) => a.localeCompare(b)));
+  return `${JSON.stringify({ files: byPath }, null, 2)}\n`;
+}
+
 export function unpacked(
   text: string,
 ): { readonly ok: true; readonly files: ReadonlyMap<string, string> } | { readonly ok: false; readonly says: string } {

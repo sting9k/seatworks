@@ -85,7 +85,7 @@ thinking, it reads for the watch (`WATCH.md`). Whatever code can check stays cod
 the Human, a hand-back with no evidence on its commit, a claim of green checks against a red run, a deleted test, an
 added skip marker and the same failing step run again are facts the kernel's views already show. The reflex takes
 only what needs a reading of meaning, and the table under Every use is the whole of it. The questions are in
-`profile/slp/reflex.yaml`, and the project's own rules in its `rules.yaml`.
+`templates/slp/reflex.yaml`, and the project's own rules in its `rules.yaml`.
 
 ## Asking well
 
@@ -145,7 +145,7 @@ trigger.
 
 ## Questions are data
 
-`profile/slp/reflex.yaml` holds the questions. Nothing in code names one.
+`templates/slp/reflex.yaml` holds the questions. Nothing in code names one.
 
 ```yaml
 questions:

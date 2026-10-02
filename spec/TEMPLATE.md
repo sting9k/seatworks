@@ -1,7 +1,7 @@
 # Template
 
 A template is a profile packed to be shared: a way of working that another team takes, changes and runs without
-touching the plugin. SLP is the one Seatworks ships. A template is to Seatworks what a workflow template is to
+touching the plugin. SLP is the one that comes with Seatworks. A template is to Seatworks what a workflow template is to
 ComfyUI: picked from a gallery, opened as a graph, changed, and run. `EDITOR.md` says how one is opened and changed;
 this says what a template is, what the plugin reads of it, and how it reaches a machine.
 
@@ -104,7 +104,7 @@ code and is not a template's to state.
 
 ### A role's prompt
 
-Five parts, after `profile/slp/roles/peer.md`:
+Five parts, after `templates/slp/roles/peer.md`:
 
 1. What the role owns, where its work comes from and where it goes: one paragraph.
 2. How to read what it is given: what is fixed, and what it may question.
@@ -220,11 +220,15 @@ roles:
 
 ## A profile for each project
 
-- The state root keeps the profiles the Human installed by name, `profiles/<name>/`, beside the one Seatworks ships,
-  `slp`. One installed under the shipped one's name stands in its place, so the shipped way of working is changed
-  without a fork.
-- Attaching a project names its profile. The surface asks which only when more than one is there; with the shipped
-  one alone a project is attached at once. A project keeps the profile it was attached with: its name is in the
+- **The core has no profile of its own.** Every profile a project runs is one the Human installed, kept by name in the
+  state root, `profiles/<name>/`. SLP comes with the plugin as a template, `templates/slp/`, and is installed like any
+  other: by a press on the plugin's page. Nothing is read from the plugin's own directory when a project runs.
+- **So nothing is written over behind the Human's back.** A new release of the plugin brings a new SLP beside the one
+  installed, and leaves that one alone until the Human installs again; a copy they changed is theirs. The page says
+  of each template that comes with the plugin whether it is not installed, installed as it comes, or installed and
+  not as this release brings it.
+- Attaching a project names its profile. With none installed no project is attached, and the reason says to install
+  one; with one, a project is attached with it at once; with more, the surface asks which. A project keeps the profile it was attached with: its name is in the
   project's own file in the state root, and on the record beside the hash of its files when the project opened.
 - The plugin loads a profile for each project, each time the project is opened: its roles for the kernel, its
   prompts, its reflex and its watch. What is edited in a profile (a prompt, a skill, a question, a moment) reaches the
@@ -271,7 +275,7 @@ server and no accounts. SLP is the only one at first.
 - **The page reads the gallery built beside it**, `gallery/index.json` and the files it lists, from wherever the page
   is served. A page with no gallery beside it says so, and still opens a file or a folder of the person's own; a
   listed template whose file is gone or does not load says why on its own card.
-- **This repository builds a gallery of its own from `profile/`**, which holds the shipped SLP, each time the editor is
+- **This repository builds a gallery of its own from `templates/`**, which holds SLP, each time the editor is
   served or built (`npm run gallery`). So SLP is in the gallery from the one place it is kept, and never copied.
 
 The gallery's own repository, and where its page is served from, are the owner's to set up: both are made outside
@@ -295,11 +299,13 @@ npm run template -- pack <dir> <file>    # the same check, then the one file it 
 
 ## Installing
 
-A template is downloaded as the one file it is shared as and installed from the plugin's page in Paseo. The Human
-gives the path of the file on their machine, and the plugin:
+A template is installed from the plugin's page in Paseo, from one of two places: one that comes with the plugin,
+picked from the list the page shows, or one downloaded as the one file it is shared as, by the path of that file on
+the Human's machine. Both go the same way, and the plugin:
 
 1. Reads it where it is, unpacks it aside, and loads it as it would load any profile; a file that is not a packed
-   template, reaches outside its own directory, or does not load is refused, saying what is wrong.
+   template, reaches outside its own directory, or does not load is refused, saying what is wrong. A name that is not
+   a template of the plugin's is read from nowhere.
 2. Says what it would bring: the name it would be installed and attached under, whether one of that name is installed
    already, its roles, each Paseo agent profile its roles name with whether the Human has it, each outside server
    with the command it runs or the address it calls, and each variable a server reads with whether it is set.
@@ -314,7 +320,7 @@ first plan; the page was chosen since it needs no knowing where the plugin lives
 
 A profile names its agent profiles its own way, and a Human who had to make one in Paseo's settings for every name of
 every template they try would not try many. So on the plugin's page each name a profile's roles give is matched to an
-agent profile the Human already has: the shipped profile's names as much as an installed template's.
+agent profile the Human already has, for every profile installed.
 
 - **One matching for a profile, set in one place.** The page lists every profile a project may be attached with, each
   name its roles give, what that name runs on and whether Paseo has it, beside the Human's own agent profiles to pick
@@ -379,5 +385,5 @@ Its cases are in `CONFORMANCE.md`: Editor, Templates and Gallery.
 
 ## To decide
 
-- Whether `profile/slp/reference/ANTIPATTERNS.md`, which no prompt, skill or code points at, goes into a skill or
+- Whether `templates/slp/reference/ANTIPATTERNS.md`, which no prompt, skill or code points at, goes into a skill or
   goes. It is SLP's content.

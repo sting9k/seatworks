@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { galleryOf } from "../editor/template/gallery.ts";
-import { filesUnder } from "./template-files.ts";
+import { filesUnder } from "../server/profile/template-files.ts";
 
 /** `gallery.ts <out> <dir>...`: builds a gallery, and fails naming each template that does not load. */
 

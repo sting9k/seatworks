@@ -49,7 +49,7 @@ server/satellites one job each behind a port (spec/PORTS.md): store, agent-host,
 client/           the Human's surface (step 3)
 bin/              the git shim and the team's MCP server, their own Node processes
 harness/          each agent's shipped settings
-profile/slp/      the SLP preset: roles, prompts, skills, reflex.yaml, watch.yaml: runtime content, not docs
+templates/slp/    the SLP template: roles, prompts, skills, reflex.yaml, watch.yaml: runtime content, not docs
 ```
 
 - **One log per project** in SQLite: events and the effects they ask for commit in one transaction (the outbox), one
@@ -91,7 +91,7 @@ profile/slp/      the SLP preset: roles, prompts, skills, reflex.yaml, watch.yam
 
 ## Skills for building Seatworks
 
-In `.claude/skills/`, for whoever builds Seatworks. They are not the agents' runtime skills in `profile/slp/skills/`.
+In `.claude/skills/`, for whoever builds Seatworks. They are not the agents' runtime skills in `templates/slp/skills/`.
 
 | Skill               | Use                                                                              |
 | ------------------- | -------------------------------------------------------------------------------- |
@@ -144,7 +144,7 @@ The skills hold the recipes. The rules:
 
 ## Runtime content
 
-`profile/slp/` is what agents read and what the reflex asks. An edit there changes what agents do.
+`templates/slp/` is what agents read and what the reflex asks. An edit there changes what agents do.
 
 - A prompt keeps only judgement; what code can check is code, and what a tool reply says is not repeated.
 - The watched never learn they are watched: no prompt, tool reply or fact to an agent names the watch or a moment.

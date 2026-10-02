@@ -72,9 +72,9 @@ client/                the surface and its views
 bin/                   the git shim, the team's MCP server, the gallery's build and the template check (`npm run
                        template`), run by Node as their own processes
 harness/               each agent's shipped settings (codex/config.toml, omp/config.yml, pi/extension.ts)
-profile/slp/           the SLP preset
+templates/slp/         SLP, the template that comes with the plugin; installed by the Human, never run from here
 editor/                the template editor, a web page: `npm run editor` serves it, `npm run editor:build` builds it,
-                       each after `npm run gallery` builds the gallery it lists from `profile/`
+                       each after `npm run gallery` builds the gallery it lists from `templates/`
 ```
 
 `editor/` is not part of what Paseo builds: nothing in `index.server.ts` or `index.client.tsx` imports it.

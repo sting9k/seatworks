@@ -1,6 +1,5 @@
 import { z } from "zod";
-import { installName, unpacked } from "../../shared/contracts/template.ts";
-import { packed } from "./pack.ts";
+import { installName, packed, unpacked } from "../../shared/contracts/template.ts";
 import { readTemplate, type TemplateFiles } from "./read-template.ts";
 
 /** The gallery as a page reads it: an index of templates beside the one file each is shared as, always built. */

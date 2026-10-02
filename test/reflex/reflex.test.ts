@@ -7,7 +7,7 @@ import { loadReflex } from "../../server/satellites/reflex/config.ts";
 import type { Jev } from "../../server/satellites/reflex/jev.ts";
 import { SHA, brief, plan, team } from "../kernel/ledger.ts";
 
-const config = loadReflex(join(import.meta.dirname, "../../profile/slp"), {
+const config = loadReflex(join(import.meta.dirname, "../../templates/slp"), {
   reflex: "reflex.yaml",
   watch: "watch.yaml",
 })!;

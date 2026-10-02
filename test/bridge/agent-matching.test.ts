@@ -4,10 +4,11 @@ import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, test } from "node:test";
-import { packed } from "../../editor/template/pack.ts";
+import { packed } from "../../shared/contracts/template.ts";
 import { Plugin } from "../../server/bridge/plugin.ts";
 import { slpFiles } from "../editor/slp.ts";
 import { fakePaseo } from "./fake-paseo.ts";
+import { stateRoot } from "./state-root.ts";
 
 // Each case is a row of spec/CONFORMANCE.md, Templates: the agent profiles a profile names, matched to the Human's.
 
@@ -18,7 +19,7 @@ after(async () => {
 });
 
 async function started() {
-  const root = mkdtempSync(join(tmpdir(), "sw-root-"));
+  const root = stateRoot();
   const plugin = new Plugin(root);
   plugins.push(plugin);
   const paseo = fakePaseo(pluginDir);
@@ -54,7 +55,7 @@ const keptIn = (root: string, profile: string, text: string) => {
   writeFileSync(join(root, "agents", `${profile}.json`), text);
 };
 
-test("an agent profile a profile's roles name is matched to one the Human has, the shipped profile's too: its agent is made from that one", async () => {
+test("an agent profile a profile's roles name is matched to one the Human has, SLP's too: its agent is made from that one", async () => {
   const { plugin, paseo } = await started();
   const before = await shown(plugin, "slp");
   assert.deepEqual(before.of("slp-peer-alt"), { name: "slp-peer-alt", runsOn: "slp-peer-alt", there: false });
@@ -132,9 +133,9 @@ test("a template installed again keeps the matching of its name", async () => {
   const about = JSON.stringify({ name: "Night Crew", description: "A crew for the night shift." });
   writeFileSync(path, packed(new Map([...slpFiles(), ["template.json", about]])));
   const install = async () => {
-    const read = await plugin.template(path, null);
+    const read = await plugin.template({ path: path }, null);
     assert.ok(read.ok);
-    assert.ok((await plugin.template(path, read.offer.hash)).ok);
+    assert.ok((await plugin.template({ path: path }, read.offer.hash)).ok);
   };
 
   await install();

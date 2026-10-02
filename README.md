@@ -64,16 +64,20 @@ evidence, and keeping a plan needs a reason as much as changing it does.
 curl -fsSL https://raw.githubusercontent.com/sting9k/seatworks/main/install.sh | sh
 ```
 
-`install.sh` checks git, Node, npm and Paseo, adds the plugin to Paseo from this repository, and lists the Paseo agent
-profiles the roles run on. Run it again later and it tells you whether a newer release is out.
+`install.sh` checks git, Node, npm and Paseo, adds the plugin to Paseo from this repository, and says what to do
+next. Run it again later and it tells you whether a newer release is out.
 
 ```sh
 sh install.sh --ref <branch|tag|commit>   # install another branch or release
 sh install.sh --dir <path>                # install a checkout on this machine
 ```
 
-Then give each name the roles use an agent and a model. Either create an agent profile of that name in Paseo's
-settings, or open Seatworks, then Plugin, and under Agent profiles match the name to a profile you already have:
+Then open Seatworks in Paseo's sidebar, and Plugin. Under Templates, install SLP: it comes with Seatworks, and
+nothing runs until a template is installed. A later release of the plugin leaves your installed copy alone; the page
+says when the two differ, and installing again takes the new one.
+
+Give each name SLP's roles use an agent and a model. Under Agent profiles on the same page, match the name to an
+agent profile you already have, or create one of that name in Paseo's settings:
 
 | Profile                        | Used by                                   |
 | ------------------------------ | ----------------------------------------- |
@@ -120,7 +124,7 @@ its agents, deletes its copies and branches, and sets its record aside until you
 
 ## Your own way of working
 
-SLP is a template, not the plugin. Everything its agents read is in [`profile/slp/`](profile/slp): roles and what each
+SLP is a template, not the plugin. Everything its agents read is in [`templates/slp/`](templates/slp): roles and what each
 may do (`profile.yaml`), prompts (`roles/`), skills (`skills/`), and what the watch looks for (`watch.yaml`,
 `reflex.yaml`). A way of working of your own is another template: a directory of the same kind of files, installed
 beside SLP with no change to the plugin's code. Roles are data; nothing in the code knows their names.
@@ -169,7 +173,7 @@ There is no CI and no build step. Tests run against a stand-in for Paseo and nev
 | `server/`         | The bridge to Paseo and the satellites that do I/O: store, agent host, workspaces, evidence, delivery |
 | `client/`         | What you see in Paseo, in React Native                                                        |
 | `bin/`, `harness/` | The git guard and the team's MCP server; each agent's shipped settings                       |
-| `profile/slp/`    | The SLP profile: everything agents read                                                        |
+| `templates/slp/`    | The SLP profile: everything agents read                                                        |
 | `editor/`         | The template editor, a web page of its own: `npm run editor`                                  |
 | `docs/`           | For whoever makes a template: the spec an agent writes one from, and the guide to the editor   |
 | `.claude/skills/` | Recipes for building Seatworks: kernel changes, satellites, Paseo's boundary, tests          |

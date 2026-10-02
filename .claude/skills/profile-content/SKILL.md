@@ -1,11 +1,11 @@
 ---
 name: profile-content
-description: "Writes or edits what agents read and what the reflex asks, under profile/slp: role prompts, runtime skills, profile.yaml, reflex.yaml questions and watch.yaml moments. Use for any change there; not for the dev skills in .claude/skills, which are for whoever builds Seatworks."
+description: "Writes or edits what agents read and what the reflex asks, under templates/slp: role prompts, runtime skills, profile.yaml, reflex.yaml questions and watch.yaml moments. Use for any change there; not for the dev skills in .claude/skills, which are for whoever builds Seatworks."
 ---
 
 # Profile content
 
-`profile/slp/` is runtime content: an edit changes what agents do on the next seat created. It is SLP's preset, not
+`templates/slp/` is runtime content: an edit changes what agents do on the next seat created. It is SLP's preset, not
 the plugin: another team's profile replaces it with no change to code.
 
 ## Where a rule belongs

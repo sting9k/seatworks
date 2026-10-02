@@ -1,5 +1,4 @@
-import { installName } from "../../shared/contracts/template.ts";
-import { packed } from "../template/pack.ts";
+import { installName, packed } from "../../shared/contracts/template.ts";
 import type { TemplateFiles } from "../template/read-template.ts";
 
 /** The files of a folder a person picked, by their path inside it; a hidden file is left out. */

@@ -23,7 +23,7 @@ const fetched = async (file: string) => {
   const answer = await fetch(new URL(`gallery/${file}`, document.baseURI));
   return answer.ok ? answer.text() : null;
 };
-/** The shipped template's name in the gallery: the mark another template's always-on words are set beside. */
+/** SLP's name in the gallery: the mark another template's always-on words are set beside. */
 const MARKED = "slp";
 
 /** The gallery and the templates open beside it, each in a tab. */

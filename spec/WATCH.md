@@ -42,7 +42,7 @@ The owner gave this design to the builder. These choices settle it, each with it
 ## When: moments
 
 A moment is something that bears on the design or the implementation while it can still be changed cheaply. The SLP
-profile's set, in `profile/slp/watch.yaml` with its questions and thresholds:
+profile's set, in `templates/slp/watch.yaml` with its questions and thresholds:
 
 | Moment                  | Seen when                                                                               | Watches    |
 | ----------------------- | --------------------------------------------------------------------------------------- | ---------- |
@@ -122,7 +122,7 @@ The same two questions are asked over a hand-back's test diff, as `judgement` ev
 
 ### The Watcher
 
-A role in the profile (`profile/slp/roles/watcher.md`), seated under the root over the scopes it watches. It writes
+A role in the profile (`templates/slp/roles/watcher.md`), seated under the root over the scopes it watches. It writes
 nothing and speaks only to the Supervisor; what it attends to reaches the owner of the watched agent's scope.
 
 - **Model.** The profile names one of the Human's Paseo agent profiles: a cheap model with a long context.

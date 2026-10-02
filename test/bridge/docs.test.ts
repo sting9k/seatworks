@@ -7,6 +7,7 @@ import { after, test } from "node:test";
 import { Plugin } from "../../server/bridge/plugin.ts";
 import { agentTools } from "./agent-tools.ts";
 import { fakePaseo } from "./fake-paseo.ts";
+import { stateRoot } from "./state-root.ts";
 
 const pluginDir = join(import.meta.dirname, "../..");
 const plugins: Plugin[] = [];
@@ -25,7 +26,7 @@ test("the glossary and the map are written from the record into the repository, 
   writeFileSync(join(repo, "a.txt"), "a\n");
   git("add", ".");
   git("commit", "-q", "-m", "start");
-  const plugin = new Plugin(mkdtempSync(join(tmpdir(), "sw-root-")));
+  const plugin = new Plugin(stateRoot());
   plugins.push(plugin);
   const paseo = fakePaseo(pluginDir);
   plugin.saw(paseo.api);

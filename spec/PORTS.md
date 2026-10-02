@@ -130,7 +130,7 @@ Shows the Human the kernel's views and the agents' own words, and takes the Huma
 views: whatTheHumanNeeds, sinceTheyLooked, chainOfChange, openObligations, status, signals, stuck
 commands: answer_question, send_message, hold_scope, resume_scope, amend_plan (lines of theirs), answer_permission,
           set_checks, publish
-upkeep: attach(repository, profile), profiles, templateOffer(path), installTemplate(path, hash), agents(match), leftovers,
+upkeep: attach(repository, profile), profiles, presets, templateOffer(from), installTemplate(from, hash), agents(match), leftovers,
         clean(picked), checkUpdate
 ```
 

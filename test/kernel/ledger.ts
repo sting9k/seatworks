@@ -13,7 +13,7 @@ import { INITIAL, type State } from "../../shared/kernel/state.ts";
 
 export function slpProfile(): Profile {
   const file = ProfileFileSchema.parse(
-    parse(readFileSync(join(import.meta.dirname, "../../profile/slp/profile.yaml"), "utf8")),
+    parse(readFileSync(join(import.meta.dirname, "../../templates/slp/profile.yaml"), "utf8")),
   );
   const resolved = resolveProfile(file);
   if (!resolved.ok) throw new Error(resolved.says);

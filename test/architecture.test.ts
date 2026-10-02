@@ -17,7 +17,7 @@ const code = [...files("shared"), ...files("server"), ...files("bin"), "index.se
 
 test("no role of the profile is named in the plugin's code, even in what it says: roles are data, and a renamed profile behaves the same", () => {
   const roles = Object.keys(
-    (parse(readFileSync(join(root, "profile/slp/profile.yaml"), "utf8")) as { roles: Record<string, unknown> }).roles,
+    (parse(readFileSync(join(root, "templates/slp/profile.yaml"), "utf8")) as { roles: Record<string, unknown> }).roles,
   );
   const named = code.flatMap((file) => {
     const text = readFileSync(join(root, file), "utf8")
@@ -35,7 +35,7 @@ test("no role of the profile is named in the plugin's code, even in what it says
 
 test("the Human's surface writes no role's name of its own: it shows the names the project's profile gives", () => {
   const roles = Object.keys(
-    (parse(readFileSync(join(root, "profile/slp/profile.yaml"), "utf8")) as { roles: Record<string, unknown> }).roles,
+    (parse(readFileSync(join(root, "templates/slp/profile.yaml"), "utf8")) as { roles: Record<string, unknown> }).roles,
   );
   const named = [...files("client"), "index.client.tsx"].flatMap((file) => {
     const text = readFileSync(join(root, file), "utf8")

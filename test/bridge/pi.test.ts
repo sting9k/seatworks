@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { after, test } from "node:test";
 import { Plugin } from "../../server/bridge/plugin.ts";
 import { fakePaseo } from "./fake-paseo.ts";
+import { stateRoot } from "./state-root.ts";
 
 const pluginDir = join(import.meta.dirname, "../..");
 const plugins: Plugin[] = [];
@@ -23,7 +24,7 @@ async function openedOn(provider: string) {
   writeFileSync(join(repo, "a.txt"), "a\n");
   git("add", ".");
   git("commit", "-q", "-m", "start");
-  const root = mkdtempSync(join(tmpdir(), "sw-root-"));
+  const root = stateRoot();
   const plugin = new Plugin(root);
   plugins.push(plugin);
   const paseo = fakePaseo(pluginDir, provider);

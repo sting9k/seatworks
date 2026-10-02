@@ -13,7 +13,7 @@
     "test": "node --test --experimental-strip-types --no-warnings=ExperimentalWarning --import ./test/setup.ts \"test/**/*.test.ts\"",
     "check": "npm run typecheck && npm run lint && prettier --check . && npm test",
     "template": "node --experimental-strip-types --no-warnings=ExperimentalWarning bin/template.ts",
-    "gallery": "node --experimental-strip-types --no-warnings=ExperimentalWarning bin/gallery.ts editor/public/gallery profile",
+    "gallery": "node --experimental-strip-types --no-warnings=ExperimentalWarning bin/gallery.ts editor/public/gallery templates",
     "editor": "npm run gallery && vite editor",
     "editor:build": "npm run gallery && vite build editor"
   },

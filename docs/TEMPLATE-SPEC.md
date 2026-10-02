@@ -1,7 +1,7 @@
 # Writing a Seatworks template
 
 This is everything a template is, for whoever writes one without the editor: an agent asked to make one, or a person
-with a text editor. It needs no other file of this repository. `profile/slp/` is the template Seatworks ships, and the
+with a text editor. It needs no other file of this repository. `templates/slp/` is the template that comes with Seatworks, and the
 worked example to read beside it. To make one by dragging nodes instead, read `EDITOR-GUIDE.md`.
 
 A template is a directory of text files that says how a team of coding agents works: who is on the team, what each
@@ -11,7 +11,7 @@ be said in the files below, it is out of a template's reach; say so to whoever a
 
 ## The short way: start from SLP
 
-1. Copy `profile/slp/` to a directory of your own, outside this repository. Its name does not matter yet.
+1. Copy `templates/slp/` to a directory of your own, outside this repository. Its name does not matter yet.
 2. In `template.json`, set `name` and `description`. The name decides what it is installed as: `Night Crew` installs
    as `night-crew`.
 3. In `profile.yaml`, set each role's `models` to names of your own for what each role runs on, such as
@@ -260,7 +260,7 @@ its description and the path to read), and the Human's own rules for the role. I
 is seated on and shows that scope as `status` does. So a prompt does not explain tools or the record; tool
 descriptions and replies do that.
 
-Write a prompt in five parts, as `profile/slp/roles/peer.md` does:
+Write a prompt in five parts, as `templates/slp/roles/peer.md` does:
 
 1. What the role owns, where its work comes from and where it goes: one paragraph.
 2. How to read what it is given: what is fixed, and what it may question.

@@ -45,7 +45,7 @@ its agents read; it never gives the kernel a reason to refuse (§1), brings no c
 
 Prompts, skills, models and harness choices are in the profile too, but the kernel does not read them.
 
-The SLP profile, from CONCEPT-V2 §3, is `profile/slp/profile.yaml`. The properties the kernel reads from it:
+The SLP profile, from CONCEPT-V2 §3, is `templates/slp/profile.yaml`. The properties the kernel reads from it:
 
 | Role       | Properties                                                                                   |
 | ---------- | -------------------------------------------------------------------------------------------- |

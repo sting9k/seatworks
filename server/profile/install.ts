@@ -2,11 +2,12 @@ import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { variablesNamed } from "../../shared/contracts/profile.ts";
-import type { TemplateOffer } from "../../shared/contracts/rpc.ts";
-import { installName, unpacked } from "../../shared/contracts/template.ts";
+import type { TemplateOffer, TemplateSource } from "../../shared/contracts/rpc.ts";
+import { installName, packed, unpacked } from "../../shared/contracts/template.ts";
 import { loadReflex } from "../satellites/reflex/config.ts";
 import { type Has, namedBy, there } from "./agents.ts";
 import { type Bundle, loadBundle } from "./bundle.ts";
+import { presetFiles } from "./presets.ts";
 import { profilesDir } from "./profiles.ts";
 
 /** What installing a template would bring; its `hash` is of the file as read, and no other file is installed. */
@@ -15,12 +16,30 @@ type Offer = TemplateOffer;
 type Failed = { readonly ok: false; readonly says: string };
 type Staged = { readonly ok: true; readonly offer: Offer; readonly dir: string };
 
-/** Reads a shared template, unpacks it aside and loads it; the directory is the caller's to install or remove. */
-function staged(stateRoot: string, path: string, has: readonly Has[], env: NodeJS.ProcessEnv): Staged | Failed {
-  if (!existsSync(path)) return { ok: false, says: `there is no file at ${path}` };
-  const text = readFileSync(path, "utf8");
+/** The plugin's directory, the state root and the environment a template is installed against. */
+type Where = { readonly pluginDir: string; readonly stateRoot: string; readonly env: NodeJS.ProcessEnv };
+
+/** A template's files and the text its hash is of: a shared file as it is, one that comes with the plugin packed. */
+function sourced(
+  pluginDir: string,
+  from: TemplateSource,
+): { ok: true; files: ReadonlyMap<string, string>; text: string } | Failed {
+  if ("preset" in from) {
+    const files = presetFiles(pluginDir, from.preset);
+    if (files === null) return { ok: false, says: `no template named ${from.preset} comes with Seatworks` };
+    return { ok: true, files, text: packed(files) };
+  }
+  if (!existsSync(from.path)) return { ok: false, says: `there is no file at ${from.path}` };
+  const text = readFileSync(from.path, "utf8");
   const read = unpacked(text);
+  return read.ok ? { ok: true, files: read.files, text } : read;
+}
+
+/** Reads a template, unpacks it aside and loads it; the directory is the caller's to install or remove. */
+function staged({ pluginDir, stateRoot, env }: Where, from: TemplateSource, has: readonly Has[]): Staged | Failed {
+  const read = sourced(pluginDir, from);
   if (!read.ok) return read;
+  const { text } = read;
   const about = aboutOf(read.files.get("template.json"));
   if (about === null) return { ok: false, says: "its template.json does not say its name" };
   const name = installName(about.name);
@@ -64,35 +83,33 @@ function staged(stateRoot: string, path: string, has: readonly Has[], env: NodeJ
   };
 }
 
-/** What installing the template at `path` would bring; nothing of it is kept. */
+/** What installing the template would bring; nothing of it is kept. */
 export function offerOf(
-  stateRoot: string,
-  path: string,
+  where: Where,
+  from: TemplateSource,
   has: readonly Has[],
-  env: NodeJS.ProcessEnv,
 ): { readonly ok: true; readonly offer: Offer } | Failed {
-  const made = staged(stateRoot, path, has, env);
+  const made = staged(where, from, has);
   if (!made.ok) return made;
   rmSync(made.dir, { recursive: true, force: true });
   return { ok: true, offer: made.offer };
 }
 
-/** Installs the template at `path` under its name; a file changed since the offer of `hash` is not installed. */
+/** Installs the template under its name; one that changed since the offer of `hash` is not installed. */
 export function install(
-  stateRoot: string,
-  path: string,
+  where: Where,
+  from: TemplateSource,
   hash: string,
   has: readonly Has[],
-  env: NodeJS.ProcessEnv,
 ): { readonly ok: true; readonly offer: Offer } | Failed {
-  const made = staged(stateRoot, path, has, env);
+  const made = staged(where, from, has);
   if (!made.ok) return made;
   if (made.offer.hash !== hash) {
     rmSync(made.dir, { recursive: true, force: true });
-    return { ok: false, says: "the file changed since it was read: look at it again before installing it" };
+    return { ok: false, says: "the template changed since it was read: look at it again before installing it" };
   }
-  const into = join(profilesDir(stateRoot), made.offer.name);
-  mkdirSync(profilesDir(stateRoot), { recursive: true });
+  const into = join(profilesDir(where.stateRoot), made.offer.name);
+  mkdirSync(profilesDir(where.stateRoot), { recursive: true });
   rmSync(into, { recursive: true, force: true });
   renameSync(made.dir, into);
   return { ok: true, offer: made.offer };

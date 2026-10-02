@@ -1,32 +1,28 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
-/** The profile Seatworks ships, by the name a project runs it under. */
-export const SHIPPED = "slp";
-
 /** Where the profiles the Human installed are kept, each in a directory of its name (TEMPLATE.md). */
 export const profilesDir = (stateRoot: string) => join(stateRoot, "profiles");
 
-/** A profile's directory by its name; one installed under the shipped one's name stands in its place. */
-export function profilePath(pluginDir: string, stateRoot: string, name: string): string | null {
+/** An installed profile's directory by its name; null when none of that name is installed. */
+export function profilePath(stateRoot: string, name: string): string | null {
   const installed = join(profilesDir(stateRoot), name);
-  if (existsSync(join(installed, "profile.yaml"))) return installed;
-  return name === SHIPPED ? join(pluginDir, "profile", SHIPPED) : null;
+  return existsSync(join(installed, "profile.yaml")) ? installed : null;
 }
 
 export type Listed = { readonly name: string; readonly title: string; readonly description: string };
 
-/** Every profile a project may be attached with: the shipped one, and each installed. */
-export function listProfiles(pluginDir: string, stateRoot: string): Listed[] {
-  const dir = profilesDir(stateRoot);
-  const installed = existsSync(dir)
-    ? readdirSync(dir).filter((name) => existsSync(join(dir, name, "profile.yaml")))
-    : [];
-  return [...new Set([SHIPPED, ...installed])].sort().map((name) => {
-    const about = aboutOf(join(profilePath(pluginDir, stateRoot, name)!, "template.json"));
+/** Every template directory under `dir`, by its name, with what its `template.json` calls it. */
+export function templatesIn(dir: string): Listed[] {
+  const names = existsSync(dir) ? readdirSync(dir).filter((name) => existsSync(join(dir, name, "profile.yaml"))) : [];
+  return names.sort().map((name) => {
+    const about = aboutOf(join(dir, name, "template.json"));
     return { name, title: about.name ?? name, description: about.description ?? "" };
   });
 }
+
+/** Every profile a project may be attached with: each the Human installed. */
+export const listProfiles = (stateRoot: string): Listed[] => templatesIn(profilesDir(stateRoot));
 
 /** What a profile's `template.json` calls it, when it has one that reads; the plugin needs nothing else of the file. */
 function aboutOf(path: string): { name?: string; description?: string } {
