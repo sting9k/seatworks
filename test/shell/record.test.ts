@@ -28,7 +28,11 @@ test("a scope's record read from the events filed under it says what the whole l
       const log = [...store.read(0)];
       const scopes = log.flatMap((e) => (e.type === "scope_opened" ? [e.scope.id] : []));
       for (const scope of scopes)
-        assert.equal(scopeRecordText(store.about(scope), scope), scopeRecordText(log, scope), `scope ${scope}`);
+        assert.equal(
+          scopeRecordText(store.about(scope), scope, "above"),
+          scopeRecordText(log, scope, "above"),
+          `scope ${scope}`,
+        );
       project.dispose();
     }),
     { numRuns: 200 },

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { activityLine } from "../../shared/views/activity.ts";
 import { humanView } from "../../shared/views/human.ts";
-import { chainOf, signalsOf } from "../../shared/views/record.ts";
+import { chainOf, signalsOf, yieldsOf } from "../../shared/views/record.ts";
 import { SHA, brief, plan, team } from "./ledger.ts";
 
 test("the Human sees what waits on them, what agents decided for them, and their words not yet carried in", () => {
@@ -127,4 +127,82 @@ test("a finding reopened with new evidence reads as not yet weighed in its chain
   const chain = chainOf(ledger.log, "f1");
   assert.equal(chain?.verdict, null, "the old verdict no longer stands");
   assert.deepEqual(chain.evidence, ["e1"]);
+});
+
+test("a look back reads of each question how often it was asked and went past its threshold, what its watcher made of it and what came of its attentions", () => {
+  const { ledger, supervisor, lead, peer, task } = team();
+  ledger.must(ledger.as(supervisor, "open_scope", { parent: "root", role: "watcher", over: "all" }));
+  const asked = (level: string, answer: string) => ({
+    question: "trades-the-goal",
+    actor: peer,
+    scope: task,
+    source: "reflex",
+    model: "jev-1.13.0",
+    answer,
+    level,
+    route: { kind: "attention", why: "int8", urgency: "now" },
+  });
+  ledger.must(ledger.fact("record_observation", asked("record", "0.10")));
+  ledger.must(ledger.fact("record_observation", asked("record", "0.20")));
+  ledger.must(ledger.fact("record_observation", asked("consider", "0.95")));
+  ledger.must(ledger.fact("record_observation", asked("consider", "0.60")));
+  const [first, second] = [...ledger.state.obligations.values()].flatMap((o) =>
+    o.about.kind === "candidate" ? [o.about.id] : [],
+  );
+  ledger.must(
+    ledger.as("a4", "attend", {
+      candidate: first,
+      actor: peer,
+      moment: "trades-the-goal",
+      why: "int8 against a goal of precision",
+      urgency: "now",
+    }),
+  );
+  ledger.must(ledger.as(lead, "acknowledge", { attention: [...ledger.state.attentions.keys()][0]! }));
+  ledger.must(ledger.as("a4", "pass", { candidate: second, reason: "the brief allows it" }));
+
+  const looped = {
+    question: "going-in-circles",
+    actor: peer,
+    scope: task,
+    source: "code",
+    answer: "5 times",
+    level: "tell",
+    route: { kind: "attention", why: "the same call failed the same way 5 times", urgency: "now" },
+  };
+  ledger.must(ledger.fact("record_observation", looped));
+  ledger.must(ledger.fact("record_delivery", { to: lead, attentions: [[...ledger.state.attentions.keys()][0]!] }));
+  ledger.must(ledger.as(lead, "send_message", { to: peer, text: "What has each attempt told you?" }));
+
+  const row = (name: string) => yieldsOf(ledger.log).find((y) => y.name === name);
+  assert.deepEqual(row("trades-the-goal"), {
+    name: "trades-the-goal",
+    asked: 4,
+    past: 2,
+    low: 2,
+    mid: 1,
+    high: 1,
+    attended: 1,
+    passed: 1,
+    attentions: 1,
+    acted: 0,
+    acknowledged: 1,
+    noise: 0,
+    climbed: 0,
+  });
+  assert.deepEqual(row("going-in-circles"), {
+    name: "going-in-circles",
+    asked: 1,
+    past: 1,
+    low: 0,
+    mid: 0,
+    high: 0,
+    attended: 0,
+    passed: 0,
+    attentions: 1,
+    acted: 1,
+    acknowledged: 0,
+    noise: 0,
+    climbed: 0,
+  });
 });

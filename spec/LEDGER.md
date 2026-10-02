@@ -487,17 +487,21 @@ for it.
   `mayChange` edge at both its ends while both are open, what a watching scope watches over, a hand-back with whether any check is set to run on it, open obligations on and to its owner, a message or direction owed with its words, the
   latest claim and its evidence, spend of the scope and its descendants beside its appetite.
 - `record(scope)`: briefs with every version; what the owner above did to the scope (paths moved, held, resumed,
-  reseated, dropped); each hand-back and what came of it (sent back, integrated); each scope opened under it, with
-  its role and paths, and whether it was integrated or dropped, which is how whoever takes a lane in reads what its
-  owner did with its tasks once they are closed and out of `status`; findings with their chains
-  (classified, reopened, carried, withdrawn); reports; attentions with what came of them. It reads the log, so it
-  answers for a scope that is closed too, and it reads only that scope's part of it: each event is filed, in the
-  append that writes it, under the scopes whose record it is read in (a finding's are the scope it was raised in and
-  the one it is about; what came of an attention is filed under the scope the attention is about, read off the state
-  before the event that settles it), so the read costs what one scope's history holds, whatever the length of the log.
+  reseated, dropped); each hand-back and what came of it (sent back, integrated); each scope opened under it, with its
+  role and paths, and whether it was integrated or dropped, which is how whoever takes a lane in reads what its owner
+  did with its tasks once they are closed and out of `status`; findings with their chains (classified, reopened,
+  carried, withdrawn); reports; and, for a reader who owns a scope above it or watches, the attentions about it with
+  what came of them, which the watched never read (`WATCH.md`, Decided 6). For the root's owner the root's record ends
+  with what a look back reads: the five signals, and `yields`, the counts of each question and moment (`REFLEX.md`,
+  Measured by the record), folded from the whole log when it is asked for. It reads the log, so it answers for a scope
+  that is closed too, and it reads only that scope's part of it: each event is filed, in the append that writes it,
+  under the scopes whose record it is read in (a finding's are the scope it was raised in and the one it is about; what
+  came of an attention is filed under the scope the attention is about, read off the state before the event that
+  settles it), so the read costs what one scope's history holds, whatever the length of the log.
 - An agent's reads (`status`, `record`, `diff`) take its own scope when it names none. Their arguments are parsed at
   the boundary as a command's are, and one that does not fit is refused, saying which.
-- `obligations(actor)`, `whatTheHumanNeeds`, `sinceTheyLooked(at)`, `chainOfChange(finding)`, `signals(since)`.
+- `obligations(actor)`, `whatTheHumanNeeds`, `sinceTheyLooked(at)`, `chainOfChange(finding)`, `signals(since)`,
+  `yields`.
 
 The five signals, each `count of total` (`shared/views/record.ts`), in the plainest terms the log supports:
 repeated findings (on a line or scope that already had one), questions to the Human after whose answer a plan or

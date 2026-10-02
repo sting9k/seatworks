@@ -540,6 +540,27 @@ test("the attention tools: a watcher's attention reaches the owner above the age
   const kept = (await guard.call("record", { scope: "1.1" })).text;
   assert.match(kept, / attention t1: acknowledged by a2$/m, "the record keeps what came of each attention");
   assert.match(kept, / attention t2: its kind marked noise by a2$/m);
+  assert.doesNotMatch(
+    (await maker.call("record", {})).text,
+    /attention/,
+    "the agent watched reads nothing of an attention in its own scope's record",
+  );
+  const lookBack = (await chief.call("record", { scope: "root" })).text;
+  assert.match(
+    lookBack,
+    /^The five signals, each a count of a total:$/m,
+    "the root's owner reads what a look back needs",
+  );
+  assert.match(lookBack, /^- attentions left until they climbed: 0 of 2$/m);
+  assert.match(
+    lookBack,
+    /^- going-in-circles: asked 0 · past its threshold 0 · attended 0, passed 0 · attentions 2: acted on 0, acknowledged 1, marked noise 1, climbed 0$/m,
+  );
+  assert.doesNotMatch(
+    (await maker.call("record", { scope: "root" })).text,
+    /signals|going-in-circles/,
+    "nobody else is shown it",
+  );
   const before = c.told(1).length;
   assert.equal(
     await did(c, guard, "attend", { actor: "a3", moment: "going-in-circles", why: "a third time", urgency: "now" }),

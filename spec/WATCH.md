@@ -34,7 +34,8 @@ The owner gave this design to the builder. These choices settle it, each with it
    ceremony the concept warns of. One its reader has neither acted on nor acknowledged by the end of its next turn,
    and that still holds, goes up one owner (`STEERING.md`). `mark_noise` quiets a moment for one agent and scope.
 6. **The agent never learns it is watched.** An agent that knows plays to the watch (V1). The owner's question is its
-   own, with no attention's words, id or source in it.
+   own, with no attention's words, id or source in it. Its own scope's `record` shows it nothing of what was told of
+   its work, and what a look back reads of the watch is shown to the root's owner alone.
 7. **An open question to a Peer copies its Lead and opens no obligation**, since it directs nothing (KERNEL I7).
 8. **Blind designs narrow no one's reading.** A design is blind to its Lead's framing and to the other designs
    because the Lead does not put them in its brief, and Peers do not message each other. What an agent may read stays

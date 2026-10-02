@@ -247,15 +247,147 @@ export function attentionsAbout(events: Iterable<Event>, actor: string): string[
   return lines.map(([head, ...came]) => `${head}: ${came.length > 0 ? came.join("; ") : "not yet acted on"}`);
 }
 
-/** A scope's history for the `record` read: its briefs, what was done to it, its hand-backs, findings and reports. */
-export function scopeRecordText(events: Iterable<Event>, scope: string): string {
+/** What a look back reads of one question or moment (REFLEX.md, Measured by the record). */
+export type Yield = {
+  readonly name: string;
+  /** Answers on the record, and of those that are probabilities how many fell under 0.25, between, and over 0.7. */
+  readonly asked: number;
+  readonly low: number;
+  readonly mid: number;
+  readonly high: number;
+  /** Answers past its threshold, and the candidates among them its watcher attended and passed. */
+  readonly past: number;
+  readonly attended: number;
+  readonly passed: number;
+  /** Attentions opened under its name, and what came of them. */
+  readonly attentions: number;
+  readonly acted: number;
+  readonly acknowledged: number;
+  readonly noise: number;
+  readonly climbed: number;
+};
+
+/** Each question and moment the log holds an answer or an attention of, in the order first seen: counts, no rule. */
+export function yieldsOf(events: Iterable<Event>): Yield[] {
+  type Row = { -readonly [K in keyof Yield]: Yield[K] };
+  const rows = new Map<string, Row>();
+  const row = (name: string): Row => {
+    const found = rows.get(name);
+    if (found) return found;
+    const made = { name, asked: 0, low: 0, mid: 0, high: 0, past: 0, attended: 0, passed: 0 };
+    const fresh: Row = { ...made, attentions: 0, acted: 0, acknowledged: 0, noise: 0, climbed: 0 };
+    rows.set(name, fresh);
+    return fresh;
+  };
+  /** Open candidates and attentions by id, each with the name it is counted under. */
+  const candidates = new Map<string, string>();
+  const attentions = new Map<string, string>();
+  const settled = (attention: string): Row | undefined => {
+    const name = attentions.get(attention);
+    attentions.delete(attention);
+    return name === undefined ? undefined : row(name);
+  };
+  for (const e of events) {
+    switch (e.type) {
+      case "observation_made": {
+        const r = row(e.observation.question);
+        r.asked += 1;
+        if (e.observation.level !== "record") r.past += 1;
+        const p = e.observation.source === "reflex" ? probabilityIn(e.observation.answer) : null;
+        if (p !== null) r[p < 0.25 ? "low" : p > 0.7 ? "high" : "mid"] += 1;
+        break;
+      }
+      case "obligation_opened":
+        if (e.obligation.seen) candidates.set(e.obligation.about.id, e.obligation.seen.moment);
+        break;
+      case "attended":
+      case "passed": {
+        const name = e.candidate === null ? undefined : candidates.get(e.candidate);
+        if (e.candidate !== null) candidates.delete(e.candidate);
+        if (name !== undefined) row(name)[e.type] += 1;
+        break;
+      }
+      case "attention_opened":
+        attentions.set(e.attention.id, e.attention.moment);
+        row(e.attention.moment).attentions += 1;
+        break;
+      case "attention_acted": {
+        const r = settled(e.attention);
+        if (r) r.acted += 1;
+        break;
+      }
+      case "acknowledged": {
+        const r = settled(e.attention);
+        if (r) r.acknowledged += 1;
+        break;
+      }
+      case "noise_marked": {
+        const r = settled(e.attention);
+        if (r) r.noise += 1;
+        break;
+      }
+      case "attention_climbed": {
+        // A climb goes on as the same attention under a new id: counted as left once, and opened once.
+        const r = settled(e.attention);
+        if (r) {
+          r.climbed += 1;
+          attentions.set(e.to.id, r.name);
+        }
+        break;
+      }
+      default:
+        break;
+    }
+  }
+  return [...rows.values()];
+}
+
+/** The probability an answer of the reflex states: alone, or in brackets after the label chosen. */
+function probabilityIn(answer: string): number | null {
+  const found = /(?:^|\()([01](?:\.\d+)?)\)?$/.exec(answer)?.[1];
+  return found === undefined ? null : Number(found);
+}
+
+/** What a look back reads off the whole log: the five signals, and each question's and moment's yield. */
+export function lookBackText(read: () => Iterable<Event>): string {
+  const s = signalsOf(read());
+  const ratio = ([count, total]: readonly [number, number]) => `${count} of ${total}`;
+  const yields = yieldsOf(read()).map((y) => {
+    const sizes = y.low + y.mid + y.high > 0 ? ` (${y.low} under 0.25, ${y.mid} between, ${y.high} over 0.7)` : "";
+    const came = `acted on ${y.acted}, acknowledged ${y.acknowledged}, marked noise ${y.noise}, climbed ${y.climbed}`;
+    return [
+      `- ${y.name}: asked ${y.asked}${sizes}`,
+      `past its threshold ${y.past}`,
+      `attended ${y.attended}, passed ${y.passed}`,
+      `attentions ${y.attentions}: ${came}`,
+    ].join(" · ");
+  });
+  return [
+    "The five signals, each a count of a total:",
+    `- findings on a line or scope that already had one: ${ratio(s.repeatedFindings)}`,
+    `- questions to the Human whose answer changed a plan or a brief: ${ratio(s.questionsThatChanged)}`,
+    `- verdicts and failing checks followed by a send-back or an amended brief: ${ratio(s.reviewsThatChanged)}`,
+    `- attentions left until they climbed: ${ratio(s.interventionsLate)}`,
+    `- messages that asked for an answer and got none: ${ratio(s.unanswered)}`,
+    "",
+    "Each question and moment, by its answers and what came of them:",
+    ...(yields.length > 0 ? yields : ["- none has an answer or an attention on the record"]),
+  ].join("\n");
+}
+
+/** Who reads a scope's record: an owner above the work or one that watches it, or anyone else. */
+export type RecordReader = "above" | "other";
+
+/** A scope's history for the `record` read; what the watch told of the work is shown only to a reader above it. */
+export function scopeRecordText(events: Iterable<Event>, scope: string, reader: RecordReader): string {
   const out: string[] = [];
   const findings = new Map<string, string[]>();
   const attentions = new Set<string>();
   const mine = (finding: string) => (findings.has(finding) ? [scope] : []);
-  const told = (attention: string) => (attentions.has(attention) ? [scope] : []);
+  const told: string[] = [];
+  const mineToo = (attention: string) => (attentions.has(attention) ? [scope] : []);
   for (const e of events) {
-    if (!recordedIn(e, mine, told).includes(scope)) continue;
+    if (!recordedIn(e, mine, mineToo).includes(scope)) continue;
     const done = doneTo(e, scope) ?? doneUnder(e, scope);
     if (done !== null) out.push(`${e.at} ${done}`);
     if ((e.type === "brief_issued" || e.type === "brief_amended") && e.scope === scope)
@@ -279,12 +411,14 @@ export function scopeRecordText(events: Iterable<Event>, scope: string): string 
       );
     if (e.type === "attention_opened" && e.attention.about.scope === scope) {
       attentions.add(e.attention.id);
-      out.push(`${e.at} attention ${e.attention.id} (${e.attention.moment}) to ${e.attention.to}`);
+      told.push(`${e.at} attention ${e.attention.id} (${e.attention.moment}) to ${e.attention.to}`);
     }
     const came = cameOf(e);
-    if (came && attentions.has(came.attention)) out.push(`${e.at} attention ${came.attention}: ${came.says}`);
+    if (came && attentions.has(came.attention)) told.push(`${e.at} attention ${came.attention}: ${came.says}`);
     if (e.type === "attention_climbed" && e.to.about.scope === scope) attentions.add(e.to.id);
   }
+  // The watched never learn they are watched (WATCH.md, Decided 6): what was told of the work is for those above it.
+  if (reader === "above") out.push(...told);
   for (const lines of findings.values()) out.push(lines.join("\n"));
   return out.length > 0 ? out.join("\n") : `Nothing on the record for scope ${scope}.`;
 }

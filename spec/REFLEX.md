@@ -235,6 +235,10 @@ tokens: under four million tokens, about fifteen cents. Events and hand-backs ad
 - The record gives each answer its label later: for each question, the look back reads how many notes were followed
   by an act of the role told on the same subject (an amendment, a hold, a question, a send-back). That is the
   ceremony signal (§10.3) applied to the reflex, and the data a threshold is set from.
+- The look back reads it in the root's `record`, which ends, for the root's owner alone, with the five signals and
+  with each question's and moment's counts (`LEDGER.md` §9): answers on the record, how many of them fell under
+  0.25, between, and over 0.7, how many went past its threshold, the candidates its watcher attended and passed, and
+  its attentions with what came of each. Counts, never a rule: a threshold is still set by whoever looks back.
 - From the first day, before any outcome is known, the answers' shape says whether a question works. A decisive one
   answers near 0 or near 1. A weak one sits in the middle, with its median above 0.25 and nothing past 0.7: it is
   underspecified, and is split, given a concrete shape, or given an example. A noisy one passes its threshold on
@@ -337,11 +341,8 @@ ask(state, questions, model) -> Result<{ model, answers, tokens }>
 - Whether OpenRouter's `/api/v1/systemone` honours `provider: { data_collection: deny }` as its `/api/alpha/decisions`
   did for V1; until it is shown to, Seatworks uses the route V1 used.
 - The rate OpenRouter allows Jev, which it does not publish.
-- No view gives a look back each question's answers and their labels: what an agent can read is the attentions in a
-  scope's `record` and what came of each. So a question's shape (decisive, weak, noisy) and how its answers separate
-  are not yet readable, and a threshold cannot be earned from them until a view is built. The five signals and a
-  finding's chain are given only by the plugin's `record` call, which no agent's tool reads and the Human's page
-  does not make.
+- The label of a note told straight to its role, once a question has earned its threshold: whether that role then
+  acted on the same subject is not counted yet, and no question has earned a threshold so far.
 
 ## Decided
 
