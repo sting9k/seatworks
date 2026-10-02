@@ -553,6 +553,8 @@ test("a Reviewer's verdict on the candidate is still citable once its reading sc
   ledger.must(ledger.as(lead, "drop_scope", { scope: "1.2", reason: "read" }));
   ledger.must(ledger.as(lead, "integrate", { scope: task, evidence: [verdict] }));
   assert.equal(ledger.state.scopes.get(task)?.integrating, true);
+  ledger.must(ledger.fact("record_integration", { scope: task, result: { sha: SHA(2) } }));
+  assert.equal(ledger.state.evidence.size, 0, "once nothing may cite it any more, it leaves memory with the rest");
 });
 
 test("a scope opened after its sibling gets no copy and no agent until that sibling is integrated", () => {
