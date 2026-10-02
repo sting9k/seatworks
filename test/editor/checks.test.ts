@@ -23,6 +23,7 @@ import {
 import { graphOf } from "../../editor/template/graph.ts";
 import { readTemplate, type Template, type TemplateFiles } from "../../editor/template/read-template.ts";
 import { wordingOf } from "../../server/satellites/reflex/config.ts";
+import { pairFiles } from "../pair.ts";
 import { slpFiles } from "./slp.ts";
 
 // Each case is a row of spec/CONFORMANCE.md, Editor: what a machine sees in a template, as a note on a node.
@@ -47,6 +48,12 @@ const filesChanged = (after: Template) =>
 
 test("SLP as it comes draws no note", () => {
   assert.deepEqual(notes(slp), []);
+});
+
+test("a template that shares no role with SLP draws no note", () => {
+  const pair = opened(pairFiles());
+
+  assert.deepEqual(notesOf(pair, pair), []);
 });
 
 test("each thing a machine can see in a template is a note on the node it is about", () => {

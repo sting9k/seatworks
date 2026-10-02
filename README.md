@@ -1,62 +1,61 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/images/logo-dark.svg" />
-    <img alt="Seatworks" src="docs/images/logo-light.svg" width="440" />
+    <source media="(prefers-color-scheme: dark)" srcset=".github/logo-dark.svg" />
+    <img alt="Seatworks" src=".github/logo-light.svg" width="440" />
   </picture>
 </p>
 
-<p align="center"><b>A team of coding agents in Paseo, working the SLP way.</b></p>
+<p align="center"><b>A team of coding agents in Paseo, working the way you choose.</b></p>
 
-Seatworks is a plugin for Paseo. You talk to one agent, the **Supervisor**. It works
-out with you what the project should do, splits the work into lanes, and lands what is done. Each lane has a **Lead**
-that plans it and answers for it, and **Peers** that each write one task in a copy of their own. A **Reviewer** reads a
-commit when a Lead wants evidence, and the **watch** tells an owner when one of its agents needs a look.
+Seatworks is a plugin for [Paseo](https://paseo.sh). It lets several coding agents work on one repository as a team:
+each owns a piece of the work, writes in a copy of its own, and what it hands back is taken in only on evidence.
 
-The plugin does not decide how the team works. It keeps the record, checks the few things that must hold, carries
-what agents say to each other, and runs git, checks and agents for them. The agents decide what to build and how,
-from prompts and skills that are plain files you can replace.
+The plugin does not decide how the team works. It keeps the record of who owns what and why, refuses the few things
+that would break that record, carries what agents say to each other, and runs git, checks and agents for them. How
+the team is arranged, and every word its agents read, is a **template**: plain files you install, change or replace
+without touching the plugin. **SLP** is the template that comes with it.
 
-> **Status: in testing.** Nothing has shipped yet. The test suite runs against a stand-in for Paseo; the first runs on
-> a real Paseo are happening now. Expect rough edges, and read [What to expect](#what-to-expect).
+> **Status: in testing.** Nothing has shipped. The tests run against a stand-in for Paseo; Claude Code and Pi have
+> been run as real agents, Codex and Oh My Pi have settings shipped and have not. Read
+> [What to expect](#what-to-expect).
 
-## Who does what
+## SLP, the template that comes with it
 
-| Who        | Owns                                                                             | Never                                        |
-| ---------- | -------------------------------------------------------------------------------- | -------------------------------------------- |
-| You        | What the project is for, what must hold, what it may cost                        |                                              |
-| Supervisor | Your intent turned into lanes, what happens where lanes meet, landing            | Writes code or decides a technical result    |
-| Lead       | One lane: its plan, who writes what, weighing what comes back, acceptance         | Writes code                                  |
-| Peer       | One task, and the engineering judgement inside it; may argue with its brief     | Writes outside its paths                     |
-| Reviewer   | Nothing: its verdict on one commit is evidence the Lead weighs                   | Changes the work                             |
-| Watcher    | Nothing: it tells an owner when one of its agents needs a look                    | Speaks to the agent it watches               |
+You talk to one agent, the **Supervisor**. It works out with you what the project should do, splits the work into
+lanes and lands what is done. Each lane has a **Lead** that plans it and answers for it, and **Peers** that each
+write one task. A **Reviewer** reads a commit when a Lead wants evidence, and the **watch** tells an owner when one
+of its agents needs a look.
 
-Authority runs along each role's own axis, not down a chain of command. A Peer may refuse its Lead's framing with
-evidence, and keeping a plan needs a reason as much as changing it does.
+| Who        | Owns                                                                        | Never                                     |
+| ---------- | --------------------------------------------------------------------------- | ----------------------------------------- |
+| You        | What the project is for, what must hold, what it may cost                   |                                           |
+| Supervisor | Your intent turned into lanes, what happens where lanes meet, landing       | Writes code or decides a technical result |
+| Lead       | One lane: its plan, who writes what, weighing what comes back, acceptance   | Writes code                               |
+| Peer       | One task, and the engineering judgement inside it; may argue with its brief | Writes outside its paths                  |
+| Reviewer   | Nothing: its verdict on one commit is evidence the Lead weighs              | Changes the work                          |
+| Watcher    | Nothing: it tells an owner when one of its agents needs a look              | Speaks to the agent it watches            |
 
-## How a piece of work goes
+A piece of work goes like this:
 
-1. **You bring work.** The Supervisor asks until nothing you care about is assumed: numbered rounds, each question with
-   its recommended answer. Your answers become the plan's lines, marked as yours, and settled words become the
-   project's glossary.
-2. **Lanes open.** One per independent outcome. Whatever several lanes will meet on (a shape, a contract, a record)
-   goes first. Each Lead gets a directive that keeps apart what must hold, what was chosen, and what nobody knows yet.
-3. **Tasks run.** The Lead briefs Peers the same way. Each Peer works on its own branch in its own worktree. It raises
-   a finding when the code contradicts its brief, and hands back a commit with each behaviour beside what proves it.
-4. **Evidence, not claims.** The project's checks run on every hand-back. A Lead integrates a task only by citing
-   evidence on that very commit; a red result needs a reason. The Supervisor lands a lane the same way.
+1. **You bring work.** The Supervisor asks until nothing you care about is assumed. Your answers become the plan's
+   lines, marked as yours.
+2. **Lanes open**, one per independent outcome, and each Lead briefs its Peers. Every Peer works on its own branch in
+   its own worktree.
+3. **A Peer hands back a commit.** The project's checks run on it. It raises a finding when the code contradicts its
+   brief, and may refuse its Lead's framing with evidence.
+4. **Work is taken in on evidence.** A Lead integrates a task by citing evidence on that very commit, and the
+   Supervisor lands a lane the same way.
 5. **You are asked only what is yours:** a change to what a lane is for or what it may cost, and a permission an
-   agent asks for. Everything else is decided by the Supervisor or a Lead, and listed for you as "decided for you".
-6. **Looking back.** From the record, the Supervisor reads how each finding changed the work and five signals of how
-   the team is doing, and proposes at most one change, usually taking something away.
+   agent asks for. The rest is decided by the team and listed for you as decided, open to question.
 
 ## Requirements
 
 - Paseo `0.10.0` or newer, with its daemon running.
-- Node.js `22.13` or newer, with npm, where the daemon runs. Paseo builds the plugin with npm.
+- Node.js `22.13` or newer, with npm, where the daemon runs: Paseo builds the plugin with npm.
 - git.
-- A Paseo agent profile for each role, named below. Claude Code and Pi are the agents with settings shipped for them.
-- A key for **Jev**, the small model the watch asks one question at a time, through OpenRouter or TypeSafe's own
-  API, set on the plugin's settings page. Without it the team still works, less watched, and you are told.
+- A Paseo agent profile for each name the template's roles use (below).
+- Optional: a key for **Jev**, the small model the watch asks one question at a time, through OpenRouter or
+  TypeSafe's own API. Without it the team still works, less watched, and you are told.
 
 ## Install
 
@@ -64,98 +63,139 @@ evidence, and keeping a plan needs a reason as much as changing it does.
 curl -fsSL https://raw.githubusercontent.com/sting9k/seatworks/main/install.sh | sh
 ```
 
-`install.sh` checks git, Node, npm and Paseo, adds the plugin to Paseo from this repository, and says what to do
-next. Run it again later and it tells you whether a newer release is out.
+`install.sh` checks git, Node, npm and Paseo, adds the plugin to Paseo from this repository and says what to do next.
+Run again once installed, it says whether a newer release is out.
 
 ```sh
-sh install.sh --ref <branch|tag|commit>   # install another branch or release
-sh install.sh --dir <path>                # install a checkout on this machine
+sh install.sh --ref <branch|tag|commit>   # another branch or release
+sh install.sh --dir <path>                # a checkout on this machine
 ```
 
-Then open Seatworks in Paseo's sidebar, and Plugin. Under Templates, install SLP: it comes with Seatworks, and
-nothing runs until a template is installed. A later release of the plugin leaves your installed copy alone; the page
-says when the two differ, and installing again takes the new one.
+Until the branch `open-templates` is merged into `main`, what this README describes is on that branch only:
 
-Give each name SLP's roles use an agent and a model. Under Agent profiles on the same page, match the name to an
-agent profile you already have, or create one of that name in Paseo's settings:
+```sh
+curl -fsSL https://raw.githubusercontent.com/sting9k/seatworks/open-templates/install.sh | sh -s -- --ref open-templates
+```
 
-| Profile                        | Used by                                   |
-| ------------------------------ | ----------------------------------------- |
-| `slp-supervisor`               | the Supervisor                            |
-| `slp-lead`                     | Leads                                     |
-| `slp-peer`, `slp-peer-alt`     | Peers; the second lets blind designs differ |
-| `slp-reviewer`                 | Reviewers (they may also use `slp-peer`)  |
-| `slp-watcher`                  | the Watcher                               |
+Then, in Paseo:
 
-Give every profile an explicit model. Different models for `slp-peer` and `slp-peer-alt` are the point: one model asked
-one hard question twice tends to give one answer.
+1. **Install a template.** Open Seatworks in the sidebar, then Plugin. Under Templates, install SLP. Nothing runs
+   until a template is installed.
+2. **Match its agent profiles.** Under Agent profiles on the same page, match each name the template gives to an
+   agent profile you already have, or create one of that name in Paseo's settings. Give each an explicit model.
+3. **Set Jev's key**, if you have one, under Settings, Jev.
+
+SLP names these:
+
+| Profile                    | Used by                                     |
+| -------------------------- | ------------------------------------------- |
+| `slp-supervisor`           | the Supervisor                              |
+| `slp-lead`                 | Leads                                       |
+| `slp-peer`, `slp-peer-alt` | Peers; the second lets blind designs differ |
+| `slp-reviewer`             | Reviewers (they may also use `slp-peer`)    |
+| `slp-watcher`              | the Watcher                                 |
+
+Different models for `slp-peer` and `slp-peer-alt` are the point: one model asked one hard question twice tends to
+give one answer.
 
 ## Using it
 
-- **Attach a project.** Open Seatworks in Paseo's sidebar and attach one of your Paseo projects, or run "Open a
-  Seatworks team here" from the command center in a workspace. Attaching starts the project's Supervisor. Then talk to
-  the Supervisor in its chat.
-- **The Seatworks page** has a tab per project: **Needs you** (questions and permissions waiting on you), **Lanes**
-  (each lane's state, and how much its Lead still owes), **Decided** (what agents decided for you, open to question),
-  and **Activity**.
-- **The Team panel** beside a workspace shows the same lanes, and a **"needs you" pill** in each agent's chat counts
-  what waits on you.
-- **Permissions** an agent asks for reach you on the Needs you tab. Answering one in the agent's own prompt works too;
-  the record catches up.
-- **The plugin's page** checks for a newer release (updating stays Paseo's `paseo plugin update seatworks`) and cleans
-  up: copies and branches no open work uses, agents whose seat ended, whole projects, and the records of removed ones.
-  Only what you pick and confirm is removed, and a copy holding uncommitted work never is.
+- **Attach a project.** On Seatworks' page, attach one of your Paseo projects, or run "Open a Seatworks team here"
+  from the command center in a workspace. That seats the template's first agent; talk to it in its chat.
+- **A project's page** has four tabs: **Needs you** (questions and permissions waiting on you), **Lanes** (each
+  lane's state and what is still owed in it), **Decided** (what agents decided for you) and **Activity**.
+- **The Team panel** beside a workspace shows the same lanes, and a pill in each agent's chat counts what waits on
+  you.
+- **Permissions** an agent asks for reach you on Needs you. Answering one in the agent's own prompt works too.
+- **The Plugin page** installs and removes templates, matches agent profiles, checks for a newer release (updating
+  is Paseo's `paseo plugin update seatworks`) and cleans up: copies and branches no open work uses, agents whose
+  seat ended, whole projects. Only what you pick and confirm is removed, and a copy holding uncommitted work never
+  is.
 
 ## What it writes into your repository
 
 - **A note in `AGENTS.md`**, between the plugin's markers, committed on your base branch as a commit of that file
-  alone, so every agent in the repository, the team's or your own, knows the team is there and which branches are its.
-  It never writes over a file you are editing; the note waits until you commit.
-- **Branches** under `sw/<project>/`, one per lane and task, in worktrees under the plugin's state directory, never in your checkout. Only the plugin makes,
-  merges and deletes them; a git guard on every agent refuses pull, checkout, push and the like.
-- **`GLOSSARY.md`** (the words settled with you) and **`docs/seatworks/MAP.md`** (where the project is going, what
-  must hold, what the team chose so far, each landed lane with what it decided, assumed and left open, and what is still
-  in dispute), written from the record between the plugin's markers.
-- **`docs/adr/`**, written by the agent whose decision it records, only for a decision that is hard to reverse,
-  surprising without its reason, and a real trade-off.
+  alone, so every agent in the repository, the team's or your own, knows the team is there. It never writes over a
+  file you are editing; the note waits until you commit.
+- **Branches** under `sw/<project>/`, one per lane and task, in worktrees under the plugin's state directory, never
+  in your checkout. Only the plugin makes, merges and deletes them; a git guard on every agent refuses push, pull,
+  checkout and the like.
+- **What the template names as the project's own.** For SLP: `GLOSSARY.md` (the words settled with you) and
+  `docs/seatworks/MAP.md` (where the project is going and what each landed lane decided), written from the record
+  between the plugin's markers, and `docs/adr/`, written by the agent whose decision it records.
 
-These stay with your repository after the team is gone. Removing a project takes the `AGENTS.md` note out, archives
-its agents, deletes its copies and branches, and sets its record aside until you delete it too.
+These stay with your repository after the team is gone. Removing a project takes the note out, archives its agents,
+deletes its copies and branches, and sets its record aside until you delete it too.
 
-## Your own way of working
+## Templates: a way of working of your own
 
-SLP is a template, not the plugin. Everything its agents read is in [`templates/slp/`](templates/slp): roles and what each
-may do (`profile.yaml`), prompts (`roles/`), skills (`skills/`), and what the watch looks for (`watch.yaml`,
-`reflex.yaml`). A way of working of your own is another template: a directory of the same kind of files, installed
-beside SLP with no change to the plugin's code. Roles are data; nothing in the code knows their names.
+A template is a directory of text. Roles are data: nothing in the plugin's code knows a role's name, and making a
+template never needs a change to the plugin.
 
-- **Have an agent write it.** Give your coding agent [`docs/TEMPLATE-SPEC.md`](docs/TEMPLATE-SPEC.md), which is
-  everything a template is, and say how you want the team to work. It checks what it wrote with
-  `npm run template -- check <dir>` and packs it into one file.
-- **Or make it by hand**, on a canvas of nodes and wires: `npm run editor`, open SLP, change it, export.
-  [`docs/EDITOR-GUIDE.md`](docs/EDITOR-GUIDE.md) walks through it.
+```text
+<template>/
+  template.json            its name, description and tags
+  profile.yaml             the roles: what each is, may call and runs on; a report's sections; outside tool servers
+  roles/<role>.md          a role's prompt, read every turn
+  skills/<skill>/SKILL.md  a skill, read when it applies; its description is read every turn
+  flow.md                  the team's flow, read every turn
+  project.md               the note kept in an attached project's instruction file
+  reflex.yaml              questions asked of the record's events
+  watch.yaml               moments in an agent's turns that an owner is told of
+  NOTICE.md                the outside sources its files draw on
+```
 
-Either way you get one file, `<name>.template.json`. In Paseo, open Seatworks, then Plugin, and under Templates give
-its path: you are shown what it brings (its roles, the agent profiles it names, any outside tool server it starts)
-before it is installed. Under Agent profiles on the same page, match each name it gives to an agent profile you
-already have. Attaching a project then asks which template it runs.
+What a template may do:
 
-A project runs a copy of the template it was attached with, so nothing you change or install later reaches a running
-team until you press Sync on that project's page; agents seated from then on are made from the new files. A template
-can be removed from the machine on the Plugin page, and projects that run it go on.
+- **It arranges and words; it never refuses.** It says who is seated, what each may call, and what each reads. It
+  cannot add a required phase, section or review.
+- **It brings no code.** What it adds to an agent's reach is an outside tool server, which you are shown before you
+  install it.
+- **The core's names stay.** The tools and the nouns (scope, brief, plan, finding, evidence) are the plugin's.
+- **Every agent reads the record** (`status`, `record`, `diff`, `look`) whatever its role is given. The other 33
+  tools are a role's only when its template lists them.
+
+To make one:
+
+- **Start from one that works.** [`templates/slp/`](templates/slp) is SLP whole, and
+  [`test/templates/pair/`](test/templates/pair) is a small one of three roles. [`spec/TEMPLATE.md`](spec/TEMPLATE.md)
+  says what each file is, [`spec/KERNEL.md`](spec/KERNEL.md) §2 what a role's properties and tools mean, and
+  [`spec/REFLEX.md`](spec/REFLEX.md) and [`spec/WATCH.md`](spec/WATCH.md) how a question and a moment are written.
+- **Or draw it.** `npm run editor` opens a template as a graph of nodes and wires: change it, read its notes, export.
+  The same editor, with the templates others have shared, is at https://sting9k.github.io/seatworks-gallery/.
+- **Check and pack it** from a checkout of this repository:
+
+  ```sh
+  npm run template -- check <dir>          # does it load, what it needs of a machine, and its notes
+  npm run template -- pack <dir> <file>    # the same check, then the one file it is shared as
+  ```
+
+Either way you get one file, `<name>.template.json`. Under Templates on the Plugin page, give its path: you are
+shown what it brings (its roles, the agent profiles it names, any outside tool server it starts) before it is
+installed. To share one, open a pull request on
+[`sting9k/seatworks-gallery`](https://github.com/sting9k/seatworks-gallery).
+
+A project runs a copy of the template it was attached with, for its whole life. Nothing you install or change later
+reaches a running team until you press **Sync** on that project's page; agents seated from then on are made from the
+new files, and an agent already seated keeps what it started with. A template can be removed from the machine, and
+projects that run it go on.
 
 Rules of your own that should hold whatever the template says, such as how you want code written, go in
-`rules/<template>/` under the plugin's state directory (`~/.local/share/seatworks/rules/slp/` for SLP on Linux and
-macOS): `all.md` for every agent, `<role>.md` for one role (`lead.md`). Each agent made from then on reads them after
-its role's prompt; an agent already running keeps what it started with.
+`rules/<template>/` under the plugin's state directory (`~/.local/share/seatworks/rules/slp/` for SLP): `all.md` for
+every agent, `<role>.md` for one role. Each agent made from then on reads them after its role's prompt.
 
 ## What to expect
 
 - Agents are real and cost real money. Watch the first lanes, and set an appetite with the Supervisor.
-- Only Claude Code and Pi have settings shipped for them. Other agents run, without the plugin's guards tuned for them.
+- **Agents.** Claude Code and Pi have been run in a team. Codex and Oh My Pi have their settings and have not been
+  run. Nothing is shipped for any other: Paseo hands the team's tools to OpenCode, with none of the plugin's guards
+  tuned for it, and refuses to make an agent of any other kind with them.
+- **A message never lands inside an agent's turn.** It waits, and everything waiting is delivered as one message
+  when the turn ends. Only you can stop a turn, with Paseo's own stop.
 - The plugin makes worktrees with git, not through Paseo's worktree setup, so a copy has no `node_modules` or `.env`
-  until the project's checks install them. Say so to the Supervisor when it sets the checks.
-- What the plugin keeps (the record, settings) has no stable format before 1.0: a new release may start it over.
+  until the project's checks install them. Say so when the checks are set.
+- What the plugin keeps (the record, settings) has no stable format yet: a new release may start it over, and a
+  project attached under an older build is removed and attached again.
 - Something wrong? `~/.paseo/daemon.log` has what the plugin said, and the Activity tab what the team did.
 
 ## Building Seatworks
@@ -164,23 +204,24 @@ its role's prompt; an agent already running keeps what it started with.
 npm ci
 npm run check    # typecheck, lint, format check and every test; run before every commit
 npm run format   # lays the code out as Prettier wants it
+npm run editor   # the template editor, with a gallery built from templates/
 ```
 
 There is no CI and no build step. Tests run against a stand-in for Paseo and never start a real agent.
 
-| Where             | What                                                                                          |
-| ----------------- | --------------------------------------------------------------------------------------------- |
-| `AGENTS.md`       | The rules for whoever changes this repository, human or agent. Read it first.                 |
-| `concept/`        | CONCEPT-V2 and the orchestration analysis: the standard the plugin serves                    |
-| `spec/`           | What to build: the kernel's contract, the ports, Paseo's facts, the watch, the conformance cases |
-| `shared/`         | The kernel (pure TypeScript: decide, evolve, react) and the zod contracts                    |
-| `server/`         | The bridge to Paseo and the satellites that do I/O: store, agent host, workspaces, evidence, delivery |
-| `client/`         | What you see in Paseo, in React Native                                                        |
-| `bin/`, `harness/` | The git guard and the team's MCP server; each agent's shipped settings                       |
-| `templates/slp/`    | The SLP profile: everything agents read                                                        |
-| `editor/`         | The template editor, a web page of its own: `npm run editor`                                  |
-| `docs/`           | For whoever makes a template: the spec an agent writes one from, and the guide to the editor   |
-| `.claude/skills/` | Recipes for building Seatworks: kernel changes, satellites, Paseo's boundary, tests          |
+| Where              | What                                                                                              |
+| ------------------ | ------------------------------------------------------------------------------------------------- |
+| `AGENTS.md`        | The rules for whoever changes this repository, human or agent. Read it first.                     |
+| `concept/`         | CONCEPT-V2 and the orchestration analysis: the standard the plugin serves                         |
+| `spec/`            | What to build: the kernel's contract, the ports, Paseo's facts, templates, the conformance cases  |
+| `shared/`          | The kernel (pure TypeScript: decide, evolve, react) and the zod contracts                         |
+| `server/`          | The bridge to Paseo and the satellites that do I/O: store, agent host, workspaces, evidence, delivery |
+| `client/`          | What you see in Paseo                                                                             |
+| `bin/`, `harness/` | The git guard, the team's MCP server, the template check; each agent's shipped settings           |
+| `templates/slp/`   | SLP: everything its agents read                                                                   |
+| `editor/`          | The template editor, a web page of its own                                                        |
+| `test/`            | The conformance cases as tests, and the stand-in for Paseo they run against                       |
+| `.claude/skills/`  | Recipes for building Seatworks: kernel changes, satellites, Paseo's boundary, tests               |
 
 ## License
 

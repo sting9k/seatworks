@@ -10,15 +10,6 @@ servers, the gallery's build and the page that reads one, and the check a templa
 through, the report's sections as the profile's, and the gallery's own repository with its page. The order is at
 the end.
 
-**Two files are written for whoever makes a template**, in `docs/`, apart from these spec files, which are for
-whoever builds Seatworks:
-
-- `docs/TEMPLATE-SPEC.md` is everything a template is, whole in one file, so an agent can write a template from it
-  alone. It restates what `KERNEL.md` §2, `REFLEX.md`, `WATCH.md` and this file say of a template's files, and a test
-  holds it to the code: every tool, every key of every file, every event, state path and code-counted moment is named
-  in it, and the whole template it gives as an example loads with no note.
-- `docs/EDITOR-GUIDE.md` is how a person makes one by hand in the editor.
-
 Making a template never asks for a change to the plugin. Where one did, that was a fault of the plugin's and was
 mended: the Human's surface wrote a role's name, the reflex read fixed file names, and a template chose where the
 Human's key was sent.
@@ -322,8 +313,7 @@ the gallery is.
 
 ## Checking one without the editor
 
-A template written by hand, or by an agent from `docs/TEMPLATE-SPEC.md`, is checked from a terminal in a checkout of
-this repository:
+A template written by hand, or by an agent, is checked from a terminal in a checkout of this repository:
 
 ```sh
 npm run template -- check <dir>          # does it load, what it needs of a machine, and its notes
@@ -417,7 +407,7 @@ Each is made in the commit that builds it.
 | 3     | A profile for each project, installing, the hash, `project.docs`, `flow`               | Yes         | Yes   |
 | 4     | Outside tool servers                                                                   | Yes         | Yes   |
 | 5     | The gallery's build and its page; the gallery's own repository                         | None        | Yes   |
-| 6     | The check from a terminal, the spec for whoever writes a template, the editor's guide  | Yes         | Yes   |
+| 6     | The check from a terminal                                                              | Yes         | Yes   |
 | 7     | The report's sections                                                                  | Yes         | Yes   |
 
 Its cases are in `CONFORMANCE.md`: Editor, Templates and Gallery.

@@ -5,12 +5,11 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, test } from "node:test";
 import { Plugin } from "../../server/bridge/plugin.ts";
-import { specExample } from "../spec-example.ts";
+import { pairFiles } from "../pair.ts";
 import { agentTools } from "./agent-tools.ts";
 import { fakePaseo } from "./fake-paseo.ts";
 
-// A row of spec/CONFORMANCE.md, The profile is data: a template that shares no role with SLP, run through
-// the plugin as it is written in the spec an agent writes one from.
+// A row of spec/CONFORMANCE.md, The profile is data: a template that shares no role with SLP, run through the plugin.
 
 const pluginDir = join(import.meta.dirname, "../..");
 const git = (cwd: string, ...args: string[]) =>
@@ -24,12 +23,12 @@ after(async () => {
   for (const p of plugins) await p.dispose();
 });
 
-/** The agent profiles the stand-in for Paseo has, in place of those the example names. */
+/** The agent profiles the stand-in for Paseo has, in place of those the template names. */
 const RUNS_ON = { "pair-navigator": "slp-supervisor", "pair-driver": "slp-peer", "pair-checker": "slp-reviewer" };
 
 test("a template with no role of SLP runs a task end to end: its root seats a writer, takes the work in and lands it, and the Human is shown its own names", async () => {
   const root = mkdtempSync(join(tmpdir(), "sw-root-"));
-  for (const [path, text] of specExample()) {
+  for (const [path, text] of pairFiles()) {
     const file = join(root, "profiles", "pair", path);
     mkdirSync(join(file, ".."), { recursive: true });
     writeFileSync(

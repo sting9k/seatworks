@@ -1,0 +1,33 @@
+roles:
+  navigator:
+    root: true
+    delegates: true
+    humanDoor: true
+    spawns: [driver, checker]
+    speaksTo: [human, children]
+    prompt: roles/navigator.md
+    models: [pair-navigator]
+    tools: [status, record, diff, look, open_scope, amend_brief, set_plan, amend_plan, reseat, release, drop_scope,
+            classify_finding, integrate, send_back, send_message, answer, ask_human, answer_permission, acknowledge,
+            set_checks, run_checks, publish]
+
+  driver:
+    writes: true
+    speaksTo: [parent]
+    prompt: roles/driver.md
+    skills: [proof-first]
+    models: [pair-driver]
+    tools: [status, record, diff, raise_finding, withdraw_finding, hand_back, run_checks, send_message, answer]
+
+  checker:
+    reading: true
+    speaksTo: [parent]
+    prompt: roles/checker.md
+    models: [pair-checker, pair-driver]
+    tools: [status, record, diff, record_verdict, raise_finding, send_message, answer]
+
+flow: flow.md
+project:
+  file: AGENTS.md
+  note: project.md
+  docs: [docs/decisions]

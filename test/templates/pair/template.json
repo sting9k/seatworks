@@ -1,0 +1,5 @@
+{
+  "name": "Pair",
+  "description": "A navigator works with the Human and splits the work, a driver writes one task at a time, and a checker reads a commit when asked.",
+  "tags": ["small", "review"]
+}

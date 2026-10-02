@@ -38,9 +38,6 @@ The plugin **serves** SLP so it works better with Paseo. It must **never constra
    `CONFORMANCE.md` lists the cases that prove it. The order of work is below.
 3. **The code** does what the spec says. Where code and spec disagree, one of them is wrong: fix the code, or change
    the spec in the same commit with the reason, never leave them apart.
-4. **`docs/`** is for whoever makes a template, not for whoever builds Seatworks: `TEMPLATE-SPEC.md`, everything a
-   template is, whole in one file so an agent can write one from it alone, and `EDITOR-GUIDE.md`, how a person makes
-   one in the editor. They restate the spec for that reader, and `test/docs.test.ts` holds the first to the code.
 
 The first version of this plugin, V1, was removed on 2026-09-29 and is in git history. The spec's "What V1 did"
 sections say what it taught; never port a V1 mechanism the spec has no place for.
@@ -63,7 +60,6 @@ harness/          each agent's shipped settings, and the routes the reflex asks 
 templates/slp/    SLP, the template that comes with the plugin: roles, prompts, skills, reflex.yaml, watch.yaml:
                   runtime content, not docs
 editor/           the template editor, a web page of its own that Paseo does not build (spec/EDITOR.md)
-docs/             for whoever makes a template: the spec an agent writes one from, and the guide to the editor
 ```
 
 - **One log per project** in SQLite: events and the effects they ask for commit in one transaction (the outbox), one
@@ -90,7 +86,7 @@ docs/             for whoever makes a template: the spec an agent writes one fro
 4. The reflex and the watch (`spec/REFLEX.md`, `spec/WATCH.md`), starting with their `active` sets. Done.
 5. Open templates (`spec/TEMPLATE.md`, `spec/EDITOR.md`): the editor, installing and removing a template, outside
    tool servers, matching agent profiles, a project's own copy and Sync, the gallery's build, a report's sections as
-   the profile's, the two files in `docs/`, the gallery's own repository and its page. Done.
+   the profile's, the gallery's own repository and its page. Done.
 6. **Now: testing on a real Paseo, by the owner.** What only a live daemon can show is in `spec/PASEO.md` and
    `spec/HARNESS.md`, To check. Anything the spec marks "to check" is checked against Paseo's published types or source
    before it is built on, never by an agent running the daemon. The surface is type-checked and nothing more: what
@@ -118,8 +114,9 @@ docs/             for whoever makes a template: the spec an agent writes one fro
   the check a template passes. It builds what is pushed: a second workflow there looks every quarter of an hour, and
   builds the page again when that branch has moved past the commit the page was built from. So the `gallery`
   script, `bin/gallery.ts` and the editor's build are called from outside: change one and that workflow together.
-- **Spec files are the docs the owner asked for**, with the two in `docs/` for whoever makes a template. No other
-  markdown and no decision records; a change that needs explaining is explained in its commit message.
+- **Spec files are the docs the owner asked for**, and `README.md` is for whoever installs Seatworks or makes a
+  template. No other markdown and no decision records; a change that needs explaining is explained in its commit
+  message.
 
 ## Skills for building Seatworks
 
@@ -193,8 +190,6 @@ copy its project took, so an edit here reaches one when the template is installe
   outcome described, English.
 - `NOTICE.md` at the repository root lists the outside sources the skills draw on; a skill drawn from a new source
   adds its row there, and the plugin ships a copy.
-- A change to what a template may write (a key, a tool, an event a question is asked on) changes
-  `docs/TEMPLATE-SPEC.md` in the same commit; its test fails until it does.
 
 ## Paseo
 

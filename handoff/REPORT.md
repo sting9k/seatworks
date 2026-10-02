@@ -139,8 +139,6 @@ Also from `readiness-review.md` (gaps, not bugs):
   spec does not settle.
 - **Install from `main`.** `install.sh` and the README install from `sting9k/seatworks` on `main`. Until this branch
   is merged, install with `sh install.sh --ref rebuild`.
-- **`docs/images` and `docs/video`.** Everything there except the logos shows V1's design, and the README no longer
-  links to it.
 
 ## Suggested order
 

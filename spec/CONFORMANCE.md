@@ -64,7 +64,7 @@ on an implementation without the rule before it is trusted.
 | A search of the kernel and satellites for any role name in the profile     | None found                    |
 | A search of the Human's surface for any role name in the profile           | None found: the agent the Human works with is shown by the name its profile gives the root's role |
 | A profile with no `humanDoor` role                                         | Loads; `ask_human` is shown to no one |
-| The small template `docs/TEMPLATE-SPEC.md` gives, which shares no role with SLP, attached to a project | Its root is seated with its own prompt and flow and the project's note is its own; the root seats a writer, takes its work in on evidence and lands it; a tool a role is not given is refused; the Human's view names the root by its role |
+| A small template that shares no role with SLP, attached to a project | Its root is seated with its own prompt and flow and the project's note is its own; the root seats a writer, takes its work in on evidence and lands it; a tool a role is not given is refused; the Human's view names the root by its role |
 | A profile that gives a role a tool the team does not have: one misspelt, or one only the Human sends | Does not load, saying which role and which tool |
 
 ## Workflow
@@ -358,8 +358,7 @@ What the plugin reads of a profile that a template adds (`TEMPLATE.md`).
 | A profile that names the sections of its own a report has, and an agent given `report` | The agent is shown each section with what it holds, in the profile's order, and no other; its report reaches the owner above, the scope's record and a question asked on it under those names, in that order, a section left out not there at all |
 | A report that names a section the profile does not have      | Refused, saying which sections a report has; nothing is recorded      |
 | A question or a moment named as asked that its file does not write | The profile does not load, saying which                          |
-| `docs/TEMPLATE-SPEC.md` read beside the code                | It names every tool a role may be given, every key of `template.json`, `profile.yaml`, a role, the project, the reflex and watch files and a question, every relation, every event a question is asked on, every state path, whom a question tells and every moment counted in code |
-| The whole small template `docs/TEMPLATE-SPEC.md` gives      | Loads as the editor and as the plugin load one, and draws no note   |
+| A small template that shares no role with SLP, read as the editor reads one | Draws no note                                       |
 | The check command on a template's directory that loads      | Says the name it installs under, its roles and the agent profiles it needs; its notes are printed and it still passes |
 | The check command on a directory that does not load         | Fails, saying why, and prints nothing else                          |
 | The pack command                                            | The one file a template is shared as, holding the directory's very files; nothing is written for a template that does not load |
