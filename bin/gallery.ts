@@ -10,12 +10,17 @@ if (out === undefined || dirs.length === 0) {
   process.stderr.write("usage: gallery.ts <out> <directory of template directories>...\n");
   process.exit(2);
 }
+const found = dirs.flatMap((dir) =>
+  readdirSync(dir)
+    .filter((name) => existsSync(join(dir, name, "profile.yaml")))
+    .map((name) => ({ name, dir })),
+);
+// One name is one template to install: two directories that both hold it would list whichever was read last.
+const twice = found.filter((one, at) => found.findIndex((other) => other.name === one.name) < at);
 const templates = new Map(
-  dirs.flatMap((dir) =>
-    readdirSync(dir)
-      .filter((name) => existsSync(join(dir, name, "profile.yaml")))
-      .map((name): [string, Map<string, string>] => [name, new Map(filesUnder(join(dir, name)))]),
-  ),
+  found
+    .filter((one) => !twice.some((other) => other.name === one.name))
+    .map(({ name, dir }): [string, Map<string, string>] => [name, new Map(filesUnder(join(dir, name)))]),
 );
 const built = galleryOf(templates);
 rmSync(out, { recursive: true, force: true });
@@ -23,4 +28,8 @@ mkdirSync(out, { recursive: true });
 for (const [file, text] of built.files) writeFileSync(join(out, file), text);
 process.stdout.write(`${built.files.size - 1} template${built.files.size === 2 ? "" : "s"} in ${out}\n`);
 for (const { id, says } of built.refused) process.stderr.write(`${id} is left out: ${says}\n`);
-if (built.refused.length > 0) process.exit(1);
+for (const { name, dir } of twice)
+  process.stderr.write(
+    `${name} is left out: it is in both ${found.find((one) => one.name === name)!.dir} and ${dir}\n`,
+  );
+if (built.refused.length + twice.length > 0) process.exit(1);

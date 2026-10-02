@@ -287,19 +287,20 @@ server and no accounts. SLP is the only one at first.
   <name>.template.json  the template as the one file it is shared as
 ```
 
-- **The gallery is built, never written by hand.** `bin/gallery.ts <out> <directory of template directories>` reads
-  each directory that holds a `profile.yaml`, loads it as the page loads any template, and writes the index and each
+- **The gallery is built, never written by hand.** `bin/gallery.ts <out> <directory of template directories>...`
+  reads each directory that holds a `profile.yaml`, loads it as the page loads any template, and writes the index and each
   template as its one file. In a pull request a template is a directory, so what changed in it is read line by line;
   in the gallery it is the file a person opens, exports and installs.
 - **The build is the check a template passes to be published.** A template that does not load, or whose directory is
-  not the name it would be installed under, is left out and said with why, and the build fails. What a machine can note beyond
+  not the name it would be installed under, is left out and said with why, and the build fails. So is one whose name
+  two of the directories built from both hold: a name is one template to install. What a machine can note beyond
   that stops nothing (`EDITOR.md`, Checks); whether a template is worth listing is its reviewers' to say.
 - **A template has one name to install it under**, made from the name in its `template.json`: lower case, with a
   dash for whatever is neither letter nor digit, so `Night Crew` is `night-crew`. Its directory in the gallery carries
   that name, the file it is shared as is `<that name>.template.json`, and so do the state root and a project's
   record. A shared file holds no directory, which is why the name is made from what it does hold.
 - **The page reads the gallery built beside it**, `gallery/index.json` and the files it lists, from wherever the page
-  is served. A page with no gallery beside it says so, and still opens a file or a folder of the person's own; a
+  is served: built, it asks for its own scripts and styles by a relative path too, so it is served from any path. A page with no gallery beside it says so, and still opens a file or a folder of the person's own; a
   listed template whose file is gone or does not load says why on its own card.
 - **This repository builds a gallery of its own from `templates/`**, which holds SLP, each time the editor is
   served or built (`npm run gallery`). So SLP is in the gallery from the one place it is kept, and never copied.

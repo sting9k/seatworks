@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
 import { cpSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { galleryOf, loadGallery } from "../../editor/template/gallery.ts";
 import { slpFiles } from "./slp.ts";
@@ -108,4 +108,45 @@ test("the build command writes a gallery from a directory of template directorie
   assert.equal(failed.status, 1);
   assert.match(failed.stderr, /broken is left out: /);
   assert.deepEqual(readdirSync(out).sort(), ["index.json", "slp.template.json"]);
+});
+
+test("the build command takes several directories: the templates of each are listed, and one both hold is left out, saying where", () => {
+  const ours = mkdtempSync(join(tmpdir(), "sw-gallery-ours-"));
+  cpSync(join(repo, "templates", "slp"), join(ours, "slp"), { recursive: true });
+  const theirs = mkdtempSync(join(tmpdir(), "sw-gallery-theirs-"));
+  for (const [path, text] of crew()) {
+    mkdirSync(dirname(join(theirs, "night-crew", path)), { recursive: true });
+    writeFileSync(join(theirs, "night-crew", path), text);
+  }
+  const out = join(mkdtempSync(join(tmpdir(), "sw-gallery-out-")), "gallery");
+  const command = ["--experimental-strip-types", "--no-warnings=ExperimentalWarning", join(repo, "bin", "gallery.ts")];
+
+  execFileSync(process.execPath, [...command, out, ours, theirs]);
+  assert.deepEqual(readdirSync(out).sort(), ["index.json", "night-crew.template.json", "slp.template.json"]);
+
+  cpSync(join(ours, "slp"), join(theirs, "slp"), { recursive: true });
+  const failed = spawnSync(process.execPath, [...command, out, ours, theirs], { encoding: "utf8" });
+  assert.equal(failed.status, 1);
+  assert.ok(
+    failed.stderr.includes(`slp is left out: it is in both ${ours} and ${theirs}`),
+    `it says where each is: ${failed.stderr}`,
+  );
+  assert.deepEqual(readdirSync(out).sort(), ["index.json", "night-crew.template.json"]);
+});
+
+test("the page built asks for its scripts and styles beside itself, so it is served from any path", () => {
+  const out = mkdtempSync(join(tmpdir(), "sw-page-"));
+  const vite = join(repo, "node_modules", "vite", "bin", "vite.js");
+  execFileSync(process.execPath, [vite, "build", join(repo, "editor"), "--outDir", out, "--emptyOutDir"], {
+    stdio: "pipe",
+  });
+
+  const asked = [...readFileSync(join(out, "index.html"), "utf8").matchAll(/(?:src|href)="([^"]+)"/g)].map(
+    (found) => found[1]!,
+  );
+  assert.ok(asked.length >= 2, asked.join(", "));
+  assert.deepEqual(
+    asked.filter((path) => !path.startsWith("./")),
+    [],
+  );
 });

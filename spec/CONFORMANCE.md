@@ -338,3 +338,5 @@ Template directories in, what a page lists out (`TEMPLATE.md`, The gallery).
 | A template that does not load, or whose directory is not the name it would be installed under | Left out of the gallery, and said with why |
 | A page with no gallery beside it; with a wrong index; with a listed template whose file is gone or does not load | The page says why; the card of that template says why |
 | The build command on a directory of template directories    | The gallery written; with a template that does not load among them, it fails naming it and writes the rest |
+| The build command on two directories of template directories; then with a template of one name in both | The templates of both are listed; the one both hold is left out, saying where each is, and the build fails |
+| The page built                                              | Every script and style it asks for is beside it, by a relative path, so it is served from any path, as a repository's own page is |
