@@ -7,9 +7,10 @@ import { decide } from "../../shared/kernel/decider.ts";
 import { evolve, foldCommand } from "../../shared/kernel/evolve.ts";
 import { react } from "../../shared/kernel/react.ts";
 import { INITIAL, type State } from "../../shared/kernel/state.ts";
+import { recordedIn } from "../../shared/views/record.ts";
 import { decode, encode } from "../core/codec.ts";
 import { KeyedQueue } from "../core/keyed-queue.ts";
-import type { ProjectStore } from "../satellites/store/project-store.ts";
+import type { Filed, ProjectStore } from "../satellites/store/project-store.ts";
 
 export type Submitted =
   | { ok: true; events: readonly Event[]; replayed: boolean }
@@ -87,12 +88,17 @@ export class Project {
     let seq = this.state.seq;
     const events = decision.events.map((body) => ({ ...body, seq: ++seq, at: command.at, by, commandId: command.id }));
     const effects: Effect[] = [];
+    // Each event is filed under the scopes whose record it is read in, so a scope's record is read by itself.
+    const filed: Filed[] = [];
     let folding = this.state;
     for (const event of events) {
       folding = evolve(folding, event);
       effects.push(...react(event, folding));
+      const after = folding;
+      for (const scope of recordedIn(event, (finding) => raisedIn(after, finding)))
+        filed.push({ subject: scope, seq: event.seq });
     }
-    const appended = this.store.append(events, effects, this.state.seq);
+    const appended = this.store.append(events, effects, filed, this.state.seq);
     if (!appended.ok) throw new Error(`project ${this.id}: ${appended.says}`);
     this.state = foldCommand(this.state, events);
 
@@ -104,4 +110,11 @@ export class Project {
     for (const listener of this.listeners) listener(events);
     return { ok: true, events, replayed: false };
   }
+}
+
+/** The scopes a finding was raised in and about, as the state holds it. */
+function raisedIn(state: State, finding: string): readonly string[] {
+  const f = state.findings.get(finding);
+  if (!f) return [];
+  return f.about === null ? [f.scope] : [f.scope, f.about];
 }

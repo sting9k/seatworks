@@ -446,7 +446,9 @@ for it.
 - `record(scope)`: briefs with every version; what the owner above did to the scope (paths moved, held, resumed,
   reseated, dropped); each hand-back and what came of it (sent back, integrated); findings with their chains
   (classified, reopened, carried, withdrawn); reports; attentions with what came of them. It reads the log, so it
-  answers for a scope that is closed too.
+  answers for a scope that is closed too, and it reads only that scope's part of it: each event is filed, in the
+  append that writes it, under the scopes whose record it is read in (a finding's are the scope it was raised in and
+  the one it is about), so the read costs what one scope's history holds, whatever the length of the log.
 - An agent's reads (`status`, `record`, `diff`) take its own scope when it names none. Their arguments are parsed at
   the boundary as a command's are, and one that does not fit is refused, saying which.
 - `obligations(actor)`, `whatTheHumanNeeds`, `sinceTheyLooked(at)`, `chainOfChange(finding)`, `signals(since)`.
@@ -476,8 +478,11 @@ A project runs for months. Everything below is bounded by open work, not by hist
 
 **On disk.**
 
-- The log is appended and never rewritten: it is the record. About one event per command and one per turn; a busy
-  project writes tens of thousands a month, a few megabytes in SQLite.
+- The log is appended and never rewritten: it is the record. About one event per command and one per turn, and one
+  for each answer of the reflex, which is most of a log: a soak of a thousand small tasks wrote 110,000 events, two
+  thirds of them the reflex's, in 37 MB of SQLite. Appending costs the same at any length.
+- Filed: one row for each event and each scope whose record reads it, written in the event's own append and never
+  rewritten; an answer of the reflex is filed under nothing.
 - Snapshots: the two latest are kept, one written every 500 events and at unload.
 - Effects: a settled effect keeps its key, status and result for seven days, so a late duplicate fact is dropped;
   then its row goes. A fact whose key is unknown is dropped.

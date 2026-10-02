@@ -131,6 +131,7 @@ test("a settled effect's row is let go after a week, and only then", () => {
   store.append(
     [{ type: "checks_set", checks: [], seq: 1, at: "", by: "human", commandId: "c" }],
     [{ key: "1:x", body: { kind: "machine.hold", actor: "a1", hold: true } }],
+    [],
     0,
   );
   store.settle("1:x", "done", null, new Date(at).toISOString());
@@ -157,6 +158,7 @@ test("an effect that waits is tried again only after a change, never spun on whi
   store.append(
     [{ type: "checks_set", checks: [], seq: store.seq() + 1, at: "", by: "human", commandId: "x" }],
     [{ key: "99:machine", body: { kind: "machine.hold", actor: "a1", hold: true } }],
+    [],
     store.seq(),
   );
   dispatcher.kick("freed");

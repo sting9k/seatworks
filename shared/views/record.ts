@@ -160,11 +160,44 @@ export function signalsOf(events: Iterable<Event>): Signals {
   };
 }
 
+/** The scopes whose record an event is read in; `ofFinding` gives those a finding was raised in and about. */
+export function recordedIn(e: Event, ofFinding: (finding: string) => readonly string[]): readonly string[] {
+  const carried = "carries" in e && e.carries !== null ? ofFinding(e.carries) : [];
+  switch (e.type) {
+    case "handed_over":
+      return [e.from, e.to, ...carried];
+    case "brief_issued":
+    case "brief_amended":
+    case "scope_held":
+    case "scope_resumed":
+    case "reseated":
+    case "sent_back":
+    case "integrated":
+    case "scope_dropped":
+    case "report_made":
+      return [e.scope, ...carried];
+    case "claim_made":
+      return [e.claim.scope];
+    case "finding_raised":
+      return e.finding.about === null ? [e.finding.scope] : [e.finding.scope, e.finding.about];
+    case "finding_classified":
+    case "finding_withdrawn":
+    case "finding_reopened":
+      return ofFinding(e.finding);
+    case "attention_opened":
+      return [e.attention.about.scope];
+    default:
+      return carried;
+  }
+}
+
 /** A scope's history for the `record` read: its briefs, what was done to it, its hand-backs, findings and reports. */
 export function scopeRecordText(events: Iterable<Event>, scope: string): string {
   const out: string[] = [];
   const findings = new Map<string, string[]>();
+  const mine = (finding: string) => (findings.has(finding) ? [scope] : []);
   for (const e of events) {
+    if (!recordedIn(e, mine).includes(scope)) continue;
     const done = doneTo(e, scope);
     if (done !== null) out.push(`${e.at} ${done}`);
     if ((e.type === "brief_issued" || e.type === "brief_amended") && e.scope === scope)

@@ -974,7 +974,7 @@ export class Plugin {
     const view = runtime.project.view;
     const own = view.actors.get(actor)?.scope ?? "root";
     if (name === "status") return statusText(view, a.scope ?? own, actor) ?? `No scope ${a.scope ?? own} is open.`;
-    if (name === "record") return scopeRecordText(runtime.store.read(0), a.scope ?? own);
+    if (name === "record") return scopeRecordText(runtime.store.about(a.scope ?? own), a.scope ?? own);
     if (name === "diff") {
       const scope = view.scopes.get(a.scope ?? own);
       const parent = scope?.parent ? view.scopes.get(scope.parent) : undefined;

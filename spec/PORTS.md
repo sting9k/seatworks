@@ -11,15 +11,19 @@ Signatures are language-neutral. `Result` is a success with its value, or a fail
 Keeps the kernel's log.
 
 ```text
-append(project, events, effects, expectedSeq) -> Result<seq>   // fails if another append came first
+append(project, events, effects, filed, expectedSeq) -> Result<seq>   // fails if another append came first
 pending(project) -> effects                               // written, with no result yet
 settle(project, key, result)                              // a fact for an effect; a key settled before is dropped
 read(project, fromSeq) -> events
+about(project, subject) -> events                         // those filed under a subject, in order
 putSnapshot(project, seq, state); getSnapshot(project) -> (seq, state)?
 ```
 
 - An append is atomic and durable before it returns.
 - Snapshots are a cache: losing one MUST lose nothing.
+- `filed` names, for an event, the subjects it is read under; it is written in the same append, so reading what is
+  about one subject never reads the whole log. The store gives no meaning to a subject: the shell files an event
+  under the scopes whose record it is read in.
 - One kernel writes a project's log at a time.
 
 It is a SQLite file of its own, on Node's built-in `node:sqlite` (`STACK.md`): events in an append-only table, the

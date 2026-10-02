@@ -95,31 +95,33 @@ export const plan = (goal: string, usd: number | null = null) => ({
 });
 export const SHA = (n: number) => n.toString(16).padStart(40, "a");
 
-/** A project with a Supervisor (a1), a lane under it with its Lead (a2), and one Peer (a3) on src/net/. */
-export function team(ledger = new Ledger()) {
-  ledger.must(
-    ledger.human("open_project", { base: "main", profile: "slp", profileHash: "p1", model: "slp-supervisor" }),
-  );
-  ledger.must(ledger.fact("record_workspace", { scope: "root", ok: true, branch: "main", head: SHA(0) }));
-  ledger.must(
-    ledger.as("a1", "open_scope", {
-      parent: "root",
-      role: "lead",
-      paths: ["src/"],
-      brief: brief("Ship the net layer"),
-    }),
-  );
-  ledger.must(ledger.fact("record_workspace", { scope: "1", ok: true, branch: "sw/1" }));
-  ledger.must(ledger.as("a2", "set_plan", { scope: "1", plan: plan("Ship the net layer", 50) }));
-  ledger.must(
-    ledger.as("a2", "open_scope", {
+const HUMAN_CALLER: Caller = { kind: "human" };
+const BRIDGE_CALLER: Caller = { kind: "bridge" };
+const agent = (actor: string): Caller => ({ kind: "agent", actor });
+
+/** The commands that make the team below, in order, for whoever drives the kernel through another shell. */
+export const TEAM_STEPS: readonly (readonly [Caller, string, Record<string, unknown>])[] = [
+  [HUMAN_CALLER, "open_project", { base: "main", profile: "slp", profileHash: "p1", model: "slp-supervisor" }],
+  [BRIDGE_CALLER, "record_workspace", { scope: "root", ok: true, branch: "main", head: SHA(0) }],
+  [agent("a1"), "open_scope", { parent: "root", role: "lead", paths: ["src/"], brief: brief("Ship the net layer") }],
+  [BRIDGE_CALLER, "record_workspace", { scope: "1", ok: true, branch: "sw/1" }],
+  [agent("a2"), "set_plan", { scope: "1", plan: plan("Ship the net layer", 50) }],
+  [
+    agent("a2"),
+    "open_scope",
+    {
       parent: "1",
       role: "peer",
       paths: ["src/net/"],
       brief: brief("Encode directions", { constraints: [{ text: "int16 precision" }] }),
-    }),
-  );
-  ledger.must(ledger.fact("record_workspace", { scope: "1.1", ok: true, branch: "sw/1.1" }));
+    },
+  ],
+  [BRIDGE_CALLER, "record_workspace", { scope: "1.1", ok: true, branch: "sw/1.1" }],
+];
+
+/** A project with a Supervisor (a1), a lane under it with its Lead (a2), and one Peer (a3) on src/net/. */
+export function team(ledger = new Ledger()) {
+  for (const [caller, type, args] of TEAM_STEPS) ledger.must(ledger.send(caller, type, args));
   return { ledger, supervisor: "a1", lead: "a2", peer: "a3", lane: "1", task: "1.1" };
 }
 

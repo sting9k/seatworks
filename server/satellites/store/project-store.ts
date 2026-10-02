@@ -7,6 +7,8 @@ import type { Event } from "../../../shared/contracts/events.ts";
 /** `abandoned`: its satellite threw on every try, so no fact about it reached the record. */
 export type EffectStatus = "pending" | "done" | "dropped" | "failed" | "abandoned";
 export type PendingEffect = Effect & { readonly seq: number; readonly attempts: number };
+/** An event filed under a subject, so that what is read of one thing reads its own events and not the whole log. */
+export type Filed = { readonly subject: string; readonly seq: number };
 
 const SCHEMA = `
   CREATE TABLE IF NOT EXISTS events (
@@ -18,6 +20,8 @@ const SCHEMA = `
     status TEXT NOT NULL, attempts INTEGER NOT NULL DEFAULT 0, result TEXT, settled_at TEXT) STRICT;
   CREATE INDEX IF NOT EXISTS effects_pending ON effects (status, event_seq);
   CREATE TABLE IF NOT EXISTS snapshots (seq INTEGER PRIMARY KEY, state TEXT NOT NULL) STRICT;
+  CREATE TABLE IF NOT EXISTS filed (
+    subject TEXT NOT NULL, seq INTEGER NOT NULL, PRIMARY KEY (subject, seq)) STRICT, WITHOUT ROWID;
 `;
 
 /** Snapshots kept: the latest two, so a torn write of one leaves the other (LEDGER.md §10). */
@@ -30,6 +34,8 @@ export class ProjectStore {
   private readonly db: DatabaseSync;
   private readonly insertEvent: StatementSync;
   private readonly insertEffect: StatementSync;
+  private readonly insertFiled: StatementSync;
+  private readonly filedRows: StatementSync;
   private readonly lastSeq: StatementSync;
   private readonly byCommand: StatementSync;
   private readonly pendingRows: StatementSync;
@@ -48,6 +54,10 @@ export class ProjectStore {
     this.insertEffect = this.db.prepare(
       "INSERT INTO effects (key, event_seq, kind, payload, status) VALUES (?, ?, ?, ?, 'pending')",
     );
+    this.insertFiled = this.db.prepare("INSERT OR IGNORE INTO filed (subject, seq) VALUES (?, ?)");
+    this.filedRows = this.db.prepare(
+      "SELECT e.seq, e.command_id, e.at, e.by, e.type, e.payload FROM filed f JOIN events e ON e.seq = f.seq WHERE f.subject = ? ORDER BY f.seq",
+    );
     this.lastSeq = this.db.prepare("SELECT coalesce(max(seq), 0) AS seq FROM events");
     this.byCommand = this.db.prepare(
       "SELECT seq, command_id, at, by, type, payload FROM events WHERE command_id = ? ORDER BY seq",
@@ -64,10 +74,11 @@ export class ProjectStore {
     );
   }
 
-  /** Appends one command's events and the effects they ask for, atomically; fails if another append came first. */
+  /** Appends one command's events with their effects and filings, atomically; fails if another append came first. */
   append(
     events: readonly Event[],
     effects: readonly Effect[],
+    filed: readonly Filed[],
     expectedSeq: number,
   ): { ok: true; seq: number } | { ok: false; says: string } {
     this.db.exec("BEGIN IMMEDIATE");
@@ -84,6 +95,7 @@ export class ProjectStore {
       const firstSeq = events[0]?.seq ?? seq;
       for (const f of effects)
         this.insertEffect.run(f.key, Number(f.key.split(":")[0] ?? firstSeq), f.body.kind, JSON.stringify(f.body));
+      for (const f of filed) this.insertFiled.run(f.subject, f.seq);
       this.db.exec("COMMIT");
       return { ok: true, seq: events.at(-1)?.seq ?? seq };
     } finally {
@@ -106,6 +118,11 @@ export class ProjectStore {
       .prepare("SELECT seq, command_id, at, by, type, payload FROM events WHERE seq > ? ORDER BY seq")
       .iterate(fromSeq))
       yield toEvent(row);
+  }
+
+  /** The events filed under a subject, in order. */
+  about(subject: string): Event[] {
+    return this.filedRows.all(subject).map(toEvent);
   }
 
   /** The latest events, newest last, for the Human's view of what happened. */

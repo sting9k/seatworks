@@ -97,6 +97,11 @@ test("the scope tools: open, amend a brief, handover, hold and resume, reseat, r
   assert.ok(c.paseo.archived.includes(c.paseo.created[3]!.host));
   await did(c, keeper, "drop_scope", { scope: "1.2", reason: "B is not needed at all" });
   assert.doesNotMatch(await status(keeper), /1\.2/, "a dropped scope is no longer among its parent's children");
+  assert.match(
+    (await keeper.call("record", { scope: "1.2" })).text,
+    / dropped: B is not needed at all$/,
+    "a dropped scope's record says so",
+  );
 
   assert.match(
     (await keeper.call("record", { scope: "1.1" })).text,
@@ -274,6 +279,30 @@ test("the finding tools: raised on a line, kept, reopened on new evidence, carri
     { finding: "f2", verdict: "minor", reason: "late" },
     /finding f2 is withdrawn/,
   );
+
+  await did(c, maker, "raise_finding", { about: "1", text: "the lane's plan names no cache", default: "go on" });
+  await did(c, keeper, "set_plan", {
+    scope: "1",
+    plan: { goal: { text: "Lane" }, appetite: { line: { text: "A day" } } },
+  });
+  await did(c, keeper, "amend_plan", {
+    scope: "1",
+    add: [{ section: "limits", text: "A cache holds what was read" }],
+    reason: "the cache was missing",
+    carries: "f3",
+  });
+  await did(c, keeper, "classify_finding", { finding: "f3", verdict: "changes", reason: "the plan has it now" });
+  const chain =
+    "f3 from a3: the lane's plan names no cache\n  carried by plan amended (a2)\n  classified changes: the plan has it now";
+  const lane = (await keeper.call("record", { scope: "1" })).text;
+  assert.ok(lane.endsWith(chain), "a finding about another scope is read in that scope's record, with what came of it");
+  assert.doesNotMatch(lane, /f1|f2/, "and no other scope's findings are");
+  assert.ok(
+    (await maker.call("record", {})).text.endsWith(
+      `f2 from a3: the tests are slow\n  withdrawn: my machine was busy\n${chain}`,
+    ),
+    "the scope it was raised in keeps it too, beside the one withdrawn",
+  );
   for (const t of [chief, keeper, maker]) t.close();
 });
 
@@ -409,6 +438,11 @@ test("the attention tools: a watcher's attention reaches the owner above the age
   );
   assert.deepEqual(c.told(2), [], "the agent watched is told nothing");
   await refused(guard, "acknowledge", { attention: "t1" }, /attention t1 was not sent to you/);
+  assert.match(
+    (await keeper.call("record", { scope: "1.1" })).text,
+    / attention t1 \(going-in-circles\) to a2$/m,
+    "the record of the scope it is about keeps it",
+  );
   await did(c, keeper, "acknowledge", { attention: "t1" });
   await refused(keeper, "acknowledge", { attention: "t1" }, /no open attention t1/);
 
