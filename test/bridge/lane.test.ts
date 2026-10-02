@@ -364,3 +364,32 @@ test("two projects on one daemon each get their own first agent", async () => {
   await plugin.idle();
   assert.equal(paseo.created.length, 2, "a Supervisor for each");
 });
+
+test("a publish asked for after the plugin's own commit moved the base is made: the note at attaching is no move of anyone's", async () => {
+  const repo = mkdtempSync(join(tmpdir(), "sw-publish-"));
+  git(repo, "init", "-q", "-b", "main");
+  writeFileSync(join(repo, "a.txt"), "a\n");
+  git(repo, "add", ".");
+  git(repo, "commit", "-q", "-m", "start");
+  const remote = mkdtempSync(join(tmpdir(), "sw-remote-"));
+  git(remote, "init", "-q", "--bare", "-b", "main");
+  git(repo, "remote", "add", "origin", remote);
+  const plugin = new Plugin(stateRoot());
+  plugins.push(plugin);
+  const paseo = fakePaseo(pluginDir);
+  plugin.saw(paseo.api);
+  const { socketPath } = await plugin.whenReady();
+  await plugin.openProject(repo, "main");
+  await plugin.idle();
+  assert.match(git(repo, "log", "-1", "--format=%an: %s", "main"), /^seatworks: Tell every agent here/);
+
+  const supervisor = await agentTools(socketPath, paseo.created[0]!.env);
+  assert.ok((await supervisor.call("publish", { remote: "origin" })).ok);
+  await plugin.idle();
+  assert.equal(
+    git(remote, "rev-parse", "main"),
+    git(repo, "rev-parse", "main"),
+    "the first publish lands, note and all",
+  );
+  supervisor.close();
+});

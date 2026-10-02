@@ -1,4 +1,5 @@
 import { HUMAN } from "../contracts/ids.ts";
+import { sameCommit } from "./commits.ts";
 import type { State } from "./state.ts";
 
 /** Keeps the state to open work; nothing an open obligation, attention or message points at is removed (I11). */
@@ -54,10 +55,11 @@ export function prune(s: State): State {
   for (const id of gone) scopes.delete(id);
   for (const f of s.findings.values()) if (gone.has(f.scope)) findings.delete(f.id);
   // Evidence on a commit an open scope may still integrate stays citable, whichever scope recorded it (I4).
-  const citable = new Set<string>();
+  const citable: string[] = [];
   for (const scope of s.scopes.values())
-    if (!gone.has(scope.id) && scope.candidate) citable.add(scope.candidate.candidate);
-  for (const e of s.evidence.values()) if (gone.has(e.scope) && !citable.has(e.subject)) evidence.delete(e.id);
+    if (!gone.has(scope.id) && scope.candidate) citable.push(scope.candidate.candidate);
+  for (const e of s.evidence.values())
+    if (gone.has(e.scope) && !citable.some((commit) => sameCommit(commit, e.subject))) evidence.delete(e.id);
   const noise = new Set([...s.noise].filter((key) => !gone.has(key.split("|")[2] ?? "")));
 
   return { ...s, scopes, findings, evidence, claims, messages, attentions, permissions, actors, noise };

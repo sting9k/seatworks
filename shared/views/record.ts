@@ -1,4 +1,5 @@
 import type { Event } from "../contracts/events.ts";
+import { sameCommit } from "../kernel/commits.ts";
 
 /** The chain of change of one finding (CONCEPT-V2 §10.1), read from the log as it streams past. */
 export type Chain = {
@@ -85,10 +86,12 @@ export function signalsOf(events: Iterable<Event>): Signals {
   const reviews = new Map<string, number>();
   const commits = new Map<string, Set<string>>();
   const changed = (scope: string) => {
-    for (const c of commits.get(scope) ?? []) {
-      changedReviews += reviews.get(c) ?? 0;
-      reviews.delete(c);
-    }
+    for (const c of commits.get(scope) ?? [])
+      for (const [subject, count] of reviews)
+        if (sameCommit(subject, c)) {
+          changedReviews += count;
+          reviews.delete(subject);
+        }
   };
   let reviewCount = 0;
   let changedReviews = 0;

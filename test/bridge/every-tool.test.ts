@@ -498,6 +498,45 @@ test("the attention tools: a watcher's attention reaches the owner above the age
   for (const t of [chief, keeper, maker, guard]) t.close();
 });
 
+test("a commit named by an abbreviation is that commit: handed back, checked, read, integrated and published as one", async () => {
+  const c = await started();
+  const chief = await c.tools(0);
+  await did(c, chief, "open_scope", { parent: "root", role: "maker", paths: ["src/"], brief: brief("Make a") });
+  const maker = await c.tools(1);
+  const copy = c.paseo.created[1]!.cwd;
+  mkdirSync(join(copy, "src/a"), { recursive: true });
+  writeFileSync(join(copy, "src/a/done.txt"), "done\n");
+  git(copy, "add", ".");
+  git(copy, "commit", "-q", "-m", "done");
+  const head = git(copy, "rev-parse", "HEAD");
+  const short = head.slice(0, 9);
+
+  await did(c, maker, "hand_back", { commit: short, text: "all of it" });
+  assert.match(await status(chief, "1"), new RegExp(`candidate ${head}$`, "m"), "the candidate is by its whole name");
+  await did(c, maker, "run_checks", { scope: "1", commit: short, steps: [{ name: "t", run: ["true"] }] });
+  await did(c, chief, "open_scope", { parent: "root", role: "reader", commit: short, brief: brief("Read it") });
+  await did(c, await c.tools(2), "record_verdict", { ok: true, text: "it is one word, as asked" });
+  await did(c, chief, "drop_scope", { scope: "2", reason: "its verdict is in" });
+  await did(c, chief, "integrate", { scope: "1", evidence: ["e1", "e2"] });
+  assert.equal(git(c.repo, "rev-parse", "main"), head, "evidence on the abbreviation is evidence on the commit");
+  await did(c, chief, "publish", { remote: "origin" });
+  assert.equal(git(c.remote, "rev-parse", "main"), head, "and the publish finds the head the record has");
+  chief.close();
+});
+
+test("a publish the remote or a moved base refuses wakes the root's owner with why", async () => {
+  const c = await started();
+  const chief = await c.tools(0);
+  writeFileSync(join(c.repo, "theirs.txt"), "the Human's\n");
+  git(c.repo, "add", ".");
+  git(c.repo, "commit", "-q", "-m", "the Human's own commit");
+  await did(c, chief, "publish", { remote: "origin" });
+  assert.equal(c.told(0).at(-1), "Publishing main to origin was refused: main moved since the publish was asked");
+  await did(c, chief, "publish", { remote: "origin" });
+  assert.equal(git(c.remote, "rev-parse", "main"), git(c.repo, "rev-parse", "main"), "asked again, it finds the tip");
+  chief.close();
+});
+
 test("with no check set, a hand-back is given no evidence: a run of nothing is nothing to integrate on", async () => {
   const c = await started();
   const chief = await c.tools(0);

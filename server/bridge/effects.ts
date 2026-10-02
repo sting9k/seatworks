@@ -233,8 +233,10 @@ export function handlersFor(w: Wiring): Handlers {
       return "removed" in r ? done() : { status: "failed", why: r.kept };
     },
 
-    "workspace.publish": async (e) =>
-      done({ type: "record_publish", result: await w.workspace.publish(e.branch, e.remote, e.expectedSha) }),
+    "workspace.publish": async (e) => {
+      const result = await w.workspace.publish(e.branch, e.remote, e.expectedSha);
+      return done({ type: "record_publish", remote: e.remote, branch: e.branch, result });
+    },
 
     "docs.write": async (_e, { state }) => {
       const docs = w.bundle.project;

@@ -159,6 +159,10 @@ type Evidence = { id: EvidenceId; scope: ScopeId; kind: "check" | "verdict" | "m
                   heldMachine: boolean };
 ```
 
+A commit is named as its caller named it: whole, or by an abbreviation. Two names are of one commit when one begins
+with the other, so evidence on `34d5447` is evidence on the candidate `34d54477dd40…` (I4), and a claim, a check and a
+verdict that name one commit differently are read as on the same one. A candidate is always by its whole name.
+
 `answeredBy` follows `KERNEL.md` §4.4: a brief line → the brief's scope's parent; a plan line → the plan's scope; no
 line, or `about` another scope → the raiser's scope's parent.
 
@@ -286,7 +290,7 @@ the shell and never reaches `decide`.
 | `record_evidence`      | `scope, subject, ok, steps, heldMachine`                                | `evidence_recorded`                 |
 | `record_integration`   | `scope, result: { sha } \| { moved } \| { failed: why }`                | `integrated` or `integration_refused` |
 | `record_profile`       | `profileHash`: the files the project now runs                                | `profile_taken`; nothing when it is the hash the record has |
-| `record_publish`       | `result: { sha } \| { refused: why, at? }`                                   | `published` or `publish_refused`    |
+| `record_publish`       | `remote, branch, result: { sha } \| { refused: why, at? }`: the remote and branch it went to, since another may have been asked for meanwhile | `published` or `publish_refused` |
 | `record_permission`    | `actor, request, text`                                                  | `permission_asked`, `obligation_opened` |
 | `record_permission_settled` | `actor, request, allow`: answered in the agent's own prompt        | `permission_settled`, `obligation_closed`; nothing when the ledger answered it already |
 | `record_human_words`   | `actor, text`                                                           | `message_sent` (from the Human, directs, not queued), its copy (I7) |
@@ -425,6 +429,8 @@ Whoever a command changes something for is told, in the tool's own words and not
 | `finding_withdrawn`           | Whoever was to answer it                                         | No    |
 | `brief_amended`, `plan_set`, `plan_amended`, `claim_made`, `integrated`, `scope_dropped` | The owner of each scope the scope `mustTell`: what changed | Yes |
 | `brief_amended` by leave of `mayChange` | The owner of the scope's parent: who amended it, from which scope, and why | Yes |
+| `published`                   | The root's owner: the branch, the remote and the commit          | No    |
+| `publish_refused`             | The root's owner, with why: a landing that did not reach the remote is theirs to know, whoever asked | Yes |
 | `integration_refused`         | The owner of the scope's parent, who asked: over a parent that moved, that another candidate is being made; for any other reason, the reason and that the candidate stands | Yes |
 
 An integration the workspace refuses for anything but a parent that moved (a base checked out with uncommitted

@@ -21,12 +21,15 @@ const REFS_ONLY = new Set([
   "config",
 ]);
 
+/** Whose every commit of the plugin's own is, which is how one is told from anyone else's. */
+export const PLUGIN_EMAIL = "seatworks@localhost";
+
 /** What the plugin commits is made as seatworks and unsigned: the Human's name and signer are for their commits. */
 export const AS_PLUGIN = [
   "-c",
   "user.name=seatworks",
   "-c",
-  "user.email=seatworks@localhost",
+  `user.email=${PLUGIN_EMAIL}`,
   "-c",
   "commit.gpgSign=false",
 ];

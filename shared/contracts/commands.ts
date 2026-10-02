@@ -355,6 +355,8 @@ export const COMMANDS = {
   record_integration: z.object({ scope: id, result: z.union([z.object({ sha }), z.object({ refused: z.string() })]) }),
   record_profile: z.object({ profileHash: z.string().min(1).max(100) }),
   record_publish: z.object({
+    remote: z.string(),
+    branch: z.string(),
     result: z.union([z.object({ sha }), z.object({ refused: z.string(), at: sha.nullable().default(null) })]),
   }),
   record_permission: z.object({ actor: id, request: z.string().min(1), text }),

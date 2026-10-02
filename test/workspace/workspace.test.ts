@@ -76,6 +76,11 @@ test("a candidate takes the moved parent in without a checkout; a conflict names
     { candidate: work, parentHead: run(root, "rev-parse", "main") },
     "nothing moved: the commit itself",
   );
+  assert.deepEqual(
+    await ws.candidate(work.slice(0, 9), "main", "Integrate 1"),
+    clean,
+    "named by an abbreviation it is the same commit, by its whole name",
+  );
 
   commitIn(root, "c.txt", "base moved\n");
   const merged = await ws.candidate(work, "main", "Integrate 1");
@@ -126,6 +131,22 @@ test("publish pushes only the head it was asked at, and a moved tip is refused w
   assert.equal(again.at, next);
   assert.equal(run(remote, "rev-parse", "refs/heads/main"), head, "the new tip was not pushed");
   assert.deepEqual(await ws.publish("main", "origin", next), { sha: next });
+
+  const note = await ws.putBlock("main", "AGENTS.md", "seatworks", "The team's note.", "note");
+  assert.ok("sha" in note);
+  assert.deepEqual(
+    await ws.publish("main", "origin", next),
+    { sha: note.sha },
+    "a tip that holds only the plugin's own commits over the head asked for is that landing",
+  );
+  const theirs = commitIn(root, "c.txt", "the Human's\n");
+  const over = await ws.putBlock("main", "AGENTS.md", "seatworks", "The team's note, again.", "note");
+  assert.ok("sha" in over);
+  const mixed = await ws.publish("main", "origin", note.sha);
+  assert.ok("refused" in mixed, "a commit of anyone else's among them is a base that moved");
+  assert.equal(mixed.at, over.sha);
+  assert.equal(run(remote, "rev-parse", "refs/heads/main"), note.sha);
+  assert.notEqual(theirs, over.sha);
 });
 
 test("a copy holding uncommitted work is kept; a clean one goes, with its branch once merged", async () => {

@@ -148,7 +148,11 @@ test("publish names the head the record last saw on the base; a moved tip is rec
   assert.equal(effect.body.expectedSha, SHA(0));
 
   ledger.must(
-    ledger.fact("record_publish", { result: { refused: "main moved since the publish was asked", at: SHA(9) } }),
+    ledger.fact("record_publish", {
+      remote: "origin",
+      branch: "main",
+      result: { refused: "main moved since the publish was asked", at: SHA(9) },
+    }),
   );
   const again = ledger.must(ledger.human("publish", { remote: "origin" }));
   assert.equal(
@@ -156,6 +160,11 @@ test("publish names the head the record last saw on the base; a moved tip is rec
     SHA(9),
     "the refusal told the record the tip it found",
   );
+
+  ledger.must(ledger.human("publish", { remote: "backup" }));
+  const first = { remote: "origin", branch: "main", result: { sha: SHA(9) } };
+  const landed = ledger.must(ledger.fact("record_publish", first)).find((e) => e.type === "published");
+  assert.equal(landed?.remote, "origin", "a publish is recorded to the remote it went to, whatever was asked since");
 });
 
 test("a hand-back from the root owes the Human, who sends it back or publishes over it", () => {
@@ -184,7 +193,7 @@ test("a hand-back from the root owes the Human, who sends it back or publishes o
     ledger.must(ledger.as(supervisor, "hand_back", { commit: SHA(9), text: "the project is done" }));
     assert.equal(claimsOnHuman(ledger).length, 1);
     ledger.must(ledger.human("publish", { remote: "origin" }));
-    ledger.must(ledger.fact("record_publish", { result: { sha: SHA(9) } }));
+    ledger.must(ledger.fact("record_publish", { remote: "origin", branch: "main", result: { sha: SHA(9) } }));
     assert.equal(claimsOnHuman(ledger).length, 0, "publishing the claim settles it");
   }
 });

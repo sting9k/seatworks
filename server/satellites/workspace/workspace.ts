@@ -2,7 +2,7 @@ import { existsSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { createHash } from "node:crypto";
 import { join } from "node:path";
-import { AS_PLUGIN, git, isAncestor, said, sha } from "./git.ts";
+import { AS_PLUGIN, PLUGIN_EMAIL, git, isAncestor, said, sha } from "./git.ts";
 
 export type CopyKind =
   { kind: "writer"; branch: string; from: string } | { kind: "reader"; at: string; branch: string | null };
@@ -84,23 +84,15 @@ export class Workspace {
   async candidate(commit: string, onto: string, message: string): Promise<Candidate | { failed: string }> {
     const parentHead = await sha(this.repo, onto);
     if (!parentHead) return { failed: `${onto} does not exist` };
-    if (!(await sha(this.repo, commit))) return { failed: `${commit} is not in the repository` };
-    if (await isAncestor(this.repo, parentHead, commit)) return { candidate: commit, parentHead };
-    const merged = await git(this.repo, ["merge-tree", "--write-tree", "--name-only", parentHead, commit]);
+    // By its whole name, however it was named: a branch is moved to it, and a publish looks for it, by that name.
+    const tip = await sha(this.repo, commit);
+    if (!tip) return { failed: `${commit} is not in the repository` };
+    if (await isAncestor(this.repo, parentHead, tip)) return { candidate: tip, parentHead };
+    const merged = await git(this.repo, ["merge-tree", "--write-tree", "--name-only", parentHead, tip]);
     if (merged.code === 1) return { conflict: conflictsOf(merged.stdout) };
     if (merged.code !== 0) return { failed: said(merged) };
     const tree = merged.stdout.split("\n")[0]?.trim() ?? "";
-    const made = await git(this.repo, [
-      ...AS_PLUGIN,
-      "commit-tree",
-      tree,
-      "-p",
-      parentHead,
-      "-p",
-      commit,
-      "-m",
-      message,
-    ]);
+    const made = await git(this.repo, [...AS_PLUGIN, "commit-tree", tree, "-p", parentHead, "-p", tip, "-m", message]);
     return made.code === 0 ? { candidate: made.stdout.trim(), parentHead } : { failed: said(made) };
   }
 
@@ -309,6 +301,16 @@ export class Workspace {
     return out;
   }
 
+  /** Whether `tip` is `from` with nothing over it but commits of the plugin's own, none of them a merge. */
+  private async oursOnly(from: string, tip: string): Promise<boolean> {
+    if (!(await isAncestor(this.repo, from, tip))) return false;
+    const over = await git(this.repo, ["log", "--format=%ae %P", `${from}..${tip}`]);
+    const commits = over.stdout.split("\n").filter((line) => line !== "");
+    return (
+      over.code === 0 && commits.every((line) => line.split(" ").length === 2 && line.startsWith(`${PLUGIN_EMAIL} `))
+    );
+  }
+
   /** Pushes a branch to a remote, never forced; a tip that moved since the request is refused, saying what it found. */
   async publish(
     branch: string,
@@ -317,7 +319,8 @@ export class Workspace {
   ): Promise<{ sha: string } | { refused: string; at: string | null }> {
     const tip = await sha(this.repo, branch);
     if (!tip) return { refused: `${branch} does not exist`, at: null };
-    if (tip !== expectedSha) return { refused: `${branch} moved since the publish was asked`, at: tip };
+    if (tip !== expectedSha && !(await this.oursOnly(expectedSha, tip)))
+      return { refused: `${branch} moved since the publish was asked`, at: tip };
     const run = await git(
       this.repo,
       ["push", "--no-verify", remote, `refs/heads/${branch}:refs/heads/${branch}`],

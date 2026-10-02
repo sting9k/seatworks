@@ -222,13 +222,15 @@ export function react(e: Event, s: State): readonly Effect[] {
       );
       break;
     case "published":
+      tell(s.scopes.get(ROOT)?.owner ?? null, "note", `Published ${e.branch} to ${e.remote} at ${e.sha}.`);
+      break;
     case "publish_refused":
+      // A landing that did not reach the remote is the root's owner's to know now, whoever asked for the publish.
       tell(
-        s.scopes.get("root")?.owner ?? null,
+        s.scopes.get(ROOT)?.owner ?? null,
         "note",
-        e.type === "published"
-          ? `Published ${e.branch} to ${e.remote} at ${e.sha}.`
-          : `Publishing ${e.branch} to ${e.remote} was refused: ${e.why}`,
+        `Publishing ${e.branch} to ${e.remote} was refused: ${e.why}`,
+        true,
       );
       break;
     case "integration_started":

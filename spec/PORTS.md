@@ -67,7 +67,7 @@ merge(path, from) -> Result<sha | conflict(paths)>        // a conflict is undon
 advance(branch, fromSha, toSha, how) -> Result<sha>       // how: squash | merge | ff; refuses if branch moved
 state(path) -> { head, branch, uncommitted }
 remove(key) -> Result<removed | kept(why)>                // keeps a copy holding uncommitted work
-publish(branch, remote, expectedSha) -> Result<sha>       // never forced; refuses if the remote moved
+publish(branch, remote, expectedSha) -> Result<sha>       // never forced; refuses if the branch moved, or the remote
 onDisk() -> { key, path, branch, unsaved }[]              // every copy under the root, used or not
 branchesUnder(prefix, into) -> { branch, merged }[]
 removeBranch(branch) -> Result<removed | kept(why)>       // git refuses one checked out in a copy
@@ -84,6 +84,12 @@ Invariants, taken from Symphony's workspace safety rules:
 - The git an agent runs refuses what only the workspace does (branch moves, pushes, switching, work outside its own
   copy). It guards against mistakes, not intent.
 - The workspace's own git runs no hook or command a repository's config names.
+- A commit it returns is named whole, however it was named to it: a branch is moved to it and a publish looks for
+  it by that name, and an abbreviation would match neither.
+- A publish finds the branch moved when its tip is not the head it was asked at, but for one case: a tip that is that
+  head with only the plugin's own commits over it, none a merge (the note it writes at attaching, the docs it writes
+  after a landing), is the same landing and is pushed, those commits with it. Without that, every publish after a
+  landing would be refused once for the plugin's own writing.
 
 ## Evidence
 

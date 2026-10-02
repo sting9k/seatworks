@@ -95,14 +95,18 @@ test("a Reviewer's red verdict followed by a send-back counts as a review that c
       parent: lane,
       role: "reviewer",
       paths: [],
-      commit: SHA(2),
+      commit: SHA(2).slice(0, 12),
       brief: brief("Review"),
     }),
   );
   ledger.must(ledger.fact("record_workspace", { scope: "1.2", ok: true, branch: null }));
   ledger.must(ledger.as("a4", "record_verdict", { ok: false, text: "the rounding is off" }));
   ledger.must(ledger.as(lead, "send_back", { scope: task, reason: "fix the rounding" }));
-  assert.deepEqual(signalsOf(ledger.log).reviewsThatChanged, [1, 1]);
+  assert.deepEqual(
+    signalsOf(ledger.log).reviewsThatChanged,
+    [1, 1],
+    "the commit read was named by an abbreviation, and is the candidate all the same",
+  );
 });
 
 test("a finding reopened with new evidence reads as not yet weighed in its chain", () => {

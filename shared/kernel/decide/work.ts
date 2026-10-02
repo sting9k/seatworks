@@ -2,6 +2,7 @@ import type { CommandBody } from "../../contracts/commands.ts";
 import { BRIDGE, HUMAN, type Party, ROOT } from "../../contracts/ids.ts";
 import type { Evidence, Scope } from "../../contracts/ledger.ts";
 import { descendants, ownerOfParent } from "../authority.ts";
+import { sameCommit } from "../commits.ts";
 import { releaseSeat } from "./seats.ts";
 import { type Context, type Refusal, isRefusal, refuse } from "./context.ts";
 import { closeAbout } from "./findings.ts";
@@ -99,13 +100,13 @@ export function integrate(ctx: Of<"integrate">): Refusal | undefined {
   for (const id of ctx.body.evidence) {
     const e = ctx.state.evidence.get(id);
     if (!e) return refuse("unknown", `no evidence ${id}`);
-    if (e.subject !== candidate.candidate)
+    if (!sameCommit(e.subject, candidate.candidate))
       return refuse(
         "I4",
         `evidence ${id} is on ${e.subject}, not on ${candidate.candidate}, the commit being integrated`,
       );
   }
-  const failing = [...ctx.state.evidence.values()].find((e) => e.subject === candidate.candidate && !e.ok);
+  const failing = [...ctx.state.evidence.values()].find((e) => sameCommit(e.subject, candidate.candidate) && !e.ok);
   if (failing && ctx.body.reason === null)
     return refuse("I4", `a failing result is integrated only with a reason: ${failing.id} failed on this commit`);
   ctx.emit({
@@ -214,8 +215,7 @@ export function integrationFact(ctx: Of<"record_integration">): Refusal | undefi
 
 export function publishFact(ctx: Of<"record_publish">): Refusal | undefined {
   const root = ctx.state.scopes.get(ROOT);
-  const remote = ctx.state.project?.remote ?? "";
-  const branch = root?.branch ?? "";
+  const { remote, branch } = ctx.body;
   const r = ctx.body.result;
   if ("refused" in r) ctx.emit({ type: "publish_refused", remote, branch, why: r.refused, found: r.at });
   else {
