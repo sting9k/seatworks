@@ -279,6 +279,7 @@ A call as an agent's tool server sends it, the answer read back.
 | A restart with a candidate neither attended nor passed      | Given to the Watcher again                                 |
 | The classifier's host unreachable                           | Facts and sweeps reach the Watcher; nothing else changes   |
 | No classifier by choice: none in the template, or switched off | Nothing is asked and nothing is said; what code counts still reaches the owner above, a candidate and a sweep the one that watches |
+| A team on a template with no classifier, through the plugin: an agent's call fails the same way a third time, the one that watches attends, and more work gathers | The candidate is sent to the agent that watches, its attention reaches the owner above the work, a sweep wakes it, and no call leaves the machine |
 | No Watcher role                                             | Only `tell` answers, code moments and alarms reach the owners |
 | Three moments on one Peer in one turn                       | One numbered message to its Lead, after the Lead's turn    |
 | The Lead marks a moment noise for its Peer                  | That moment is not told again for that Peer and scope      |

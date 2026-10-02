@@ -131,6 +131,85 @@ test("a template's classifier is asked at the host the Human's key is for and at
   bare.close();
 });
 
+test("a team whose template names no classifier is watched end to end: a call that keeps failing reaches the one that watches, who attends, and the owner above is told; a sweep follows the work; no model is asked", async () => {
+  const calls = net();
+  const root = stateRoot();
+  const profile = join(root, "profiles", "slp", "profile.yaml");
+  const text = readFileSync(profile, "utf8");
+  writeFileSync(
+    profile,
+    text.slice(0, text.indexOf("classifier:")) + text.slice(text.indexOf("# Kept in an attached")),
+  );
+  const repo = mkdtempSync(join(tmpdir(), "sw-watched-"));
+  const git = (...args: string[]) =>
+    execFileSync("git", ["-c", "user.name=t", "-c", "user.email=t@t", "-c", "commit.gpgSign=false", ...args], {
+      cwd: repo,
+    });
+  git("init", "-q", "-b", "main");
+  writeFileSync(join(repo, "a.txt"), "a\n");
+  git("add", ".");
+  git("commit", "-q", "-m", "start");
+  const plugin = new Plugin(root);
+  plugins.push(plugin);
+  const paseo = fakePaseo(pluginDir);
+  plugin.saw(paseo.api);
+  plugin.setReflex({ on: true, host: "openrouter.ai", key: "the-key" });
+  const { socketPath } = await plugin.whenReady();
+  await plugin.openProject(repo, "main");
+  await plugin.idle();
+  const made = (prompt: RegExp) => paseo.created.find((agent) => prompt.test(agent.systemPrompt))!;
+  const told = (host: string) => paseo.sent.filter((sent) => sent.host === host).map((sent) => sent.text);
+  const supervisor = await agentTools(socketPath, paseo.created[0]!.env);
+  const lane = { goal: { text: "Encode directions" }, kind: "discovery" };
+  assert.ok((await supervisor.call("open_scope", { parent: "root", role: "lead", paths: ["src/"], brief: lane })).ok);
+  assert.ok((await supervisor.call("open_scope", { parent: "root", role: "watcher", over: "all" })).ok);
+  await plugin.idle();
+  const lead = await agentTools(socketPath, made(/^# Lead/).env);
+  const task = { goal: { text: "Write the encoder" }, kind: "verification" };
+  assert.ok((await lead.call("open_scope", { parent: "1", role: "peer", paths: ["src/net/"], brief: task })).ok);
+  await plugin.idle();
+  const peer = made(/^# Peer/);
+  const watcher = made(/^# Watcher/);
+
+  const failing = (n: number) => ({
+    type: "tool_call" as const,
+    callId: `c${n}`,
+    name: "Bash",
+    status: "completed" as const,
+    error: null,
+    detail: { type: "shell" as const, command: "npm test", exitCode: 1, output: "Error: port 3000 in use" },
+  });
+  const turn = [{ type: "user_message" as const, text: peer.prompt, clientMessageId: peer.promptId }];
+  const third = [...turn, failing(1), failing(2), failing(3)];
+  await plugin.turnEnded(peer.host, { kind: "completed" }, third);
+  await plugin.idle();
+  const candidate = /CANDIDATE (\S+) · going-in-circles/.exec(told(watcher.host).join("\n"))?.[1];
+  assert.ok(candidate, `the third failure is a candidate for the one that watches: ${told(watcher.host).join("|")}`);
+
+  const watching = await agentTools(socketPath, watcher.env);
+  const attended = await watching.call("attend", {
+    candidate,
+    actor: "a4",
+    moment: "going-in-circles",
+    why: '"Error: port 3000 in use", three times',
+    urgency: "now",
+  });
+  assert.ok(attended.ok, attended.text);
+  await plugin.idle();
+  assert.match(told(made(/^# Lead/).host).join("\n"), /ATTENTION .+going-in-circles/, "the Peer's Lead is told");
+
+  const long = { type: "reasoning" as const, text: "x".repeat(1400) };
+  await plugin.turnEnded(peer.host, { kind: "completed" }, [...third, ...Array.from({ length: 25 }, () => long)]);
+  await plugin.idle();
+  assert.ok(
+    told(watcher.host).some((said) => said.includes("A sweep: the work since the last one.")),
+    "and a sweep wakes it once enough work has gathered",
+  );
+  assert.equal(calls.length, 0, "with no model asked at any point");
+  assert.equal(plugin.alarmOf(plugin.projects()[0]!.id), null);
+  for (const tools of [supervisor, lead, watching]) tools.close();
+});
+
 test("a classifier served over plain http anywhere but this machine, or by no route, is a profile that does not load", () => {
   const withClassifier = (block: string) => {
     const root = stateRoot();
