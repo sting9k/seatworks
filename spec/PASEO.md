@@ -162,6 +162,12 @@ On 2 October 2026, Paseo 0.10.2, a daemon run for it with a home of its own (`HA
   that turn spent is counted nowhere. A Peer taken in within seconds of its hand-back, while it was still writing
   its last words, had none of its spend recorded.
 - The timeline of an archived agent could not be read from the command line.
+- Installed with the README's line from the branch `open-templates` into a daemon with nothing installed: cloned from
+  GitHub, built with `npm ci --omit=dev`, ready in under two seconds, and SLP installed through the calls the
+  plugin's page makes. Paseo keeps the remote and the commit of an install and not the `--ref` it was given
+  (`managed-source.js`, 0.10.2): an update with no `--ref` goes to the remote's default branch. So an install from
+  another branch is shown the default branch's head as a newer release, by `paseo plugin update` and by the plugin's
+  own check alike, and updating takes it there; `paseo plugin update seatworks --ref <branch>` follows the branch.
 - A daemon run with a home of its own made an empty folder for each agent's directory under the Human's own Pi
   sessions, for Claude agents too; the sessions themselves were in the home Seatworks lays out for Pi.
 

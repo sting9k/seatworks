@@ -77,6 +77,10 @@ Until the branch `open-templates` is merged into `main`, what this README descri
 curl -fsSL https://raw.githubusercontent.com/sting9k/seatworks/open-templates/install.sh | sh -s -- --ref open-templates
 ```
 
+Paseo does not remember the branch an install came from. Until the merge, `paseo plugin update seatworks` and the
+Plugin page's check both point at `main`, which is older: update with
+`paseo plugin update seatworks --ref open-templates`.
+
 Then, in Paseo:
 
 1. **Install a template.** Open Seatworks in the sidebar, then Plugin. Under Templates, install SLP. Nothing runs
