@@ -1,0 +1,323 @@
+import type { Relation, Role } from "../../shared/contracts/profile.ts";
+import { type Step, withAbout, withEditor } from "./about.ts";
+import { flowText } from "./flow.ts";
+import type { Property, Wire } from "./graph.ts";
+import { readTemplate, type Template, type TemplateFiles } from "./read-template.ts";
+import { promptSkeleton, skillSkeleton } from "./skeletons.ts";
+import { TOOL_GROUPS, toolsFollowing } from "./tool-groups.ts";
+import { deleteIn, renameKey, setIn, type Value } from "./yaml-patch.ts";
+
+/**
+ * A change to a template: its files in, its files out, or why it is not made. A change touches only the file it
+ * changes, and in a YAML file only the node it changes (EDITOR.md, Decided 7).
+ */
+export type Edit = (template: Template) => TemplateFiles | { readonly refused: string };
+
+const PROFILE = "profile.yaml";
+const FLOW = "flow.md";
+const NAME = /^[a-z][a-z0-9-]*$/;
+
+/**
+ * The template after the edit, or why the edit was not made: one that would leave a template that does not load is
+ * not made.
+ */
+export function applied(
+  template: Template,
+  edit: Edit,
+):
+  | { readonly ok: true; readonly files: TemplateFiles; readonly template: Template }
+  | { readonly ok: false; readonly says: string } {
+  const files = edit(template);
+  if ("refused" in files) return { ok: false, says: files.refused };
+  const read = readTemplate(files);
+  return read.ok ? { ok: true, files, template: read.template } : read;
+}
+
+/** Several edits as one, each made on what the one before left. */
+export const together =
+  (...edits: readonly Edit[]): Edit =>
+  (template) => {
+    let current = template;
+    for (const edit of edits) {
+      const made = applied(current, edit);
+      if (!made.ok) return { refused: made.says };
+      current = made.template;
+    }
+    return current.files;
+  };
+
+/** The template under another name: what the gallery and its tab call it. */
+export const renameTemplate =
+  (name: string): Edit =>
+  (template) =>
+    name.trim() === ""
+      ? { refused: "a template has a name" }
+      : withAbout(template.files, (about) => ({ ...about, name: name.trim() }));
+
+const nameIn = (id: string) => id.slice(id.indexOf(":") + 1);
+const withFile = (files: TemplateFiles, path: string, change: (text: string) => string): Map<string, string> =>
+  new Map(files).set(path, change(files.get(path)!));
+const having = <T>(items: Iterable<T>, item: T, on: boolean): T[] => {
+  const all = [...items];
+  if (on) return all.includes(item) ? all : [...all, item];
+  return all.filter((other) => other !== item);
+};
+/** A role's list as the file keeps one: written out, or its key taken away when nothing is left in it. */
+const listed = (text: string, role: string, key: string, items: readonly string[]) =>
+  items.length > 0 ? setIn(text, ["roles", role, key], items) : deleteIn(text, ["roles", role, key]);
+
+/**
+ * Switches a role's property. The tools the property brings come ticked and go with it. The root moves: switching it
+ * on for one role switches it off for the role that had it, since a template has exactly one.
+ */
+export const setProperty =
+  (name: string, property: Property, on: boolean): Edit =>
+  (template) => {
+    let text = template.files.get(PROFILE)!;
+    if (property === "root" && on)
+      for (const other of template.profile.roles.values())
+        if (other.root && other.name !== name) text = switched(text, template, other, "root", false);
+    return new Map(template.files).set(
+      PROFILE,
+      switched(text, template, template.profile.roles.get(name)!, property, on),
+    );
+  };
+
+function switched(text: string, template: Template, before: Role, property: Property, on: boolean): string {
+  const after: Role = { ...before, [property]: on };
+  const path = ["roles", before.name, property];
+  const inherits = template.file.roles[before.name]?.like !== undefined;
+  const set = on ? setIn(text, path, true) : inherits ? setIn(text, path, false) : deleteIn(text, path);
+  const brought = toolsFollowing(after);
+  const taken = [...toolsFollowing(before)].filter((tool) => !brought.has(tool));
+  const tools = [...before.tools].filter((tool) => !taken.includes(tool));
+  for (const tool of brought) if (!toolsFollowing(before).has(tool) && !tools.includes(tool)) tools.push(tool);
+  const same = tools.length === before.tools.size && tools.every((tool) => before.tools.has(tool));
+  return same ? set : listed(set, before.name, "tools", tools);
+}
+
+export const setTool =
+  (name: string, tool: string, shown: boolean): Edit =>
+  (template) =>
+    withFile(template.files, PROFILE, (text) =>
+      listed(text, name, "tools", having(template.profile.roles.get(name)!.tools, tool, shown)),
+    );
+
+export const setSpeaks =
+  (name: string, relation: Relation, on: boolean): Edit =>
+  (template) =>
+    withFile(template.files, PROFILE, (text) =>
+      listed(text, name, "speaksTo", having(template.profile.roles.get(name)!.speaksTo, relation, on)),
+    );
+
+/** Draws a wire or takes it away, as what its kind becomes in the template's files (EDITOR.md, Wires). */
+export const wired =
+  (kind: Wire["kind"], from: string, to: string, on: boolean): Edit =>
+  (template) => {
+    const roles = template.profile.roles;
+    switch (kind) {
+      case "spawns":
+        return withFile(template.files, PROFILE, (text) =>
+          listed(text, nameIn(from), "spawns", having(roles.get(nameIn(from))!.spawns, nameIn(to), on)),
+        );
+      case "skill":
+        return withFile(template.files, PROFILE, (text) =>
+          listed(text, nameIn(to), "skills", having(template.file.roles[nameIn(to)]!.skills ?? [], nameIn(from), on)),
+        );
+      case "tools": {
+        const group = TOOL_GROUPS.find((candidate) => candidate.id === nameIn(from))!;
+        const role = roles.get(nameIn(to))!;
+        const tools = group.tools.reduce<string[]>((kept, tool) => having(kept, tool, on), [...role.tools]);
+        return withFile(template.files, PROFILE, (text) => listed(text, role.name, "tools", tools));
+      }
+      case "human": {
+        const role = roles.get(nameIn(from))!;
+        const told = setSpeaks(role.name, "human", on);
+        return on || !role.humanDoor
+          ? told(template)
+          : together(setProperty(role.name, "humanDoor", false), told)(template);
+      }
+      case "watches": {
+        const moment = template.moments.find((candidate) => candidate.name === nameIn(from))!;
+        const watched = having(moment.spec.watches ?? [], nameIn(to), on);
+        const path = ["moments", moment.name, "watches"];
+        return withFile(template.files, template.file.watch!, (text) =>
+          watched.length > 0 ? setIn(text, path, watched) : deleteIn(text, path),
+        );
+      }
+      case "then":
+        return withSteps(template, (steps) =>
+          steps.map((step) => (step.id === nameIn(from) ? { ...step, then: having(step.then, nameIn(to), on) } : step)),
+        );
+      case "does":
+        return withSteps(template, (steps) =>
+          steps.map((step) => (step.id === nameIn(to) ? { ...step, role: on ? nameIn(from) : null } : step)),
+        );
+    }
+  };
+
+/** A role with nothing but what every seated role has: it speaks to whoever seated it, and starts from the skeleton. */
+export const addRole =
+  (name: string): Edit =>
+  (template) => {
+    if (!NAME.test(name)) return { refused: `a role's name is lower-case letters, digits and dashes: ${name} is not` };
+    if (template.profile.roles.has(name)) return { refused: `there is already a role named ${name}` };
+    const speaksTo: readonly Relation[] = ["parent"];
+    const fresh: Role = {
+      name,
+      root: false,
+      delegates: false,
+      writes: false,
+      reading: false,
+      watches: false,
+      humanDoor: false,
+      spawns: new Set(),
+      speaksTo: new Set(speaksTo),
+      tools: new Set(),
+      models: [],
+    };
+    const prompt = `roles/${name}.md`;
+    const spec = { speaksTo, prompt, tools: [...toolsFollowing(fresh)] };
+    return withFile(template.files, PROFILE, (text) => setIn(text, ["roles", name], spec)).set(
+      prompt,
+      promptSkeleton(name),
+    );
+  };
+
+/** A role as another is, under a name of its own and with a prompt of its own to change; never a second root. */
+export const duplicateRole =
+  (name: string, as: string): Edit =>
+  (template) => {
+    if (!NAME.test(as)) return { refused: `a role's name is lower-case letters, digits and dashes: ${as} is not` };
+    if (template.profile.roles.has(as)) return { refused: `there is already a role named ${as}` };
+    const { root: _, prompt, ...kept } = template.file.roles[name]!;
+    const copy: Record<string, Value> = { ...kept };
+    const files = new Map(template.files);
+    if (prompt !== undefined) {
+      copy.prompt = `roles/${as}.md`;
+      files.set(copy.prompt, template.files.get(prompt)!);
+    }
+    return files.set(PROFILE, setIn(template.files.get(PROFILE)!, ["roles", as], copy));
+  };
+
+/** Takes a role away, and its name out of everything that named it; its prompt goes when no other role reads it. */
+export const removeRole =
+  (name: string): Edit =>
+  (template) =>
+    renamed(template, name, null);
+
+export const renameRole =
+  (from: string, to: string): Edit =>
+  (template) => {
+    if (!NAME.test(to)) return { refused: `a role's name is lower-case letters, digits and dashes: ${to} is not` };
+    if (template.profile.roles.has(to)) return { refused: `there is already a role named ${to}` };
+    return renamed(template, from, to);
+  };
+
+/** Every place a role is named follows its new name, or loses it when the role is gone. */
+function renamed(template: Template, from: string, to: string | null): TemplateFiles {
+  const follow = (names: Iterable<string>) => [...names].flatMap((name) => (name === from ? (to ?? []) : name));
+  const files = new Map(template.files);
+  let text = files.get(PROFILE)!;
+  for (const [name, spec] of Object.entries(template.file.roles)) {
+    if (name === from) continue;
+    if (spec.spawns?.includes(from)) text = listed(text, name, "spawns", follow(spec.spawns));
+    if (spec.like === from && to !== null) text = setIn(text, ["roles", name, "like"], to);
+  }
+  const own = `roles/${from}.md`;
+  const prompt = template.file.roles[from]!.prompt;
+  const shared = Object.entries(template.file.roles).some(([name, spec]) => name !== from && spec.prompt === prompt);
+  if (to === null) {
+    text = deleteIn(text, ["roles", from]);
+    if (prompt !== undefined && !shared) files.delete(prompt);
+  } else {
+    if (prompt === own && !shared) {
+      const moved = `roles/${to}.md`;
+      files.set(moved, files.get(own)!);
+      files.delete(own);
+      text = setIn(text, ["roles", from, "prompt"], moved);
+    }
+    text = renameKey(text, ["roles", from], to);
+  }
+  files.set(PROFILE, text);
+
+  const watch = template.file.watch;
+  if (watch !== undefined) {
+    let moments = files.get(watch)!;
+    for (const moment of template.moments) {
+      if (!moment.spec.watches?.includes(from)) continue;
+      const watched = follow(moment.spec.watches);
+      const path = ["moments", moment.name, "watches"];
+      moments = watched.length > 0 ? setIn(moments, path, watched) : deleteIn(moments, path);
+    }
+    files.set(watch, moments);
+  }
+  if (!template.steps.some((step) => step.role === from)) return files;
+  return stepsIn(files, (steps) => steps.map((step) => (step.role === from ? { ...step, role: to } : step)));
+}
+
+export const addSkill =
+  (name: string): Edit =>
+  (template) => {
+    if (!NAME.test(name)) return { refused: `a skill's name is lower-case letters, digits and dashes: ${name} is not` };
+    if (template.skills.has(name)) return { refused: `there is already a skill named ${name}` };
+    return new Map(template.files).set(`skills/${name}/SKILL.md`, skillSkeleton(name));
+  };
+
+/** Takes a skill away: its folder, and its name out of every role that had it. */
+export const removeSkill =
+  (name: string): Edit =>
+  (template) => {
+    const files = new Map(template.files);
+    for (const path of template.files.keys()) if (path.startsWith(`skills/${name}/`)) files.delete(path);
+    let text = files.get(PROFILE)!;
+    for (const [role, spec] of Object.entries(template.file.roles))
+      if (spec.skills?.includes(name)) text = listed(text, role, "skills", having(spec.skills, name, false));
+    return files.set(PROFILE, text);
+  };
+
+/** The id a new step of this name is given: its name in lower case, numbered when one has it already. */
+export function stepIdFor(steps: readonly Step[], name: string): string {
+  const base =
+    name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "") || "step";
+  const taken = new Set(steps.map((step) => step.id));
+  let id = base;
+  for (let n = 2; taken.has(id); n++) id = `${base}-${n}`;
+  return id;
+}
+
+export const addStep =
+  (name: string): Edit =>
+  (template) =>
+    withSteps(template, (steps) => [...steps, { id: stepIdFor(steps, name), name, text: "", role: null, then: [] }]);
+
+export const setStep =
+  (id: string, change: Partial<Pick<Step, "name" | "text">>): Edit =>
+  (template) =>
+    withSteps(template, (steps) => steps.map((step) => (step.id === id ? { ...step, ...change } : step)));
+
+export const removeStep =
+  (id: string): Edit =>
+  (template) =>
+    withSteps(template, (steps) =>
+      steps.filter((step) => step.id !== id).map((step) => ({ ...step, then: having(step.then, id, false) })),
+    );
+
+const withSteps = (template: Template, change: (steps: readonly Step[]) => Step[]) => stepsIn(template.files, change);
+
+/** The steps changed, and `flow.md` written from them again; with no step left there is no flow to give. */
+function stepsIn(files: TemplateFiles, change: (steps: readonly Step[]) => Step[]): Map<string, string> {
+  let steps: Step[] = [];
+  const next = new Map(
+    withEditor(files, (editor) => {
+      steps = change(editor.steps);
+      return { ...editor, steps };
+    }),
+  );
+  if (steps.length > 0) next.set(FLOW, flowText(steps));
+  else next.delete(FLOW);
+  return next;
+}

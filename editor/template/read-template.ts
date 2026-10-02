@@ -8,7 +8,7 @@ import {
   skillDescription,
 } from "../../shared/contracts/profile.ts";
 import { type QuestionSpec, ReflexFileSchema, WatchFileSchema } from "../../shared/contracts/reflex.ts";
-import { type About, AboutSchema } from "./about.ts";
+import { type About, AboutSchema, type Step } from "./about.ts";
 
 /** A template's files as they are packed: each path inside it, with its text. */
 export type TemplateFiles = ReadonlyMap<string, string>;
@@ -22,7 +22,9 @@ export type Template = {
   readonly files: TemplateFiles;
   readonly file: ProfileFile;
   readonly profile: Profile;
+  /** Every skill the template carries, wired to a role or not. */
   readonly skills: ReadonlyMap<string, Skill>;
+  readonly steps: readonly Step[];
   readonly questions: readonly Asked[];
   readonly moments: readonly Asked[];
 };
@@ -43,7 +45,8 @@ export function readTemplate(files: TemplateFiles): Read {
   for (const [name, role] of Object.entries(file.roles))
     if (role.prompt && !files.has(role.prompt)) return missing(role.prompt, `role ${name}`);
   const skills = new Map<string, Skill>();
-  for (const name of new Set(Object.values(file.roles).flatMap((role) => role.skills ?? []))) {
+  const carried = [...files.keys()].flatMap((path) => /^skills\/([^/]+)\/SKILL\.md$/.exec(path)?.[1] ?? []);
+  for (const name of new Set([...Object.values(file.roles).flatMap((role) => role.skills ?? []), ...carried])) {
     const path = `skills/${name}/SKILL.md`;
     const skill = files.get(path);
     if (skill === undefined) return missing(path, `skill ${name}`);
@@ -62,6 +65,7 @@ export function readTemplate(files: TemplateFiles): Read {
       file,
       profile: resolved.profile,
       skills,
+      steps: about.value.editor?.steps ?? [],
       questions: asked(reflex?.value.questions ?? {}, reflex?.value.active ?? []),
       moments: asked(watch?.value.moments ?? {}, watch?.value.active ?? []),
     },

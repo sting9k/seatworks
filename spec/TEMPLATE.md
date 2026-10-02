@@ -143,8 +143,7 @@ answered it, so a question reworded in a template has not earned its `tell` and 
 | `seatworks`   | The release of Seatworks it was made against                                                         |
 | `editor`      | The editor's own: where each node sits, and the steps the flow is written from                       |
 
-The page reads `name`, `description`, `tags` and the positions under `editor` so far, and refuses a file with any
-other key; each of the rest is read from the step that uses it.
+The page reads all of these but `seatworks` so far, and refuses a file with any other key.
 
 What a template needs of a machine (the Paseo agent profiles its roles name, the variables its servers read) is read
 from `profile.yaml` by the gallery and the installer, never declared a second time here, where it could fall out of

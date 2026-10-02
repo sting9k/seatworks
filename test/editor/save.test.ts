@@ -25,7 +25,7 @@ test("a template whose nodes were put somewhere keeps the places in `template.js
     ["question:names-method", { x: 300.4, y: 91.6 }],
   ]);
 
-  const saved = positioned(files, read.template.about, put);
+  const saved = positioned(files, put);
 
   const changed = [...saved].filter(([path, text]) => files.get(path) !== text).map(([path]) => path);
   assert.deepEqual(changed, ["template.json"]);

@@ -2,8 +2,8 @@ import type { Relation, Role } from "../../shared/contracts/profile.ts";
 import type { Asked, Template } from "./read-template.ts";
 import { TOOL_GROUPS } from "./tool-groups.ts";
 
-const PROPERTIES = ["root", "delegates", "writes", "reading", "watches", "humanDoor"] as const;
-type Property = (typeof PROPERTIES)[number];
+export const PROPERTIES = ["root", "delegates", "writes", "reading", "watches", "humanDoor"] as const;
+export type Property = (typeof PROPERTIES)[number];
 
 type RoleNode = {
   readonly kind: "role";
@@ -50,10 +50,15 @@ export type GraphNode =
       readonly countedInCode: boolean;
       readonly active: boolean;
       readonly file: string;
-    };
+    }
+  | { readonly kind: "step"; readonly id: string; readonly name: string; readonly text: string };
 
 export type Wire =
-  | { readonly kind: "spawns" | "skill" | "watches" | "human"; readonly from: string; readonly to: string }
+  | {
+      readonly kind: "spawns" | "skill" | "watches" | "human" | "then" | "does";
+      readonly from: string;
+      readonly to: string;
+    }
   | { readonly kind: "tools"; readonly from: string; readonly to: string; readonly tools: readonly string[] };
 
 export type Graph = { readonly nodes: readonly GraphNode[]; readonly wires: readonly Wire[] };
@@ -87,14 +92,20 @@ export function graphOf(template: Template): Graph {
 
   for (const group of TOOL_GROUPS) {
     if (group.follows !== "optional") continue;
-    const given = roles.flatMap((role) => {
-      const tools = group.tools.filter((tool) => role.tools.has(tool));
-      return tools.length > 0 ? [{ role, tools }] : [];
-    });
-    if (given.length === 0) continue;
     const id = `tools:${group.id}`;
     nodes.push({ kind: "tools", id, name: group.name, tools: group.tools });
-    for (const { role, tools } of given) wires.push({ kind: "tools", from: id, to: roleId(role.name), tools });
+    for (const role of roles) {
+      const tools = group.tools.filter((tool) => role.tools.has(tool));
+      if (tools.length > 0) wires.push({ kind: "tools", from: id, to: roleId(role.name), tools });
+    }
+  }
+
+  for (const step of template.steps) {
+    const id = `step:${step.id}`;
+    nodes.push({ kind: "step", id, name: step.name, text: step.text });
+    if (step.role !== null && template.profile.roles.has(step.role))
+      wires.push({ kind: "does", from: roleId(step.role), to: id });
+    for (const next of step.then) wires.push({ kind: "then", from: id, to: `step:${next}` });
   }
 
   for (const question of template.questions)

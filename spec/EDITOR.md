@@ -3,10 +3,11 @@
 Where a template is opened as a graph, changed and saved: a web page, after ComfyUI's three screens. `TEMPLATE.md`
 says what a template is; this says how a person makes and changes one. The order it is built in is in `TEMPLATE.md`.
 
-Built so far: a template is picked from the gallery, or opened from a file or a folder of the person's own, and read.
-Its graph is drawn and laid out, its files are shown as text, and the node library lists the nodes it has and finds one
-by name. A node is moved and stays where it was put, and the template is exported as one file. Nothing else of it is
-changed yet.
+Built so far: a template is picked from the gallery, or opened from a file or a folder of the person's own, and opens
+in a tab. Its graph is drawn and laid out, and the node list finds a node by name. Roles, skills and steps are added,
+renamed and taken away; a role's properties are switched and its tools ticked; wires are drawn and cut; every change
+can be undone. The template is exported as one file. Its files are shown as text and not yet edited, no check is run
+beyond whether it loads, and a question or a moment is not yet added or changed.
 
 ## Decided
 
@@ -34,6 +35,10 @@ changed yet.
    whole from what was parsed. A change is made in the source, at the place of the node it changes.
 8. **The editor checks what a machine can check, and no more.** Whether a template makes a team work well is known
    only by running it and looking back.
+9. **A change that would leave a template that does not load is not made, and the page says why.** The graph is
+   always drawn from files the plugin would load, so there is never a half-made template to draw or to export. One
+   change could not be made in two steps under this rule, so it is one: switching the root on for a role switches it
+   off for the role that had it.
 
 ## Three screens
 
@@ -45,15 +50,24 @@ changed yet.
 
 ## The look
 
-After ComfyUI's, so a person who knows one finds their way in the other.
+After ComfyUI's own page, so a person who knows one finds their way in the other.
 
-- One dark ground. Nodes are neutral; colour is kept for the wires, their sockets and the dot before a node's name,
-  one colour to a kind of wire.
+- A strip of tabs over everything: the gallery, and a tab for each template open, marked while it holds a change
+  that has not been exported.
+- Down the left, a rail of icons that opens one panel beside it: the nodes, or the files. The nodes panel has two
+  tabs, the nodes of this template to find one by, and the kinds of node to add, dragged onto the graph.
+- The canvas takes the rest, with its tools floating over it: at the top left a menu for the template as a whole
+  (rename, tidy up, export, close); at the top right undo, redo, whether it is exported, the export button and the
+  switch for the panel on the right; at the bottom right the zoom and the small map.
+- The picked node has its own few actions floating above it: take away, duplicate, about.
+- On the right, a panel says the rest of the picked node, lets what is not on the node be set, and shows the file the
+  node is kept in.
+- One dark ground of neutral greys. Nodes are neutral; colour is kept for the wires, their sockets and the dot before
+  a node's name, one colour to a kind of wire. The picked node is outlined in white.
 - What comes into a node is on its left, named in lower case. What goes out is on its right, named by its kind in
   capitals, as ComfyUI names a type.
 - A setting is a row: its name on the left, its value on the right.
-- A node with one socket and nothing to set is its title alone, as a collapsed node is. The side panel says the rest
-  of the node that is picked, and shows the file it is kept in.
+- A node with one socket and nothing to set is its title alone, as a collapsed node is.
 - A family no wire places sits in a titled frame that carries its nodes when it is moved: the reflex questions.
 - A card in the gallery is covered by the template's own graph, drawn small, with its name over it. No picture is
   kept beside a template, so a cover is never out of step with what it covers.
@@ -64,9 +78,9 @@ After ComfyUI's, so a person who knows one finds their way in the other.
 | --------- | ------------------- | ------------------------------------------------------------------------ | ---------------------------------- |
 | Team      | Role                | Its name, its properties as switches, its tool groups as ticked lists, its prompt, its models | `spawns`, in and out |
 | Team      | Human               | One, fixed                                                               | From each role that may ask or message the Human |
-| Equipment | Skill               | Its folder: `SKILL.md` and the files beside it                           | To each role that has it           |
+| Equipment | Skill               | Its folder: `SKILL.md` and the files beside it. A node once the folder is there, wired or not | To each role that has it |
 | Equipment | Outside server      | Its command or address, the variables it names                           | To a role; the tools are picked on the wire |
-| Equipment | Optional tool group | Findings; the machine's hold                                             | To a role                          |
+| Equipment | Optional tool group | Findings; the machine's hold. Always on the graph, to be wired           | To a role                          |
 | Attention | Reflex question     | The events it is asked on, its question, each outcome, its thresholds, whom it tells | None                   |
 | Attention | Watch moment        | Its question, what it reads, its thresholds                              | `watches`, to each role watched    |
 | Flow      | Step                | Its name and a line on what happens in it                                | `then`, to the next; from the role that does it |
@@ -83,11 +97,13 @@ A wire has a kind, a socket takes only its own kind, and every kind says what it
 | Authority | To the Human               | `humanDoor`, `human` in `speaksTo`                   | The kernel (I10)                             |
 | Authority | `watches`                  | A moment's `watches` in `watch.yaml`                 | The watch                                    |
 | Equipment | Skill, model, server, tool group | `skills`, `models`, `servers`, `tools`         | The agent host: a role has only what is wired |
-| Flow      | `then`                     | A line of `flow.md`                                  | Nobody: the record shows where it was left   |
+| Flow      | `then`, and `does` from a role to a step | A line of `flow.md`: the step, who does it, what follows | Nobody: the record shows where it was left |
 
 - **Speaking is not a free wire.** A role speaks to its `parent`, its `children`, its `descendants` or the Human,
   counted along the tree of scopes. So it is four switches in the role's node, drawn as arrowheads on its `spawns`
   wires and as a wire to the Human.
+- **The wire to the Human is `human` in the role's `speaksTo`.** Cutting it also switches `humanDoor` off: a role that
+  may not speak to the Human does not ask them either.
 - **Nor is whom a question tells.** `tells` names a relation (`root`, `parent`, `evidence`, `answerer`, `self`), never
   a role, so it is a field in the question's node and no wire leaves it.
 - **`then` is soft.** It makes words an agent reads, and nothing the kernel refuses (`TEMPLATE.md`, rule 1). A hard
@@ -132,9 +148,12 @@ node, every tool ticked, and the author unticks what the role is not to be shown
 
 ## Steps and the flow
 
-The steps are kept in `template.json`. On each save the editor writes `flow.md` from them: one line a step, in
-order, with the role that does it and where the work goes back to. `flow.md` is not edited by hand in a template
-that has steps.
+The steps are kept in `template.json`. On each change to them the editor writes `flow.md` again: one line a step, in
+the order they were set down, with the role that does it and the steps that follow. `flow.md` is not edited by hand
+in a template that has steps, and goes when the last step does.
+
+The editor does not yet write the `flow` key into `profile.yaml`: today's plugin refuses a key it does not know, and
+gives no flow to its agents until `TEMPLATE.md`'s step 3 is built.
 
 ## Files
 
@@ -149,8 +168,9 @@ describe for each answer.
 
 Shown on the node they concern, as the template is changed.
 
-- What `resolveProfile` refuses: no root or more than one; a role that spawns but does not delegate; a role with two
-  kinds; a `spawns` that names no role.
+- What `resolveProfile` refuses (no root or more than one; a role that spawns but does not delegate; a role with two
+  kinds; a `spawns` that names no role) is never there to show: the change that would bring it is not made (Decided
+  9).
 - **The always-on words of each role**: its prompt, the descriptions of its skills and the flow, counted, beside
   SLP's own as the mark. This is the cost a template raises without anyone seeing it.
 - A prompt that names, in backticks, a tool its role is not shown.
@@ -166,10 +186,12 @@ Shown on the node they concern, as the template is changed.
 
 A template is some five to thirty nodes, so drawing is never slow; what is felt is the handling.
 
-- A wire dropped on empty space opens the node search, already narrowed to what that socket takes.
-- A node is dragged from the library onto the graph.
+- A wire dropped on empty space opens the node search, already narrowed to what that socket takes, with a new node
+  of that kind last in it.
+- A kind of node is dragged from the panel onto the graph, or clicked to land in the middle of the view.
 - While a wire is dragged, the sockets it cannot go to are dimmed.
-- Undo and redo, copy and paste, delete by key, and one button that tidies the layout.
+- Undo and redo by the keys a person expects; copy and paste make a second role of the picked one; delete by key
+  takes away the picked wire, role, skill or step; and the menu tidies the layout.
 
 ## Cases
 
@@ -177,15 +199,11 @@ They join `CONFORMANCE.md` with the step that builds them; those of reading are 
 
 | Case                                                                 | Expect                                                           |
 | -------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| `delegates` switched on for a role                                   | Its five groups appear, every tool ticked                        |
-| A tool unticked in one role's group                                  | Gone from that role's `tools`; another role's list unchanged     |
 | A wire dragged to a socket of another kind                           | Not made                                                         |
-| The root switch turned on for a second role                          | The fault `resolveProfile` gives, on that node                   |
 | A tool unticked that the role's prompt names in backticks            | A fault on the role, naming the tool                             |
-| A role renamed                                                       | Its prompt's file and every `spawns` follow; a prompt still naming the old one is a fault |
+| A role renamed                                                       | A prompt still naming the old one is a fault                     |
 | A file dropped into a skill's folder that `SKILL.md` does not name   | Kept; no fault                                                   |
 | A question's words changed                                           | Shown as not yet earned                                          |
-| A template with steps saved                                          | `flow.md` holds one line a step, in order, each with its role    |
 
 ## To check before building on it
 

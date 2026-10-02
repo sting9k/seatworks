@@ -250,3 +250,13 @@ A template's files in, what a person sees out (`EDITOR.md`).
 | The SLP profile packed with nothing changed, and opened again | Every file as it was, to the byte                                  |
 | A template whose nodes were put somewhere, then saved       | The places are in `template.json` and in no other file; opened again, each node is where it was put |
 | A file that is not a packed template                        | Not opened, saying so                                               |
+| A tool unticked for one role                                | Gone from that role's tools, another role's unchanged; no other line of `profile.yaml` touched, every comment kept |
+| A property switched on for a role, then off                 | Its groups appear with every tool ticked; switched off, the role's tools are as they were |
+| The root switched on for a second role                      | The root moves there: a template has one                            |
+| A change that would leave a template that does not load, such as `delegates` off for a role that seats others | Not made, saying why |
+| A wire of each kind drawn, then cut                         | In the one file its kind is kept in, then gone                      |
+| A role renamed                                              | Every `spawns` and every moment that named it follows, and its prompt's file |
+| A role taken away                                           | Nothing names it, and its prompt is gone                            |
+| A role added, then taken away                               | Every file as it was, to the byte                                   |
+| A skill added, and another taken away                       | The new one is a node before any role has it; the other's folder is gone and no role has it |
+| Steps set down, given roles and joined                      | `flow.md` holds a line a step in order, each with its role and what follows; only it and `template.json` change |

@@ -22,7 +22,6 @@ export function Gallery({
   return (
     <main className="gallery">
       <header>
-        <p className="eyebrow">Seatworks</p>
         <h1>Templates</h1>
         <p className="lede">
           {templates.length === 1 ? "1 way of working" : `${templates.length} ways of working`} for a team of agents

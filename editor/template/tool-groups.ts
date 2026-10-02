@@ -15,6 +15,18 @@ type ToolGroup = {
 
 const delegates = (role: Role) => role.delegates;
 
+/**
+ * The tools a role's properties bring it, ticked until the author unticks one. A role that watches is also shown
+ * `look`, alone of its group: it reads the agents it is seated over, and owns nothing they could ask leave of.
+ */
+export function toolsFollowing(role: Role): Set<string> {
+  const tools = new Set<string>();
+  for (const group of TOOL_GROUPS)
+    if (group.follows !== "optional" && group.follows(role)) for (const tool of group.tools) tools.add(tool);
+  if (role.watches) tools.add("look");
+  return tools;
+}
+
 export const TOOL_GROUPS: readonly ToolGroup[] = [
   { id: "record", name: "Record", tools: ["status", "record", "diff"], follows: () => true },
   { id: "talk", name: "Talk", tools: ["send_message", "answer"], follows: (role) => role.speaksTo.size > 0 },
