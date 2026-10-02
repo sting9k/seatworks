@@ -47,13 +47,17 @@ export function react(e: Event, s: State): readonly Effect[] {
     case "workspace_failed":
       tell(parentOwner(e.scope), "note", `The copy for scope ${e.scope} could not be made: ${e.why}`, true);
       break;
-    case "reseated":
+    case "reseated": {
       if (e.from !== null)
         add("archive", { kind: "agent.archive", actor: e.from, host: s.actors.get(e.from)?.host ?? null });
+      // Asked for again where it had failed; where one is already on its way, the second finds it made.
+      const x = s.scopes.get(e.scope);
+      if (x?.workspace === "pending" && !waits(s, x.after)) add("workspace", { kind: "workspace.create", scope: x.id });
       // The attentions the one who left was sent are now the new actor's, undelivered.
       for (const t of s.attentions.values())
         if (t.to === e.to) add(`deliver:${t.id}`, { kind: "deliver", to: e.to, item: { kind: "attention", id: t.id } });
       break;
+    }
     case "actor_released":
       add("archive", { kind: "agent.archive", actor: e.actor, host: s.actors.get(e.actor)?.host ?? null });
       break;

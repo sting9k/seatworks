@@ -15,6 +15,7 @@ export function statusText(state: State, scopeId: ScopeId, reader: string | null
     out.push(
       `The machine is held by ${state.machineHeldBy}, measuring: checks and new copies wait until it is let go.`,
     );
+  if (scope.workspace === "failed") out.push("Its copy could not be made: no agent works in it.");
   if (scope.paths.length > 0) out.push(`Paths: ${scope.paths.map((p) => p || "(the whole tree)").join(", ")}`);
   if (scope.branch) out.push(`Branch: ${scope.branch}`);
   if (scope.commit) out.push(`Reads commit: ${scope.commit}`);
@@ -106,6 +107,7 @@ function childLine(state: State, c: Scope): string {
   const owner = c.owner ? state.actors.get(c.owner) : undefined;
   const bits = [`${c.id} ${c.status}`, owner ? `${owner.id} (${owner.role})` : "nobody seated"];
   if (c.paths.length > 0) bits.push(c.paths.join(", "));
+  if (c.workspace === "failed") bits.push("no copy");
   if (c.claim) bits.push("handed back");
   if (c.candidate) bits.push(`candidate ${c.candidate.candidate}`);
   if (c.integrating) bits.push("integrating");

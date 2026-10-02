@@ -385,7 +385,7 @@ it was delivered, an attention not settled climbs: `attention_climbed` opens a c
 | ---------------------------------------- | -------------------------------------------------------- | --------------------------- |
 | `scope_opened` (work, reading), unless a scope in its `after` is open | `workspace.create { scope, base, branch, commit? }` | `<seq>:workspace` |
 | `workspace_ready`, or `actor_seated` of a watch scope | `agent.create { actor, role, scope, model }` | `<seq>:agent`               |
-| `reseated`                               | `agent.archive { host }` of the one who left, then as `actor_seated`; `deliver` of each attention it moved to the new actor | `<seq>:archive`, `<seq>:deliver:<attention>` |
+| `reseated`                               | `agent.archive { host }` of the one who left, then as `actor_seated`; `deliver` of each attention it moved to the new actor; `workspace.create` again for a scope whose copy could not be made | `<seq>:archive`, `<seq>:deliver:<attention>`, `<seq>:workspace` |
 | `message_sent` (queued)                  | `deliver { to, item }`                                   | `<seq>:deliver:<message>`   |
 | `message_moved`                          | `deliver { to, item }` to its new reader                 | `<seq>:deliver:<message>`   |
 | `attention_opened`                       | `deliver { to, item }`                                   | `<seq>:deliver:<attention>` |
@@ -427,7 +427,9 @@ Whoever a command changes something for is told, in the tool's own words and not
 | `brief_amended` by leave of `mayChange` | The owner of the scope's parent: who amended it, from which scope, and why | Yes |
 
 A scope that waited for a sibling gets its copy and its agent when the sibling is integrated or dropped, or when the
-last `after` edge that made it wait is removed (`edge_removed`): no other event would start it.
+last `after` edge that made it wait is removed (`edge_removed`): no other event would start it. A scope whose copy
+could not be made (`workspace_failed`) has no agent, and `status` says so; a reseat asks for the copy again, and the
+actor it seats gets its agent once the copy is there. Without that a reseat would seat an actor nothing ever starts.
 
 A tool's reply names what was recorded. An `attend` on a kind its reader marked noise for that agent and scope
 records the attending and opens no attention, and the reply says so, so whoever watches stops sending that kind.
@@ -440,7 +442,7 @@ promise.
 Views read the log in SQL, or fold events in memory for what is open. Nothing a view needs is kept in `State` only
 for it.
 
-- `status(scope)`: who holds the machine while it is held, the brief, its children with their state, the siblings it waits for, each `mustTell` and
+- `status(scope)`: who holds the machine while it is held, that its copy could not be made, the brief, its children with their state, the siblings it waits for, each `mustTell` and
   `mayChange` edge at both its ends while both are open, what a watching scope watches over, a hand-back with whether any check is set to run on it, open obligations on and to its owner, the
   latest claim and its evidence, spend of the scope and its descendants beside its appetite.
 - `record(scope)`: briefs with every version; what the owner above did to the scope (paths moved, held, resumed,

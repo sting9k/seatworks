@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, test } from "node:test";
 import { crew, git } from "./crew.ts";
@@ -534,6 +535,29 @@ test("with no check set, a hand-back is given no evidence: a run of nothing is n
   await did(c, chief, "integrate", { scope: "1", evidence: [ran] });
   assert.equal(git(c.repo, "rev-parse", "main"), head);
   for (const t of [chief, maker]) t.close();
+});
+
+test("a scope whose copy could not be made says so, and a reseat asks for the copy again", async () => {
+  const c = await started();
+  const chief = await c.tools(0);
+  const elsewhere = mkdtempSync(join(tmpdir(), "sw-elsewhere-"));
+  git(elsewhere, "clone", "-q", c.repo, ".");
+  writeFileSync(join(elsewhere, "late.txt"), "late\n");
+  git(elsewhere, "add", ".");
+  git(elsewhere, "commit", "-q", "-m", "late");
+  const late = git(elsewhere, "rev-parse", "HEAD");
+
+  await did(c, chief, "open_scope", { parent: "root", role: "reader", commit: late, brief: brief("Read it") });
+  assert.match(c.told(0).at(-1) ?? "", /^The copy for scope 1 could not be made: /, "the owner above is told");
+  assert.equal(c.paseo.created.length, 1, "with no copy there is no agent");
+  assert.match(await status(chief, "1"), /^Its copy could not be made: no agent works in it\.$/m);
+  assert.match(await status(chief), /^- 1 open · a2 \(reader\) · no copy$/m);
+
+  git(c.repo, "fetch", "-q", elsewhere, "main");
+  await did(c, chief, "reseat", { scope: "1", reason: "the commit is in the repository now" });
+  assert.equal(c.paseo.created.at(-1)?.title, "1 · reader", "the copy is made this time, and its agent with it");
+  assert.doesNotMatch(await status(chief, "1"), /could not be made/);
+  chief.close();
 });
 
 test("the edge tools: a wait changed before a scope starts, a scope that must tell another of what changes in it, and one given leave to change another's brief", async () => {

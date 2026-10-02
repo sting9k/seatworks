@@ -186,7 +186,13 @@ function apply(s: State, e: Event, at: string): State {
       const attentions = new Map(left.attentions);
       for (const t of left.attentions.values())
         if (e.from !== null && t.to === e.from) attentions.set(t.id, { ...t, to: e.to, delivered: null });
-      return scope({ ...left, attentions }, e.scope, (x) => ({ ...x, owner: e.to, writer: x.writes ? e.to : null }));
+      // A copy that could not be made is asked for again with the new seat: nothing else would ask.
+      return scope({ ...left, attentions }, e.scope, (x) => ({
+        ...x,
+        owner: e.to,
+        writer: x.writes ? e.to : null,
+        workspace: x.workspace === "failed" ? "pending" : x.workspace,
+      }));
     }
     case "scope_dropped": {
       const next = scope(s, e.scope, (x) => ({ ...x, status: "dropped", integrating: false }));
