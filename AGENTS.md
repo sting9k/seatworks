@@ -90,7 +90,8 @@ docs/             for whoever makes a template: the spec an agent writes one fro
 4. The reflex and the watch (`spec/REFLEX.md`, `spec/WATCH.md`), starting with their `active` sets. Done.
 5. Open templates (`spec/TEMPLATE.md`, `spec/EDITOR.md`): the editor, installing and removing a template, outside
    tool servers, matching agent profiles, a project's own copy and Sync, the gallery's build, a report's sections as
-   the profile's, the two files in `docs/`. Done, but for the gallery's own repository, which is the owner's to make.
+   the profile's, the two files in `docs/`, the gallery's own repository. Done. The gallery's page is published once
+   the branch that holds the editor is on GitHub, which is the owner's to push.
 6. **Now: testing on a real Paseo, by the owner.** What only a live daemon can show is in `spec/PASEO.md` and
    `spec/HARNESS.md`, To check. Anything the spec marks "to check" is checked against Paseo's published types or source
    before it is built on, never by an agent running the daemon. The surface is type-checked and nothing more: what
@@ -106,11 +107,16 @@ docs/             for whoever makes a template: the spec an agent writes one fro
   A fake key in a test never starts with OpenRouter's real key prefix, so a scan for it before a push finds only a
   real one.
 - **Don't click settings in the owner's live Paseo.** It writes their config.
-- **No CI.** `npm run check` before every commit is the whole net. It runs, in this order: `tsc --noEmit` for the
+- **No CI here.** `npm run check` before every commit is the whole net. It runs, in this order: `tsc --noEmit` for the
   plugin, the client and the editor, ESLint with type-checked rules, Prettier's check at 120 columns, and `node --test`
   over every test file.
 - **The editor and a template's check run from a checkout**: `npm run editor` serves the editor with a gallery built
   from `templates/`, and `npm run template -- check <dir>` loads a template as the editor and the plugin do.
+- **The gallery is a repository of its own**, `sting9k/seatworks-gallery`: templates as directories, published by
+  pull request, and no copy of the editor. Its one workflow checks this repository out at the branch its
+  `SEATWORKS_REF` variable names, runs `npm run gallery -- <its templates>` and `vite build editor`, and publishes
+  the result as its GitHub Pages; on a pull request the same build is the check a template passes. So the `gallery`
+  script, `bin/gallery.ts` and the editor's build are called from outside: change one and that workflow together.
 - **Spec files are the docs the owner asked for**, with the two in `docs/` for whoever makes a template. No other
   markdown and no decision records; a change that needs explaining is explained in its commit message.
 
@@ -150,7 +156,8 @@ The skills hold the recipes. The rules:
   its test fake.
 - **One live contract, hard cut**: no dual path, fallback, shim, legacy parser or read-time upgrade. Change every
   producer and consumer together. The log has no format number before 3.0.0; until then its shape changes with no
-  upgrade step.
+  upgrade step. Nothing is built to read, mend or remove what an older build wrote either: the owner clears it by
+  hand.
 - **Code owns only the concept.** Agents, models, tools, thresholds, questions, moments and a report's sections are
   profile data. A role, agent or server name in `shared/`, `server/` or `client/` is a defect, and a test finds it.
   What a template must never choose is the plugin's: where the reflex sends its questions, and what is masked as a

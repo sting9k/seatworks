@@ -7,8 +7,8 @@ this says what a template is, what the plugin reads of it, and how it reaches a 
 
 Built: the editor (`EDITOR.md`), what the plugin reads of a template and how one reaches a machine, outside tool
 servers, the gallery's build and the page that reads one, and the check a template written without the editor is put
-through, and the report's sections as the profile's. Not built: the gallery's own repository, which is the owner's to
-make. The order is at the end.
+through, the report's sections as the profile's, and the gallery's own repository. Its page is published once the
+branch that holds the editor is on GitHub. The order is at the end.
 
 **Two files are written for whoever makes a template**, in `docs/`, apart from these spec files, which are for
 whoever builds Seatworks:
@@ -312,8 +312,9 @@ On a pull request the same build runs and publishes nothing: that is the check a
 only ever text in the gallery's repository, and the page a person opens is this repository's editor at the branch
 the gallery names.
 
-The repository and its page are made outside this one, and putting them on a host is the owner's: nothing here
-depends on where they are.
+The repository is `sting9k/seatworks-gallery`, and its page that repository's own on GitHub Pages. The branch of
+Seatworks it builds from is its variable `SEATWORKS_REF`, so the page is built only once that branch is on GitHub.
+Nothing in this repository depends on where the gallery is.
 
 ## Checking one without the editor
 
@@ -411,7 +412,7 @@ Each is made in the commit that builds it.
 | 2     | The editor, writing: changes saved, files written from skeletons, the checks           | None        | Yes   |
 | 3     | A profile for each project, installing, the hash, `project.docs`, `flow`               | Yes         | Yes   |
 | 4     | Outside tool servers                                                                   | Yes         | Yes   |
-| 5     | The gallery's build and its page; the gallery's own repository                         | None        | The build and the page |
+| 5     | The gallery's build and its page; the gallery's own repository                         | None        | Yes   |
 | 6     | The check from a terminal, the spec for whoever writes a template, the editor's guide  | Yes         | Yes   |
 | 7     | The report's sections                                                                  | Yes         | Yes   |
 
