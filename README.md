@@ -124,12 +124,15 @@ give one answer.
 - **Branches** under `sw/<project>/`, one per lane and task, in worktrees under the plugin's state directory, never
   in your checkout. Only the plugin makes, merges and deletes them; a git guard on every agent refuses push, pull,
   checkout and the like.
-- **What the template names as the project's own.** For SLP: `GLOSSARY.md` (the words settled with you) and
-  `docs/seatworks/MAP.md` (where the project is going and what each landed lane decided), written from the record
-  between the plugin's markers, and `docs/adr/`, written by the agent whose decision it records.
+- **What the template's agents keep.** For SLP: `GLOSSARY.md`, the words the project is spoken of in, and
+  `docs/adr/`, each written by the agent whose work settled it, in the commit it explains. While the team runs, the
+  plugin commits nothing more than the note: your base moves only when work lands.
+- **A map, when you remove the project.** For SLP `docs/seatworks/MAP.md`: where the project was going, what had to
+  hold and what was chosen, the words settled, and each landed lane with what its owner reported. It is written once,
+  from the record, so that what the team knew stays with the repository.
 
-These stay with your repository after the team is gone. Removing a project takes the note out, archives its agents,
-deletes its copies and branches, and sets its record aside until you delete it too.
+Removing a project leaves the map, takes the note out, archives its agents, deletes its copies and branches, and
+sets its record aside until you delete it too.
 
 ## Templates: a way of working of your own
 

@@ -31,7 +31,7 @@ export type Bundle = {
   readonly project: {
     readonly file: string;
     readonly note: string;
-    readonly glossary: string | null;
+    /** Where what the record holds is left when the project is removed; nothing is left when it names none. */
     readonly map: string | null;
     /** The lasting docs the team keeps by hand: agents are pointed at them, and nothing writes them. */
     readonly docs: readonly string[];
@@ -72,7 +72,6 @@ export function loadBundle(dir: string): Bundle {
     ? {
         file: file.project.file,
         note: readFileSync(join(dir, file.project.note), "utf8"),
-        glossary: file.project.glossary ?? null,
         map: file.project.map ?? null,
         docs: file.project.docs,
       }

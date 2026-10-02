@@ -15,8 +15,8 @@ agent has to rediscover, and one it will not quietly undo.
   under _Avoid_. A concept it lacks is a signal: either you are inventing a word the project does not use, or there
   is a gap worth filling. A word marked as the Human's is theirs; one the team settled is a choice like any other,
   and a word that no longer fits what the code does is a finding.
-- An ADR, and every line of the map under "chosen" or "decided", is a choice someone made, not a requirement: what
-  must hold is only what the Human set. Work that contradicts a choice is a finding, raised with its evidence, never
+- An ADR, and every line of a plan or a brief that is not the Human's, is a choice someone made, not a requirement:
+  what must hold is only what the Human set. Work that contradicts a choice is a finding, raised with its evidence, never
   a silent override and never a workaround that keeps the choice alive; its owner reopens it on evidence, or keeps it
   with a reason you can argue with.
 
@@ -25,8 +25,8 @@ of the task it concerns, and that Peer writes it with the code.
 
 ## Glossary
 
-The plugin keeps the words settled with the Human between its markers; leave that block as it is. A word your work
-settles that the glossary lacks goes below the block, in your own commit:
+A word the glossary lacks goes in with your own commit when your work settles it, or uses one the plan settled.
+Write that one as the plan has it, and say after its definition when it is the Human's:
 
 ```md
 **Order**:

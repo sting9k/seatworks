@@ -20,7 +20,6 @@ export function recordingHandlers(answer: (e: EffectBody) => Handled = () => ({ 
     "agent.permission": handle,
     deliver: (batch) => Promise.all(batch.map(handle)).then((all) => all[0] ?? { status: "done" }),
     "machine.hold": handle,
-    "docs.write": handle,
   };
   return { handlers, asked };
 }

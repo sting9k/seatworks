@@ -64,11 +64,10 @@ report:
 reflex: reflex.yaml
 watch: watch.yaml
 # Kept in an attached project's instruction file, committed on its base, so every agent there knows the team is there.
-# The glossary and the map are written from the record and stay with the repository; `docs` are kept by hand, here the
-# decisions.
+# `docs` are what the team keeps by hand, in the commits of the agents that write: the words of the domain and the
+# decisions. `map` is where what the record holds is left when the project is removed.
 project:
   file: AGENTS.md
   note: project.md
-  glossary: GLOSSARY.md
   map: docs/seatworks/MAP.md
-  docs: [docs/adr]
+  docs: [GLOSSARY.md, docs/adr]

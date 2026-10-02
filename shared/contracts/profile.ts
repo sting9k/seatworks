@@ -71,12 +71,11 @@ export const ProfileFileSchema = z
     report: z.record(z.string().regex(/^[a-z][a-z0-9_]*$/), z.string().min(1)).default({}),
     /** The team's flow, a passage every role is given after its own prompt (TEMPLATE.md). */
     flow: z.string().min(1).optional(),
-    /** What every agent in an attached project reads: the note in `file`, the docs written from the record, `docs`. */
+    /** In an attached project's repository: the note in `file`, the `docs` agents keep, the `map` left at removal. */
     project: z
       .object({
         file: z.string().min(1),
         note: z.string().min(1),
-        glossary: z.string().min(1).optional(),
         map: z.string().min(1).optional(),
         docs: z.array(z.string().min(1)).default([]),
       })

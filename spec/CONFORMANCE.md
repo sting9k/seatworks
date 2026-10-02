@@ -227,9 +227,10 @@ A call as an agent's tool server sends it, the answer read back.
 | The Human removes a project while a copy holds uncommitted work                   | Refused, naming the copy; nothing touched, its agents still at work |
 | The Human removes a project while editing its `AGENTS.md`                         | Refused, naming the file; the edit kept                             |
 | A project is attached while the Human keeps an `AGENTS.md` of their own ignored     | Refused, naming the file; their file kept, nothing committed        |
-| The root's plan settles a word, and later another                                 | `GLOSSARY.md` on the base holds both between the plugin's markers; a word written by hand below them stays |
-| A lane lands after its Lead reported                                              | `docs/seatworks/MAP.md` on the base lists it, with each section its owner reported under the section's name; the checkout stays clean |
-| An agent is seated                                                                | Its first words point at the glossary, the ADRs and the map, and say that the ledger's own commits of them and of its note are on the base and go with a publish |
+| The root's plan settles a word, and a lane lands                                  | No commit of the plugin's follows on the base: its head is the lane's merge, and no file there holds the plan or the word |
+| A project with a plan and a lane landed is removed                                | The file its profile names as the map is left on the base in a commit of that file alone, before the note is taken out: the destination, what must hold apart from what was chosen, the words settled, and each lane landed under what its owner reported and how each finding in it was weighed; the checkout stays clean |
+| The Human removes a project while a file of theirs lies where its map would be left | Refused, naming the file; nothing written, the note still there      |
+| An agent is seated                                                                | Its first words point at each doc its profile lists, and at nothing the plugin writes |
 | A removal that stops part way, such as an archive that throws                     | The project stays attached, its note back; its agents archived meanwhile recorded gone |
 | The Human removes a project whose repository is gone, while one of its agents holds the machine | It leaves memory, and every other project's work that waited starts |
 | The Human removes a project                                                       | Its agents archived, every branch made for it and its note gone, its record kept aside; offered to attach again |
@@ -343,7 +344,7 @@ What the plugin reads of a profile that a template adds (`TEMPLATE.md`).
 | Case                                                        | Expect                                                              |
 | ----------------------------------------------------------- | ------------------------------------------------------------------- |
 | Two profiles that differ in a skill, a file beside a skill, a question, a moment or a prompt | Different hashes; two that differ only in `template.json` or `NOTICE.md`, the same |
-| A profile that names a flow and lists two docs of its own   | Every agent's standing instructions carry the flow after its role's prompt and before its skills; its first words point at the glossary, both docs and the map |
+| A profile that names a flow and lists two docs of its own   | Every agent's standing instructions carry the flow after its role's prompt and before its skills; its first words point at each doc it lists |
 | A project that takes its profile's files anew; the same files again | `profile_taken` with their hash, which the state then has; nothing for the hash the record already has |
 | A project opened                                            | On the record with the profile it runs, by name and by the hash of its files then |
 | Two projects attached with different profiles, and the Human's rules kept for one of them | Each project's agents get their own profile's prompts; the rules reach only the agents of their profile; a profile nobody installed is not attached |

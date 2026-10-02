@@ -52,7 +52,7 @@ test("one lane end to end: a Supervisor, a Lead and a Peer land a change on main
   assert.match(supervisorAgent.prompt, /Scope root/);
   assert.match(
     supervisorAgent.prompt,
-    /The project's docs in your copy: `GLOSSARY\.md`, `docs\/adr`, `docs\/seatworks\/MAP\.md`\. One that is not there holds nothing yet\. The ledger commits what it keeps of them on the base itself, and its note to every agent there: those commits are its own, and a publish carries them\./,
+    /You are a1\.\n\nThe project's docs in your copy: `GLOSSARY\.md`, `docs\/adr`\. One that is not there holds nothing yet\.\n\n/,
     "its brief points at the docs",
   );
 
@@ -144,14 +144,23 @@ test("one lane end to end: a Supervisor, a Lead and a Peer land a change on main
     "int16\n",
     "main has the Peer's change, checked out and clean",
   );
+  assert.throws(
+    () => git(repo, "show", "main:docs/seatworks/MAP.md"),
+    "nothing of the record is written on the base while the team runs",
+  );
+  assert.equal(git(repo, "status", "--porcelain"), "", "and the checkout stays clean");
+  for (const t of [supervisor, lead, peer]) t.close();
+
+  const whole = (await plugin.leftovers()).find((l) => l.kind === "project");
+  assert.ok(whole);
+  const removed = await plugin.clean([whole.id]);
+  assert.ok(removed[0]?.ok, removed[0]?.text);
   const map = git(repo, "show", "main:docs/seatworks/MAP.md");
   assert.match(
     map,
     /### 1: Encode directions\n\nLanded [0-9a-f]{12} on [\d-]{10}\.\n\nReported by its owner, open to question on evidence:\n\ndecided:\n- Directions are int16\n\nassumed:\n- No client sends more than 8 directions\n\nFindings raised in it:\n- f\d+ by a\d+: int16 overflows past 8 directions → not worth stopping for: no client sends more/,
-    "the map lists the lane landed: its owner's report, and every finding raised in it as it was weighed",
+    "the map left at removal lists the lane landed: its owner's report, and every finding raised in it as it was weighed",
   );
-  assert.equal(git(repo, "status", "--porcelain"), "", "and the checkout stays clean");
-  for (const t of [supervisor, lead, peer]) t.close();
 });
 
 test("a project idle past a day leaves memory, and its next command folds it back from the log", async () => {

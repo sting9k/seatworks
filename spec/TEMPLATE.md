@@ -85,8 +85,8 @@ that comes from a way of working kept in files will want a `plan.md` and a `task
 with no origin on its lines and nothing owed to anyone, and V1 kept one beside its ledger until it was dropped
 (`ROLES.md`).
 
-A file is for what outlives a lane: the words of the domain, a decision that is hard to reverse, the map, a note of
-what was found out. An agent that writes puts it in its own commit, so it lands with the code it explains.
+A file is for what outlives a lane: the words of the domain, a decision that is hard to reverse, a note of what was
+found out. An agent that writes puts it in its own commit, so it lands with the code it explains.
 
 ## Each kind of file
 
@@ -118,10 +118,10 @@ kernel holds, and nothing that names the watch.
 
 ### The project's note and its docs
 
-`project.md` is kept in an attached project's instruction file, as today. The docs the plugin writes from the record
-stay the core's: `glossary` and `map`. The docs it only points agents at become a list, `project.docs`, in place of
-the single `adr`, so a template names the lasting docs its own way of working keeps. Every agent's first words point
-at each.
+`project.md` is kept in an attached project's instruction file. The lasting docs a team keeps are a list,
+`project.docs`, so a template names them its own way: every agent's first words point at each, the agents that write
+keep them in their own commits, and the plugin writes none of them. `map` names the file the plugin leaves what the
+record holds in when the project is removed (`PORTS.md`); a profile without one leaves nothing.
 
 ### The team's flow
 

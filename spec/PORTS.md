@@ -87,9 +87,9 @@ Invariants, taken from Symphony's workspace safety rules:
 - A commit it returns is named whole, however it was named to it: a branch is moved to it and a publish looks for
   it by that name, and an abbreviation would match neither.
 - A publish finds the branch moved when its tip is not the head it was asked at, but for one case: a tip that is that
-  head with only the plugin's own commits over it, none a merge (the note it writes at attaching, the docs it writes
-  after a landing), is the same landing and is pushed, those commits with it. Without that, every publish after a
-  landing would be refused once for the plugin's own writing.
+  head with only the plugin's own commits over it, none a merge (the note it writes at attaching), is the same head
+  and is pushed, those commits with it. Without that, a publish before the first landing would be refused for the
+  plugin's own note.
 
 ## Evidence
 
@@ -174,13 +174,18 @@ upkeep: attach(repository, profile), profiles, presets, templateOffer(from), ins
 - A template is installed from a file on the Human's machine: read first for what it would bring, then installed
   once they agree, the same file by its hash (`TEMPLATE.md`, Installing).
 - The update check reads Paseo's own and installs nothing.
-- The project's docs go with its repository and stay when the team is gone: `GLOSSARY.md`, whose block between the
-  plugin's markers holds the words settled in the root's plan, and `docs/seatworks/MAP.md`, the map (destination,
-  what must hold, what is not yet known, each lane landed with what its owner reported under each section, and what is
-  still in dispute). Both are written from the log on `docs.write`, whole each time, as a commit of that file alone,
-  so one left behind is written the next time. The docs a team keeps by hand, such as the ADRs in `docs/adr/`, are written by
-  the agent whose commit they explain; the plugin only points every agent at them. The paths are the profile's:
-  `glossary`, `map`, and the list `docs`.
+- While a team runs, the plugin writes nothing of the record into the repository: after the note written at
+  attaching, the base moves by landings alone. Agents read the plan, its words and what landed from the record. A
+  commit of the plugin's after each landing moved the base under every candidate and every publish, and put two
+  writers on one file.
+- When a project is removed, what the record holds is left in the file the profile names as `map`, between the
+  plugin's markers, as a commit of that file alone, before the note is taken out: the destination, what must hold
+  apart from what was chosen, what is not yet known, the words settled, each lane landed with what its owner reported
+  under each section and how each finding in it was weighed, and what is still in dispute. A file of the Human's in
+  its place stops the removal, as an edit to the instruction file does. A project with no plan leaves nothing.
+- The docs a team keeps by hand, such as a glossary and the ADRs in `docs/adr/`, are written by the agent whose
+  commit they explain; the plugin only points every agent at them. The paths are the profile's: `map`, and the list
+  `docs`.
 - It sits in Paseo's own places: a page in the sidebar (the projects, each project's tabs, the plugin), a Team tab beside
   Files and Changes for the project a workspace belongs to, and a pill on the chat of each agent the plugin started,
   counting what waits on the Human in its project and answering it in place.

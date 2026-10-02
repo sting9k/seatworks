@@ -195,7 +195,7 @@ export class Workspace {
       // An ignored file is the Human's own, kept out of git: writing the note over it would lose it.
       const status = await git(at, ["status", "--porcelain", "--ignored", "--", file]);
       if (status.code !== 0 || status.stdout.trim() !== "")
-        return { refused: `${file} has uncommitted changes in ${at}: commit them, then attach again` };
+        return { refused: `${file} has uncommitted changes in ${at}: commit them, then try again` };
     }
     const tmp = mkdtempSync(join(tmpdir(), "sw-block-"));
     try {

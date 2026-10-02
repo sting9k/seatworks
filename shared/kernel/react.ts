@@ -280,7 +280,6 @@ export function react(e: Event, s: State): readonly Effect[] {
         branch: scope?.branch ?? null,
         mergedInto: e.type === "integrated" ? (parent?.branch ?? null) : null,
       });
-      if (e.type === "integrated" && scope?.parent === ROOT) add("docs", { kind: "docs.write" });
       // A sibling that waited for this one starts now, from its parent with this scope's work in it (I3).
       for (const x of s.scopes.values())
         if (x.status === "open" && x.workspace === "pending" && x.after.includes(e.scope) && !waits(s, x.after))
@@ -347,7 +346,6 @@ export function react(e: Event, s: State): readonly Effect[] {
       break;
     case "plan_set":
     case "plan_amended":
-      if (e.scope === ROOT) add("docs", { kind: "docs.write" });
       mustTell(e.scope, e.type === "plan_set" ? "its plan is set" : `its plan was amended (${e.reason})`);
       break;
     default:

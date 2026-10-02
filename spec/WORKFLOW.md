@@ -21,8 +21,8 @@ Human ─goal─► 0 Intake ─► 1 Open ─► 2 Plan ─► 3 Work ─► 4 
 - The first time, the Supervisor sets the project's checks from what the project already runs (its scripts, its CI),
   and the Human sees them.
 - Kernel: records the plan (goal, limits, what is not yet known and how each is checked, and the words the domain is
-  spoken of in). Each line carries its origin, here the Human. The glossary and the map in the repository are
-  written from it, and each lane landed adds to the map.
+  spoken of in). Each line carries its origin, here the Human. Agents read it from the record; it reaches the
+  repository once, as the map left when the project is removed.
 - Prompt: when not to open a team. A small change goes to one agent that owns and writes it, its evidence still bound
   to its commit. Work that needs the Human's feedback all along (UI, feel) stays with the Human.
 
@@ -101,7 +101,7 @@ Nothing blocks it.
 
 ## Always open
 
-- Every agent is pointed at the project's glossary, ADRs and map before it plans. A decision hard to reverse,
+- Every agent is pointed at the docs the project keeps, its glossary and ADRs, before it plans. A decision hard to reverse,
   surprising without its reason and a real trade-off gets an ADR from whoever made it, in the commit it explains; work
   that contradicts one is a finding.
 - The Human sees at any time the brief each agent works to, which constraints are theirs, which decisions an agent

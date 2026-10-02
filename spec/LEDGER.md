@@ -416,7 +416,6 @@ it was delivered, an attention not settled climbs: `attention_climbed` opens a c
 | `turn_ended` with `again`                | `deliver` of the words again to the reader, asking; otherwise, when failed, a note to the owner above | `<seq>:again`, `<seq>:note` |
 | `machine_held`, `machine_released`       | `machine.hold { project, actor, hold }`                  | `<seq>:machine`             |
 | `publish_requested`                      | `workspace.publish { branch, remote, expectedSha }`      | `<seq>:publish`             |
-| `plan_set`, `plan_amended` of the root; `integrated` of a lane | `docs.write`: the glossary and the map written again from the log | `<seq>:docs` |
 
 The shell holds effects that load the machine (`workspace.create`, `workspace.candidate`, `evidence.run`) while any
 project on the machine holds it.
@@ -449,7 +448,7 @@ An integration the workspace refuses for anything but a parent that moved (a bas
 changes, or in another working copy) leaves the candidate as it was: the parent's head did not move, so the same
 `integrate` is taken once what stopped it is gone. One refused as moved has no candidate until the new one is made,
 and evidence on the old one does not speak for it (I4). This is the usual case and not a rare one: each landing moves
-the base, by its own commit and by the map the plugin writes after it, under every other candidate made before.
+the base under every other candidate made before.
 
 A scope that waited for a sibling gets its copy and its agent when the sibling is integrated or dropped, or when the
 last `after` edge that made it wait is removed (`edge_removed`): no other event would start it. A scope whose copy

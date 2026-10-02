@@ -16,6 +16,7 @@ import type { Caller, CommandBody } from "../../shared/contracts/commands.ts";
 import { PROJECT_LABEL, ROOT } from "../../shared/contracts/ids.ts";
 import type { ReadArgs, ReadName } from "../../shared/contracts/tools.ts";
 import { activityLine } from "../../shared/views/activity.ts";
+import { mapText } from "../../shared/views/docs.ts";
 import { type Chain, type Signals, chainOf, scopeRecordText, signalsOf } from "../../shared/views/record.ts";
 import type {
   HumanView,
@@ -492,6 +493,16 @@ export class Plugin {
     return "removed" in done ? { ok: true, text: `Removed ${item.label}.` } : { ok: false, text: done.kept };
   }
 
+  /** Leaves what the record holds of a project in the file its profile names; nothing when it names none. */
+  private async leaveMap(runtime: Runtime, base: string): Promise<{ ok: boolean; text: string }> {
+    const file = runtime.wiring.bundle.project?.map;
+    const body = file ? mapText(runtime.store.read(0), runtime.project.view) : null;
+    if (!file || body === null) return { ok: true, text: "" };
+    const message = `Leave what the ${PLUGIN_ID} team's record holds in ${file}`;
+    const put = await runtime.workspace.putBlock(base, file, PLUGIN_ID, body, message);
+    return "refused" in put ? { ok: false, text: `${file} was left as it is: ${put.refused}` } : { ok: true, text: "" };
+  }
+
   /** Detaches a project and removes what the plugin made; its record is kept, and unsaved work stops it first. */
   private async removeProject(id: string): Promise<{ ok: boolean; text: string }> {
     const ready = await this.whenReady();
@@ -514,6 +525,8 @@ export class Plugin {
       };
     const base = runtime?.project.view.scopes.get(ROOT)?.branch;
     if (runtime && workspace && base) {
+      const left = await this.leaveMap(runtime, base);
+      if (!left.ok) return left;
       const taken = await this.writeNote(runtime, base, true);
       if (!taken.ok) return { ok: false, text: taken.text ?? "" };
     }
@@ -855,8 +868,6 @@ export class Plugin {
       rules: rulesDir(this.root, profile),
       agents: matchingFile(this.root, profile),
       checkTimeoutMs: CHECK_TIMEOUT_MS,
-      log: () => store.read(0),
-      marker: PLUGIN_ID,
     };
     const handlers = handlersFor(wiring);
     const dispatcher = new Dispatcher(project, store, handlers, () => this.holds.held());

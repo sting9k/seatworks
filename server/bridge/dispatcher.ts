@@ -187,7 +187,5 @@ function channelOf(e: EffectBody): string {
       return "publish";
     case "machine.hold":
       return "machine";
-    case "docs.write":
-      return "docs";
   }
 }

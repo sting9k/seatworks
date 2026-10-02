@@ -3,26 +3,18 @@ import { HUMAN, ROOT } from "../contracts/ids.ts";
 import type { Line, Plan } from "../contracts/ledger.ts";
 import type { State } from "../kernel/state.ts";
 
-/** The project's docs as the record holds them, written into its repository; an index, never a second store. */
-
 const by = (l: Line) => (l.origin === HUMAN ? "the Human" : l.origin);
 
-/** The words of the project's domain as they were settled, in the glossary's form; none until one is. */
-export function glossaryText(plan: Plan | null): string | null {
-  if (!plan || plan.terms.length === 0) return null;
-  const terms = [...plan.terms].sort((a, b) => a.name.localeCompare(b.name));
-  return [
-    "## Settled with the team",
-    "",
-    ...terms.flatMap((t) => [
+/** The words of the project's domain as they were settled, each with who settled it. */
+function words(plan: Plan): string[] {
+  return [...plan.terms]
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .flatMap((t) => [
       `**${t.name}**:`,
       `${t.line.text} (${by(t.line)})`,
       ...(t.avoid.length > 0 ? [`_Avoid_: ${t.avoid.join(", ")}`] : []),
       "",
-    ]),
-  ]
-    .join("\n")
-    .trimEnd();
+    ]);
 }
 
 type Weighed = { id: string; text: string; by: string; verdict: string | null; reason: string | null };
@@ -38,7 +30,7 @@ const VERDICT: Record<string, string> = {
   minor: "not worth stopping for",
 };
 
-/** The project's map: the goal, what must hold apart from what was chosen, each lane landed, what is in dispute. */
+/** What the record holds of a project, to leave in its repository when its team goes. */
 export function mapText(events: Iterable<Event>, state: State): string | null {
   const plan = state.scopes.get(ROOT)?.plan;
   if (!plan) return null;
@@ -115,6 +107,7 @@ export function mapText(events: Iterable<Event>, state: State): string | null {
       ? list(plan.unknowns.map((u) => `${u.line.text}; checked by ${u.check}`))
       : ["Nothing open."]),
     "",
+    ...(plan.terms.length > 0 ? ["## Words settled", "", ...words(plan)] : []),
     "## Lanes landed",
     "",
     ...(landed.length > 0

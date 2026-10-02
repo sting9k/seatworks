@@ -85,7 +85,8 @@ test("a profile with a flow and docs of its own: every agent reads the flow afte
     writeFileSync(join(dir, "flow.md"), "# The team's flow\n\n1. **Plan** (lead). Then: Work.\n");
     rewrite(
       join(dir, "profile.yaml"),
-      (text) => `${text.replace("docs: [docs/adr]", "docs: [docs/adr, docs/research]")}\nflow: flow.md\n`,
+      (text) =>
+        `${text.replace("docs: [GLOSSARY.md, docs/adr]", "docs: [GLOSSARY.md, docs/adr, docs/research]")}\nflow: flow.md\n`,
     );
   });
   const { plugin, paseo } = await started(root);
@@ -99,7 +100,7 @@ test("a profile with a flow and docs of its own: every agent reads the flow afte
   );
   assert.match(
     first.prompt,
-    /The project's docs in your copy: `GLOSSARY\.md`, `docs\/adr`, `docs\/research`, `docs\/seatworks\/MAP\.md`\./,
+    /The project's docs in your copy: `GLOSSARY\.md`, `docs\/adr`, `docs\/research`\. One that is not there holds nothing yet\.\n\n/,
   );
 });
 
