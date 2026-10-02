@@ -121,7 +121,7 @@ export const ReflexFileSchema = z
 export const WatchFileSchema = z
   .object({
     active: z.array(z.string()).default([]),
-    item: z.object({ chars: z.number().int().positive(), everyItems: z.number().int().positive() }).loose(),
+    item: z.object({ chars: z.number().int().positive() }).loose(),
     sweep: z
       .object({ everyChars: z.number().int().positive(), digestChars: z.number().int().positive().max(19_000) })
       .optional(),

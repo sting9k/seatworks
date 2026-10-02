@@ -26,10 +26,10 @@ The owner gave this design to the builder. These choices settle it, each with it
    the Human's consent to send agents' words to Jev's host, through OpenRouter with data collection denied unless
    they choose TypeSafe's own API (`REFLEX.md`). The Watcher runs on a provider the team already uses. Before any text
    leaves, what looks like a secret is masked.
-4. **Driven by the work, sweeps too.** A turn's end or a long turn's growth starts a look. A sweep is not a clock
-   and not a shadow reading the stream: each Watcher gathers the work of the agents it watches, and once it passes
-   `sweep.everyChars` it is woken with a digest of it. A busy lane is swept often, an idle project never, and the
-   Watcher, a model, runs only when there is work to read (AGENTS.md: no seat runs on a heartbeat).
+4. **Driven by the work, sweeps too.** A turn's end starts a look. A sweep is not a clock and not a shadow reading
+   the stream: each Watcher gathers the work of the agents it watches, and once it passes `sweep.everyChars` it is
+   woken with a digest of it. A busy lane is swept often, an idle project never, and the Watcher, a model, runs only
+   when there is work to read (AGENTS.md: no seat runs on a heartbeat).
 5. **An attention opens no obligation, but climbs if left.** Making its reader answer every one would be the
    ceremony the concept warns of. One its reader has neither acted on nor acknowledged by the end of its next turn,
    and that still holds, goes up one owner (`STEERING.md`). `mark_noise` quiets a moment for one agent and scope.
@@ -84,9 +84,9 @@ agent host stream ─► eye (code): items and facts
 - An **item** is one piece of an agent's turn: a thought, something said, a tool call with its arguments, a result
   with its exit and first lines, an edit with its path and hunk. Items are clipped to `item.chars`: a moment shows in
   a sentence or two, and a long item dilutes the question.
-- A **look** is taken at each turn's end, and every `item.everyItems` items inside a long turn, where drift hides.
-  A noisy stream is coalesced so it does not make a call per line; a turn's end, a hand-back or a finding goes
-  through at once.
+- A **look** is taken at each turn's end, of everything the turn held. Paseo tells a plugin of a turn's start and
+  its end and of nothing between (`PASEO.md`), and nothing here runs on a clock, so a long turn is read when it
+  ends. A hand-back or a finding is read with the event that records it.
 - **Facts** are counted in code: the same call failing the same way again, turns that spend and record nothing, a
   finding left unclassified, spend past an appetite, an existing line of a test changed where the brief asks nothing
   of tests (`STEERING.md`). Three things are not counted. A turn's length is a late and weak sign: failed runs are
@@ -233,7 +233,7 @@ Every other part of Seatworks works the same in each case.
 
 | V1                                                        | Seatworks                                                                   |
 | --------------------------------------------------------- | -------------------------------------------------------------------- |
-| The eye on words and thinking, at turn end and in long turns | Kept                                                              |
+| The eye on words and thinking, at turn end and in long turns | Kept at a turn's end; inside a turn Paseo tells a plugin nothing  |
 | Moments and anti-patterns as data                         | Kept, with `trades-the-goal` and `mints-an-api` added                |
 | W speaks to the Supervisor only; noise marking; the watched never know | The watched never know and noise marking kept; attentions go to the owner above the work, climbing if left |
 | A 30 s tick over every seat                               | The stream's events, and a sweep only where there is new work        |

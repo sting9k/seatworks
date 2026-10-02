@@ -22,7 +22,6 @@ active:
 
 item:
   chars: 1500 # a moment shows in a sentence or two; a longer item dilutes the question
-  everyItems: 20 # a look inside a long turn, where drift hides
 
 sweep:
   everyChars: 30000 # new work across the agents a Watcher watches, about a few turns each; an idle project sends none
