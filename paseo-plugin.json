@@ -1,6 +1,6 @@
 {
   "id": "seatworks",
-  "description": "A team of coding agents the SLP way: a Supervisor, Leads and Peers, with a ledger of who owns what and why.",
+  "description": "A team of coding agents working the way you choose: a template seats the team, and a ledger keeps who owns what and why.",
   "requirements": {
     "paseo": ">=0.10.0"
   },
