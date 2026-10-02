@@ -146,7 +146,12 @@ test("where a template leaves a role, a question or a moment with no way on, a n
     [
       "a role with no agent profile",
       addRole("planner"),
-      "role:planner: it names no agent profile, so it cannot be seated",
+      "role:planner: it names no agent profile, so whoever seats it must name one each time",
+    ],
+    [
+      "a root with no agent profile",
+      profile("    models: [slp-supervisor]\n", ""),
+      "role:supervisor: it is the root and names no agent profile, so a project cannot start",
     ],
     ["a role with no prompt", profile("    prompt: roles/watcher.md\n", ""), "role:watcher: it has no prompt"],
     [
@@ -187,6 +192,16 @@ test("where a template leaves a role, a question or a moment with no way on, a n
     const found = notes(changed(slp, edit)).filter((note) => !notes(slp).includes(note));
     assert.ok(found.includes(expected), `${name}: ${JSON.stringify(found)}`);
   }
+});
+
+test("a prompt that names a read draws no note: every agent reads the record, whatever its tools list", () => {
+  const after = changed(
+    slp,
+    rewritten("roles/peer.md", (text) => `${text}\nUse \`look\` on an agent only where \`status\` points you.\n`),
+  );
+
+  assert.equal(slp.profile.roles.get("peer")!.tools.has("look"), false);
+  assert.deepEqual(notes(after), notes(slp));
 });
 
 test("a file put beside a skill is kept, and a skill that points at it draws no note", () => {

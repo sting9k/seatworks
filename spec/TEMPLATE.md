@@ -5,11 +5,23 @@ touching the plugin. SLP is the one Seatworks ships. A template is to Seatworks 
 ComfyUI: picked from a gallery, opened as a graph, changed, and run. `EDITOR.md` says how one is opened and changed;
 this says what a template is, what the plugin reads of it, and how it reaches a machine.
 
-Built so far: the editor (`EDITOR.md`, steps 1 and 2 below), step 3, what the plugin reads of a template and how
-one reaches a machine, step 4, outside tool servers, in the plugin and in the editor, and of step 5 the gallery's
-build and the page that reads one. The gallery's own repository and the report's sections are not. The order it is built in
-is at the end. A change it asks of another spec file is listed under What this changes, and is made in the commit that
-builds it, so a spec and the code never disagree.
+Built: the editor (`EDITOR.md`), what the plugin reads of a template and how one reaches a machine, outside tool
+servers, the gallery's build and the page that reads one, and the check a template written without the editor is put
+through. Not built: the gallery's own repository, which is the owner's to make, and the report's sections. The order
+is at the end.
+
+**Two files are written for whoever makes a template**, in `docs/`, apart from these spec files, which are for
+whoever builds Seatworks:
+
+- `docs/TEMPLATE-SPEC.md` is everything a template is, whole in one file, so an agent can write a template from it
+  alone. It restates what `KERNEL.md` §2, `REFLEX.md`, `WATCH.md` and this file say of a template's files, and a test
+  holds it to the code: every tool, every key of every file, every event, state path and code-counted moment is named
+  in it, and the whole template it gives as an example loads with no note.
+- `docs/EDITOR-GUIDE.md` is how a person makes one by hand in the editor.
+
+Making a template never asks for a change to the plugin. Where one did, that was a fault of the plugin's and was
+mended: the Human's surface wrote a role's name, the reflex read fixed file names, and a template chose where the
+Human's key was sent.
 
 ## Open, not neutral
 
@@ -319,29 +331,21 @@ Each is made in the commit that builds it.
 | File             | Change                                                                                             |
 | ---------------- | -------------------------------------------------------------------------------------------------- |
 | `KERNEL.md`      | Later, §4 and §6: `report`'s sections are the profile's                                            |
-| `CONFORMANCE.md` | The cases below, and `EDITOR.md`'s                                                                 |
-
-## Cases
-
-They join `CONFORMANCE.md` with the step that builds them.
-
-| Case                                                                          | Expect                                                              |
-| ----------------------------------------------------------------------------- | ------------------------------------------------------------------- |
 
 ## Order
 
-| Step  | What                                                                                              | Plugin code |
-| ----- | ------------------------------------------------------------------------------------------------- | ----------- |
-| 0     | These two spec files                                                                              | None        |
-| 1     | The editor, reading: SLP opened as a graph, with its files                                         | None        |
-| 2     | The editor, writing: changes saved, files written from skeletons, the checks                       | None        |
-| 3     | A profile for each project, installing, the hash, `project.docs`, `flow`                           | Yes         |
-| 4     | Outside tool servers                                                                              | Yes         |
-| 5     | The gallery's repository and its page                                                             | None        |
-| Later | The report's sections                                                                             | Yes         |
+| Step  | What                                                                                   | Plugin code | Built |
+| ----- | -------------------------------------------------------------------------------------- | ----------- | ----- |
+| 0     | These two spec files                                                                   | None        | Yes   |
+| 1     | The editor, reading: SLP opened as a graph, with its files                             | None        | Yes   |
+| 2     | The editor, writing: changes saved, files written from skeletons, the checks           | None        | Yes   |
+| 3     | A profile for each project, installing, the hash, `project.docs`, `flow`               | Yes         | Yes   |
+| 4     | Outside tool servers                                                                   | Yes         | Yes   |
+| 5     | The gallery's build and its page; the gallery's own repository                         | None        | The build and the page |
+| 6     | The check from a terminal, the spec for whoever writes a template, the editor's guide  | Yes         | Yes   |
+| Later | The report's sections                                                                  | Yes         | No    |
 
-Steps 1 and 2 touch no plugin code and can run beside the owner's test on a real Paseo. Steps 3 and 4 wait for it:
-a change to how a profile is loaded, made in the middle of that test, leaves a fault with two possible causes.
+Its cases are in `CONFORMANCE.md`: Editor, Templates and Gallery.
 
 ## To check before building on it
 

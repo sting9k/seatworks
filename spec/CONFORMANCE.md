@@ -60,6 +60,7 @@ on an implementation without the rule before it is trusted.
 | A search of the kernel and satellites for any role name in the profile     | None found                    |
 | A search of the Human's surface for any role name in the profile           | None found: the agent the Human works with is shown by the name its profile gives the root's role |
 | A profile with no `humanDoor` role                                         | Loads; `ask_human` is shown to no one |
+| The small template `docs/TEMPLATE-SPEC.md` gives, which shares no role with the shipped one, attached to a project | Its root is seated with its own prompt and flow and the project's note is its own; the root seats a writer, takes its work in on evidence and lands it; a tool a role is not given is refused; the Human's view names the root by its role |
 | A profile that gives a role a tool the team does not have: one misspelt, or one only the Human sends | Does not load, saying which role and which tool |
 
 ## Workflow
@@ -290,6 +291,8 @@ What the plugin reads of a profile that a template adds (`TEMPLATE.md`).
 | A role taken out of a profile while an agent sits in it     | The project runs on; a tool the agent calls is refused, saying its role is gone from the profile, and it still reads the record; `stuck` names its seat |
 | A profile that names the file of its questions; and one that names none while a `reflex.yaml` lies in its directory | The questions are read from the file named; the second asks nothing |
 | A question or a moment named as asked that its file does not write | The profile does not load, saying which                          |
+| `docs/TEMPLATE-SPEC.md` read beside the code                | It names every tool a role may be given, every key of `template.json`, `profile.yaml`, a role, the project, the reflex and watch files and a question, every relation, every event a question is asked on, every state path, whom a question tells and every moment counted in code |
+| The whole small template `docs/TEMPLATE-SPEC.md` gives      | Loads as the editor and as the plugin load one, and draws no note   |
 | The check command on a template's directory that loads      | Says the name it installs under, its roles and the agent profiles it needs; its notes are printed and it still passes |
 | The check command on a directory that does not load         | Fails, saying why, and prints nothing else                          |
 | The pack command                                            | The one file a template is shared as, holding the directory's very files; nothing is written for a template that does not load |

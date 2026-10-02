@@ -119,15 +119,25 @@ its agents, deletes its copies and branches, and sets its record aside until you
 
 ## Your own way of working
 
-SLP is a profile, not the plugin. Everything agents read is in [`profile/slp/`](profile/slp): roles and what each may
-do (`profile.yaml`), prompts (`roles/`), skills (`skills/`), and what the watch looks for (`watch.yaml`,
-`reflex.yaml`). To change it, put your own `profile.yaml` and the files it names in `profile/` under the plugin's state
-directory (`~/.local/share/seatworks/profile/` on Linux and macOS): it replaces the shipped one whole, with no change
-to code. Roles are data; nothing in the code knows their names.
+SLP is a template, not the plugin. Everything its agents read is in [`profile/slp/`](profile/slp): roles and what each
+may do (`profile.yaml`), prompts (`roles/`), skills (`skills/`), and what the watch looks for (`watch.yaml`,
+`reflex.yaml`). A way of working of your own is another template: a directory of the same kind of files, installed
+beside SLP with no change to the plugin's code. Roles are data; nothing in the code knows their names.
 
-Rules of your own that should hold whatever the profile, such as how you want code written, go in `rules/` under the
-same directory: `all.md` for every agent, `<role>.md` for one role (`lead.md`). Each agent made from then on reads them
-after its role's prompt; an agent already running keeps what it started with.
+- **Have an agent write it.** Give your coding agent [`docs/TEMPLATE-SPEC.md`](docs/TEMPLATE-SPEC.md), which is
+  everything a template is, and say how you want the team to work. It checks what it wrote with
+  `npm run template -- check <dir>` and packs it into one file.
+- **Or make it by hand**, on a canvas of nodes and wires: `npm run editor`, open SLP, change it, export.
+  [`docs/EDITOR-GUIDE.md`](docs/EDITOR-GUIDE.md) walks through it.
+
+Either way you get one file, `<name>.template.json`. In Paseo, open Seatworks, then Plugin, and under Templates give
+its path: you are shown what it brings (its roles, the agent profiles it needs, any outside tool server it starts)
+before it is installed. Attaching a project then asks which template it runs.
+
+Rules of your own that should hold whatever the template says, such as how you want code written, go in
+`rules/<template>/` under the plugin's state directory (`~/.local/share/seatworks/rules/slp/` for SLP on Linux and
+macOS): `all.md` for every agent, `<role>.md` for one role (`lead.md`). Each agent made from then on reads them after
+its role's prompt; an agent already running keeps what it started with.
 
 ## What to expect
 
@@ -158,6 +168,8 @@ There is no CI and no build step. Tests run against a stand-in for Paseo and nev
 | `client/`         | What you see in Paseo, in React Native                                                        |
 | `bin/`, `harness/` | The git guard and the team's MCP server; each agent's shipped settings                       |
 | `profile/slp/`    | The SLP profile: everything agents read                                                        |
+| `editor/`         | The template editor, a web page of its own: `npm run editor`                                  |
+| `docs/`           | For whoever makes a template: the spec an agent writes one from, and the guide to the editor   |
 | `.claude/skills/` | Recipes for building Seatworks: kernel changes, satellites, Paseo's boundary, tests          |
 
 ## License

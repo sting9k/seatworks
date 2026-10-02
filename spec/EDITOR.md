@@ -182,8 +182,9 @@ of them in a panel of the rail. A note stops nothing, neither a change nor an ex
   and in its panel beside the fewest and the most a role of SLP reads. This is the cost a template raises without
   anyone seeing it.
 - A prompt that names, in backticks, a tool its role is not shown. It cannot tell a role told to call a tool from
-  one told that others have it, so it is a thing to look at: SLP's watcher once named the owners' `status` so, and
-  was reworded, since a role that reads a tool's name may try to call it.
+  one told that others have it, so it is a thing to look at, since a role that reads a tool's name may try to call
+  it. The four reads (`status`, `record`, `diff`, `look`) are never noted: every agent is given them whatever its
+  `tools` list says, since nothing narrows what an agent may read (N2).
 - **A role with no way on.** One that no role seats and that is not the root; one that names no agent profile; one
   with no prompt. One whose properties need a tool it is not shown: a writer without `hand_back`, a reader without
   `record_verdict`, a watching role without `attend`, a role that seats others without `open_scope` or without

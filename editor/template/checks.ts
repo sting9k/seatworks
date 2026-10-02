@@ -1,6 +1,7 @@
 import { type Role, settingsOf } from "../../shared/contracts/profile.ts";
 import { ASKED_ON, CODE_MOMENTS, STATE_PATHS, TELLS } from "../../shared/contracts/reflex.ts";
 import { SECRETS } from "../../shared/contracts/secrets.ts";
+import { READS } from "../../shared/contracts/tools.ts";
 import type { Asked, Template } from "./read-template.ts";
 import { TOOL_GROUPS } from "./tool-groups.ts";
 import { earnedOf } from "./wording.ts";
@@ -29,7 +30,12 @@ export function notesOf(template: Template, opened: Template): Note[] {
   for (const role of template.profile.roles.values()) {
     const say = (says: string) => notes.push({ node: `role:${role.name}`, says });
     if (!role.root && !seated.has(role.name)) say("no role seats it, so it never joins the team");
-    if (role.models.length === 0) say("it names no agent profile, so it cannot be seated");
+    if (role.models.length === 0)
+      say(
+        role.root
+          ? "it is the root and names no agent profile, so a project cannot start"
+          : "it names no agent profile, so whoever seats it must name one each time",
+      );
     for (const says of deadEnds(role)) say(says);
     const prompt = template.file.roles[role.name]?.prompt;
     const text = prompt === undefined ? undefined : template.files.get(prompt);
@@ -39,7 +45,8 @@ export function notesOf(template: Template, opened: Template): Note[] {
     }
     if (SKELETON.test(text)) say("its prompt still holds the skeleton's words");
     for (const tool of new Set(backticked(text)))
-      if (TOOLS.has(tool) && !role.tools.has(tool)) say(`its prompt names \`${tool}\`, which the role is not shown`);
+      if (TOOLS.has(tool) && !role.tools.has(tool) && !Object.hasOwn(READS, tool))
+        say(`its prompt names \`${tool}\`, which the role is not shown`);
     for (const name of stillNamed(text)) say(`its prompt still names ${name}, a role the template no longer has`);
     if (watched.has(role.name) && WATCH.test(text))
       say("its prompt names the watch, which a role that is watched is never told of");

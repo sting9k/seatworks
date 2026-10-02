@@ -145,10 +145,9 @@ trigger.
 
 ## Questions are data
 
-`profile/slp/reflex.yaml` holds the pinned model and the questions. Nothing in code names one.
+`profile/slp/reflex.yaml` holds the questions. Nothing in code names one.
 
 ```yaml
-model: jev-1.13.0
 questions:
   names-method:
     on: [brief_issued, brief_amended]
@@ -176,8 +175,10 @@ questions:
   `attention.json` go.
 - `consider`, where a question has one, is the probability past which an answer under `tell` goes to the actor that
   watches the scope, as a candidate (`WATCH.md`).
-- `tells` is a relation (`root`, `owner`, `parent`, `self`), `answerer` (whoever may answer a permission: the owner
-  of the asking agent's parent scope, or the Human), or `evidence`.
+- `tells` is a relation (`root`, `parent`, `self`), `answerer` (whoever may answer a permission: the owner of the
+  asking agent's parent scope, or the Human), or `evidence`. With none, the answer is an attention for the owner
+  above the agent it is about. The list is the plugin's (`shared/contracts/reflex.ts`), with the events a question
+  may be asked on and the paths its `state` may read.
   `wakes: true` lets a note wake the role it is for. Otherwise it waits for the next message that asks something, as
   every note does.
 
