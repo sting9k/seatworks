@@ -1,6 +1,7 @@
 import type { PaseoAgentConfig, PaseoAgentListResult, PaseoApi } from "@getpaseo/client";
 import type { AgentTimelineItem } from "@getpaseo/protocol/agent-types";
 import type { PaseoLink } from "./paseo-link.ts";
+import { TEAM_SERVER } from "../../../shared/contracts/ids.ts";
 
 /** What an agent is started with; the agent host's own words, naming nothing of SLP (PORTS.md, Agent host). */
 export type AgentSpec = {
@@ -19,6 +20,12 @@ export type AgentSpec = {
   };
   readonly labels: Readonly<Record<string, string>>;
   readonly writes: boolean;
+  /** MCP servers beside the team's own, each with the tools of it the agent may call without being asked. */
+  readonly servers: readonly {
+    readonly name: string;
+    readonly tools: readonly string[];
+    readonly server: Readonly<Record<string, unknown>>;
+  }[];
 };
 
 export type Harness = {
@@ -27,6 +34,8 @@ export type Harness = {
   reads: Partial<PaseoAgentConfig>;
   /** What the agent's process is given beside the seat's own environment, such as the home Seatworks lays out for it. */
   env: Readonly<Record<string, string>>;
+  /** Whether an agent of this provider can be given an MCP server beside the team's own (HARNESS.md). */
+  outsideServers: boolean;
 };
 export type Unavailable = { unavailable: true };
 const UNAVAILABLE: Unavailable = { unavailable: true };
@@ -56,6 +65,9 @@ export class PaseoHost {
     const profile = (daemon.config.agentProfiles ?? []).find((p) => p.id === spec.profile || p.name === spec.profile);
     if (!profile) return { failed: `no Paseo agent profile named ${spec.profile}: add one in Paseo's settings` };
     const harness = this.harness(profile.provider);
+    const outside = spec.servers.map((given) => given.name);
+    if (outside.length > 0 && harness?.outsideServers === false)
+      return { failed: `an agent of ${profile.provider} cannot be given the outside server ${outside.join(", ")}` };
     const base: Json = {
       provider: profile.model ? `${profile.provider}/${profile.model}` : profile.provider,
       ...(profile.modeId ? { modeId: profile.modeId } : {}),
@@ -67,9 +79,22 @@ export class PaseoHost {
       ...shaped,
       systemPrompt: spec.systemPrompt,
       mcpServers: {
-        team: { type: "stdio", command: spec.tools.command, args: [...spec.tools.args], env: { ...spec.tools.env } },
+        ...Object.fromEntries(spec.servers.map((given) => [given.name, given.server])),
+        // The team's tools are how the record is reached: never behind a tool search, however many a role is given.
+        [TEAM_SERVER]: {
+          type: "stdio",
+          command: spec.tools.command,
+          args: [...spec.tools.args],
+          env: { ...spec.tools.env },
+          alwaysLoad: true,
+        },
       },
-      toolPolicy: { preapproved: spec.tools.names.map((tool) => ({ kind: "mcp", server: "team", tool })) },
+      toolPolicy: {
+        preapproved: [
+          ...spec.tools.names.map((tool) => ({ kind: "mcp", server: TEAM_SERVER, tool })),
+          ...spec.servers.flatMap((given) => given.tools.map((tool) => ({ kind: "mcp", server: given.name, tool }))),
+        ],
+      },
     } as unknown as PaseoAgentConfig;
     try {
       const handle = await api.agents.create({

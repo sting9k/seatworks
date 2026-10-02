@@ -5,8 +5,9 @@ touching the plugin. SLP is the one Seatworks ships. A template is to Seatworks 
 ComfyUI: picked from a gallery, opened as a graph, changed, and run. `EDITOR.md` says how one is opened and changed;
 this says what a template is, what the plugin reads of it, and how it reaches a machine.
 
-Built so far: the editor (`EDITOR.md`, steps 1 and 2 below) and step 3, what the plugin reads of a template and how
-one reaches a machine. Outside tool servers, the gallery and the report's sections are not. The order it is built in
+Built so far: the editor (`EDITOR.md`, steps 1 and 2 below), step 3, what the plugin reads of a template and how
+one reaches a machine, and of step 4 the plugin's part: a role is given outside tool servers. The editor does not
+draw one yet, and the gallery and the report's sections are not built. The order it is built in
 is at the end. A change it asks of another spec file is listed under What this changes, and is made in the commit that
 builds it, so a spec and the code never disagree.
 
@@ -177,17 +178,23 @@ roles:
   tool ahead of time by its server and its name and takes no wildcard (`ToolPolicy`, 0.10.1), so the tools are named.
 - `servers` is apart from `tools`. `tools` is what the kernel reads; an outside server is read by the agent host
   alone, as a prompt or a model is.
-- **A secret is never in a template.** A server's `env` and `headers` name an environment variable, and the plugin
-  keeps no key for it.
-- **An agent that cannot be given a server is not seated**, and the reason names the server. Pi takes an MCP server
-  only with the Human's `pi-mcp-adapter`, and Paseo refuses Oh My Pi one (`HARNESS.md`). An agent missing a tool with
-  nobody told is the fault hardest to trace.
+- **A secret is never in a template.** A server's command, arguments, `env`, `headers` and address name an
+  environment variable as `$NAME`, and the plugin keeps no key for it. When an agent is made the plugin fills each in
+  from its own environment, which is the daemon's, and hands the server to Paseo as it hands the team's own.
+- **A role whose server reads a variable that is not set is not seated**, and the reason names the server and the
+  variable. A server started without what it reads fails where nobody looks.
+- **An agent that cannot be given a server is not seated**, and the reason names the server. Paseo says whether a
+  provider takes MCP servers only of an agent already made, so which providers cannot is kept in each one's harness
+  file: Pi, which takes one only with the Human's `pi-mcp-adapter` (`HARNESS.md`). Where Paseo itself refuses, the
+  reason is Paseo's. An agent missing a tool with nobody told is the fault hardest to trace.
+- **The team's tools are never put behind a tool search.** The team's own server is marked `alwaysLoad`, which Paseo's
+  Claude provider honours: they are how the record is reached, however many tools a role is given beside them.
 - **The guards do not reach it.** An outside server is a process of its own: it does not go through the git shim, and
   nothing confines it to a copy. `HARNESS.md` says the guards hold against mistakes, not intent, and a server is
   where that shows.
 - What a server's tools return is not evidence (N5). It reaches the record only through a hand-back or a check.
 - The SLP profile declares none. This is built so a template can reach what its team works with, which is what open
-  means here; that reason goes in the commit that builds it.
+  means here.
 
 ## A profile for each project
 
@@ -228,8 +235,8 @@ gives the path of the file on their machine, and the plugin:
 1. Reads it where it is, unpacks it aside, and loads it as it would load any profile; a file that is not a packed
    template, reaches outside its own directory, or does not load is refused, saying what is wrong.
 2. Says what it would bring: the name it would be installed and attached under, whether one of that name is installed
-   already, its roles, and each Paseo agent profile its roles name with whether the Human has it. With
-   `TEMPLATE.md`'s step 4 it also lists each outside server and each variable one reads.
+   already, its roles, each Paseo agent profile its roles name with whether the Human has it, each outside server
+   with the command it runs or the address it calls, and each variable a server reads with whether it is set.
 3. Installs it under its name once the Human agrees, in place of one of that name. What is installed is the file the
    Human read: its hash is checked again, and a file changed since is not installed.
 
@@ -258,8 +265,6 @@ Each is made in the commit that builds it.
 | File             | Change                                                                                             |
 | ---------------- | -------------------------------------------------------------------------------------------------- |
 | `KERNEL.md`      | Later, §4 and §6: `report`'s sections are the profile's                                            |
-| `PORTS.md`       | Agent host: `create` takes outside servers                                                         |
-| `HARNESS.md`     | Which agents take an outside server, and that the guards do not reach one                          |
 | `CONFORMANCE.md` | The cases below, and `EDITOR.md`'s                                                                 |
 
 ## Cases
@@ -268,9 +273,6 @@ They join `CONFORMANCE.md` with the step that builds them.
 
 | Case                                                                          | Expect                                                              |
 | ----------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| A role given an outside server, seated on an agent that takes one             | Created with the server, its named tools approved ahead; a role given none has only the team's |
-| A role given an outside server, seated on an agent that cannot take one       | Not seated; the reason names the server                              |
-| A shared file that declares servers                                           | Each listed, with the variables it reads, before anything is installed |
 
 ## Order
 
@@ -289,12 +291,11 @@ a change to how a profile is loaded, made in the middle of that test, leaves a f
 
 ## To check before building on it
 
-- Whether the environment the daemon was started in reaches an agent's MCP servers, so a variable named in `env` has
-  a value there.
 - Whether an agent under its sandbox can read a file of the profile outside its own copy. This holds for `SKILL.md`
   today and is part of the test on a real Paseo.
-- Whether Claude defers the team's tools behind a search once outside servers add to them. Paseo's `alwaysLoad` on a
-  server says it does not; the team's server does not set it today.
+- Whether Paseo keeps an agent's server settings on disk once it is made. The team's own server is handed over the
+  same way, with the agent's key in its environment, so an outside server's filled-in variable is kept wherever that
+  key is.
 
 ## To decide
 

@@ -53,6 +53,8 @@ test("a shared template is read before it is installed: what it would bring is l
     ["slp-peer-alt"],
   );
   assert.ok(read.offer.agentProfiles.some((profile) => profile.name === "slp-lead" && profile.there));
+  assert.deepEqual(read.offer.servers, []);
+  assert.deepEqual(read.offer.variables, []);
   assert.deepEqual(installed(root), []);
   assert.deepEqual(leftAside(root), []);
   assert.deepEqual(
@@ -118,4 +120,32 @@ test("a shared file that would not load, reaches outside its own directory, or c
   assert.deepEqual(installed(root), []);
   assert.deepEqual(leftAside(root), []);
   assert.ok(!existsSync(join(root, "outside.md")) && !existsSync(join(root, "staging", "outside.md")));
+});
+
+test("a shared template that declares an outside server says what it runs and which variables it reads, before anything is installed", async () => {
+  process.env.SW_TEST_SET_ONE = "x";
+  delete process.env.SW_TEST_UNSET_ONE;
+  const { plugin, root } = await started();
+  const path = shared((files) => {
+    files.set(
+      "profile.yaml",
+      `${files.get("profile.yaml")!.replace("    humanDoor: true\n", "    humanDoor: true\n    servers: { tickets: [search] }\n")}
+servers:
+  tickets:
+    type: http
+    url: https://tickets.example/mcp
+    headers: { Authorization: "Bearer $SW_TEST_UNSET_ONE", X-Team: $SW_TEST_SET_ONE }
+`,
+    );
+  });
+
+  const read = await plugin.template(path, null);
+
+  assert.ok(read.ok, read.ok ? "" : read.says);
+  assert.deepEqual(read.offer.servers, [{ name: "tickets", runs: "https://tickets.example/mcp" }]);
+  assert.deepEqual(read.offer.variables, [
+    { name: "SW_TEST_SET_ONE", there: true },
+    { name: "SW_TEST_UNSET_ONE", there: false },
+  ]);
+  assert.deepEqual(installed(root), []);
 });

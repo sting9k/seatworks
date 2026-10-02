@@ -286,3 +286,8 @@ What the plugin reads of a profile that a template adds (`TEMPLATE.md`).
 | A shared template read from a file on the machine           | What it would bring is said: its name, its roles, each agent profile its roles name and whether Paseo has it; nothing is installed and nothing unpacked is left |
 | The template installed with the hash of what was read       | Under its name, listed to attach a project with; read again, it says it would replace the one there |
 | A shared file that does not load, names a path outside its own directory, is not a packed template or is not there; and one changed since it was read | Refused, saying which; nothing installed, nothing written outside the state root |
+| A role given an outside server, on an agent that takes one  | Made with the server beside the team's, its named tools approved ahead, each variable it names filled in; the team's server marked always loaded; a role given none has only the team's |
+| A role whose server reads a variable that is not set        | Not seated; the reason names the server and the variable            |
+| A role given an outside server, on an agent that cannot take one | Not seated; the reason names the server                        |
+| A profile that gives a role a server it does not declare, or names one as the team's own | Does not load, saying which                |
+| A shared template that declares an outside server           | What it runs is said, and each variable it reads with whether it is set, before anything is installed |

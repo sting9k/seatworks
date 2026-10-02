@@ -59,3 +59,6 @@ export function childScopeId(parent: ScopeId, n: number): ScopeId {
 /** Labels every agent the plugin starts carries, so Paseo itself finds a project's agents and a seat's agent. */
 export const PROJECT_LABEL = "seatworks.project";
 export const ACTOR_LABEL = "seatworks.actor";
+
+/** The MCP server the team's own tools come from, by the name an agent is given it under; no other server takes it. */
+export const TEAM_SERVER = "team";

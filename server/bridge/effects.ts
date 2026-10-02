@@ -13,6 +13,7 @@ import type { EvidenceRunner } from "../satellites/evidence/runner.ts";
 import type { MachineHolds } from "../satellites/machine/holds.ts";
 import type { Workspace } from "../satellites/workspace/workspace.ts";
 import type { Bundle } from "../profile/bundle.ts";
+import { filledIn } from "../profile/servers.ts";
 import { firstPrompt, systemPromptFor } from "./briefing.ts";
 import type { Handled, Handlers } from "./dispatcher.ts";
 
@@ -72,6 +73,8 @@ export function withShim(w: Pick<Wiring, "team">, env: Record<string, string>): 
   return { ...env, PATH: `${w.team.shimDir}${process.platform === "win32" ? ";" : ":"}${process.env.PATH ?? ""}` };
 }
 const done = (...facts: CommandBody[]): Handled => ({ status: "done", facts });
+/** The fact that an actor's agent was never made, or is no more, and why. */
+const gone = (actor: string, why: string): CommandBody => ({ type: "record_gone", actor, why });
 
 /** Each effect the kernel asks for, carried to the satellite that does it, and what it found brought back as facts. */
 export function handlersFor(w: Wiring): Handlers {
@@ -108,6 +111,8 @@ export function handlersFor(w: Wiring): Handlers {
       const role = w.bundle.profile.roles.get(actor.role);
       if (!scope || !role) return { status: "dropped", why: `${e.actor}'s scope or role is gone` };
       const { cwd, env } = seatEnv(w, actor.id, scope, role.writes);
+      const given = filledIn(w.bundle.servers.get(actor.role) ?? [], process.env);
+      if (!given.ok) return { status: "failed", why: given.says, facts: [gone(actor.id, given.says)] };
       const created = await w.host.create({
         // Paseo keeps a keyed create for the whole daemon, and every project's log counts from 1.
         key: `${w.project}:${key}`,
@@ -133,14 +138,11 @@ export function handlersFor(w: Wiring): Handlers {
         },
         labels: { [PROJECT_LABEL]: w.project, [ACTOR_LABEL]: actor.id, "seatworks.scope": actor.scope },
         writes: role.writes,
+        servers: given.grants,
       });
       if ("unavailable" in created) return WAIT;
       if ("failed" in created)
-        return {
-          status: "failed",
-          why: created.failed,
-          facts: [{ type: "record_gone", actor: actor.id, why: created.failed }],
-        };
+        return { status: "failed", why: created.failed, facts: [gone(actor.id, created.failed)] };
       return done({ type: "record_agent", actor: actor.id, host: created.host });
     },
 

@@ -1,4 +1,5 @@
 {
+  "outsideServers": false,
   "home": {
     "env": "PI_CODING_AGENT_DIR",
     "from": "~/.pi/agent",

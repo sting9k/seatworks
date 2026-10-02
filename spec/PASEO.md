@@ -115,6 +115,12 @@ from Paseo 0.10.1: the plugin SDK, `@getpaseo/client`, `@getpaseo/protocol`, the
   `notifyOnFinish`. Agents Seatworks makes through the plugin API get none, so nothing reaches a Lead around delivery.
 - Plugin settings work when host-scoped, as above.
 
+- An MCP server is `stdio` (command, args, env), `http` or `sse` (url, headers), and any of them may be marked
+  `alwaysLoad`, which the Claude provider honours by never putting that server's tools behind a tool search
+  (`@getpaseo/protocol`, `agent-types`). A tool is approved ahead by its server and its name, with no wildcard.
+- Whether a provider takes MCP servers (`supportsMcpServers`) is a capability of an agent once made; the provider
+  snapshot the API lists before that carries none. So Seatworks keeps which providers cannot in its harness files.
+
 ## To check before building on it
 
 - Per-agent control of Paseo's tools: today it is per provider ID (`paseoTools` on a custom provider) and injection

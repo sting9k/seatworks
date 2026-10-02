@@ -78,6 +78,10 @@ const TemplateOfferSchema = z.object({
   replaces: z.boolean(),
   roles: z.array(z.string()),
   agentProfiles: z.array(z.object({ name: z.string(), there: z.boolean() })),
+  /** Each outside server it declares, with the command it runs or the address it calls. */
+  servers: z.array(z.object({ name: z.string(), runs: z.string() })),
+  /** Each environment variable its servers read, and whether this machine has it set. */
+  variables: z.array(z.object({ name: z.string(), there: z.boolean() })),
 });
 export type TemplateOffer = z.infer<typeof TemplateOfferSchema>;
 

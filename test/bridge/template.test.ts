@@ -162,3 +162,93 @@ test("a role taken out of a profile while an agent sits in it: the project runs 
   assert.ok(read.ok, read.text);
   lead.close();
 });
+
+const TICKETS = `
+servers:
+  tickets:
+    type: stdio
+    command: npx
+    args: [-y, some-ticket-server]
+    env: { TOKEN: $SW_TEST_TICKETS_TOKEN, REGION: eu }
+`;
+/** The shipped profile with an outside server declared and given to the root, with two of its tools. */
+const withTickets = (dir: string) => {
+  rewrite(
+    join(dir, "profile.yaml"),
+    (text) =>
+      text.replace("    humanDoor: true\n", "    humanDoor: true\n    servers: { tickets: [search, create_issue] }\n") +
+      TICKETS,
+  );
+};
+
+test("a role given an outside server is made with it beside the team's, its named tools approved ahead and its variable filled in; a role given none has only the team's", async () => {
+  process.env.SW_TEST_TICKETS_TOKEN = "t0ken";
+  const { plugin, paseo, socketPath } = await started(rootWith("desk", withTickets));
+  await plugin.openProject(repository(), "main", "desk");
+  await plugin.idle();
+
+  const root = paseo.created[0]!;
+  assert.deepEqual(Object.keys(root.servers).sort(), ["team", "tickets"]);
+  assert.deepEqual(root.servers.tickets, {
+    type: "stdio",
+    command: "npx",
+    args: ["-y", "some-ticket-server"],
+    env: { TOKEN: "t0ken", REGION: "eu" },
+  });
+  assert.deepEqual(
+    root.approved.filter((tool) => tool.startsWith("tickets.")),
+    ["tickets.search", "tickets.create_issue"],
+  );
+  assert.equal(root.servers.team?.alwaysLoad, true);
+
+  const supervisor = await agentTools(socketPath, root.env);
+  const lane = await supervisor.call("open_scope", {
+    parent: "root",
+    role: "lead",
+    paths: ["docs/"],
+    brief: { goal: { text: "Tidy the docs" }, kind: "verification" },
+  });
+  assert.ok(lane.ok, lane.text);
+  await plugin.idle();
+  supervisor.close();
+  assert.deepEqual(Object.keys(paseo.created[1]!.servers), ["team"]);
+  assert.ok(paseo.created[1]!.approved.every((tool) => tool.startsWith("team.")));
+});
+
+test("a role whose server reads a variable that is not set is not seated, and the reason names the server and the variable", async () => {
+  delete process.env.SW_TEST_TICKETS_TOKEN;
+  const { plugin, paseo } = await started(rootWith("desk", withTickets));
+  const { project } = await plugin.openProject(repository(), "main", "desk");
+  await plugin.idle();
+
+  assert.deepEqual(paseo.created, []);
+  const view = await plugin.view(project);
+  assert.match(JSON.stringify(view), /the outside server tickets reads \$SW_TEST_TICKETS_TOKEN, which is not set/);
+});
+
+test("a role given an outside server is not seated on an agent that cannot take one, and the reason names the server", async () => {
+  process.env.SW_TEST_TICKETS_TOKEN = "t0ken";
+  const root = rootWith("desk", withTickets);
+  const plugin = new Plugin(root);
+  plugins.push(plugin);
+  const paseo = fakePaseo(pluginDir, "pi");
+  plugin.saw(paseo.api);
+  await plugin.whenReady();
+  const { project } = await plugin.openProject(repository(), "main", "desk");
+  await plugin.idle();
+
+  assert.deepEqual(paseo.created, []);
+  assert.match(JSON.stringify(await plugin.view(project)), /an agent of pi cannot be given the outside server tickets/);
+});
+
+test("a profile that gives a role a server it does not declare, or names one as the team's own, does not load", () => {
+  const undeclared = profileCopy();
+  rewrite(join(undeclared, "profile.yaml"), (text) =>
+    text.replace("    humanDoor: true\n", "    humanDoor: true\n    servers: { tickets: [search] }\n"),
+  );
+  assert.throws(() => loadBundle(undeclared), /is given the server tickets, which the profile does not declare/);
+
+  const asTheTeams = profileCopy();
+  rewrite(join(asTheTeams, "profile.yaml"), (text) => `${text}\nservers:\n  team:\n    type: stdio\n    command: x\n`);
+  assert.throws(() => loadBundle(asTheTeams), /no outside server may be named team/);
+});

@@ -36,6 +36,20 @@ out under the plugin's state root and named to the agent through one variable.
 Rules that match a command's text (Claude's `Bash(git push *)`, Codex's exec policy, Oh My Pi's `bash.patterns`)
 are passed by `git -C`, an alias or a full path; Seatworks does not rely on them.
 
+## Outside tool servers
+
+A role may be given an MCP server that is not the team's (`TEMPLATE.md`). It is handed to Paseo beside the team's own,
+its named tools approved ahead.
+
+- **It is outside every guard above.** A server is a process of its own: it runs no git through the shim, is confined
+  to no copy, and may write where it likes. The guards hold against an agent's mistakes, not against what a template's
+  author chose to start. The Human sees each server and its command before a template is installed.
+- **Not every agent takes one.** A harness file says so with `outsideServers: false`, and a role given a server is then
+  not seated on that provider, the reason naming the server. Pi is so marked: Paseo hands it MCP servers only with
+  the Human's `pi-mcp-adapter`, which the plugin cannot see, and drops them without a word otherwise.
+- **The team's own server is marked `alwaysLoad`**, so Claude never puts the team's tools behind a tool search,
+  however many a server adds beside them.
+
 ## Each agent, through Paseo first
 
 Paseo's `AgentSessionConfig` is the first way in: `systemPrompt`, `modeId`, `mcpServers`, `toolPolicy`,

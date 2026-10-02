@@ -33,7 +33,7 @@ takes from Paseo, and how it survives Paseo's releases, is in `PASEO.md`.
 
 ```text
 create(spec) -> Result<agentId>
-  spec: { name, agent, model, thinking, systemPrompt, tools, cwd, env, labels, sandbox }
+  spec: { name, agent, model, thinking, systemPrompt, tools, servers, cwd, env, labels, sandbox }
 send(agentId, text, key) -> Result<sent | duplicate>
 stream(agentId) -> events: turn_started, turn_ended(done | failed(why) | cancelled), said, thought, tool_call,
                           usage(tokens, cost), permission_requested, gone(why)
@@ -46,6 +46,9 @@ labelled(labels) -> { agentId, title, labels }[]            // every agent not a
 - `sandbox` is built from role properties (`writes`, `reading`), never from a role's name. Each agent's own format
   lives in `agent-host/harness/<agent>/`.
 - A prompt and a tool set are fixed when an agent is created: a change of either is a new agent.
+- `servers` are MCP servers beside the one `tools` come from, each with the tools of it the agent may call unasked.
+  The host knows nothing of what a server is for. It refuses to make an agent whose provider cannot take one, naming
+  the server.
 - A stream resumed after a reconnect MAY have missed events; the adapter reads `history` to fill the gap before it
   reports a turn ended.
 - Hooks that can refuse an agent's creation answer within the host's time limit, with no unbounded I/O.

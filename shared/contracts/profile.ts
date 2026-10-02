@@ -1,8 +1,33 @@
 import { z } from "zod";
+import { TEAM_SERVER } from "./ids.ts";
 
 /** What a role may message, as relations on the scope graph (KERNEL.md §2). */
 export const RELATIONS = ["parent", "children", "descendants", "human"] as const;
 export type Relation = (typeof RELATIONS)[number];
+
+/**
+ * An MCP server that is not the team's, as Paseo takes one (TEMPLATE.md, Outside tool servers). A value of `env`,
+ * `headers` or `url` names an environment variable as `$NAME`, filled in when an agent is made: a secret is never
+ * written in a profile.
+ */
+const ServerSchema = z.discriminatedUnion("type", [
+  z
+    .object({
+      type: z.literal("stdio"),
+      command: z.string().min(1),
+      args: z.array(z.string()).default([]),
+      env: z.record(z.string(), z.string()).default({}),
+    })
+    .strict(),
+  z
+    .object({
+      type: z.enum(["http", "sse"]),
+      url: z.string().min(1),
+      headers: z.record(z.string(), z.string()).default({}),
+    })
+    .strict(),
+]);
+export type Server = z.infer<typeof ServerSchema>;
 
 const RoleSchema = z
   .object({
@@ -19,12 +44,15 @@ const RoleSchema = z
     prompt: z.string().optional(),
     skills: z.array(z.string()).optional(),
     models: z.array(z.string()).optional(),
+    /** The outside servers it is given, each with the tools of it the role may call, by name. */
+    servers: z.record(z.string(), z.array(z.string().min(1)).min(1)).optional(),
   })
   .strict();
 
 export const ProfileFileSchema = z
   .object({
     roles: z.record(z.string().regex(/^[a-z][a-z0-9-]*$/), RoleSchema),
+    servers: z.record(z.string().regex(/^[a-z][a-z0-9-]*$/), ServerSchema).default({}),
     reflex: z.string().optional(),
     watch: z.string().optional(),
     /** The team's flow, a passage every role is given after its own prompt (TEMPLATE.md). */
@@ -115,6 +143,12 @@ export function resolveProfile(file: ProfileFile): { ok: true; profile: Profile 
     if (role.spawns.size > 0 && !role.delegates)
       return { ok: false, says: `role ${role.name} spawns roles but does not delegate` };
   }
+  if (Object.hasOwn(file.servers, TEAM_SERVER))
+    return { ok: false, says: `no outside server may be named ${TEAM_SERVER}: that is the team's own` };
+  for (const [name, spec] of Object.entries(raw))
+    for (const server of Object.keys(spec.servers ?? {}))
+      if (!Object.hasOwn(file.servers, server))
+        return { ok: false, says: `role ${name} is given the server ${server}, which the profile does not declare` };
   return { ok: true, profile: { roles: resolved, root } };
 }
 

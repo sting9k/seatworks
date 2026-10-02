@@ -203,7 +203,9 @@ export class Plugin {
   ): Promise<{ ok: true; offer: TemplateOffer } | { ok: false; says: string }> {
     const names = await (await this.whenReady()).host.agentProfiles();
     if ("unavailable" in names) return { ok: false, says: "Paseo's API has not arrived; try again in a moment" };
-    return agreed === null ? offerOf(this.root, path, names) : install(this.root, path, agreed, names);
+    return agreed === null
+      ? offerOf(this.root, path, names, process.env)
+      : install(this.root, path, agreed, names, process.env);
   }
 
   /**
@@ -885,5 +887,11 @@ function harnessOf(dir: string, root: string, provider: string): Harness | null 
   if (!existsSync(file)) return null;
   const h = JSON.parse(readFileSync(file, "utf8")) as Partial<Harness> & { home?: Home };
   const env = h.home ? layHome(join(root, "homes", provider), h.home, dir) : {};
-  return { always: h.always ?? {}, writes: h.writes ?? {}, reads: h.reads ?? {}, env };
+  return {
+    always: h.always ?? {},
+    writes: h.writes ?? {},
+    reads: h.reads ?? {},
+    env,
+    outsideServers: h.outsideServers ?? true,
+  };
 }

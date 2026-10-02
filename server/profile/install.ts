@@ -6,6 +6,7 @@ import { unpacked } from "../../shared/contracts/template.ts";
 import { loadReflex } from "../satellites/reflex/config.ts";
 import { type Bundle, loadBundle } from "./bundle.ts";
 import { profilesDir } from "./profiles.ts";
+import { variablesNamed } from "./servers.ts";
 
 /**
  * What installing a shared template would bring to this machine, for the Human to read before it is theirs. Its
@@ -20,7 +21,12 @@ type Staged = { readonly ok: true; readonly offer: Offer; readonly dir: string }
  * Reads a shared template from a file on this machine, unpacks it aside and loads it as the plugin would. Nothing is
  * put where a project could run it. The directory it hands back is the caller's to install or remove.
  */
-function staged(stateRoot: string, path: string, agentProfiles: readonly string[]): Staged | Failed {
+function staged(
+  stateRoot: string,
+  path: string,
+  agentProfiles: readonly string[],
+  env: NodeJS.ProcessEnv,
+): Staged | Failed {
   if (!existsSync(path)) return { ok: false, says: `there is no file at ${path}` };
   const text = readFileSync(path, "utf8");
   const read = unpacked(text);
@@ -48,6 +54,7 @@ function staged(stateRoot: string, path: string, agentProfiles: readonly string[
     return { ok: false, says: `it does not load: ${error instanceof Error ? error.message : String(error)}` };
   }
   const models = [...new Set([...bundle.profile.roles.values()].flatMap((role) => role.models))].sort();
+  const servers = new Map([...bundle.servers.values()].flat().map((grant) => [grant.name, grant.server]));
   return {
     ok: true,
     dir,
@@ -59,6 +66,14 @@ function staged(stateRoot: string, path: string, agentProfiles: readonly string[
       replaces: existsSync(join(profilesDir(stateRoot), name)),
       roles: [...bundle.profile.roles.keys()],
       agentProfiles: models.map((model) => ({ name: model, there: agentProfiles.includes(model) })),
+      servers: [...servers].map(([server, how]) => ({
+        name: server,
+        runs: how.type === "stdio" ? [how.command, ...how.args].join(" ") : how.url,
+      })),
+      variables: variablesNamed([...servers.values()]).map((variable) => ({
+        name: variable,
+        there: (env[variable] ?? "") !== "",
+      })),
     },
   };
 }
@@ -68,8 +83,9 @@ export function offerOf(
   stateRoot: string,
   path: string,
   agentProfiles: readonly string[],
+  env: NodeJS.ProcessEnv,
 ): { readonly ok: true; readonly offer: Offer } | Failed {
-  const made = staged(stateRoot, path, agentProfiles);
+  const made = staged(stateRoot, path, agentProfiles, env);
   if (!made.ok) return made;
   rmSync(made.dir, { recursive: true, force: true });
   return { ok: true, offer: made.offer };
@@ -84,8 +100,9 @@ export function install(
   path: string,
   hash: string,
   agentProfiles: readonly string[],
+  env: NodeJS.ProcessEnv,
 ): { readonly ok: true; readonly offer: Offer } | Failed {
-  const made = staged(stateRoot, path, agentProfiles);
+  const made = staged(stateRoot, path, agentProfiles, env);
   if (!made.ok) return made;
   if (made.offer.hash !== hash) {
     rmSync(made.dir, { recursive: true, force: true });

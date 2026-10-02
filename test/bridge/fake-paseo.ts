@@ -11,6 +11,9 @@ type Created = {
   tools: string[];
   /** The environment the team's tool server would be spawned with. */
   teamEnv: Record<string, string> | undefined;
+  /** Every MCP server the agent was given, by name, and each tool approved ahead as `server.tool`. */
+  servers: Record<string, Record<string, unknown>>;
+  approved: string[];
   labels: Record<string, string>;
 };
 
@@ -125,8 +128,8 @@ export function fakePaseo(pluginDir: string, provider = "claude") {
         labels: Record<string, string>;
         config: {
           systemPrompt: string;
-          toolPolicy: { preapproved: { tool: string }[] };
-          mcpServers?: { team?: { env?: Record<string, string> } };
+          toolPolicy: { preapproved: { server: string; tool: string }[] };
+          mcpServers?: Record<string, { env?: Record<string, string> } & Record<string, unknown>>;
         };
       }) => {
         if (gate.refuse !== null) return Promise.reject(new Error(gate.refuse));
@@ -145,8 +148,10 @@ export function fakePaseo(pluginDir: string, provider = "claude") {
           prompt: o.prompt,
           env: o.env,
           systemPrompt: o.config.systemPrompt,
-          tools: o.config.toolPolicy.preapproved.map((p) => p.tool),
+          tools: o.config.toolPolicy.preapproved.filter((p) => p.server === "team").map((p) => p.tool),
           teamEnv: o.config.mcpServers?.team?.env,
+          servers: o.config.mcpServers ?? {},
+          approved: o.config.toolPolicy.preapproved.map((p) => `${p.server}.${p.tool}`),
           labels: o.labels,
         });
         if (gate.loseReplies > 0) {

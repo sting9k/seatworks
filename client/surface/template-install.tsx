@@ -38,6 +38,7 @@ export function TemplateInstall({ theme }: { theme: PluginTheme }) {
       });
   };
   const missing = offer?.agentProfiles.filter((profile) => !profile.there) ?? [];
+  const unset = offer?.variables.filter((variable) => !variable.there) ?? [];
 
   return (
     <SettingsSection title="Templates">
@@ -99,6 +100,17 @@ export function TemplateInstall({ theme }: { theme: PluginTheme }) {
                 : null
             }
           />
+          {offer.servers.length > 0 ? (
+            <SettingsRow
+              label="Outside tool servers it starts"
+              hint={offer.servers.map((server) => `${server.name}: ${server.runs}`).join("\n")}
+              error={
+                unset.length > 0
+                  ? `Not set on this machine: ${unset.map((variable) => `$${variable.name}`).join(", ")}. A role given a server that reads one is not seated until it is.`
+                  : null
+              }
+            />
+          ) : null}
           <View style={{ padding: SPACE.md, alignItems: "flex-end" }}>
             <Button
               label={busy ? "Installing" : offer.replaces ? "Install in its place" : "Install"}

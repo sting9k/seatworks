@@ -6,8 +6,12 @@ import {
   type Profile,
   ProfileFileSchema,
   resolveProfile,
+  type Server,
   skillDescription,
 } from "../../shared/contracts/profile.ts";
+
+/** An outside server given to a role: the tools of it the role may call, and how the server is reached. */
+export type Grant = { readonly name: string; readonly tools: readonly string[]; readonly server: Server };
 
 /** What agents are started with from a profile directory: the kernel's profile, each role's prompt and skills. */
 export type Bundle = {
@@ -18,6 +22,8 @@ export type Bundle = {
   /** The team's flow, given to every role after its prompt; none when the profile names none. */
   readonly flow: string | null;
   readonly skills: ReadonlyMap<string, readonly { name: string; description: string; path: string }[]>;
+  /** The outside servers each role is given; a role given none has no entry. */
+  readonly servers: ReadonlyMap<string, readonly Grant[]>;
   readonly environment: readonly string[];
   /** The note an attached project's instruction file carries, with `{branches}` and `{base}` to fill. */
   readonly project: {
@@ -47,6 +53,15 @@ export function loadBundle(dir: string): Bundle {
       }),
     );
   }
+  const servers = new Map<string, Grant[]>();
+  for (const [name, role] of Object.entries(file.roles)) {
+    const grants = Object.entries(role.servers ?? {}).map(([server, tools]) => ({
+      name: server,
+      tools,
+      server: file.servers[server]!,
+    }));
+    if (grants.length > 0) servers.set(name, grants);
+  }
   const reflexFile = file.reflex ? join(dir, file.reflex) : null;
   const reflex = reflexFile && existsSync(reflexFile) ? (parse(readFileSync(reflexFile, "utf8")) as { environment?: unknown }) : {};
   const environment = Array.isArray(reflex.environment) ? reflex.environment.filter((p): p is string => typeof p === "string") : [];
@@ -64,6 +79,7 @@ export function loadBundle(dir: string): Bundle {
     profile: resolved.profile,
     hash: hashOf(dir),
     prompts,
+    servers,
     flow: file.flow ? readFileSync(join(dir, file.flow), "utf8") : null,
     skills,
     environment,
