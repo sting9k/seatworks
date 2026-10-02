@@ -247,3 +247,6 @@ A template's files in, what a person sees out (`EDITOR.md`).
 | The SLP profile opened                                      | Each role's ticked tools are exactly its `tools` in `profile.yaml`, in its node's groups or on a wire to it |
 | A template that names a skill it does not carry             | Not opened, saying which skill                                      |
 | A template that keeps no positions opened                   | Every node placed, no two on top of each other                      |
+| The SLP profile packed with nothing changed, and opened again | Every file as it was, to the byte                                  |
+| A template whose nodes were put somewhere, then saved       | The places are in `template.json` and in no other file; opened again, each node is where it was put |
+| A file that is not a packed template                        | Not opened, saying so                                               |

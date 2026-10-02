@@ -133,6 +133,35 @@ h2 {
   font-size: 15px;
 }
 
+.ways-in {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.way-in {
+  padding: 8px 18px;
+  border: 1px solid var(--line-strong);
+  border-radius: 14px;
+  background: rgb(255 255 255 / 6%);
+  cursor: pointer;
+}
+
+.way-in:hover {
+  color: var(--strong);
+}
+
+.way-in input {
+  display: none;
+}
+
+.refused {
+  margin: 16px auto 0;
+  max-width: 640px;
+  color: #f29a9a;
+}
+
 .cards {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
@@ -281,6 +310,13 @@ h2 {
 .bar h1 {
   margin: 0;
   font-size: 14px;
+}
+
+.bar .cta {
+  margin-left: auto;
+  padding: 6px 18px;
+  border-radius: 10px;
+  font-size: 12px;
 }
 
 .back {

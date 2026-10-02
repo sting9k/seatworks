@@ -8,15 +8,10 @@ import {
   skillDescription,
 } from "../../shared/contracts/profile.ts";
 import { type QuestionSpec, ReflexFileSchema, WatchFileSchema } from "../../shared/contracts/reflex.ts";
+import { type About, AboutSchema } from "./about.ts";
 
 /** A template's files as they are packed: each path inside it, with its text. */
 export type TemplateFiles = ReadonlyMap<string, string>;
-
-/** `template.json`: what the gallery shows of a template (TEMPLATE.md). */
-const AboutSchema = z
-  .object({ name: z.string().min(1), description: z.string().min(1), tags: z.array(z.string()).default([]) })
-  .strict();
-type About = z.infer<typeof AboutSchema>;
 
 type Skill = { readonly name: string; readonly description: string };
 export type Asked = { readonly name: string; readonly spec: QuestionSpec; readonly active: boolean };

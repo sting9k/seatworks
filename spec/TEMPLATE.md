@@ -48,7 +48,14 @@ What a template may do, in four rules:
 ```
 
 Everything but `template.json`, `NOTICE.md` and `flow.md` is the profile directory as it is today. The plugin reads
-neither `template.json` nor `NOTICE.md`.
+neither `template.json` nor `NOTICE.md`. Every file is text.
+
+## Sharing
+
+A template is shared as one JSON file, `<name>.template.json`, that holds the text of each of its files by its path:
+`{ "files": { "profile.yaml": "...", "roles/lead.md": "..." } }`. A page writes it and Node reads it with nothing
+installed, where an archive would need a package on both sides; ComfyUI shares a workflow as one JSON file for the
+same reason. In the gallery's repository a template stays a directory, so a pull request shows what changed in it.
 
 ## Files by when they are read
 
@@ -136,8 +143,8 @@ answered it, so a question reworded in a template has not earned its `tell` and 
 | `seatworks`   | The release of Seatworks it was made against                                                         |
 | `editor`      | The editor's own: where each node sits, and the steps the flow is written from                       |
 
-The gallery reads `name`, `description` and `tags` so far, and refuses a file with any other key; each of the rest
-is read from the step that uses it.
+The page reads `name`, `description`, `tags` and the positions under `editor` so far, and refuses a file with any
+other key; each of the rest is read from the step that uses it.
 
 What a template needs of a machine (the Paseo agent profiles its roles name, the variables its servers read) is read
 from `profile.yaml` by the gallery and the installer, never declared a second time here, where it could fall out of
@@ -207,7 +214,7 @@ server and no accounts. SLP is the only one at first.
 
 ## Installing
 
-A template is downloaded as one archive and installed by a command of the plugin's. The command:
+A template is downloaded as the one file it is shared as and installed by a command of the plugin's. The command:
 
 1. Loads it as the plugin would, with `resolveProfile`, and says what is wrong if it does not load.
 2. Lists what it asks of the machine: each outside server with its command or address, each environment variable
@@ -257,8 +264,8 @@ They join `CONFORMANCE.md` with the step that builds them.
 | A profile that lists two docs under `project.docs`                            | An agent's first words point at both                                 |
 | A role given an outside server, seated on an agent that takes one             | Created with the server, its named tools approved ahead; a role given none has only the team's |
 | A role given an outside server, seated on an agent that cannot take one       | Not seated; the reason names the server                              |
-| An archive whose profile does not load                                        | Refused, saying what is wrong; nothing copied                        |
-| An archive that declares servers and names agent profiles                     | Each listed before anything is copied                                |
+| A shared file whose profile does not load                                     | Refused, saying what is wrong; nothing copied                        |
+| A shared file that declares servers and names agent profiles                  | Each listed before anything is copied                                |
 | The SLP profile, with none of the new keys                                    | Loads and behaves as before                                          |
 
 ## Order
@@ -287,7 +294,7 @@ a change to how a profile is loaded, made in the middle of that test, leaves a f
 
 ## To decide
 
-- The archive's format, and the name of the command that installs one.
+- The name of the command that installs a template.
 - What a project does while a seated agent's role is missing from its profile, beyond saying so.
 - Whether `profile/slp/reference/ANTIPATTERNS.md`, which no prompt, skill or code points at, goes into a skill or
   goes. It is SLP's content.

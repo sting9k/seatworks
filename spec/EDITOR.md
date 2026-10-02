@@ -3,8 +3,10 @@
 Where a template is opened as a graph, changed and saved: a web page, after ComfyUI's three screens. `TEMPLATE.md`
 says what a template is; this says how a person makes and changes one. The order it is built in is in `TEMPLATE.md`.
 
-Built so far: a template is picked from the gallery and read. Its graph is drawn and laid out, its files are shown as
-text, and the node library lists the nodes it has and finds one by name. Nothing is changed or saved yet.
+Built so far: a template is picked from the gallery, or opened from a file or a folder of the person's own, and read.
+Its graph is drawn and laid out, its files are shown as text, and the node library lists the nodes it has and finds one
+by name. A node is moved and stays where it was put, and the template is exported as one file. Nothing else of it is
+changed yet.
 
 ## Decided
 
@@ -19,11 +21,17 @@ text, and the node library lists the nodes it has and finds one by name. Nothing
    changed in June 2025.
 4. **dagre lays out a template that has no positions** (MIT). elkjs is not taken: EPL or GPL.
 5. **Files come in and go out by import and export.** A page cannot write into the state root, and opening a
-   directory in place works only in some browsers. The way out is the archive `TEMPLATE.md` installs.
-6. **The graph is a view of the files.** Nothing is kept in the editor that the template's files do not hold. What is
-   the editor's alone (where a node sits, the steps) is in `template.json`.
-7. **Opened and saved unchanged, a template comes out byte for byte as it went in.** `reflex.yaml` and `watch.yaml`
-   keep the reason for each number in a comment, and a save that drops a comment destroys content.
+   directory in place works only in some browsers. A template comes in as the one file it is shared as or as a folder
+   picked from the machine, and goes out as that one file (`TEMPLATE.md`, Sharing). A change lives only in the page
+   until it is exported, so the page says when one has not been, and asks before it is left.
+6. **The graph is a view of the files.** The files are what the page keeps: every change makes new files, and
+   everything shown is read again from them. What is the editor's alone (where a node sits, the steps) is in
+   `template.json`.
+7. **A file that is not changed is kept to the byte, and a change touches only what it changes.** `reflex.yaml` and
+   `watch.yaml` keep the reason for each number in a comment, and a save that drops a comment destroys content. The
+   `yaml` package cannot be asked to write a file back: tried on the three files of SLP, its document form joins a
+   list written over several lines and folds text again, changing most lines of each. So no file is ever written
+   whole from what was parsed. A change is made in the source, at the place of the node it changes.
 8. **The editor checks what a machine can check, and no more.** Whether a template makes a team work well is known
    only by running it and looking back.
 
@@ -169,7 +177,6 @@ They join `CONFORMANCE.md` with the step that builds them; those of reading are 
 
 | Case                                                                 | Expect                                                           |
 | -------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| The SLP profile opened and saved with nothing changed                | Every file byte for byte the same, comments kept                 |
 | `delegates` switched on for a role                                   | Its five groups appear, every tool ticked                        |
 | A tool unticked in one role's group                                  | Gone from that role's `tools`; another role's list unchanged     |
 | A wire dragged to a socket of another kind                           | Not made                                                         |
@@ -179,11 +186,8 @@ They join `CONFORMANCE.md` with the step that builds them; those of reading are 
 | A file dropped into a skill's folder that `SKILL.md` does not name   | Kept; no fault                                                   |
 | A question's words changed                                           | Shown as not yet earned                                          |
 | A template with steps saved                                          | `flow.md` holds one line a step, in order, each with its role    |
-| A template laid out, then saved                                      | Its positions are in `template.json` and nowhere else            |
 
 ## To check before building on it
 
-- That the `yaml` package's document form writes `profile.yaml`, `reflex.yaml` and `watch.yaml` back unchanged,
-  comments and all. Decision 7 rests on it.
 - Whether the flow, added to a role's standing instructions, repeats what SLP's hand-written prompts already say. It
   is tried on the SLP profile before any template relies on it.

@@ -11,8 +11,10 @@ import {
   useReactFlow,
 } from "@xyflow/react";
 import { useEffect, useMemo, useState } from "react";
+import { type Point, positioned } from "../template/about.ts";
 import { type Graph, type GraphNode, graphOf } from "../template/graph.ts";
 import type { Template } from "../template/read-template.ts";
+import { download } from "./files.ts";
 import { laidOut } from "./layout.ts";
 import { type FlowNode, type FrameNode, NODE_TYPES } from "./nodes.tsx";
 import { SidePanel } from "./side-panel.tsx";
@@ -30,16 +32,26 @@ const FRAME = { pad: 14, title: 34 };
 const nameOf = (node: GraphNode) => (node.kind === "human" ? "The Human" : node.name);
 const fileOf = (node: GraphNode) => ("file" in node ? node.file : null);
 
+type Props = {
+  readonly template: Template;
+  /** Whether it holds a change that has not been exported. */
+  readonly changed: boolean;
+  /** The template's files after a change; everything shown is read again from them. */
+  readonly onChange: (files: Template["files"]) => void;
+  readonly onExported: () => void;
+  readonly onBack: () => void;
+};
+
 /** One template: its graph, the nodes it is made of by family, and what the picked one says. */
-export function GraphView({ template, onBack }: { template: Template; onBack: () => void }) {
+export function GraphView(props: Props) {
   return (
     <ReactFlowProvider>
-      <Opened template={template} onBack={onBack} />
+      <Opened {...props} />
     </ReactFlowProvider>
   );
 }
 
-function Opened({ template, onBack }: { template: Template; onBack: () => void }) {
+function Opened({ template, changed, onChange, onExported, onBack }: Props) {
   const graph = useMemo(() => graphOf(template), [template]);
   const edges = useMemo(() => edgesOf(graph), [graph]);
   const [nodes, setNodes, onNodesChange] = useNodesState<Drawn>(graph.nodes.map(unplaced));
@@ -55,12 +67,30 @@ function Opened({ template, onBack }: { template: Template; onBack: () => void }
     const sizes = new Map(
       flow.getNodes().map((node) => [node.id, { width: node.measured!.width!, height: node.measured!.height! }]),
     );
-    setNodes((drawn) => framed(drawn as FlowNode[], laidOut(graph, sizes), sizes));
+    const kept = new Map(Object.entries(template.about.editor?.positions ?? {}));
+    const places = graph.nodes.every((node) => kept.has(node.id)) ? kept : laidOut(graph, sizes);
+    setNodes((drawn) => framed(drawn, places, sizes));
     setArranged(true);
-  }, [measured, arranged, flow, graph, setNodes]);
+  }, [measured, arranged, flow, graph, template, setNodes]);
   useEffect(() => {
     if (arranged) void flow.fitView({ padding: 0.06 });
   }, [arranged, flow]);
+
+  /** Where every node is now is kept, so the template opens next time as it was left. */
+  const keepPlaces = () => {
+    const drawn = flow.getNodes();
+    const frames = new Map(drawn.flatMap((node) => (node.type === "frame" ? [[node.id, node.position]] : [])));
+    const places = new Map<string, Point>();
+    const sizes = new Map<string, { width: number; height: number }>();
+    for (const node of drawn) {
+      if (node.type === "frame") continue;
+      const frame = node.parentId === undefined ? { x: 0, y: 0 } : frames.get(node.parentId)!;
+      places.set(node.id, { x: frame.x + node.position.x, y: frame.y + node.position.y });
+      sizes.set(node.id, { width: node.measured!.width!, height: node.measured!.height! });
+    }
+    setNodes((current) => framed(current, places, sizes));
+    onChange(positioned(template.files, template.about, places));
+  };
 
   const pick = (node: GraphNode) => {
     setPicked(node);
@@ -79,7 +109,17 @@ function Opened({ template, onBack }: { template: Template; onBack: () => void }
           ‹ Templates
         </button>
         <h1>{template.about.name}</h1>
-        <span className="pill">Read only</span>
+        {changed ? <span className="pill">Changed, not exported</span> : null}
+        <button
+          type="button"
+          className="cta"
+          onClick={() => {
+            download(template.about.name, template.files);
+            onExported();
+          }}
+        >
+          Export
+        </button>
       </header>
       <Library graph={graph} picked={picked} onPick={show} />
       <div className={arranged ? "canvas" : "canvas arranging"}>
@@ -94,6 +134,7 @@ function Opened({ template, onBack }: { template: Template; onBack: () => void }
           onPaneClick={() => {
             setPicked(null);
           }}
+          onNodeDragStop={keepPlaces}
           nodesConnectable={false}
           deleteKeyCode={null}
           minZoom={0.1}
@@ -176,11 +217,15 @@ const unplaced = (node: GraphNode): FlowNode =>
  * reaches a question, so nothing else says they belong together.
  */
 function framed(
-  drawn: readonly FlowNode[],
-  placed: ReadonlyMap<string, { x: number; y: number }>,
+  drawn: readonly Drawn[],
+  placed: ReadonlyMap<string, Point>,
   sizes: ReadonlyMap<string, { width: number; height: number }>,
 ): Drawn[] {
-  const at = drawn.map((node) => ({ ...node, position: placed.get(node.id)! }));
+  const at = drawn.flatMap((node) => {
+    if (node.type === "frame") return [];
+    const { parentId: _, ...loose } = node;
+    return [{ ...loose, position: placed.get(node.id)! }];
+  });
   const inside = at.filter((node) => node.type === "question");
   if (inside.length === 0) return at;
   const left = Math.min(...inside.map((node) => node.position.x)) - FRAME.pad;
