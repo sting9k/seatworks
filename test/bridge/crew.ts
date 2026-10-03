@@ -41,8 +41,8 @@ function profile(more: string): Map<string, string> {
   ]);
 }
 
-/** A project attached with that profile, and whatever `more` its file says, on a repository with one commit, a check and a remote. */
-export async function crew(more = "") {
+/** A project attached with that profile and whatever `more` its file says, its agents on one provider, on a repository with a commit. */
+export async function crew(more = "", provider = "claude") {
   const root = mkdtempSync(join(tmpdir(), "sw-root-"));
   for (const [path, text] of profile(more)) {
     mkdirSync(join(root, "profiles", "crew", path, ".."), { recursive: true });
@@ -60,7 +60,7 @@ export async function crew(more = "") {
   const plugin = new Plugin(root);
   const paseo = fakePaseo(
     pluginDir,
-    "claude",
+    provider,
     Object.keys(ROLES).map((name) => `${name}-agent`),
   );
   plugin.saw(paseo.api);

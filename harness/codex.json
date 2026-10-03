@@ -39,8 +39,23 @@
       "each": "\n[[skills.config]]\npath = {path}\nenabled = false\n"
     },
     "files": {
-      "config.toml": "[features]\nmulti_agent = false\nmulti_agent_v2 = false\napps = false\nplugins = false\ntool_suggest = false\nsleep_tool = false\ngoals = false\nbrowser_use = false\nbrowser_use_external = false\ncomputer_use = false\nimage_generation = false\n\n[skills.bundled]\nenabled = false\n\n[mcp_servers.paseo]\nurl = \"http://not-for-a-teams-agent.invalid/\"\nenabled = false\n",
-      "rules/seatworks.rules": "prefix_rule(\n    pattern = [\"paseo\"],\n    decision = \"forbidden\",\n    justification = \"Paseo's command line is not for a team's agents: use the team's tools.\",\n)\n"
+      "config.toml": "[features]\nmulti_agent = false\nmulti_agent_v2 = false\napps = false\nplugins = false\ntool_suggest = false\nsleep_tool = false\ngoals = false\nbrowser_use = false\nbrowser_use_external = false\ncomputer_use = false\nimage_generation = false\n\n[skills.bundled]\nenabled = false\n\n[mcp_servers.paseo]\nurl = \"http://not-for-a-teams-agent.invalid/\"\nenabled = false\n\n[hooks.state.\"{room}/hooks.json:post_tool_use:0:0\"]\ntrusted_hash = \"sha256:e968ae32d2ce79b875de67886e710e68877cf3dbea8248fd0e84ccabbf100327\"\n",
+      "rules/seatworks.rules": "prefix_rule(\n    pattern = [\"paseo\"],\n    decision = \"forbidden\",\n    justification = \"Paseo's command line is not for a team's agents: use the team's tools.\",\n)\n",
+      "hooks.json": {
+        "hooks": {
+          "PostToolUse": [
+            {
+              "hooks": [
+                {
+                  "type": "command",
+                  "command": "\"$SEATWORKS_SHIM_DIR/seatworks-mail\" PostToolUse",
+                  "timeout": 10
+                }
+              ]
+            }
+          ]
+        }
+      }
     }
   }
 }

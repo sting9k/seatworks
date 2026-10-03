@@ -146,7 +146,8 @@ test("an OpenCode agent asks nobody, starts no agent of its own and is shown non
   // Paseo's schema for OpenCode's options has no place for a tool by name: the rule is in the config its server reads.
   const off = { action: "paseo_*", resource: "*", effect: "deny" };
   // A snapshot OpenCode takes of its own is a git run with a git directory elsewhere, which the guard on its PATH refuses.
-  const inline = { permissions: [off], agents: { build: { permissions: [off] } }, snapshot: false };
+  const door = join(pluginDir, "harness/opencode");
+  const inline = { permissions: [off], agents: { build: { permissions: [off] } }, snapshot: false, plugins: [door] };
   assert.deepEqual(JSON.parse(made.env.OPENCODE_CONFIG_CONTENT!), inline);
 
   await plugin.dispose();

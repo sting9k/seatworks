@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, realpathSync } from "node:fs";
 import { join } from "node:path";
 import { promisify } from "node:util";
 import { DatabaseSync } from "node:sqlite";
@@ -19,8 +19,8 @@ after(async () => {
 });
 
 /** A lane's owner inside its first turn, with one maker under it inside its own, in a template that lets mail in. */
-async function team(intoTurn: string | null) {
-  const c = await crew(intoTurn === null ? "" : `intoTurn: ${intoTurn}\n`);
+async function team(intoTurn: string | null, provider = "claude") {
+  const c = await crew(intoTurn === null ? "" : `intoTurn: ${intoTurn}\n`, provider);
   plugins.push(c.plugin);
   c.paseo.gate.turns = true;
   const chief = await c.tools(0);
@@ -109,6 +109,81 @@ test("a Claude agent's hook, run between two of its steps as Claude Code runs it
   assert.ok(said.hookSpecificOutput.additionalContext.startsWith(INTO_TURN));
   assert.match(said.hookSpecificOutput.additionalContext, /it directs\nUse the real parser\.$/);
   assert.equal(await hook(), "", "and once it has entered");
+  for (const tools of [keeper, maker]) tools.close();
+});
+
+test("a Codex agent's hook, named in its room and trusted there, hands the mail over as Claude's does, under its own event's name", async () => {
+  const { c, keeper, maker } = await team("{ patience: 0, rest: 0 }", "codex");
+  const made = c.paseo.created[2]!;
+  const room = made.env.CODEX_HOME!;
+  const hooks = JSON.parse(readFileSync(join(room, "hooks.json"), "utf8")) as {
+    hooks: { PostToolUse: { hooks: { command: string }[] }[] };
+  };
+  const command = hooks.hooks.PostToolUse[0]!.hooks[0]!.command;
+  // Codex runs a hook only once its own config says the hook is trusted, naming the hook's file by its real path.
+  const trusted = `[hooks.state."${realpathSync(room)}/hooks.json:post_tool_use:0:0"]\ntrusted_hash = "sha256:`;
+  assert.ok(readFileSync(join(room, "config.toml"), "utf8").includes(trusted), "its room says so of this hook");
+  const hook = async () =>
+    (await promisify(execFile)("/bin/sh", ["-c", command], { env: { ...process.env, ...made.env } })).stdout;
+
+  assert.equal(await hook(), "", "silent while nothing waits");
+  await says(c, keeper, { to: "a3", text: "Use the real parser.", directs: true });
+  const said = JSON.parse(await hook()) as { hookSpecificOutput: { hookEventName: string; additionalContext: string } };
+  assert.equal(said.hookSpecificOutput.hookEventName, "PostToolUse");
+  assert.ok(said.hookSpecificOutput.additionalContext.startsWith(INTO_TURN));
+  assert.match(said.hookSpecificOutput.additionalContext, /it directs\nUse the real parser\.$/);
+  for (const tools of [keeper, maker]) tools.close();
+});
+
+test("an OpenCode agent's plugin, named in the config its server is handed, adds the mail to the result of the tool that just ran", async () => {
+  const { c, keeper, maker } = await team("{ patience: 0, rest: 0 }", "opencode");
+  const made = c.paseo.created[2]!;
+  const config = JSON.parse(made.env.OPENCODE_CONFIG_CONTENT!) as { plugins: string[] };
+  const folder = join(import.meta.dirname, "../../harness/opencode");
+  assert.deepEqual(config.plugins, [folder]);
+  const named = JSON.parse(readFileSync(join(folder, "package.json"), "utf8")) as { exports: Record<string, string> };
+
+  type Ran = { status: string; result?: { content: unknown } };
+  const hooks = new Map<string, (ran: Ran) => Promise<void>>();
+  const saved = { ...process.env };
+  Object.assign(process.env, made.env);
+  let leave: () => Promise<void>;
+  try {
+    const plugin = (await import(join(folder, named.exports["./server"]!))) as {
+      default: { setup(context: unknown): Promise<() => Promise<void>> };
+    };
+    leave = await plugin.default.setup({
+      tool: {
+        hook: (name: string, run: (ran: Ran) => Promise<void>) => {
+          hooks.set(name, run);
+          return Promise.resolve(undefined);
+        },
+      },
+    });
+  } finally {
+    process.env = saved;
+  }
+  const after = hooks.get("execute.after")!;
+
+  const quiet = { status: "completed", result: { content: [{ type: "text", text: "1: hello" }] } };
+  await after(quiet);
+  assert.deepEqual(quiet.result.content, [{ type: "text", text: "1: hello" }], "nothing is added while nothing waits");
+
+  await says(c, keeper, { to: "a3", text: "Use the real parser.", directs: true });
+  const failed = { status: "error" };
+  await after(failed);
+  const ran = {
+    status: "completed",
+    result: { content: [{ type: "text", text: "1: hello" }] as { type: string; text: string }[] },
+  };
+  await after(ran);
+  assert.equal(ran.result.content.length, 2, "it follows what the tool returned, which a failed tool has none of");
+  assert.ok(ran.result.content[1]!.text.startsWith(INTO_TURN));
+  assert.match(ran.result.content[1]!.text, /it directs\nUse the real parser\.$/);
+  const next = { status: "completed", result: { content: "plain words" } };
+  await after(next);
+  assert.equal(next.result.content, "plain words", "and it enters once");
+  await leave();
   for (const tools of [keeper, maker]) tools.close();
 });
 

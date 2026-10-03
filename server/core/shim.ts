@@ -29,7 +29,7 @@ export function installMail(dir: string, script: string): void {
   const launcher = join(dir, "seatworks-mail");
   writeFileSync(
     launcher,
-    `#!/bin/sh\n[ -s "$SEATWORKS_MAIL" ] || exit 0\nELECTRON_RUN_AS_NODE=1 exec "${process.execPath}" --experimental-strip-types --no-warnings "${script}"\n`,
+    `#!/bin/sh\n[ -s "$SEATWORKS_MAIL" ] || exit 0\nELECTRON_RUN_AS_NODE=1 exec "${process.execPath}" --experimental-strip-types --no-warnings "${script}" "$@"\n`,
   );
   chmodSync(launcher, 0o755);
 }

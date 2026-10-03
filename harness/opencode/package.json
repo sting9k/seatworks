@@ -1,0 +1,8 @@
+{
+  "name": "seatworks-opencode",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./server": "./server.ts"
+  }
+}

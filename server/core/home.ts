@@ -47,7 +47,8 @@ export function layHome(dir: string, home: Home, places: Places, skills: readonl
     if (existsSync(at) || isLink(at)) rmSync(at, { force: true });
     if (existsSync(target)) symlinkSync(target, at);
   }
-  const here = { ...places, home: homedir(), room: dir };
+  // An agent names a file of its home by its real path, where the home is reached through a link.
+  const here = { ...places, home: homedir(), room: realpathSync(dir) };
   const left = home.leaves ? leftOut(home.leaves, here) : "";
   const kept = home.keeps ? keptOf(join(from, home.keeps.file), home.keeps) : { top: "", tables: "" };
   for (const [name, content] of Object.entries(home.files)) {

@@ -60,7 +60,7 @@
               "hooks": [
                 {
                   "type": "command",
-                  "command": "\"$SEATWORKS_SHIM_DIR/seatworks-mail\"",
+                  "command": "\"$SEATWORKS_SHIM_DIR/seatworks-mail\" PostToolBatch",
                   "timeout": 10
                 }
               ]

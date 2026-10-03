@@ -1362,7 +1362,10 @@ function harnessFile(dir: string, provider: string): HarnessFile | null {
 function harnessOf(h: HarnessFile, room: Room, provider: string, places: Places): Harness {
   const home = layHome(join(room.dir, provider), h.home, places, room.skills);
   // A variable an agent reads its config from is written in the file as that config, and handed over as its JSON.
-  const named = Object.entries(h.env ?? {}).map(([name, v]) => [name, typeof v === "string" ? v : JSON.stringify(v)]);
+  const named = Object.entries(withPlaces(h.env ?? {}, places) as Record<string, unknown>).map(([name, v]) => [
+    name,
+    typeof v === "string" ? v : JSON.stringify(v),
+  ]);
   // A setting an agent takes a skill at a time is written once in the file, for a skill, and set for each the room has.
   const set = (settings: unknown) =>
     withSkills(

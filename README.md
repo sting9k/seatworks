@@ -18,7 +18,7 @@ the team is arranged and what each role is told (its prompt, its skills, the que
 and what they say, are the plugin's. **SLP** is the template that comes with it.
 
 > **Status: in testing.** Nothing has shipped. The tests run against a stand-in for Paseo; Claude Code and Pi have
-> been run as real agents in every role, Codex and OpenCode as a Peer only. Read
+> been run as real agents in every role, Codex and OpenCode as a Supervisor and a Peer. Read
 > [What to expect](#what-to-expect).
 
 ## SLP, the template that comes with it
@@ -224,14 +224,13 @@ settings, whose `env` every agent of it is given. Codex is the exception: a prov
 ## What to expect
 
 - Agents are real and cost real money. Watch the first lanes, and set an appetite with the Supervisor.
-- **Agents.** Claude Code and Pi have been run in a team. Codex and OpenCode (version 2) have been run as a Peer
-  and in no other role. Nothing is shipped for any other, Oh My Pi among them: Paseo refuses to make an agent of
+- **Agents.** Claude Code and Pi have been run in a team. Codex and OpenCode (version 2) have been run as a
+  Supervisor and as a Peer, and in no other role. Nothing is shipped for any other, Oh My Pi among them: Paseo refuses to make an agent of
   any other kind with the team's tools.
 - **Mail waits for a pause.** What is sent to an agent in the middle of a turn is delivered when the turn ends,
-  everything waiting as one message. A template may let some of it in sooner, and SLP does: on Claude Code and Pi,
-  what cannot wait (a direction, anything you say, an answer the agent asked for) enters between two of its steps,
-  and a question from below once it has waited two minutes. On Codex and OpenCode everything still waits for the
-  turn's end. Only you can stop a turn, with Paseo's own stop.
+  everything waiting as one message. A template may let some of it in sooner, and SLP does: what cannot wait (a
+  direction, anything you say, an answer the agent asked for) enters between two of the agent's steps, and a
+  question from below once it has waited two minutes. Only you can stop a turn, with Paseo's own stop.
 - **A lane's worktree is Paseo's.** Paseo makes it and then runs the repository's own set-up there, in the
   background (`worktree.setup` in its `paseo.json`). A worktree has no `node_modules` or `.env` unless that set-up
   or the project's checks put them there. Say so when the checks are set.

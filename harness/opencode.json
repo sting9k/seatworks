@@ -37,7 +37,8 @@
           ]
         }
       },
-      "snapshot": false
+      "snapshot": false,
+      "plugins": ["{plugin}/harness/opencode"]
     }
   },
   "home": {

@@ -8,7 +8,8 @@ Codex 0.154 and OpenCode 2.0.16 as installed.
 
 Built: a harness file for each of the four. Every test runs against a stand-in for Paseo that refuses what Paseo's
 source refuses. Claude Code and Pi were seen on live agents on 2 October 2026, Codex and OpenCode on 4 October (Seen on a live
-Paseo, below), each of those two as a Peer only; what only a live one can still show is under To check. Oh My Pi had a harness file until
+Paseo, below), each of those two as a Supervisor and as a Peer; what only a live one can still show is under To
+check. Oh My Pi had a harness file until
 3 October 2026: Paseo registers its own tools with an Oh My Pi session itself, where nothing of Seatworks' can switch
 them off, so the file was removed on the owner's word and OpenCode's written.
 
@@ -290,21 +291,26 @@ with the agent's key, what may enter now, and the plugin's answer is the mail or
 
 | Agent       | The door                                                                                              |
 | ----------- | ----------------------------------------------------------------------------------------------------- |
-| Claude Code | A `PostToolBatch` hook in its room's `settings.json`, which fires once a batch of tools has run and before the next model call. It runs `seatworks-mail` from the directory of the git guard, and what that prints is the hook's `additionalContext`, 10,000 characters at most |
+| Claude Code | A `PostToolBatch` hook in its room's `settings.json`, which fires once a batch of tools has run and before the next model call. It runs `seatworks-mail` from the directory of the git guard, with the hook's event as its argument, and what that prints is the hook's `additionalContext`, 10,000 characters at most |
 | Pi          | Its extension's `tool_result` handler sends the mail with `deliverAs: "steer"`, which Pi delivers after the turn's tool calls and before the next model call |
-| Codex       | None yet. Its `PostToolUse` hook takes `additionalContext`, but a hook that is not managed must be trusted through `/hooks` first |
-| OpenCode    | None yet                                                                                              |
+| Codex       | A `PostToolUse` hook in its room's `hooks.json`, which fires after each tool: the same `seatworks-mail`, under that event's name, and Codex gives what it prints to the model as a developer message. Codex runs a hook of the user's only once it is trusted, and keeps that in its config as `[hooks.state."<the hook's file>:post_tool_use:0:0"]` with `trusted_hash`, the hook's own hash: the room's `config.toml` says so of the room's own hook |
+| OpenCode    | A plugin of the server Paseo starts for the agent, the folder `harness/opencode`, named in `plugins` of the config that server is handed. OpenCode 2 loads a plugin as a package folder and its `./server` entry. Its hook on `execute.after` of every tool adds the mail to what the tool returned, as one more part of text, which the model reads next |
 
 - **Silent while nothing waits.** The plugin keeps a file for each seat, named to the agent as `SEATWORKS_MAIL`,
-  empty unless something may enter. Claude's launcher tests it in the shell and starts no process otherwise: a hook
-  that spawns one at every step was measured at most of a second a step elsewhere. Pi's extension holds the line
-  open and asks.
+  empty unless something may enter. The launcher Claude's and Codex's hooks run tests it in the shell and starts no
+  process otherwise: a hook that spawns one at every step was measured at most of a second a step elsewhere. Pi's
+  extension and OpenCode's plugin hold the line open and ask.
+- **The hash of Codex's hook** is Codex's own, read from its server (`hooks/list`) for the hook as the harness file
+  writes it: the same in every room, since it is of the hook and not of its path, which Codex names by the room's
+  real path. A hook written otherwise has another hash, and a Codex that hashes otherwise would leave it untrusted:
+  its mail then waits for the turn's end, as before there was a door.
 - **Never the Human's config.** Paseo's own "terminal agent hooks" write `~/.claude/settings.json`,
   `~/.codex/hooks.json` and an OpenCode plugin, for every session on the machine, and only to learn whether an agent
   in one of its terminals runs or idles. Seatworks' hook is in the room of an agent it seats and nowhere else, and
   nothing of the Human's is written.
-- **What a timeline shows.** Claude's hook text is in no timeline Paseo keeps. Pi's is listed as the agent's own
-  words: the plugin knows it by its first words and counts none of it as said by the agent.
+- **What a timeline shows.** Claude's and Codex's hook text is in no timeline Paseo keeps. Pi's is listed as the
+  agent's own words: the plugin knows it by its first words and counts none of it as said by the agent. OpenCode's
+  is at the end of a tool's result.
 - No launcher is written on Windows.
 
 ## Role prompts
@@ -445,6 +451,22 @@ tasks, each handed back on a commit, checked, taken in and landed.
   code.
 - **Not seen.** A role that does not write on either; a permission asked; OpenCode on any model but that one.
 
+Later the same day, for what that run had left: a project whose Supervisor and Peer both ran on Codex (`glm-5.3`),
+and one whose Supervisor and Peer both ran on OpenCode (`opencode/muse-spark-1.3-contributor-free`; the models
+reached through NVIDIA's key took minutes a step, or answered nothing). Each Supervisor was told to seat a Peer and
+send it one direction at once, and each task landed with the direction followed.
+
+- **A role that does not write, on each.** A Supervisor on Codex read the record, asked the Human what to build
+  before anything was sent it, opened a scope, directed its Peer, ran the checks, took the work in and wrote to the
+  Human; it then read `retrospective` from its room, whose description names that moment. One on OpenCode did the
+  same with the team's tools, `open_scope` to `integrate`.
+- **Mail into a turn on Codex.** The Human's words entered the Supervisor's first turn after the tool it was
+  running, as a developer message, and the Supervisor's direction entered the Peer's turn a second after it was
+  sent, after the Peer's first command: the Peer wrote the name it was directed to from its first file on.
+- **Mail into a turn on OpenCode.** Both entered the same way, each at the end of the result of the first tool its
+  reader ran, and the Peer handed back under the name it was directed to, saying its brief had named another.
+- **Not seen.** A Lead or a Reviewer on either; a permission asked; a turn that failed.
+
 ## To check before building on it
 
 - A role that does not write, held from writing in the worktree it shares: which of each provider's own settings
@@ -452,11 +474,12 @@ tasks, each handed back on a commit, checked, taken in and landed.
   as a build or a test that writes its own output, and without stopping the lane's owner from settling a merge by
   hand. Until then its prompt is all that holds it, and on a live run it did not (Seen on a live Paseo).
 - On a live OpenCode: whether a plugin or a server a copy's own `.opencode/` names is loaded for the next agent
-  that works in that worktree. An OpenCode agent's sessions are kept in the Human's own data folder, where the room
-  holds none of them.
-- A role that does not write, on Codex and on OpenCode: neither was seated live. A Supervisor or a Lead on either
-  has the team's tools from Paseo as a Peer does, and that is all that was seen of it.
-- Mail into a turn has no door on Codex or OpenCode (Mail into a turn, above).
+  that works in that worktree.
+- OpenCode keeps an agent's sessions in the Human's own data folder, and they stay there. Its `OPENCODE_DB` names
+  another file for them, but the same file holds a login made through OpenCode itself (its `credential` and
+  `account` tables): in a room's own, a team's agent would have none.
+- The hash of Codex's hook after a Codex update (Mail into a turn, above): `hooks/list` on its server says whether
+  the room's hook is still trusted.
 - A repository's own `.claude/` reaches a Claude agent, since `project` and `local` are among the sources Paseo
   sets: its skills, and the hooks or servers its settings name, as its `AGENTS.md` does. A second
   `--setting-sources` through `extraArgs` comes after Paseo's and wins (run on 2.1.280), and would cut all of it,
