@@ -192,6 +192,7 @@ A call as an agent's tool server sends it, the answer read back.
 | `status`, `record` and `diff` called with no scope named, then with another scope's name | The caller's own scope as the record has it, its history, and its change against its parent's branch; then the other's |
 | `look` at an agent, and at the last two things in its history | What it was told, thought and said, newest last; no more of them than asked for, and the newest |
 | `diff` of a scope that is not open                          | Said so, by its name                                       |
+| `diff` of a change that is none                             | Said so, naming both ends and the paths it was read under, never an empty answer |
 | `record` of each scope, after any run of commands             | What the whole log says of that scope, read from the events filed under it alone |
 | A read whose arguments do not fit: `look` with no actor, or asking for more turns than it gives; a scope that is no name | Refused, saying which argument; nothing is read |
 | Every tool an agent may be shown                            | Each of its arguments says what it is, at every depth; a line's own fields are said once, by each tool that takes lines |
@@ -274,6 +275,7 @@ A call as an agent's tool server sends it, the answer read back.
 | The Human removes a project while a file of theirs lies where its map would be left | Refused, naming the file; nothing written, the note still there      |
 | An agent is seated                                                                | Its first words point at each doc its profile lists, and at nothing the plugin writes |
 | An agent is seated                                                                | Its first words say that nothing sent to it arrives while its turn runs, and that it waits by ending the turn |
+| An agent with skills is seated                                                    | Its standing instructions list each skill by the file to read, and say that none is a tool to call |
 | A removal that stops part way, such as an archive that throws                     | The project stays attached, its note back; its agents archived meanwhile recorded gone |
 | The Human removes a project whose repository is gone, while one of its agents holds the machine | It leaves memory, and every other project's work that waited starts |
 | The Human removes a project                                                       | Its agents archived, every branch made for it and its note gone, its record kept aside; offered to attach again |

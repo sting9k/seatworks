@@ -9,7 +9,9 @@ export function systemPromptFor(bundle: Bundle, actor: Actor, rules: string | nu
   const skills = bundle.skills.get(actor.role) ?? [];
   const list = skills.map((s) => `- \`${s.name}\`: ${s.description} Read ${s.path} when it applies.`).join("\n");
   const flow = bundle.flow?.trimEnd();
-  const parts = [prompt, flow, list && `## Skills\n\n${list}`, rules && `## The Human's rules\n\n${rules}`];
+  // An agent with a skill tool of its own asks it for these first, and is told there is no such skill.
+  const read = "Each is a file to read when it applies, not a tool to call.";
+  const parts = [prompt, flow, list && `## Skills\n\n${read}\n\n${list}`, rules && `## The Human's rules\n\n${rules}`];
   return `${parts.filter(Boolean).join("\n\n")}\n`;
 }
 

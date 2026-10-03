@@ -204,6 +204,11 @@ test("a scope's change is read against where it started, and under its own paths
     (await ws.fileDiffs(start, tip, ["src/a/"])).map((file) => file.path),
     ["src/a/one.txt"],
   );
+  assert.equal(
+    await ws.diff(tip, tip, ["src/a/"]),
+    `Nothing changed between ${tip} and ${tip} under src/a/.`,
+    "a change that is none says so, rather than answer with nothing",
+  );
 });
 
 test("each branch made for a project says how many of its commits the base does not hold: none once merged, all where there is no base", async () => {

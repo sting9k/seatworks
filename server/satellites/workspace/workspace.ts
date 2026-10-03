@@ -186,6 +186,9 @@ export class Workspace {
     const stat = await git(this.repo, ["diff", "--stat", `${base}...${tip}`, "--", ...within]);
     if (stat.code !== 0) return `No diff: ${said(stat)}`;
     const patch = await git(this.repo, ["diff", `${base}...${tip}`, "--", ...within]);
+    // An answer of nothing reads as a tool that failed: a change that is none is said.
+    if (patch.stdout.trim() === "")
+      return `Nothing changed between ${base} and ${tip}${within.length > 0 ? ` under ${within.join(", ")}` : ""}.`;
     const body =
       patch.stdout.length > DIFF_CAP
         ? `${patch.stdout.slice(0, DIFF_CAP)}\n… cut at ${DIFF_CAP} characters; read the files for the rest.`
