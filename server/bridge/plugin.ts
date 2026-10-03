@@ -1094,6 +1094,7 @@ export class Plugin {
     // What a profile gives is read through the runtime, so files taken anew reach every effect that follows.
     const wiring: Wiring = {
       project: id,
+      attached: () => store.began(),
       workspace,
       evidence,
       host: ready.host,

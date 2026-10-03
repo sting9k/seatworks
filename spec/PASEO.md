@@ -103,7 +103,10 @@ from Paseo 0.10.1: the plugin SDK, `@getpaseo/client`, `@getpaseo/protocol`, the
   is empty, and a delivery retried after a lost reply can reach its reader twice.
 - `agents.create` with an `idempotencyKey` goes through Paseo's creation service, which writes the key and a digest of
   the whole request to disk before it starts, so it holds across a daemon restart, for the whole daemon: Seatworks
-  keys a create by its project and its effect's key. The same key with a different
+  keys a create by its log's first command and its effect's key. A project removed and attached again starts a log
+  that counts from 1, under the same project and actor names, while Paseo keeps the first attachment's agents,
+  archived: so that command's id, which no other log has, is in every key and is a label of every agent
+  (`seatworks.attached`). The same key with a different
   request is refused (`agent_request_key_conflict`), and a create in flight when the daemon stopped stays
   `agent_request_outcome_unknown`. The first prompt reads the record as it is, so a retry would differ: the agent host
   first looks for the agent by its labels (`agents.list`, `filter.labels`), before a create and after one that throws.

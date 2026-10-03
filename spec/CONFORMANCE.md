@@ -426,6 +426,7 @@ What the plugin reads of a profile that a template adds (`TEMPLATE.md`).
 | A role taken out of the installed template and the project synced while an agent sits in it; the template gains a role | The project runs on; a tool the agent calls is refused, saying its role is gone from the profile, and it still reads the record; `stuck` names its seat; the kernel seats the role gained |
 | Sync when the template is no longer installed, or the installed one does not load | Refused, saying which; the project runs on as it was |
 | A template removed from the machine; a name not installed, such as a path out of the profiles | No project is attached with it after; a project that runs it goes on, the plugin started again too; the second is refused |
+| A project removed, then attached again                      | Its root is seated with an agent of its own: what Paseo keeps of the first attachment, archived under the same project and actor names, is never taken for it |
 | A project attached again under another template's name      | It runs the one it was first attached with                          |
 | A project's own copy changed by hand                        | Said on its page; when the project is next opened the record takes the hash of the files loaded; Sync puts the installed files back |
 | A profile that names the file of its questions; and one that names none while a `reflex.yaml` lies in its directory | The questions are read from the file named; the second asks nothing |

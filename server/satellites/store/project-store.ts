@@ -110,6 +110,14 @@ export class ProjectStore {
     return (this.lastSeq.get() as { seq: number }).seq;
   }
 
+  /** The id of the command that began the log: what no other log has, though the same project is attached again. */
+  began(): string {
+    const first = this.db.prepare("SELECT command_id FROM events WHERE seq = 1").get() as
+      { command_id: string } | undefined;
+    if (!first) throw new Error("the log holds no event yet");
+    return first.command_id;
+  }
+
   /** The events a command appended before, for answering a retried command with its earlier result. */
   commandEvents(commandId: string): Event[] {
     return this.byCommand.all(commandId).map(toEvent);

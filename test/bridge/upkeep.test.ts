@@ -189,6 +189,33 @@ test("the Human attaches a Paseo project, clears what a dropped task left, and r
   supervisor.close();
 });
 
+test("a project removed and attached again gets agents of its own: what Paseo keeps of the first attachment, under the same names, is never taken for them", async () => {
+  const repo = repoWith("again");
+  const plugin = new Plugin(stateRoot());
+  plugins.push(plugin);
+  const paseo = fakePaseo(pluginDir);
+  plugin.saw(paseo.api);
+  await plugin.whenReady();
+  const { project } = await plugin.openProject(repo, "main");
+  await plugin.idle();
+  const first = paseo.created[0]!;
+  const whole = (await plugin.leftovers()).find((left) => left.kind === "project")!;
+  const removed = await plugin.clean([whole.id]);
+  assert.ok(removed[0]?.ok, removed[0]?.text);
+  assert.ok(paseo.archived.includes(first.host), "Paseo keeps the first attachment's agent, archived");
+
+  const again = await plugin.openProject(repo, "main");
+  await plugin.idle();
+  assert.equal(again.project, project, "the same repository is the same project");
+  const second = paseo.created[1];
+  const stuck = (await plugin.view(project))?.stuck ?? [];
+  assert.ok(second, `no agent was made for the second attachment: ${stuck.join("; ")}`);
+  const named = (agent: typeof first) => [agent.labels["seatworks.actor"], agent.labels["seatworks.scope"]];
+  assert.deepEqual(named(second), named(first), "its log counts from the start again, so its seat has the same names");
+  assert.equal(paseo.archived.includes(second.host), false, "and the seat has an agent of its own, at work");
+  assert.deepEqual(stuck, []);
+});
+
 function repoWith(name: string) {
   const repo = realpathSync(mkdtempSync(join(tmpdir(), `sw-${name}-`)));
   git(repo, "init", "-q", "-b", "main");

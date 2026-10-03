@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import type { CommandBody } from "../../shared/contracts/commands.ts";
-import { ACTOR_LABEL, PROJECT_LABEL, ROOT } from "../../shared/contracts/ids.ts";
+import { ACTOR_LABEL, ATTACHED_LABEL, PROJECT_LABEL, ROOT } from "../../shared/contracts/ids.ts";
 import type { Scope } from "../../shared/contracts/ledger.ts";
 import type { State } from "../../shared/kernel/state.ts";
 import type { Keys } from "../core/keys.ts";
@@ -20,6 +20,8 @@ import type { Handled, Handlers } from "./dispatcher.ts";
 
 export type Wiring = {
   readonly project: string;
+  /** What names this attachment of the project among all Paseo keeps: its log's first command. */
+  readonly attached: () => string;
   readonly workspace: Workspace;
   readonly evidence: EvidenceRunner;
   readonly host: PaseoHost;
@@ -119,7 +121,7 @@ export function handlersFor(w: Wiring): Handlers {
       if (lane.id !== scope.id || (await w.workspace.treeOf(branch)) !== null) return ready(branch);
       const exists = (await w.workspace.headOf(`refs/heads/${branch}`)) !== null;
       const made = await w.host.openWorktree({
-        key: `${w.project}:${key}`,
+        key: `${w.attached()}:${key}`,
         projectRoot: w.workspace.repo,
         title: scope.brief?.goal.text ?? `${scope.id} · ${scope.role}`,
         slug: branch.replaceAll("/", "-"),
@@ -166,8 +168,8 @@ export function handlersFor(w: Wiring): Handlers {
       const own = ownOf(w.own);
       if (!own.ok) return { status: "failed", why: own.says, facts: [gone(actor.id, own.says)] };
       const created = await w.host.create({
-        // Paseo keeps a keyed create for the whole daemon, and every project's log counts from 1.
-        key: `${w.project}:${key}`,
+        // Paseo keeps a keyed create for the whole daemon, and every log counts from 1: a project attached again too.
+        key: `${w.attached()}:${key}`,
         // Its first words go under the effect's own key, as every delivery does: that is how they are known as ours.
         promptId: `${key}:prompt`,
         title: `${actor.scope} · ${actor.role}`,
@@ -190,7 +192,12 @@ export function handlersFor(w: Wiring): Handlers {
           env: { ...env, ELECTRON_RUN_AS_NODE: "1" },
           names: [...role.tools, "status", "record", "diff", "look"].filter((t, i, all) => all.indexOf(t) === i),
         },
-        labels: { [PROJECT_LABEL]: w.project, [ACTOR_LABEL]: actor.id, "seatworks.scope": actor.scope },
+        labels: {
+          [PROJECT_LABEL]: w.project,
+          [ATTACHED_LABEL]: w.attached(),
+          [ACTOR_LABEL]: actor.id,
+          "seatworks.scope": actor.scope,
+        },
         writes: role.writes,
         gitDir: await w.workspace.gitDir(),
         servers: given.grants,
@@ -206,7 +213,8 @@ export function handlersFor(w: Wiring): Handlers {
 
     "agent.archive": async (e) => {
       // With no agent on the record, one may still be there: made while its seat was ending, and found by its labels.
-      const made = e.host === null ? await w.host.labelled({ [PROJECT_LABEL]: w.project, [ACTOR_LABEL]: e.actor }) : [];
+      const made =
+        e.host === null ? await w.host.labelled({ [ATTACHED_LABEL]: w.attached(), [ACTOR_LABEL]: e.actor }) : [];
       if ("unavailable" in made) return WAIT;
       const hosts = e.host === null ? made.map((agent) => agent.host) : [e.host];
       if (hosts.length === 0) return { status: "dropped", why: "it never started" };
