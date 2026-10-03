@@ -128,6 +128,7 @@ Everything through Paseo; no config directory of Seatworks' own, so the Human's 
 | Team tools          | `mcpServers` and `toolPolicy`                                                                 |
 | No prompts          | `modeId: bypassPermissions`; deny rules still win                                             |
 | No sleep in a turn  | `permissions.deny`: `ScheduleWakeup`. Paseo keeps the turn open while the agent sleeps, and mail waits for a turn's end |
+| Its template's skills | `permissions.deny`: `Skill`. Claude Code's own skill tool knows the Human's skills and none of a template's, and a name in both loads the Human's |
 | Mail into a turn    | `providerOptions.extraArgs`: `plugin-dir`, the plugin's own `harness/claude`, a Claude Code plugin whose one hook runs at `PostToolBatch` |
 | Writer              | `providerOptions.sandbox`: `enabled`, `failIfUnavailable`, `allowUnsandboxedCommands: false`   |
 | Context             | Claude reads `AGENTS.md` itself since 2.1.277: V1's CLAUDE.md import goes                     |
@@ -290,6 +291,11 @@ Paseo made (`PASEO.md`, Seen on a live daemon):
   commit's own file to show two of them. The method held on both agents; what a review finds is its model's.
   A Claude agent asked its own `Skill` tool for the skill first and was told there was none, so the list of skills
   now says each is a file to read.
+- **Skills.** A skill listed only in an agent's standing instructions went unread: a Peer given a screen read its
+  brief and built. A Peer given a question asked Claude Code's `Skill` tool for `research` and was handed the Human's
+  own skill of that name, from their home, in place of the template's. With that tool denied, and an agent's first
+  words ending in the names of its skills to read before it starts, the Peer on Claude Code read `research` and
+  `frontend-design` and the Peer on Pi `design-note`, and each note came back in the form its skill gives.
 - **Waiting.** Told only that it would be told of an outcome, an agent stayed in its turn, where nothing reaches it
   (`COMMUNICATION.md`, When a reader is woken). With the first words that say how it waits, a Lead did a lane in
   five calls.

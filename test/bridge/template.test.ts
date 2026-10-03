@@ -96,7 +96,7 @@ test("a profile with a flow and docs of its own: every agent reads the flow afte
   const first = paseo.created[0]!;
   assert.match(
     first.systemPrompt,
-    /# Supervisor[\s\S]*# The team's flow\n\n1\. \*\*Plan\*\* \(lead\)\. Then: Work\.\n\n## Skills\n\nEach is a file to read when it applies, not a tool to call\.\n\n- /,
+    /# Supervisor[\s\S]*# The team's flow\n\n1\. \*\*Plan\*\* \(lead\)\. Then: Work\.\n\n## Skills\n\nEach is a file, not a tool\. Before you start a task, read the ones whose description fits it: they hold how this team does that kind of work\.\n\n- /,
   );
   assert.match(
     first.prompt,

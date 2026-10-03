@@ -5,7 +5,7 @@
       "extraArgs": { "plugin-dir": "{plugin}/harness/claude" },
       "settings": {
         "permissions": {
-          "deny": ["Agent", "Workflow", "AskUserQuestion", "ScheduleWakeup", "mcp__paseo", "Bash(paseo *)"]
+          "deny": ["Agent", "Workflow", "AskUserQuestion", "ScheduleWakeup", "Skill", "mcp__paseo", "Bash(paseo *)"]
         }
       }
     }

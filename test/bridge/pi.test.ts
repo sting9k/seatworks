@@ -193,6 +193,12 @@ test("a Claude agent is made without the tool that parks a turn until a time it 
   assert.ok(denied.includes("ScheduleWakeup"), denied.join(", "));
 });
 
+test("a Claude agent is made without Claude Code's own skill tool: it knows the Human's skills and none of its template's", async () => {
+  const { paseo } = await openedOn("claude");
+  const denied = (paseo.created[0]!.config.options?.settings as { permissions: { deny: string[] } }).permissions.deny;
+  assert.ok(denied.includes("Skill"), denied.join(", "));
+});
+
 test("a permission asked while the plugin was down is on the record once it starts, and once only", async () => {
   const { plugin, paseo, root } = await openedOn("claude");
   const project = plugin.projects()[0]!.id;

@@ -9,8 +9,9 @@ export function systemPromptFor(bundle: Bundle, actor: Actor, rules: string | nu
   const skills = bundle.skills.get(actor.role) ?? [];
   const list = skills.map((s) => `- \`${s.name}\`: ${s.description} Read ${s.path} when it applies.`).join("\n");
   const flow = bundle.flow?.trimEnd();
-  // An agent with a skill tool of its own asks it for these first, and is told there is no such skill.
-  const read = "Each is a file to read when it applies, not a tool to call.";
+  // Left to itself an agent starts on the task and reads none; one with a skill tool of its own asks that instead.
+  const read =
+    "Each is a file, not a tool. Before you start a task, read the ones whose description fits it: they hold how this team does that kind of work.";
   const parts = [prompt, flow, list && `## Skills\n\n${read}\n\n${list}`, rules && `## The Human's rules\n\n${rules}`];
   return `${parts.filter(Boolean).join("\n\n")}\n`;
 }
@@ -31,6 +32,7 @@ export function firstPrompt(
   reseated: boolean,
   docs: readonly string[],
   intoTurn: boolean,
+  skills: readonly string[],
 ): string {
   const status = statusText(state, actor.scope, actor.id) ?? `Scope ${actor.scope}`;
   const lead = reseated
@@ -40,5 +42,10 @@ export function firstPrompt(
     docs.length > 0
       ? `\n\nThe project's docs in your copy: ${docs.map((d) => `\`${d}\``).join(", ")}. One that is not there holds nothing yet.`
       : "";
-  return `${lead} You are ${actor.id}.${read}\n\n${intoTurn ? ARRIVES.between : ARRIVES.atEnd} ${WAITS}\n\n${status}`;
+  // Last, where it is read just before the work begins: a skill named only in the standing instructions goes unread.
+  const first =
+    skills.length > 0
+      ? `\n\nBefore you start, read each of your skills that fits this: ${skills.map((s) => `\`${s}\``).join(", ")}. Each is a file your standing instructions point at.`
+      : "";
+  return `${lead} You are ${actor.id}.${read}\n\n${intoTurn ? ARRIVES.between : ARRIVES.atEnd} ${WAITS}\n\n${status}${first}`;
 }

@@ -260,6 +260,7 @@ export function handlersFor(w: Wiring): Handlers {
           [...state.actors.values()].some((a) => a.scope === actor.scope && a.id !== actor.id),
           w.bundle.project?.docs ?? [],
           w.bundle.intoTurn !== null,
+          (w.bundle.skills.get(actor.role) ?? []).map((skill) => skill.name),
         ),
         env: agentEnv(w, env),
         tools: {
