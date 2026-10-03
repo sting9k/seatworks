@@ -127,25 +127,41 @@ const TemplateOfferSchema = z.object({
 });
 export type TemplateOffer = z.infer<typeof TemplateOfferSchema>;
 
+/** A name a profile's roles give: the roles that name it, the Human's profile it runs on, and what that profile runs. */
+const AgentSchema = z.object({
+  name: z.string(),
+  roles: z.array(z.string()),
+  runsOn: z.string(),
+  there: z.boolean(),
+  provider: z.string().nullable(),
+  model: z.string().nullable(),
+  effort: z.string().nullable(),
+});
+
 /** A profile's agent profiles as they stand on this machine (`server/profile/agents.ts`). */
 const ProfileAgentsSchema = z.object({
   name: z.string(),
   title: z.string(),
   problem: z.string().nullable(),
-  /** Each name its roles give: the roles that name it, the Human's profile it runs on, and what that profile runs. */
-  agents: z.array(
-    z.object({
-      name: z.string(),
-      roles: z.array(z.string()),
-      runsOn: z.string(),
-      there: z.boolean(),
-      provider: z.string().nullable(),
-      model: z.string().nullable(),
-      effort: z.string().nullable(),
-    }),
-  ),
+  agents: z.array(AgentSchema),
 });
 export type ProfileAgents = z.infer<typeof ProfileAgentsSchema>;
+
+const named = z.string().min(1);
+/** With none for an effort, the model's own. */
+const effort = named.nullable();
+
+/** What a project runs in place of a profile of the Human's: an effort, a model with its effort, or a provider with both. */
+export const OwnRunsSchema = z.union([
+  z.object({ provider: named, model: named, effort }).strict(),
+  z.object({ model: named, effort }).strict(),
+  z.object({ effort }).strict(),
+]);
+export type OwnRuns = z.infer<typeof OwnRunsSchema>;
+
+/** A name of a project's template as the project runs it: the Human's profile, and the project's own over it. */
+const ProjectAgentSchema = AgentSchema.extend({ own: OwnRunsSchema.nullable() });
+export type ProjectAgent = z.infer<typeof ProjectAgentSchema>;
 
 /** A model a provider has: the efforts it may think at, and the one it starts on. */
 const ProviderModelSchema = z.object({
@@ -354,6 +370,21 @@ export const RPC = {
       effort: z.string().min(1).optional(),
     }),
     output: z.object({ ok: z.boolean(), text: z.string() }),
+  },
+  /** What each name of a project's template runs in that project; with `own`, one name's own is kept first. */
+  projectAgents: {
+    name: "seatworks.project_agents",
+    input: z.object({
+      project: z.string().min(1),
+      /** With no runs, the name runs the Human's profile again. */
+      own: z.object({ agent: z.string().min(1), runs: OwnRunsSchema.nullable() }).optional(),
+    }),
+    output: z.object({
+      ok: z.boolean(),
+      text: z.string(),
+      agents: z.array(ProjectAgentSchema),
+      providers: z.array(z.string()),
+    }),
   },
   checkUpdate: {
     name: "seatworks.check_update",

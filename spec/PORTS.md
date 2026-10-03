@@ -38,7 +38,7 @@ takes from Paseo, and how it survives Paseo's releases, is in `PASEO.md`.
 
 ```text
 create(spec) -> Result<agentId>
-  spec: { name, agent, model, thinking, systemPrompt, tools, servers, cwd, env, labels, sandbox }
+  spec: { name, agent, model, thinking, systemPrompt, tools, servers, cwd, env, labels, sandbox, runs }
 send(agentId, text, key) -> Result<sent | duplicate>
 stream(agentId) -> events: turn_started, turn_ended(done | failed(why) | cancelled), said, thought, tool_call,
                           usage(tokens, cost), permission_requested, gone(why)
@@ -55,6 +55,9 @@ shapeProfile(name, { provider, model, effort? }) -> Result  // what that one pro
 
 - An agent profile that names no model makes no agent, and the host says which profile it is: Paseo's own refusal
   names a format, which nobody can act on.
+- `runs` is what this one agent runs in place of what its profile runs: a provider, a model, an effort, each left
+  out where the profile's stands. The host is told it and asks nobody whose it is (`TEMPLATE.md`, Agent profiles on
+  a machine).
 - `sandbox` is built from role properties (`writes`, `reading`), never from a role's name. Each agent's own format
   lives in `agent-host/harness/<agent>/`.
 - A prompt and a tool set are fixed when an agent is created: a change of either is a new agent.
@@ -163,7 +166,8 @@ upkeep: attach(repository, profile), folderAt(dir), gitOffer(dir), setUpGit(dir)
         createRemote(project, visibility), profiles, presets,
         templateOffer(from), installTemplate(from, hash),
         removeTemplate(name), syncTemplate(project), agents(match), models(provider),
-        createAgents(profile, provider, model, effort), shapeAgent(agent, provider, model, effort), leftovers,
+        createAgents(profile, provider, model, effort), shapeAgent(agent, provider, model, effort),
+        projectAgents(project, own), leftovers,
         clean(picked), checkUpdate
 ```
 

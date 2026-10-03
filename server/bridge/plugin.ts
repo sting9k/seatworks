@@ -31,8 +31,10 @@ import {
 import type {
   HumanView,
   Leftover,
+  OwnRuns,
   Preset,
   ProfileAgents,
+  ProjectAgent,
   ProjectTemplate,
   TemplateOffer,
   TemplateSource,
@@ -62,7 +64,16 @@ import { git } from "../satellites/workspace/git.ts";
 import { createOnGitHub, githubLogin, publishedAt, remotesOf } from "../satellites/workspace/forge.ts";
 import { commitAll, firstCommitOf, type GitState, gitStateOf } from "../satellites/workspace/setup.ts";
 import { Workspace } from "../satellites/workspace/workspace.ts";
-import { agentsByProfile, lacking, match, type Matching, matchingFile } from "../profile/agents.ts";
+import {
+  agentsByProfile,
+  agentsOf,
+  lacking,
+  match,
+  type Matching,
+  matchingFile,
+  matchingOf,
+} from "../profile/agents.ts";
+import { keepOwn, laidOver, ownFile, ownOf } from "../profile/own-runs.ts";
 import { type Bundle, loadBundle } from "../profile/bundle.ts";
 import { install, offerOf } from "../profile/install.ts";
 import { pin, pinnedDir, templateOf } from "../profile/pinned.ts";
@@ -385,6 +396,49 @@ export class Plugin {
     const shaped = await host.shapeProfile(agent, runs);
     if ("unavailable" in shaped) return { ok: false, says: UNREACHED };
     return "failed" in shaped ? { ok: false, says: shaped.failed } : { ok: true };
+  }
+
+  /** What each name of a project's template runs in it: the Human's profile, and the project's own, kept first when given. */
+  async projectAgents(
+    project: string,
+    own: { readonly agent: string; readonly runs: OwnRuns | null } | null,
+  ): Promise<
+    { ok: true; agents: ProjectAgent[]; providers: string[]; problem: string | null } | { ok: false; says: string }
+  > {
+    const ready = await this.whenReady();
+    const dir = projectDir(this.root, project);
+    if (!existsSync(join(dir, "project.json"))) return { ok: false, says: `no project ${project} is attached` };
+    const runtime = this.runtimes.get(project) ?? this.open(project, ready);
+    const [has, providers] = await Promise.all([ready.host.agentProfiles(), ready.host.providers()]);
+    if ("unavailable" in has || "unavailable" in providers) return { ok: false, says: UNREACHED };
+    const matched = matchingOf(runtime.wiring.agents);
+    const agents = agentsOf(runtime.loaded.bundle, matched.ok ? matched.matching : {}, has);
+    if (own !== null) {
+      const named = agents.find((agent) => agent.name === own.agent);
+      if (!named) return { ok: false, says: `${own.agent} is not an agent profile this project's template names` };
+      if (own.runs !== null) {
+        const { provider, model, effort } = laidOver(named, own.runs);
+        if (provider === null)
+          return { ok: false, says: `Paseo has no agent profile named ${named.runsOn} to run ${own.agent} on` };
+        if (model === null)
+          return {
+            ok: false,
+            says: `the Paseo agent profile ${named.runsOn} names no model: pick one with the effort`,
+          };
+        if (provider !== named.provider && !providers.includes(provider))
+          return { ok: false, says: `Paseo finds no provider named ${provider} on this machine` };
+        const unfit = await this.unfit({ provider, model, effort });
+        if (unfit !== null) return { ok: false, says: unfit };
+      }
+      keepOwn(runtime.wiring.own, own.agent, own.runs);
+    }
+    const kept = ownOf(runtime.wiring.own);
+    return {
+      ok: true,
+      agents: agents.map((agent) => ({ ...agent, own: kept.ok ? (kept.own[agent.name] ?? null) : null })),
+      providers: [...providers],
+      problem: kept.ok ? (matched.ok ? null : matched.says) : kept.says,
+    };
   }
 
   /** The profile a repository would be attached with: the one named, or the only one installed; null once attached. */
@@ -1021,6 +1075,7 @@ export class Plugin {
       scratch,
       rules: rulesDir(this.root, profile),
       agents: matchingFile(this.root, profile),
+      own: ownFile(dir),
       checkTimeoutMs: CHECK_TIMEOUT_MS,
       recorded: (scope) => store.about(scope),
     };

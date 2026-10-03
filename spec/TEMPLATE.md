@@ -400,6 +400,17 @@ agent profile the Human already has, for every profile installed.
   keeps the name the profile gives, so a log reads the same on every machine.
 - **A matching is refused whole** when it names a profile nobody installed, a name the profile's roles do not give, or
   an agent profile Paseo does not have. Nothing is kept of one refused.
+- **What the Human's profile runs is the default, and a project may run a name its own way.** One project wants its
+  work done at a high effort and another at a low one, or on another provider, and one profile in Paseo cannot be
+  both. So a project keeps, for a name its template gives, what it runs in place of the Human's profile: an effort,
+  a model with its effort, or a provider with both, since a model is one provider's and an effort one model's. What
+  it leaves out is the profile's. It is kept with the project, in `agents.json` under its folder in the state root,
+  and is read when an agent is made, so it holds for agents seated from then on, in that project alone; nothing is
+  written in Paseo, and taking it away runs the Human's profile again. On another provider the profile's mode and
+  feature values name nothing and are left out. It is refused, and nothing kept, for a name the project's template
+  does not give, a profile Paseo lacks, a provider Paseo does not find, a model the provider lacks or an effort the
+  model lacks. A file of it that does not read seats no agent and says so on the seat and the page, as a matching
+  does; picked again, it is written anew.
 - **What goes wrong later is said, and stops one seat only.** A name matched to an agent profile the Human has since
   removed, or a matching whose file no longer reads, leaves that agent not seated with the reason on its seat, as a
   missing agent profile always did; the page says the same. Matched again, the seat is taken by a reseat. Nothing

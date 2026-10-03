@@ -340,6 +340,141 @@ test("the provider an agent profile runs on is changed from the page, to one Pas
   assert.equal(paseo.patches.length, 2, "what is refused writes nothing");
 });
 
+/** Seats the root of a project anew and gives back the agent Paseo made for it. */
+async function reseated(plugin: Plugin, paseo: ReturnType<typeof fakePaseo>, project: string) {
+  const again = await plugin.human(project, {
+    type: "reseat",
+    scope: "root",
+    reason: "to run what is set",
+    model: null,
+  });
+  assert.ok(again.ok, again.ok ? "" : again.refused.says);
+  await plugin.idle();
+  return paseo.created.at(-1)!;
+}
+
+/** What the page is shown of one name in a project. */
+async function inProject(plugin: Plugin, project: string, name: string) {
+  const read = await plugin.projectAgents(project, null);
+  assert.ok(read.ok, read.ok ? "" : read.says);
+  return read.agents.find((agent) => agent.name === name);
+}
+
+test("a project runs an agent profile's name at its own effort, or on its own provider and model: its agents are made so from then on, and no other project's are", async () => {
+  const { plugin, paseo } = await started();
+  paseo.providers.set("codex", [{ id: "gpt", label: "GPT", isDefault: true }]);
+  Object.assign(
+    paseo.held.find((profile) => profile.name === "slp-supervisor")!,
+    {
+      model: "sonnet",
+      thinkingOptionId: "low",
+      featureValues: { fast: true },
+    },
+  );
+  const one = (await plugin.openProject(repository(), "main")).project;
+  const other = (await plugin.openProject(repository(), "main")).project;
+  await plugin.idle();
+  assert.deepEqual(await inProject(plugin, one, "slp-supervisor"), {
+    name: "slp-supervisor",
+    roles: ["supervisor"],
+    runsOn: "slp-supervisor",
+    there: true,
+    provider: "claude",
+    model: "sonnet",
+    effort: "low",
+    own: null,
+  });
+
+  const effort = await plugin.projectAgents(one, { agent: "slp-supervisor", runs: { effort: "high" } });
+  assert.ok(effort.ok, effort.ok ? "" : effort.says);
+  assert.deepEqual((await inProject(plugin, one, "slp-supervisor"))?.own, { effort: "high" });
+  const harder = await reseated(plugin, paseo, one);
+  assert.deepEqual(
+    [harder.provider, harder.config.thinkingOptionId, harder.config.featureValues],
+    ["claude/sonnet", "high", { fast: true }],
+    "the effort is the project's, and the rest of the Human's profile stays",
+  );
+  const theirs = await reseated(plugin, paseo, other);
+  assert.deepEqual(
+    [theirs.provider, theirs.config.thinkingOptionId, (await inProject(plugin, other, "slp-supervisor"))?.own],
+    ["claude/sonnet", "low", null],
+    "another project runs the Human's profile as it is",
+  );
+  assert.equal(
+    paseo.held.find((profile) => profile.name === "slp-supervisor")?.thinkingOptionId,
+    "low",
+    "and nothing is written in Paseo",
+  );
+
+  const moved = await plugin.projectAgents(one, {
+    agent: "slp-supervisor",
+    runs: { provider: "codex", model: "gpt", effort: null },
+  });
+  assert.ok(moved.ok, moved.ok ? "" : moved.says);
+  const elsewhere = await reseated(plugin, paseo, one);
+  assert.deepEqual(
+    [elsewhere.provider, elsewhere.config.thinkingOptionId, elsewhere.config.featureValues],
+    ["codex/gpt", undefined, undefined],
+    "on another provider the feature values of the Human's profile name nothing, and go",
+  );
+
+  const back = await plugin.projectAgents(one, { agent: "slp-supervisor", runs: null });
+  assert.ok(back.ok, back.ok ? "" : back.says);
+  assert.equal((await inProject(plugin, one, "slp-supervisor"))?.own, null);
+  const again = await reseated(plugin, paseo, one);
+  assert.deepEqual([again.provider, again.config.thinkingOptionId], ["claude/sonnet", "low"]);
+});
+
+test("a project's own is refused for a name its template does not give, a profile Paseo lacks, a provider Paseo does not find, a model or an effort that is not the provider's: nothing is kept", async () => {
+  const { plugin, root, paseo } = await started();
+  Object.assign(
+    paseo.held.find((profile) => profile.name === "slp-lead")!,
+    { model: "sonnet" },
+  );
+  const { project } = await plugin.openProject(repository(), "main");
+  await plugin.idle();
+
+  for (const [agent, runs, says] of [
+    ["night-owl", { effort: "high" }, /night-owl is not an agent profile this project's template names/],
+    ["slp-peer-alt", { effort: "high" }, /Paseo has no agent profile named slp-peer-alt/],
+    ["slp-lead", { provider: "not-installed", model: "sonnet", effort: null }, /finds no provider named not-installed/],
+    ["slp-lead", { model: "gpt-9", effort: null }, /claude has no model named gpt-9/],
+    ["slp-lead", { effort: "max" }, /sonnet has no effort named max/],
+  ] as const) {
+    const refused = await plugin.projectAgents(project, { agent, runs });
+    assert.ok(!refused.ok, `${agent} ${JSON.stringify(runs)}`);
+    assert.match(refused.says, says);
+  }
+  assert.equal(existsSync(join(root, "projects", project, "agents.json")), false);
+  assert.equal((await plugin.projectAgents("nowhere", null)).ok, false, "nor is one read of a project not attached");
+});
+
+test("what a project keeps of its own that does not read seats no agent and says why, on the page and on the seat; picked again, the seat is taken", async () => {
+  const { plugin, root, paseo } = await started();
+  Object.assign(
+    paseo.held.find((profile) => profile.name === "slp-supervisor")!,
+    { model: "sonnet" },
+  );
+  const { project } = await plugin.openProject(repository(), "main");
+  await plugin.idle();
+  writeFileSync(join(root, "projects", project, "agents.json"), "{ not its own");
+
+  const read = await plugin.projectAgents(project, null);
+  assert.ok(read.ok, read.ok ? "" : read.says);
+  assert.match(read.problem ?? "", /does not read: pick it again/);
+  const made = paseo.created.length;
+  const again = await plugin.human(project, { type: "reseat", scope: "root", reason: "anew", model: null });
+  assert.ok(again.ok, again.ok ? "" : again.refused.says);
+  await plugin.idle();
+  assert.equal(paseo.created.length, made, "no agent is made from a file nobody can read");
+  assert.match(JSON.stringify(await plugin.view(project)), /does not read: pick it again/);
+
+  const picked = await plugin.projectAgents(project, { agent: "slp-supervisor", runs: { effort: "high" } });
+  assert.ok(picked.ok, picked.ok ? "" : picked.says);
+  assert.equal(picked.problem, null);
+  assert.equal((await reseated(plugin, paseo, project)).config.thinkingOptionId, "high");
+});
+
 test("an agent profile that names no model seats no agent, and the seat says which profile needs one", async () => {
   const { plugin, paseo } = await started();
   paseo.held.splice(0, paseo.held.length, { id: "slp-supervisor", name: "slp-supervisor", provider: "claude" });

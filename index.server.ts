@@ -175,6 +175,13 @@ export default function contribute(server: PluginServerContext) {
       ? { ok: true, text: `${agent} runs ${provider}/${model}${input.effort ? `, ${input.effort}` : ""}.` }
       : { ok: false, text: `Not changed: ${shaped.says}.` };
   });
+  server.handle(RPC.projectAgents, async (input, { paseo }) => {
+    plugin.saw(paseo);
+    const read = await plugin.projectAgents(input.project, input.own ?? null);
+    return read.ok
+      ? { ok: true, text: read.problem ?? "", agents: read.agents, providers: read.providers }
+      : { ok: false, text: `${input.own ? "Not kept" : "Not read"}: ${read.says}.`, agents: [], providers: [] };
+  });
   server.handle(RPC.checkUpdate, () => checkUpdate(PLUGIN_ID));
   server.handle(RPC.view, async (input, { paseo }) => {
     plugin.saw(paseo);

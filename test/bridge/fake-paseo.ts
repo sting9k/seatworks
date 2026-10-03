@@ -21,8 +21,13 @@ type Created = {
   servers: Record<string, Record<string, unknown>>;
   approved: string[];
   labels: Record<string, string>;
-  /** The whole config the agent was made with, for what a harness file adds: its mode and its provider's options. */
-  config: { modeId?: string; options?: Record<string, unknown> };
+  /** The whole config the agent was made with: its mode, how hard it thinks, its feature values, its provider's options. */
+  config: {
+    modeId?: string;
+    thinkingOptionId?: string;
+    featureValues?: Record<string, unknown>;
+    options?: Record<string, unknown>;
+  };
 };
 
 /** The providers Paseo hands MCP servers and pre-approves exact tools for, as its registry has them at 0.10.3. */
@@ -238,6 +243,8 @@ export function fakePaseo(
           provider: string;
           systemPrompt: string;
           modeId?: string;
+          thinkingOptionId?: string;
+          featureValues?: Record<string, unknown>;
           options?: Record<string, unknown>;
           toolPolicy?: { preapproved: { server: string; tool: string }[] };
           mcpServers?: Record<string, { env?: Record<string, string> } & Record<string, unknown>>;
@@ -280,7 +287,12 @@ export function fakePaseo(
           servers: o.config.mcpServers ?? {},
           approved: (o.config.toolPolicy?.preapproved ?? []).map((p) => `${p.server}.${p.tool}`),
           labels: o.labels,
-          config: { modeId: o.config.modeId, options: o.config.options },
+          config: {
+            modeId: o.config.modeId,
+            thinkingOptionId: o.config.thinkingOptionId,
+            featureValues: o.config.featureValues,
+            options: o.config.options,
+          },
         });
         if (gate.loseReplies > 0) {
           gate.loseReplies--;

@@ -6,6 +6,7 @@ import type { State } from "../../shared/kernel/state.ts";
 import type { Keys } from "../core/keys.ts";
 import { humanRules } from "../core/rules.ts";
 import { matchingOf, runsOn } from "../profile/agents.ts";
+import { ownOf } from "../profile/own-runs.ts";
 import type { PaseoHost } from "../satellites/agent-host/host.ts";
 import { type Recorded, renderBatch } from "../satellites/delivery/render.ts";
 import type { EvidenceRunner } from "../satellites/evidence/runner.ts";
@@ -38,6 +39,8 @@ export type Wiring = {
   readonly rules: string;
   /** The file of the Human's matching: which of their agent profiles each name the profile gives runs on. */
   readonly agents: string;
+  /** The file of the project's own: what it runs in place of the Human's profile, by the name the profile gives. */
+  readonly own: string;
   readonly checkTimeoutMs: number;
   /** The events on a scope's record, for what a delivery shows of it. */
   readonly recorded: Recorded;
@@ -120,6 +123,8 @@ export function handlersFor(w: Wiring): Handlers {
       const kept = matchingOf(w.agents);
       if (!kept.ok) return { status: "failed", why: kept.says, facts: [gone(actor.id, kept.says)] };
       const profile = runsOn(kept.matching, actor.model);
+      const own = ownOf(w.own);
+      if (!own.ok) return { status: "failed", why: own.says, facts: [gone(actor.id, own.says)] };
       const created = await w.host.create({
         // Paseo keeps a keyed create for the whole daemon, and every project's log counts from 1.
         key: `${w.project}:${key}`,
@@ -127,6 +132,7 @@ export function handlersFor(w: Wiring): Handlers {
         promptId: `${key}:prompt`,
         title: `${actor.scope} · ${actor.role}`,
         profile,
+        runs: own.own[actor.model] ?? {},
         cwd,
         systemPrompt: systemPromptFor(w.bundle, actor, humanRules(w.rules, actor.role)),
         prompt: firstPrompt(

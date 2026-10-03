@@ -13,6 +13,8 @@ export type AgentSpec = {
   readonly promptId: string;
   readonly title: string;
   readonly profile: string;
+  /** What this agent runs in place of what its profile runs; what is left out is the profile's. */
+  readonly runs: Partial<Runs>;
   readonly cwd: string;
   readonly systemPrompt: string;
   readonly prompt: string;
@@ -89,18 +91,23 @@ export class PaseoHost {
     const daemon = await api.config.get();
     const profile = (daemon.config.agentProfiles ?? []).find((p) => p.id === spec.profile || p.name === spec.profile);
     if (!profile) return { failed: `no Paseo agent profile named ${spec.profile}: add one in Paseo's settings` };
+    const provider = spec.runs.provider ?? profile.provider;
+    const model = spec.runs.model ?? profile.model;
     // Paseo makes no agent of a provider alone, and says so in words no Human can act on.
-    if (!profile.model)
+    if (!model)
       return { failed: `the Paseo agent profile ${profile.name} names no model: give it one on Seatworks' page` };
-    const harness = this.harness(profile.provider);
+    const effort = spec.runs.effort === undefined ? profile.thinkingOptionId : spec.runs.effort;
+    const harness = this.harness(provider);
     const outside = spec.servers.map((given) => given.name);
     if (outside.length > 0 && harness?.servers === false)
-      return { failed: `an agent of ${profile.provider} cannot be given the outside server ${outside.join(", ")}` };
+      return { failed: `an agent of ${provider} cannot be given the outside server ${outside.join(", ")}` };
+    // A mode and feature values are one provider's own: on another they name nothing.
+    const kept = provider === profile.provider ? profile : null;
     const base: Json = {
-      provider: profile.model ? `${profile.provider}/${profile.model}` : profile.provider,
-      ...(profile.modeId ? { modeId: profile.modeId } : {}),
-      ...(profile.thinkingOptionId ? { thinkingOptionId: profile.thinkingOptionId } : {}),
-      ...(profile.featureValues ? { featureValues: profile.featureValues } : {}),
+      provider: `${provider}/${model}`,
+      ...(kept?.modeId ? { modeId: kept.modeId } : {}),
+      ...(effort ? { thinkingOptionId: effort } : {}),
+      ...(kept?.featureValues ? { featureValues: kept.featureValues } : {}),
     };
     const added = mergeAll(harness?.always ?? {}, (spec.writes ? harness?.writes : harness?.reads) ?? {});
     const shaped = mergeAll(base, withPlaces(added, { git: spec.gitDir }) as Json);
