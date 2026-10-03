@@ -375,10 +375,15 @@ agent profile the Human already has, for every profile installed.
 - **One matching for a profile, set in one place.** The page lists every profile a project may be attached with, each
   name its roles give, what that name runs on and whether Paseo has it, beside the Human's own agent profiles to pick
   from. A pick is kept at once. Installing takes no matching of its own: a template just installed is in the list.
-- **One pick may stand for every name Paseo has no profile for.** A template of six names would be six picks before
-  a first team is seated. So the page takes one of the Human's own for all that are not matched: each then runs on
-  it, a name matched to a profile Paseo has is kept, and any name is still set by itself after. Where Paseo has no
-  agent profile at all the page says so, since there is nothing to pick.
+- **The names Paseo has no profile for are made in Paseo, on the Human's press.** A Human with no agent profile of
+  their own had six to make by hand in Paseo's settings before SLP's first team could be seated. So the page makes
+  them: an agent profile for each name a template gives that Paseo lacks, under that very name, on a provider the
+  Human picks among those Paseo finds on the machine, and a model if they name one. What a team runs on is the
+  Human's, never the template's: a template gives names and no provider. A profile Paseo holds is never touched,
+  and a name that was matched to a profile since removed stands for the profile of its own name again. It is the
+  one thing the plugin writes in Paseo's config (`PASEO.md`), and nothing is written where nothing is lacking, a
+  provider Paseo does not find is named, or the template is not installed. Each is the Human's to shape in Paseo
+  after: a different model for two of them is often the point.
 - **It is the Human's and their machine's**, so it is kept beside the profiles, in `agents/<profile>.json` under the
   state root, and never in the template. A template's files and hash stay as shared, and one installed again keeps
   the matching of its name.

@@ -65,6 +65,25 @@ export function agentsByProfile(stateRoot: string, has: readonly Has[]): Profile
   });
 }
 
+/** The names a profile's roles give that Paseo has no agent profile for, and its matching with those taken out. */
+export function lacking(
+  stateRoot: string,
+  profile: string,
+  has: readonly Has[],
+): { readonly ok: true; readonly names: readonly string[]; readonly matching: Matching } | Refused {
+  const read = namedIn(stateRoot, profile);
+  if (!read.ok) return read;
+  const kept = matchingOf(matchingFile(stateRoot, profile));
+  // A matching that does not read matches nothing: every name then stands for the profile of its own name.
+  const matching = kept.ok ? kept.matching : {};
+  const names = read.named.filter((agent) => !there(has, runsOn(matching, agent)));
+  return {
+    ok: true,
+    names,
+    matching: Object.fromEntries(Object.entries(matching).filter(([agent]) => !names.includes(agent))),
+  };
+}
+
 /** Keeps the Human's matching for a profile in place of the one before, or refuses it whole and keeps nothing. */
 export function match(
   stateRoot: string,

@@ -131,6 +131,43 @@ export class PaseoHost {
     return ((await api.config.get()).config.agentProfiles ?? []).map(({ id, name }) => ({ id, name }));
   }
 
+  /** The providers Paseo finds on this machine, each one an agent can be started on; none where it cannot say. */
+  async providers(): Promise<readonly string[] | Unavailable> {
+    const api = this.link.current;
+    if (!api) return UNAVAILABLE;
+    try {
+      const found = await api.providers.listAvailable();
+      return found.providers.filter((one) => one.available).map((one) => one.provider);
+    } catch {
+      // Paseo finds its providers lazily and may fail to: what reads beside them, such as a matching, still reads.
+      return [];
+    }
+  }
+
+  /** Adds agent profiles of these names to Paseo on one provider; a name it holds is left as the Human shaped it. */
+  async addProfiles(
+    names: readonly string[],
+    provider: string,
+    model: string | null,
+  ): Promise<{ added: readonly string[] } | { failed: string } | Unavailable> {
+    const api = this.link.current;
+    if (!api) return UNAVAILABLE;
+    const held = (await api.config.get()).config.agentProfiles ?? [];
+    const known = new Set(held.flatMap((profile) => [profile.id, profile.name]));
+    const added = names.filter((name) => !known.has(name));
+    if (added.length === 0) return { added };
+    const made = added.map((name) => ({ id: name, name, provider, ...(model === null ? {} : { model }) }));
+    try {
+      // Paseo takes the list whole and not as a merge, so what it holds goes back with what is added.
+      await api.config.patch({ agentProfiles: [...held, ...made] });
+    } catch (error) {
+      return {
+        failed: `Paseo did not take the agent profiles: ${error instanceof Error ? error.message : String(error)}`,
+      };
+    }
+    return { added };
+  }
+
   /** The agent a create with these labels made, if one did. */
   private async made(
     api: PaseoApi,

@@ -59,7 +59,7 @@ import { type Asker, Classifier } from "../satellites/reflex/classifier.ts";
 import { loadReflex } from "../satellites/reflex/config.ts";
 import { git } from "../satellites/workspace/git.ts";
 import { Workspace } from "../satellites/workspace/workspace.ts";
-import { agentsByProfile, match, type Matching, matchingFile } from "../profile/agents.ts";
+import { agentsByProfile, lacking, match, type Matching, matchingFile } from "../profile/agents.ts";
 import { type Bundle, loadBundle } from "../profile/bundle.ts";
 import { install, offerOf } from "../profile/install.ts";
 import { pin, pinnedDir, templateOf } from "../profile/pinned.ts";
@@ -301,14 +301,45 @@ export class Plugin {
   /** What each profile's agent profiles run on here; with `matched`, that profile's matching is kept first. */
   async agents(
     matched: { readonly profile: string; readonly matching: Matching } | null,
-  ): Promise<{ ok: true; profiles: ProfileAgents[]; available: string[] } | { ok: false; says: string }> {
-    const has = await (await this.whenReady()).host.agentProfiles();
-    if ("unavailable" in has) return { ok: false, says: UNREACHED };
+  ): Promise<
+    { ok: true; profiles: ProfileAgents[]; available: string[]; providers: string[] } | { ok: false; says: string }
+  > {
+    const { host } = await this.whenReady();
+    const [has, providers] = await Promise.all([host.agentProfiles(), host.providers()]);
+    if ("unavailable" in has || "unavailable" in providers) return { ok: false, says: UNREACHED };
     if (matched !== null) {
       const kept = match(this.root, matched.profile, matched.matching, has);
       if (!kept.ok) return kept;
     }
-    return { ok: true, profiles: agentsByProfile(this.root, has), available: has.map((p) => p.name) };
+    return {
+      ok: true,
+      profiles: agentsByProfile(this.root, has),
+      available: has.map((p) => p.name),
+      providers: [...providers],
+    };
+  }
+
+  /** Makes in Paseo, on the Human's word, an agent profile for each name a profile gives that Paseo has none for. */
+  async createAgents(
+    profile: string,
+    provider: string,
+    model: string | null,
+  ): Promise<{ ok: true; made: readonly string[] } | { ok: false; says: string }> {
+    const { host } = await this.whenReady();
+    const [has, providers] = await Promise.all([host.agentProfiles(), host.providers()]);
+    if ("unavailable" in has || "unavailable" in providers) return { ok: false, says: UNREACHED };
+    const lacks = lacking(this.root, profile, has);
+    if (!lacks.ok) return lacks;
+    if (!providers.includes(provider))
+      return { ok: false, says: `Paseo finds no provider named ${provider} on this machine` };
+    if (lacks.names.length === 0) return { ok: true, made: [] };
+    const added = await host.addProfiles(lacks.names, provider, model);
+    if ("unavailable" in added) return { ok: false, says: UNREACHED };
+    if ("failed" in added) return { ok: false, says: added.failed };
+    // A name that stood for a profile since removed now stands for the one of its own name, which Paseo holds.
+    const named = lacks.names.map((name) => ({ id: name, name }));
+    const kept = match(this.root, profile, lacks.matching, [...has, ...named]);
+    return kept.ok ? { ok: true, made: added.added } : kept;
   }
 
   /** The profile a repository would be attached with: the one named, or the only one installed; null once attached. */

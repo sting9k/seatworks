@@ -108,8 +108,22 @@ export default function contribute(server: PluginServerContext) {
     plugin.saw(paseo);
     const read = await plugin.agents(input.match ?? null);
     return read.ok
-      ? { ok: true, text: "", profiles: read.profiles, available: read.available }
-      : { ok: false, text: `${input.match ? "Not matched" : "Not read"}: ${read.says}.`, profiles: [], available: [] };
+      ? { ok: true, text: "", profiles: read.profiles, available: read.available, providers: read.providers }
+      : {
+          ok: false,
+          text: `${input.match ? "Not matched" : "Not read"}: ${read.says}.`,
+          profiles: [],
+          available: [],
+          providers: [],
+        };
+  });
+  server.handle(RPC.createAgents, async (input, { paseo }) => {
+    plugin.saw(paseo);
+    const made = await plugin.createAgents(input.profile, input.provider, input.model ?? null);
+    if (!made.ok) return { ok: false, text: `Not made: ${made.says}.` };
+    return made.made.length === 0
+      ? { ok: true, text: "Paseo already holds every agent profile it names." }
+      : { ok: true, text: `Made in Paseo, on ${input.provider}: ${made.made.join(", ")}.` };
   });
   server.handle(RPC.checkUpdate, () => checkUpdate(PLUGIN_ID));
   server.handle(RPC.view, async (input, { paseo }) => {

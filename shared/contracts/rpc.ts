@@ -251,7 +251,20 @@ export const RPC = {
       text: z.string(),
       profiles: z.array(ProfileAgentsSchema),
       available: z.array(z.string()),
+      /** The providers Paseo finds on this machine: what a new agent profile may run on. */
+      providers: z.array(z.string()),
     }),
+  },
+  /** Makes in Paseo an agent profile for each name a profile gives that Paseo has none for, on one provider. */
+  createAgents: {
+    name: "seatworks.create_agents",
+    input: z.object({
+      profile: z.string().min(1),
+      provider: z.string().min(1),
+      /** The model each runs; with none, the provider's own. */
+      model: z.string().min(1).optional(),
+    }),
+    output: z.object({ ok: z.boolean(), text: z.string() }),
   },
   checkUpdate: {
     name: "seatworks.check_update",

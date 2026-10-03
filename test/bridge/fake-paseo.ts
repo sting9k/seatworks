@@ -42,12 +42,18 @@ function refusedOption(options: Record<string, unknown>): string | undefined {
   return Object.keys(permission).find((key) => !OPENCODE_PERMISSIONS.has(key));
 }
 
+/** An agent profile as Paseo keeps one; its model is the provider's own where none is named. */
+type Held = { id: string; name: string; provider: string; model?: string };
+
 /** The part of Paseo's API the plugin uses, recording what it was asked; `gate` makes creates and reads fail. */
 export function fakePaseo(
   pluginDir: string,
   provider = "claude",
   profiles: readonly string[] = ["slp-supervisor", "slp-lead", "slp-peer", "slp-reviewer", "slp-watcher"],
 ) {
+  /** The agent profiles Paseo holds, as the Human shaped them; a patch takes the list whole, as Paseo's own store does. */
+  const held: Held[] = profiles.map((name) => ({ id: name, name, provider, model: name }));
+  const patches: unknown[] = [];
   const created: Created[] = [];
   const sent: Sent[] = [];
   const archived: string[] = [];
@@ -56,6 +62,8 @@ export function fakePaseo(
     loseReplies: number;
     refuse: string | null;
     configFails: number;
+    /** Whether Paseo fails to say which providers it finds. */
+    providersFail: boolean;
     archiveFails: number;
     /** A create answers only once this settles, and says through `reached` that it is that far. */
     hold: Promise<void> | null;
@@ -66,6 +74,7 @@ export function fakePaseo(
     loseReplies: 0,
     refuse: null,
     configFails: 0,
+    providersFail: false,
     archiveFails: 0,
     hold: null,
     reached: () => undefined,
@@ -135,8 +144,24 @@ export function fakePaseo(
           : Promise.resolve({
               config: {
                 plugins: { seatworks: { source: "directory", path: pluginDir } },
-                agentProfiles: profiles.map((name) => ({ id: name, name, provider, model: name })),
+                agentProfiles: held,
               },
+            }),
+      patch: (change: { agentProfiles?: Held[] }) => {
+        patches.push(change);
+        if (change.agentProfiles) held.splice(0, held.length, ...change.agentProfiles);
+        return Promise.resolve({ config: { agentProfiles: held } });
+      },
+    },
+    providers: {
+      listAvailable: () =>
+        gate.providersFail
+          ? Promise.reject(new Error("provider discovery timed out"))
+          : Promise.resolve({
+              providers: [
+                { provider, available: true },
+                { provider: "not-installed", available: false, error: "its command is not on PATH" },
+              ],
             }),
     },
     agents: {
@@ -228,6 +253,8 @@ export function fakePaseo(
   const endTurn = (host: string) => inTurn.delete(host);
   return {
     api: api as unknown as PaseoApi,
+    held,
+    patches,
     created,
     sent,
     archived,

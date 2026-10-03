@@ -54,7 +54,7 @@ A piece of work goes like this:
 - Paseo `0.10.0` or newer, with its daemon running.
 - Node.js `22.13` or newer, with npm, where the daemon runs: Paseo builds the plugin with npm.
 - git.
-- A Paseo agent profile for each name the template's roles use (below).
+- A Paseo agent profile for each name the template's roles use; Seatworks makes those you lack, on your press (below).
 - Optional: a key for the template's **classifier**, the small model its watch asks one question at a time. SLP names
   Jev, served through OpenRouter or TypeSafe's own API. Without a key the team still works, less watched, and you are
   told; you may also switch it off, or take it out of the template.
@@ -89,9 +89,10 @@ Open Seatworks in the sidebar. A strip at the top of its page shows the four ste
 
 1. **Install a template.** On the Templates tab, read SLP and install it. Nothing runs until a template is
    installed.
-2. **Match its agent profiles.** On the same tab, open the template: match each name it gives to an agent profile
-   you already have, or create one of that name in Paseo's settings. One pick runs every name not yet matched on one
-   of yours, and each is still set by itself after. Give each profile an explicit model.
+2. **Give it agent profiles.** On the same tab, open the template. One press creates in Paseo an agent profile
+   for each name it gives that you do not have yet, on the provider you pick and the model you name; nothing you
+   already have is touched. Or match a name to an agent profile of yours instead. Then shape each in Paseo's
+   settings: give each an explicit model.
 3. **Set a key for the template's classifier**, if you have one, on the Classifier tab, or switch it off there.
 
 SLP names these:

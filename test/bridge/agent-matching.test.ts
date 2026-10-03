@@ -4,7 +4,7 @@ import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, test } from "node:test";
-import { oneOn, restOn } from "../../client/state/matching.ts";
+import { oneOn } from "../../client/state/matching.ts";
 import { packed } from "../../shared/contracts/template.ts";
 import { Plugin } from "../../server/bridge/plugin.ts";
 import { slpFiles } from "../editor/slp.ts";
@@ -19,11 +19,12 @@ after(async () => {
   for (const p of plugins) await p.dispose();
 });
 
-async function started() {
+/** A plugin beside a Paseo that holds SLP's agent profiles but one, or the ones named. */
+async function started(profiles?: readonly string[]) {
   const root = stateRoot();
   const plugin = new Plugin(root);
   plugins.push(plugin);
-  const paseo = fakePaseo(pluginDir);
+  const paseo = fakePaseo(pluginDir, "claude", profiles);
   plugin.saw(paseo.api);
   await plugin.whenReady();
   return { plugin, root, paseo };
@@ -49,7 +50,12 @@ async function shown(plugin: Plugin, profile: string) {
   assert.ok(read.ok, read.ok ? "" : read.says);
   const one = read.profiles.find((listed) => listed.name === profile);
   assert.ok(one, `${profile} is listed`);
-  return { ...one, available: read.available, of: (name: string) => one.agents.find((agent) => agent.name === name) };
+  return {
+    ...one,
+    available: read.available,
+    providers: read.providers,
+    of: (name: string) => one.agents.find((agent) => agent.name === name),
+  };
 }
 const keptIn = (root: string, profile: string, text: string) => {
   mkdirSync(join(root, "agents"), { recursive: true });
@@ -128,36 +134,89 @@ test("a name matched to an agent profile the Human has since removed: the page s
   );
 });
 
-test("one of the Human's agent profiles picked for every name Paseo has none for: each runs on it, and a name matched to one Paseo has is kept", async () => {
-  const { plugin, root } = await started();
+test("the names a template gives that Paseo has no profile for are made in Paseo on the Human's word, on the provider they chose; what Paseo holds is left as it is", async () => {
+  const { plugin, root, paseo } = await started();
   keptIn(root, "slp", JSON.stringify({ "slp-supervisor": "long-gone", "slp-lead": "slp-peer" }));
   const before = await shown(plugin, "slp");
+  assert.deepEqual(before.providers, ["claude"], "only a provider Paseo finds on this machine is offered");
   assert.deepEqual(
     before.agents.filter((agent) => !agent.there).map((agent) => agent.name),
     ["slp-peer-alt", "slp-supervisor"],
   );
+  const mine = structuredClone(paseo.held);
 
-  const picked = restOn(before.agents, "slp-reviewer");
-  assert.deepEqual(picked, {
-    "slp-lead": "slp-peer",
-    "slp-peer-alt": "slp-reviewer",
-    "slp-supervisor": "slp-reviewer",
-  });
-  const kept = await plugin.agents({ profile: "slp", matching: picked });
-  assert.ok(kept.ok, kept.ok ? "" : kept.says);
+  const made = await plugin.createAgents("slp", "claude", "sonnet");
+  assert.ok(made.ok, made.ok ? "" : made.says);
+  assert.deepEqual(made.made, ["slp-peer-alt"], "a name Paseo holds a profile of is not made again");
+  assert.deepEqual(paseo.held.slice(0, mine.length), mine, "every profile Paseo held goes back as the Human shaped it");
+  assert.deepEqual(paseo.held.slice(mine.length), [
+    { id: "slp-peer-alt", name: "slp-peer-alt", provider: "claude", model: "sonnet" },
+  ]);
   const after = await shown(plugin, "slp");
   assert.deepEqual(
     after.agents.filter((agent) => !agent.there),
     [],
     "nothing is left to match",
   );
-
-  const back = oneOn(after.agents, "slp-lead", "slp-lead");
   assert.deepEqual(
-    back,
-    { "slp-peer-alt": "slp-reviewer", "slp-supervisor": "slp-reviewer" },
-    "one name is then set by itself, back on the profile of its own name here, and the rest stay",
+    [after.of("slp-supervisor")?.runsOn, after.of("slp-lead")?.runsOn],
+    ["slp-supervisor", "slp-peer"],
+    "a name matched to a profile since removed runs on its own again; one matched to a profile Paseo has keeps it",
   );
+  assert.deepEqual(
+    oneOn(after.agents, "slp-watcher", "slp-peer"),
+    { "slp-lead": "slp-peer", "slp-watcher": "slp-peer" },
+    "and a name is still matched by itself after, the rest as they were",
+  );
+
+  const again = await plugin.createAgents("slp", "claude", null);
+  assert.ok(again.ok, again.ok ? "" : again.says);
+  assert.deepEqual([again.made, paseo.patches.length], [[], 1], "with nothing lacking, nothing is written");
+});
+
+test("where Paseo holds no agent profile, every name a template gives is made at once, and with no model where none was given", async () => {
+  const { plugin, paseo } = await started([]);
+
+  const made = await plugin.createAgents("slp", "claude", null);
+
+  assert.ok(made.ok, made.ok ? "" : made.says);
+  assert.deepEqual(
+    paseo.held,
+    ["slp-lead", "slp-peer", "slp-peer-alt", "slp-reviewer", "slp-supervisor", "slp-watcher"].map((name) => ({
+      id: name,
+      name,
+      provider: "claude",
+    })),
+  );
+  assert.deepEqual(
+    (await shown(plugin, "slp")).agents.filter((agent) => !agent.there),
+    [],
+  );
+});
+
+test("agent profiles are not made on a provider Paseo does not find here, nor for a template nobody installed: nothing is written", async () => {
+  const { plugin, paseo } = await started([]);
+  const refused = [
+    ["slp", "not-installed", /not-installed/],
+    ["slp", "nowhere", /nowhere/],
+    ["../slp", "claude", /no profile named/],
+  ] as const;
+  for (const [profile, provider, says] of refused) {
+    const made = await plugin.createAgents(profile, provider, null);
+    assert.ok(!made.ok, `${profile} on ${provider}`);
+    assert.match(made.says, says);
+  }
+  assert.deepEqual(paseo.patches, []);
+});
+
+test("a Paseo that cannot say which providers it finds: the page still reads what each name runs on, and offers none to make a profile on", async () => {
+  const { plugin, paseo } = await started();
+  paseo.gate.providersFail = true;
+
+  const read = await shown(plugin, "slp");
+
+  assert.deepEqual(read.providers, []);
+  assert.deepEqual(read.of("slp-supervisor"), { name: "slp-supervisor", runsOn: "slp-supervisor", there: true });
 });
 
 test("a template installed again keeps the matching of its name", async () => {

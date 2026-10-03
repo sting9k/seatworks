@@ -1,6 +1,6 @@
 import type { PluginTheme } from "@getpaseo/plugin";
 import { openExternalUrl, useRpc } from "@getpaseo/plugin/client";
-import { Icon } from "@getpaseo/plugin/client/react-native";
+import { Icon, useToast } from "@getpaseo/plugin/client/react-native";
 import { SettingsSelect } from "@getpaseo/plugin/client/ui";
 import { useCallback, useEffect, useState } from "react";
 import { Pressable, Text, View } from "react-native";
@@ -17,28 +17,39 @@ import { Field } from "../kit/field.tsx";
 import { Label, Row } from "../kit/row.tsx";
 import { Tag } from "../kit/tag.tsx";
 import { FONT, SPACE } from "../kit/theme.ts";
-import { oneOn, restOn } from "../state/matching.ts";
+import { oneOn } from "../state/matching.ts";
 import { problemText } from "../state/problem-text.ts";
 
 /** Where templates are made and shared: the gallery's page, which carries the editor. */
 const EDITOR = "https://sting9k.github.io/seatworks-gallery/";
 
-export type Matching = { readonly profiles: readonly ProfileAgents[]; readonly available: readonly string[] };
+export type Matching = {
+  readonly profiles: readonly ProfileAgents[];
+  /** The agent profiles the Human keeps in Paseo, and the providers Paseo finds here to make a new one on. */
+  readonly available: readonly string[];
+  readonly providers: readonly string[];
+};
 
 type InstalledProps = {
   readonly profile: ProfileAgents;
   readonly available: readonly string[];
+  readonly providers: readonly string[];
   readonly theme: PluginTheme;
   readonly busy: boolean;
   readonly onMatch: (matching: Record<string, string>) => void;
+  /** Makes in Paseo an agent profile for each name it has none for, on a provider and a model, or the provider's own. */
+  readonly onCreate: (provider: string, model: string) => void;
   readonly onRemove: () => void;
 };
 
 /** One installed template on a line; opened, each agent profile its roles name and the one of the Human's it runs on. */
-function Installed({ profile, available, theme, busy, onMatch, onRemove }: InstalledProps) {
+function Installed({ profile, available, providers, theme, busy, onMatch, onCreate, onRemove }: InstalledProps) {
   const unmatched = profile.agents.filter((agent) => !agent.there).length;
   const [open, setOpen] = useState(unmatched > 0);
   const [removing, setRemoving] = useState(false);
+  const [picked, setPicked] = useState<string | null>(null);
+  const [model, setModel] = useState("");
+  const provider = picked !== null && providers.includes(picked) ? picked : providers[0];
   const { foregroundMuted, statusDanger, border } = theme.colors;
   return (
     <View>
@@ -75,23 +86,50 @@ function Installed({ profile, available, theme, busy, onMatch, onRemove }: Insta
       ) : null}
       {open && unmatched > 0 ? (
         <View style={{ borderTopWidth: 1, borderTopColor: border }}>
-          {available.length > 0 ? (
-            <SettingsSelect
-              label={unmatched === 1 ? "Run the one not matched on" : `Run all ${unmatched} not matched on`}
-              value=""
-              options={[
-                { label: "Pick one of yours", value: "" },
-                ...available.map((name) => ({ label: name, value: name })),
-              ]}
-              disabled={busy}
-              onValueChange={(runsOn) => {
-                if (runsOn !== "") onMatch(restOn(profile.agents, runsOn));
-              }}
-            />
-          ) : (
+          {provider === undefined ? (
             <Text style={{ fontSize: FONT.small, color: foregroundMuted, padding: SPACE.lg }}>
-              Paseo has no agent profile yet. Make one in its settings, then match these to it.
+              Paseo finds no provider here to run an agent on.
             </Text>
+          ) : (
+            <>
+              <SettingsSelect
+                label={
+                  unmatched === 1
+                    ? "Create the one missing in Paseo, on"
+                    : `Create the ${unmatched} missing in Paseo, on`
+                }
+                value={provider}
+                options={providers.map((name) => ({ label: name, value: name }))}
+                disabled={busy}
+                onValueChange={setPicked}
+              />
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: SPACE.sm,
+                  paddingHorizontal: SPACE.lg,
+                  paddingBottom: SPACE.md,
+                }}
+              >
+                <Field
+                  value={model}
+                  placeholder="Model, or none for the provider's own"
+                  theme={theme}
+                  disabled={busy}
+                  onChange={setModel}
+                />
+                <Button
+                  label={`Create ${unmatched}`}
+                  tone="accent"
+                  theme={theme}
+                  disabled={busy}
+                  onPress={() => {
+                    onCreate(provider, model.trim());
+                  }}
+                />
+              </View>
+            </>
           )}
         </View>
       ) : null}
@@ -164,6 +202,8 @@ export function TemplatesTab({ matching, theme, onChanged }: Props) {
   const install = useRpc(RPC.installTemplate);
   const remove = useRpc(RPC.removeTemplate);
   const ask = useRpc(RPC.agents);
+  const create = useRpc(RPC.createAgents);
+  const toast = useToast();
   const [presets, setPresets] = useState<readonly Preset[]>([]);
   const [path, setPath] = useState("");
   const [offered, setOffered] = useState<{ from: TemplateSource; offer: TemplateOffer } | null>(null);
@@ -218,10 +258,18 @@ export function TemplatesTab({ matching, theme, onChanged }: Props) {
                 key={profile.name}
                 profile={profile}
                 available={matching.available}
+                providers={matching.providers}
                 theme={theme}
                 busy={busy}
                 onMatch={(match) => {
                   act(() => ask({ match: { profile: profile.name, matching: match } }), onChanged);
+                }}
+                onCreate={(provider, model) => {
+                  act(async () => {
+                    const made = await create({ profile: profile.name, provider, ...(model === "" ? {} : { model }) });
+                    if (made.ok) toast.show(made.text, { variant: "success" });
+                    return made;
+                  }, onChanged);
                 }}
                 onRemove={() => {
                   act(() => remove({ name: profile.name }), onChanged);

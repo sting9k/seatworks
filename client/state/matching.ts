@@ -9,7 +9,3 @@ const matchingOf = (agents: readonly Agent[]): Record<string, string> =>
 /** One name run on another of the Human's profiles, or on the profile of its own name again; the rest as they are. */
 export const oneOn = (agents: readonly Agent[], named: string, runsOn: string): Record<string, string> =>
   matchingOf(agents.map((agent) => (agent.name === named ? { ...agent, runsOn } : agent)));
-
-/** Every name Paseo has no profile for run on one of the Human's own; a name matched to one it has is kept. */
-export const restOn = (agents: readonly Agent[], runsOn: string): Record<string, string> =>
-  matchingOf(agents.map((agent) => (agent.there ? agent : { ...agent, runsOn })));

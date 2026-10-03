@@ -31,7 +31,7 @@ from Paseo 0.10.1: the plugin SDK, `@getpaseo/client`, `@getpaseo/protocol`, the
 | Seatworks needs                               | Paseo gives                                                                                              | Instead of V1's                    |
 | -------------------------------------- | -------------------------------------------------------------------------------------------------------- | ---------------------------------- |
 | Start an agent                         | `agents.create` with `provider/model`, `modeId`, `thinkingOptionId`, `systemPrompt`, `mcpServers`, `toolPolicy`, `labels` | —                                  |
-| A model per role                       | Paseo's agent profiles, read with `config.get()`: a role names a profile, the Human edits it in Paseo, new models arrive with Paseo's releases | Its own model lists and provider sync |
+| A model per role                       | Paseo's agent profiles, read with `config.get()`: a role names a profile, the Human edits it in Paseo, new models arrive with Paseo's releases. On the Human's press the names a template gives that Paseo lacks are added with `config.patch()`, on a provider `providers.listAvailable` finds | Its own model lists and provider sync |
 | What models exist                      | `providers.snapshot`, `listModels`, `waitForReady`                                                       | Catalog files                      |
 | A copy per writer                      | `workspaces.create` with a worktree source, and Paseo's worktree setup; Seatworks keeps merge, advance and the git guard, which Paseo does not do | Most of its own copies             |
 | Deliver a message                      | `agent.send`, when the handle's `activeTurn` is empty                                                    | Its own turn tracking              |
@@ -58,6 +58,10 @@ from Paseo 0.10.1: the plugin SDK, `@getpaseo/client`, `@getpaseo/protocol`, the
 
 ## Checked in Paseo 0.10.1's source
 
+- `config.patch` takes `agentProfiles` as the whole list, not a merge: the daemon's config store sets it to what the
+  patch holds (read in 0.10.3, `daemon-config-store`). So a patch that adds a profile carries every one Paseo held,
+  as it was. A profile needs an `id`, a `name` and a `provider`; a `model` is optional, and with none an agent of it
+  runs the provider's own.
 - The server bundle is compiled by Paseo (esbuild, CommonJS) and evaluated in the worker, not run from the plugin's
   directory, so `import.meta` is empty and the plugin cannot find its own files from code. It reads its directory
   from `config.get()`'s `plugins.<id>.path`, through the published API, and starts what needs its files (the profile,
@@ -189,11 +193,15 @@ On 2 October 2026, Paseo 0.10.2, a daemon run for it with a home of its own (`HA
   is off by default. With it on, a team's Claude, Codex and OpenCode agents have them switched off in their harness
   and none reach a Pi agent (`HARNESS.md`). An agent of a provider Seatworks ships no harness file for keeps them
   until the Human gives its profile a provider with `paseoTools.enabled: false`: Oh My Pi is one, since Paseo
-  registers them with its session itself. Seatworks writes nothing in Paseo's config.
+  registers them with its session itself. Seatworks writes one thing in Paseo's config, and only on the Human's
+  press: the agent profiles a template names that Paseo lacks (`TEMPLATE.md`, Agent profiles on a machine).
 - Branch names and locking through `workspaces.create`, against what the workspace port needs.
 - That the daemon's `PATH` finds Paseo's command line, so the update check runs; when it does not, the surface says
   so and gives the command to run by hand.
 - That `projects.list` lists every project the Human opened in Paseo, each `projectRootPath` the checkout's root.
+- Agent profiles added from a plugin: `config.patch` with the whole list and `providers.listAvailable` were read in
+  0.10.3's types and source, and held against the stand-in; neither was seen on a live Paseo, nor how long the
+  daemon takes to say which providers it finds.
 - The surface as it was rewritten on 3 October 2026, read in Paseo 0.10.3's types and source and not yet seen on a
   live Paseo: a header button and three slash commands; `openPanel` called from a button and from a command; the
   Team panel in the `workspace` location as well as the explorer, which a panel is not told, so it lays out in two

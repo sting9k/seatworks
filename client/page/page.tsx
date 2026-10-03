@@ -41,7 +41,7 @@ export function Page({ theme, layout, navigation }: PluginSurfaceProps) {
     try {
       const [projects, agents] = await Promise.all([listProjects({}), askAgents({})]);
       setListed(projects);
-      setMatching({ profiles: agents.profiles, available: agents.available });
+      setMatching({ profiles: agents.profiles, available: agents.available, providers: agents.providers });
       setProblem(agents.ok ? null : agents.text);
     } catch (failed) {
       setProblem(problemText(failed));
