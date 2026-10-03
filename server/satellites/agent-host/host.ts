@@ -1,5 +1,7 @@
 import type { PaseoAgentConfig, PaseoAgentListResult, PaseoApi } from "@getpaseo/client";
 import type { AgentTimelineItem } from "@getpaseo/protocol/agent-types";
+import { existsSync, realpathSync } from "node:fs";
+import { resolve } from "node:path";
 import type { PaseoLink } from "./paseo-link.ts";
 import { TEAM_SERVER } from "../../../shared/contracts/ids.ts";
 import type { Server } from "../../../shared/contracts/profile.ts";
@@ -16,6 +18,8 @@ export type AgentSpec = {
   /** What this agent runs in place of what its profile runs; what is left out is the profile's. */
   readonly runs: Partial<Runs>;
   readonly cwd: string;
+  /** The repository the agent's folder is a copy of: Paseo lists the agent under that repository's project. */
+  readonly projectRoot: string;
   readonly systemPrompt: string;
   readonly prompt: string;
   readonly env: Readonly<Record<string, string>>;
@@ -139,10 +143,10 @@ export class PaseoHost {
               ],
             },
           };
+    const workspace = await this.workspaceFor(api, spec);
     try {
-      const handle = await api.agents.create({
+      const handle = await api.workspaces.ref(workspace).agents.create({
         idempotencyKey: spec.key,
-        cwd: spec.cwd,
         title: spec.title,
         prompt: spec.prompt,
         clientMessageId: spec.promptId,
@@ -155,6 +159,28 @@ export class PaseoHost {
       const says = error instanceof Error ? error.message : String(error);
       return (await this.made(api, spec.labels)) ?? { failed: `Paseo could not make the agent: ${says}` };
     }
+  }
+
+  /** The workspace Paseo keeps for an agent's folder under its repository's project: the one there, else one made there. */
+  private async workspaceFor(api: PaseoApi, spec: Pick<AgentSpec, "projectRoot" | "cwd" | "title" | "key">) {
+    const real = (path: string) => (existsSync(path) ? realpathSync(path) : resolve(path));
+    const root = real(spec.projectRoot);
+    const listed = (await api.projects.list()).projects.find((project) => real(project.projectRootPath) === root);
+    // Told a folder alone, Paseo makes a project of that very folder: a copy would stand beside its own repository.
+    // A repository Paseo keeps no project for is opened there first, as the Human adding it would.
+    const projectId = listed?.projectId ?? (await api.workspaces.open(spec.projectRoot)).projectId;
+    if (!projectId) throw new Error(`Paseo keeps no project for ${spec.projectRoot}`);
+    const cwd = real(spec.cwd);
+    const kept = (await api.workspaces.list({ filter: { projectId }, page: { limit: 200 } })).entries.find(
+      (one) => !one.archivingAt && real(one.workspaceDirectory) === cwd,
+    );
+    if (kept) return kept.id;
+    const made = await api.workspaces.create({
+      idempotencyKey: `${spec.key}:workspace`,
+      title: spec.title,
+      source: { kind: "directory", path: spec.cwd, projectId },
+    });
+    return made.id;
   }
 
   /** The agent profiles the Human keeps in Paseo: the id and name a role's model may call each by, and what it runs. */

@@ -38,7 +38,7 @@ takes from Paseo, and how it survives Paseo's releases, is in `PASEO.md`.
 
 ```text
 create(spec) -> Result<agentId>
-  spec: { name, agent, model, thinking, systemPrompt, tools, servers, cwd, env, labels, sandbox, runs }
+  spec: { name, agent, model, thinking, systemPrompt, tools, servers, cwd, projectRoot, env, labels, sandbox, runs }
 send(agentId, text, key) -> Result<sent | duplicate>
 stream(agentId) -> events: turn_started, turn_ended(done | failed(why) | cancelled), said, thought, tool_call,
                           usage(tokens, cost), permission_requested, gone(why)
@@ -55,6 +55,9 @@ shapeProfile(name, { provider, model, effort? }) -> Result  // what that one pro
 
 - An agent profile that names no model makes no agent, and the host says which profile it is: Paseo's own refusal
   names a format, which nobody can act on.
+- `projectRoot` is the repository the agent's folder is a copy of. The host lists the agent under that repository's
+  project, in one workspace for the folder, and never lets the host's own rule make a project of a copy
+  (`PASEO.md`, Seen on a live daemon).
 - `runs` is what this one agent runs in place of what its profile runs: a provider, a model, an effort, each left
   out where the profile's stands. The host is told it and asks nobody whose it is (`TEMPLATE.md`, Agent profiles on
   a machine).
@@ -197,7 +200,9 @@ upkeep: attach(repository, profile), folderAt(dir), gitOffer(dir), setUpGit(dir)
   git is set up from the page, in two presses: the first makes it a repository and says what a first commit would
   hold, how many files and whether anything is ignored; the second commits them in the Human's name, signed where
   they sign. Nothing is committed by being told. Hiding what had no git left a Human with a project and a page that
-  said Paseo had none.
+  said Paseo had none. A worktree of a repository is a part of it as a folder inside it is, named with it and not
+  attached by itself; and a folder the plugin keeps for itself, a team's copies among them, is never offered,
+  listed or taken by its path.
 - A project takes the remote its repository has as where it is published: `origin` where there is one, else its
   only remote; with two and no `origin` the Human names one when they publish. A project with no remote is put on
   GitHub from its own page, private or public, in two presses, the second after it is said which account, which name and

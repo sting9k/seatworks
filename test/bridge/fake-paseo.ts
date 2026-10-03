@@ -14,6 +14,9 @@ type Created = {
   systemPrompt: string;
   /** The provider and model of the agent profile it was made from. */
   provider: string;
+  /** The workspace Paseo made it in, and the root of the project that workspace is filed under. */
+  workspace: string;
+  project: string;
   tools: string[];
   /** The environment the team's tool server would be spawned with. */
   teamEnv: Record<string, string> | undefined;
@@ -128,6 +131,15 @@ export function fakePaseo(
   const responded: string[] = [];
   /** The project roots Paseo lists; a test adds the ones the Human opened in Paseo. */
   const projects: string[] = [];
+  /** The workspaces Paseo keeps: each a folder, filed under the project of one root. */
+  const workspaces: { id: string; project: string; directory: string; title: string | null }[] = [];
+  /** A folder given with no project is filed under a project of that very folder, made where Paseo has none (0.10.3). */
+  const workspaceAt = (directory: string, title: string | null, project?: string) => {
+    if (project === undefined && !projects.includes(directory)) projects.push(directory);
+    const made = { id: `workspace-${workspaces.length + 1}`, project: project ?? directory, directory, title };
+    workspaces.push(made);
+    return made;
+  };
   /** What each agent's timeline holds, oldest first; a test puts an agent's turns here. */
   const timelines = new Map<string, unknown[]>();
   const ref = (id: string) => ({
@@ -166,6 +178,79 @@ export function fakePaseo(
       },
     },
   });
+  type Asked = {
+    idempotencyKey: string;
+    cwd: string;
+    title: string;
+    prompt: string;
+    clientMessageId: string;
+    env: Record<string, string>;
+    labels: Record<string, string>;
+    config: {
+      provider: string;
+      systemPrompt: string;
+      modeId?: string;
+      thinkingOptionId?: string;
+      featureValues?: Record<string, unknown>;
+      options?: Record<string, unknown>;
+      toolPolicy?: { preapproved: { server: string; tool: string }[] };
+      mcpServers?: Record<string, { env?: Record<string, string> } & Record<string, unknown>>;
+    };
+  };
+  const makeAgent = (o: Asked, at: (typeof workspaces)[number]) => {
+    if (gate.refuse !== null) return Promise.reject(new Error(gate.refuse));
+    // Paseo makes no agent of a provider alone: seen on a live 0.10.3, for a profile that named no model.
+    if (!o.config.provider.includes("/"))
+      return Promise.reject(new Error('Expected config.provider in "provider/model" format'));
+    // Paseo refuses these for every other provider, and a create that sends them makes no agent.
+    const kind = o.config.provider.split("/")[0]!;
+    if (o.config.toolPolicy && !TAKES_SERVERS.has(kind))
+      return Promise.reject(new Error(`Provider '${kind}' cannot preapprove exact MCP tools for unattended execution`));
+    if (Object.keys(o.config.mcpServers ?? {}).length > 0 && !TAKES_SERVERS.has(kind))
+      return Promise.reject(new Error(`Provider '${kind}' does not support MCP servers`));
+    const refused = kind === "opencode" ? refusedOption(o.config.options ?? {}) : undefined;
+    if (refused !== undefined) return Promise.reject(new Error(`Unrecognized key: "${refused}"`));
+    const request = JSON.stringify(o);
+    const known = byKey.get(o.idempotencyKey);
+    if (known)
+      return known.request === request
+        ? Promise.resolve(ref(known.host))
+        : Promise.reject(new Error("agent_request_key_conflict"));
+    const host = `host-${created.length + 1}`;
+    if (gate.turns) inTurn.add(host);
+    byKey.set(o.idempotencyKey, { host, request });
+    created.push({
+      host,
+      cwd: o.cwd,
+      title: o.title,
+      prompt: o.prompt,
+      promptId: o.clientMessageId,
+      env: o.env,
+      systemPrompt: o.config.systemPrompt,
+      provider: o.config.provider,
+      tools: (o.config.toolPolicy?.preapproved ?? []).filter((p) => p.server === "team").map((p) => p.tool),
+      teamEnv: o.config.mcpServers?.team?.env,
+      servers: o.config.mcpServers ?? {},
+      approved: (o.config.toolPolicy?.preapproved ?? []).map((p) => `${p.server}.${p.tool}`),
+      labels: o.labels,
+      workspace: at.id,
+      project: at.project,
+      config: {
+        modeId: o.config.modeId,
+        thinkingOptionId: o.config.thinkingOptionId,
+        featureValues: o.config.featureValues,
+        options: o.config.options,
+      },
+    });
+    if (gate.loseReplies > 0) {
+      gate.loseReplies--;
+      down = true;
+      return Promise.reject(new Error("connection lost"));
+    }
+    if (gate.hold === null) return Promise.resolve(ref(host));
+    gate.reached();
+    return gate.hold.then(() => ref(host));
+  };
   const api = {
     projects: {
       list: () =>
@@ -177,6 +262,38 @@ export function fakePaseo(
             projectKind: existsSync(join(root, ".git")) ? "git" : "non_git",
           })),
         }),
+    },
+    workspaces: {
+      list: (o: { filter?: { projectId?: string } } = {}) =>
+        Promise.resolve({
+          entries: workspaces
+            .filter((kept) => o.filter?.projectId === undefined || kept.project === o.filter.projectId)
+            .map((kept) => ({ id: kept.id, projectId: kept.project, workspaceDirectory: kept.directory })),
+          pageInfo: { hasMore: false, nextCursor: null },
+        }),
+      // Opening a folder finds the workspace Paseo keeps for it, or makes one, with a project of the folder.
+      open: (cwd: string) => {
+        const kept = workspaces.find((one) => one.directory === cwd) ?? workspaceAt(cwd, null);
+        return Promise.resolve({ id: kept.id, projectId: kept.project });
+      },
+      create: (o: { title?: string; source: { kind: "directory"; path: string; projectId?: string } }) => {
+        const { path, projectId } = o.source;
+        if (projectId !== undefined && !projects.includes(projectId))
+          return Promise.reject(new Error(`Unknown project: ${projectId}`));
+        const made = workspaceAt(path, o.title ?? null, projectId);
+        return Promise.resolve({ id: made.id, projectId: made.project });
+      },
+      ref: (id: string) => ({
+        id,
+        agents: {
+          create: (o: Omit<Asked, "cwd">) => {
+            const at = workspaces.find((one) => one.id === id);
+            return at
+              ? makeAgent({ ...o, cwd: at.directory }, at)
+              : Promise.reject(new Error(`Unknown workspace: ${id}`));
+          },
+        },
+      }),
     },
     config: {
       get: () =>
@@ -231,78 +348,8 @@ export function fakePaseo(
           pageInfo: { hasMore: false, nextCursor: null, prevCursor: null },
         });
       },
-      create: (o: {
-        idempotencyKey: string;
-        cwd: string;
-        title: string;
-        prompt: string;
-        clientMessageId: string;
-        env: Record<string, string>;
-        labels: Record<string, string>;
-        config: {
-          provider: string;
-          systemPrompt: string;
-          modeId?: string;
-          thinkingOptionId?: string;
-          featureValues?: Record<string, unknown>;
-          options?: Record<string, unknown>;
-          toolPolicy?: { preapproved: { server: string; tool: string }[] };
-          mcpServers?: Record<string, { env?: Record<string, string> } & Record<string, unknown>>;
-        };
-      }) => {
-        if (gate.refuse !== null) return Promise.reject(new Error(gate.refuse));
-        // Paseo makes no agent of a provider alone: seen on a live 0.10.3, for a profile that named no model.
-        if (!o.config.provider.includes("/"))
-          return Promise.reject(new Error('Expected config.provider in "provider/model" format'));
-        // Paseo refuses these for every other provider, and a create that sends them makes no agent.
-        const kind = o.config.provider.split("/")[0]!;
-        if (o.config.toolPolicy && !TAKES_SERVERS.has(kind))
-          return Promise.reject(
-            new Error(`Provider '${kind}' cannot preapprove exact MCP tools for unattended execution`),
-          );
-        if (Object.keys(o.config.mcpServers ?? {}).length > 0 && !TAKES_SERVERS.has(kind))
-          return Promise.reject(new Error(`Provider '${kind}' does not support MCP servers`));
-        const refused = kind === "opencode" ? refusedOption(o.config.options ?? {}) : undefined;
-        if (refused !== undefined) return Promise.reject(new Error(`Unrecognized key: "${refused}"`));
-        const request = JSON.stringify(o);
-        const known = byKey.get(o.idempotencyKey);
-        if (known)
-          return known.request === request
-            ? Promise.resolve(ref(known.host))
-            : Promise.reject(new Error("agent_request_key_conflict"));
-        const host = `host-${created.length + 1}`;
-        if (gate.turns) inTurn.add(host);
-        byKey.set(o.idempotencyKey, { host, request });
-        created.push({
-          host,
-          cwd: o.cwd,
-          title: o.title,
-          prompt: o.prompt,
-          promptId: o.clientMessageId,
-          env: o.env,
-          systemPrompt: o.config.systemPrompt,
-          provider: o.config.provider,
-          tools: (o.config.toolPolicy?.preapproved ?? []).filter((p) => p.server === "team").map((p) => p.tool),
-          teamEnv: o.config.mcpServers?.team?.env,
-          servers: o.config.mcpServers ?? {},
-          approved: (o.config.toolPolicy?.preapproved ?? []).map((p) => `${p.server}.${p.tool}`),
-          labels: o.labels,
-          config: {
-            modeId: o.config.modeId,
-            thinkingOptionId: o.config.thinkingOptionId,
-            featureValues: o.config.featureValues,
-            options: o.config.options,
-          },
-        });
-        if (gate.loseReplies > 0) {
-          gate.loseReplies--;
-          down = true;
-          return Promise.reject(new Error("connection lost"));
-        }
-        if (gate.hold === null) return Promise.resolve(ref(host));
-        gate.reached();
-        return gate.hold.then(() => ref(host));
-      },
+      // An agent made with a folder alone gets a workspace of that folder, under a project of that very folder.
+      create: (o: Asked) => makeAgent(o, workspaceAt(o.cwd, null)),
       ref,
     },
   };
@@ -318,6 +365,7 @@ export function fakePaseo(
     archived,
     gate,
     projects,
+    workspaces,
     pending,
     responded,
     timelines,

@@ -130,6 +130,64 @@ function repository(name: string): string {
   return repo;
 }
 
+test("every agent of a team is made in a workspace of the project Paseo keeps for the repository the team is attached to: Paseo is given no project for a copy, and a seat made again uses the workspace its copy has", async () => {
+  const { plugin, paseo } = await started();
+  const repo = repository("placed");
+  paseo.projects.push(repo);
+  const { project } = await plugin.openProject(repo, "main");
+  await plugin.idle();
+
+  const first = paseo.created[0];
+  assert.ok(first, "the root's agent is made");
+  assert.notEqual(first.cwd, repo, "it runs in a copy of its own");
+  assert.equal(first.project, repo, "and is filed under the repository's project");
+  assert.deepEqual(paseo.projects, [repo], "Paseo is given no project of the copy's folder");
+  assert.deepEqual(await plugin.unattached(), [], "so no copy is ever offered to attach a team to");
+
+  const again = await plugin.human(project, { type: "reseat", scope: "root", reason: "anew", model: null });
+  assert.ok(again.ok, again.ok ? "" : again.refused.says);
+  await plugin.idle();
+  assert.equal(paseo.created.length, 2);
+  assert.equal(paseo.created[1]?.workspace, first.workspace, "one workspace a copy, however often its seat is taken");
+  assert.equal(paseo.workspaces.length, 1);
+});
+
+test("a repository Paseo keeps no project for is opened in Paseo when its first agent is made, and the team is filed under it", async () => {
+  const { plugin, paseo } = await started();
+  const repo = repository("unlisted");
+  await plugin.openProject(repo, "main");
+  await plugin.idle();
+
+  assert.deepEqual(paseo.projects, [repo], "the repository is a project in Paseo now, and its copy is none");
+  assert.equal(paseo.created[0]?.project, repo);
+});
+
+test("a worktree of a repository, and a folder the plugin keeps for itself, are never offered to attach a team to", async () => {
+  const { plugin, paseo } = await started();
+  const repo = repository("with-worktree");
+  const tree = join(folder("trees"), "feature");
+  git(repo, "worktree", "add", "-q", "--detach", tree);
+  paseo.projects.push(repo, tree);
+  const { project } = await plugin.openProject(repo, "main");
+  await plugin.idle();
+  // What a Paseo that was given the copy's folder alone still lists: a project of that folder.
+  const copy = paseo.created[0]!.cwd;
+  paseo.projects.push(copy);
+
+  assert.deepEqual(
+    (await plugin.unattached()).map((found) => [found.root, found.git, found.within]),
+    [[tree, "inside", repo]],
+    "the worktree says whose it is, and the plugin's own copy is not listed at all",
+  );
+  const offered = await plugin.gitOffer(tree);
+  assert.ok(!offered.ok, "nor is git set up in a worktree");
+  assert.match(offered.says, new RegExp(`part of the repository at ${repo}`));
+  const own = await plugin.folderAt(copy);
+  assert.ok(!own.ok, "given by its path, the plugin's own folder is refused");
+  assert.match(own.says, /Seatworks keeps/);
+  assert.ok(project);
+});
+
 test("a project takes the remote its repository has as where it is published: origin where there is one, else its only one, else none", async () => {
   const { plugin } = await started();
   const elsewhere = folder("bare");

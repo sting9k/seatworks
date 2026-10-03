@@ -134,6 +134,7 @@ export function handlersFor(w: Wiring): Handlers {
         profile,
         runs: own.own[actor.model] ?? {},
         cwd,
+        projectRoot: w.workspace.repo,
         systemPrompt: systemPromptFor(w.bundle, actor, humanRules(w.rules, actor.role)),
         prompt: firstPrompt(
           state,

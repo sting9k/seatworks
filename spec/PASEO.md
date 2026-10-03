@@ -30,7 +30,8 @@ from Paseo 0.10.1: the plugin SDK, `@getpaseo/client`, `@getpaseo/protocol`, the
 
 | Seatworks needs                               | Paseo gives                                                                                              | Instead of V1's                    |
 | -------------------------------------- | -------------------------------------------------------------------------------------------------------- | ---------------------------------- |
-| Start an agent                         | `agents.create` with `provider/model`, `modeId`, `thinkingOptionId`, `systemPrompt`, `mcpServers`, `toolPolicy`, `labels` | —                                  |
+| Start an agent                         | A workspace's `agents.create` with `provider/model`, `modeId`, `thinkingOptionId`, `systemPrompt`, `mcpServers`, `toolPolicy`, `labels` | —                                  |
+| A team's agents under the project they work on | `workspaces.create` with a `directory` source and the `projectId` of the repository's project, from `projects.list`; `workspaces.open` for a repository Paseo keeps no project for | —          |
 | A model per role                       | Paseo's agent profiles, read with `config.get()`: a role names a profile, the Human edits it in Paseo or on the plugin's page, new models arrive with Paseo's releases. On the Human's press the names a template gives that Paseo lacks are added with `config.patch()`, on a provider `providers.listAvailable` finds and a model and thinking option `providers.listModels` lists | Its own model lists and provider sync |
 | What models exist                      | `providers.snapshot`, `listModels`, `waitForReady`                                                       | Catalog files                      |
 | A copy per writer                      | `workspaces.create` with a worktree source, and Paseo's worktree setup; Seatworks keeps merge, advance and the git guard, which Paseo does not do | Most of its own copies             |
@@ -193,6 +194,18 @@ On 3 October 2026, Paseo 0.10.3, the owner's own daemon:
   makes no profile without one.
 - A daemon run with a home of its own made an empty folder for each agent's directory under the Human's own Pi
   sessions, for Claude agents too; the sessions themselves were in the home Seatworks lays out for Pi.
+- An agent made with a folder alone is listed under a project of that very folder. The root's agent, made in its
+  copy, stood in the sidebar under a project named `root` beside the repository the team was attached to, and the
+  plugin's page then offered that copy as a folder to attach a team to. In 0.10.3's daemon
+  (`workspace-provisioning-service.js`) a create with no workspace makes one for its directory, and with no project
+  named the project is found or made by that directory's own path and named after its last part; a worktree is not
+  traced to its repository there. Paseo's own shape is a project with workspaces under it, each the project's
+  folder or a worktree of it, and `workspace.create` takes the project a directory is filed under. So every agent
+  is now made in a workspace of the project of the repository its team is attached to, found by that repository's
+  path, one workspace a copy however often its seat is taken; a repository Paseo keeps no project for is opened
+  there first, as the Human adding it would. A project stays in Paseo until it is removed there, so one made for a
+  copy before this is the Human's to remove. Paseo archives a workspace whose folder is gone on its own pass
+  (`workspace-reconciliation-service.js`), so a copy removed takes its workspace with it.
 
 ## To check before building on it
 
@@ -207,6 +220,10 @@ On 3 October 2026, Paseo 0.10.3, the owner's own daemon:
 - That the daemon's `PATH` finds Paseo's command line, so the update check runs; when it does not, the surface says
   so and gives the command to run by hand.
 - That `projects.list` lists every project the Human opened in Paseo, each `projectRootPath` the checkout's root.
+- An agent made in a workspace of another project's than its folder's own: `workspace.create` with a `directory`
+  source and a `projectId`, then the workspace's `agents.create`, were read in 0.10.3's types and daemon and held
+  against the stand-in; not seen on a live Paseo, nor how the sidebar lists a workspace whose folder is outside its
+  project's.
 - Agent profiles added from a plugin: `config.patch` with the whole list and `providers.listAvailable` were read in
   0.10.3's types and source, and held against the stand-in; neither was seen on a live Paseo, nor how long the
   daemon takes to say which providers it finds.

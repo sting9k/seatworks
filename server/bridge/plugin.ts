@@ -540,6 +540,12 @@ export class Plugin {
     });
   }
 
+  /** Whether a folder is inside the plugin's own state, where a team's copies are. */
+  private keeps(real: string): boolean {
+    const own = realpathSync(this.root);
+    return real === own || real.startsWith(`${own}/`) || real.startsWith(`${own}\\`);
+  }
+
   /** Paseo's projects no team is attached to yet, each with how it stands with git, for the Human to attach one. */
   async unattached(): Promise<Folder[]> {
     const api = this.link.current;
@@ -550,7 +556,9 @@ export class Plugin {
     for (const p of listed.projects) {
       if (!existsSync(p.projectRootPath)) continue;
       const root = realpathSync(p.projectRootPath);
-      if (!attached.has(root)) found.push({ name: p.projectDisplayName, root, ...(await gitStateOf(root)) });
+      // What the plugin keeps for itself, a team's copies among it, is no folder of the Human's to attach a team to.
+      if (attached.has(root) || this.keeps(root) || found.some((one) => one.root === root)) continue;
+      found.push({ name: p.projectDisplayName, root, ...(await gitStateOf(root)) });
     }
     return found;
   }
@@ -560,6 +568,7 @@ export class Plugin {
     if (!existsSync(dir) || !statSync(dir).isDirectory()) return { ok: false, says: `there is no folder at ${dir}` };
     const root = realpathSync(dir);
     if (this.projects().some((p) => p.repo === root)) return { ok: false, says: `${root} already has a team` };
+    if (this.keeps(root)) return { ok: false, says: `${root} is a folder Seatworks keeps for itself` };
     return { ok: true, folder: { name: basename(root), root, ...(await gitStateOf(root)) } };
   }
 
