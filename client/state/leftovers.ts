@@ -16,11 +16,23 @@ export type Sorted = {
 export function sortLeftovers(found: readonly Leftover[], attached: ReadonlySet<string>): Sorted {
   const rest = found.filter((left) => !(left.kind === "project" && attached.has(left.project)));
   const things = rest.filter((left) => left.kind !== "record");
-  const costly = (left: Leftover) => left.takesCommits || left.kind === "project";
+  const costly = (left: Leftover) => left.unmerged > 0 || left.kind === "project";
   return {
     safe: things.filter((left) => left.removable && !costly(left)),
     check: things.filter((left) => left.removable && costly(left)),
     kept: things.filter((left) => !left.removable),
     records: rest.filter((left) => left.kind === "record"),
   };
+}
+
+/** A leftover's state in a word or two for its line; a warning is what the Human looks at first. */
+export function tagOf(
+  left: Leftover,
+): { readonly label: string; readonly tone: "neutral" | "warning" | "success" } | null {
+  if (left.kind === "copy" && !left.removable) return { label: "uncommitted work", tone: "neutral" };
+  if (left.kind === "agent") return { label: "seat ended", tone: "neutral" };
+  if (left.kind !== "branch") return null;
+  return left.unmerged > 0
+    ? { label: `${left.unmerged} commit${left.unmerged === 1 ? "" : "s"} not merged`, tone: "warning" }
+    : { label: "merged", tone: "success" };
 }

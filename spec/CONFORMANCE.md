@@ -203,6 +203,7 @@ A call as an agent's tool server sends it, the answer read back.
 | Case                                                        | Expect                                   |
 | ----------------------------------------------------------- | ---------------------------------------- |
 | A key with `/` and spaces                                   | Sanitized, with a hash suffix            |
+| Two branches made for a project, one merged into the base and one two commits past it; asked against a base that is not there, and against none | None and two; every commit of each, so nothing reads as merged |
 | An agent runs git in another agent's copy                   | Refused                                  |
 | `git fetch . HEAD:<branch>`, `git branch -Df`, `git --attr-source HEAD checkout` | Refused     |
 | A merge with conflicts                                      | Undone; the conflicting paths reported   |
@@ -258,6 +259,8 @@ screens themselves are type-checked and no more, until seen on a live Paseo.
 | A scan that finds a copy holding a draft, a branch not merged and the attached project itself | Sorted as kept, to check first, and left out; the project is never among what is picked for the Human, whatever the surface knows of what is attached |
 | Setting up with no template installed                                                     | Matching agents is not done, whatever else is                        |
 | A check's command typed on one line, an argument in quotes; any arguments shown as a line and typed back | The program and its arguments, the quoted one whole; the same arguments |
+| A branch merged, one three commits past the base, a copy holding a draft, an agent; a clean copy and a record | Each line says it in a word or two: merged, 3 commits not merged, uncommitted work, seat ended; the last two say their size and day and no more |
+| A thing done under a minute ago, some minutes ago, an hour and more ago                   | Just now; to the minute; to the hour                                |
 | Sizes from nothing to past a GB, and a day of this year and of last                       | A whole number of the unit that keeps it short, a tenth more past a GB; the day's number and month, with its year when that is not this one |
 
 ## Reflex

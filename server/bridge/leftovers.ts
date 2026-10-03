@@ -45,7 +45,7 @@ export async function leftoversOf(
           ? `no open scope uses it, but ${copy.branch ?? "it"} has uncommitted work there: commit or move it first`
           : "no open scope uses it",
         removable: !copy.unsaved,
-        takesCommits: false,
+        unmerged: 0,
         bytes: await sizeOf(copy.path),
         at: null,
       });
@@ -56,11 +56,12 @@ export async function leftoversOf(
         kind: "branch",
         project,
         label: b.branch,
-        why: b.merged
-          ? `no open scope uses it, and ${base ?? "the base"} holds its work`
-          : `no open scope uses it, and it is not merged into ${base ?? "the base"}: its commits go with it`,
+        why:
+          b.ahead === 0
+            ? `no open scope uses it, and ${base ?? "the base"} holds its work`
+            : `no open scope uses it, and it is not merged into ${base ?? "the base"}: its commits go with it`,
         removable: true,
-        takesCommits: !b.merged,
+        unmerged: b.ahead,
         bytes: null,
         at: null,
       });
@@ -76,7 +77,7 @@ export async function leftoversOf(
           ? `its seat was ${actor.status}, but Paseo still keeps the agent`
           : "no seat of the project names it",
         removable: true,
-        takesCommits: false,
+        unmerged: 0,
         bytes: null,
         at: null,
       });
@@ -101,7 +102,7 @@ export function projectLeftover(project: string, repo: string, view: State | nul
     label: repo,
     why,
     removable: true,
-    takesCommits: false,
+    unmerged: 0,
     bytes,
     at: null,
   };

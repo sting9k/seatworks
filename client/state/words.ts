@@ -28,3 +28,10 @@ export function dayOf(iso: string, thisYear: number): string {
   const day = `${at.getDate()} ${MONTHS[at.getMonth()]!}`;
   return at.getFullYear() === thisYear ? day : `${day} ${at.getFullYear()}`;
 }
+
+/** How long ago a thing was done, as the surface says it: to the minute, then to the hour. */
+export function agoOf(ms: number): string {
+  const minutes = Math.floor(ms / 60_000);
+  if (minutes < 1) return "just now";
+  return minutes < 60 ? `${minutes} min ago` : `${Math.floor(minutes / 60)} h ago`;
+}

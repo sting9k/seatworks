@@ -70,7 +70,7 @@ state(path) -> { head, branch, uncommitted }
 remove(key) -> Result<removed | kept(why)>                // keeps a copy holding uncommitted work
 publish(branch, remote, expectedSha) -> Result<sha>       // never forced; refuses if the branch moved, or the remote
 onDisk() -> { key, path, branch, unsaved }[]              // every copy under the root, used or not
-branchesUnder(prefix, into) -> { branch, merged }[]
+branchesUnder(prefix, into) -> { branch, ahead }[]        // how many of its commits `into` does not hold
 removeBranch(branch) -> Result<removed | kept(why)>       // git refuses one checked out in a copy
 prune()                                                   // forgets copies git lists whose directory is gone
 putBlock(branch, file, marker, body | null) -> Result<sha | unchanged | refused(why)>
@@ -176,8 +176,8 @@ upkeep: attach(repository, profile), profiles, presets, templateOffer(from), ins
   team is there and which branches are its. Removing the project takes it out the same way. A file the Human is
   editing is never written over: the note waits for them to commit and attach again.
 - Leftovers are what no open scope uses any more: a copy, a branch made for a scope, an agent Paseo keeps whose seat
-  ended, and each project as a whole. Each says whether commits on no other branch would go with it, so the surface
-  never picks such a one for the Human, nor a project whole. The Human picks and confirms, and the plugin removes only that, checked again
+  ended, and each project as a whole. Each says how many of its commits the base does not hold, so the surface
+  never picks one that has any for the Human, nor a project whole; a base that is not there holds none of them. The Human picks and confirms, and the plugin removes only that, checked again
   against what is left over at that moment. A copy holding uncommitted work on its branch is listed and never
   removed, and a project with one is not removed at all. Removing a project archives its agents and deletes its
   copies and branches; its record is set aside, since a look back reads the log after the team is gone (P14), and is

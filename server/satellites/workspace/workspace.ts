@@ -148,15 +148,25 @@ export class Workspace {
     return found;
   }
 
-  /** The branches under `prefix`, each with whether `into` already holds its tip. */
-  async branchesUnder(prefix: string, into: string | null): Promise<{ branch: string; merged: boolean }[]> {
+  /** The branches under `prefix`, each with how many of its commits `into` does not hold: none once it is merged. */
+  async branchesUnder(prefix: string, into: string | null): Promise<{ branch: string; ahead: number }[]> {
     const listed = await git(this.repo, ["for-each-ref", "--format=%(refname)", `refs/heads/${prefix}`]);
     const found = [];
     for (const ref of listed.stdout.split("\n").filter(Boolean)) {
       const branch = ref.slice("refs/heads/".length);
-      found.push({ branch, merged: into !== null && (await isAncestor(this.repo, branch, into)) });
+      const beyond = into === null ? null : await this.commitsIn(`${into}..${branch}`);
+      // A base that is not there holds none of them: counted as merged, the branch would be picked for removal.
+      const ahead = beyond ?? (await this.commitsIn(branch));
+      if (ahead === null) throw new Error(`git cannot count the commits of ${branch}`);
+      found.push({ branch, ahead });
     }
     return found;
+  }
+
+  /** How many commits a revision or a range holds; none where git knows no such revision. */
+  private async commitsIn(range: string): Promise<number | null> {
+    const run = await git(this.repo, ["rev-list", "--count", range]);
+    return run.code === 0 ? Number(run.stdout.trim()) : null;
   }
 
   /** Deletes a branch whatever it holds; git refuses one checked out in any copy. */

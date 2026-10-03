@@ -74,8 +74,8 @@ export const LeftoverSchema = z.object({
   label: z.string(),
   why: z.string(),
   removable: z.boolean(),
-  /** Whether commits on no other branch go with it, so the Human looks before picking it. */
-  takesCommits: z.boolean(),
+  /** How many of its commits the base does not hold: they go with it, so the Human looks before picking it. */
+  unmerged: z.number(),
   /** What it takes on disk; none for a branch or an agent, which are no folder, and for a project still attached. */
   bytes: z.number().nullable(),
   /** When it was left behind, where the record says: a record's own project was removed then. */

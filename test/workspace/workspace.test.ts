@@ -163,6 +163,31 @@ test("a copy holding uncommitted work is kept; a clean one goes, with its branch
   assert.equal(run(root, "branch", "--list", "sw/p/1"), "");
 });
 
+test("each branch made for a project says how many of its commits the base does not hold: none once merged, all where there is no base", async () => {
+  const { root, ws } = repo();
+  for (const key of ["1", "2"]) {
+    const copy = await ws.create(key, { kind: "writer", branch: `sw/p/${key}`, from: "main" });
+    assert.ok(copy.ok);
+    commitIn(copy.path, `${key}.txt`, "work");
+    if (key === "2") commitIn(copy.path, "more.txt", "more work");
+  }
+  run(root, "merge", "-q", "--ff-only", "sw/p/1");
+
+  assert.deepEqual(await ws.branchesUnder("sw/p/", "main"), [
+    { branch: "sw/p/1", ahead: 0 },
+    { branch: "sw/p/2", ahead: 2 },
+  ]);
+  assert.deepEqual(
+    (await ws.branchesUnder("sw/p/", "gone")).map((found) => found.ahead),
+    [2, 3],
+    "a base that is not there holds none of them, so nothing reads as merged",
+  );
+  assert.deepEqual(
+    (await ws.branchesUnder("sw/p/", null)).map((found) => found.ahead),
+    [2, 3],
+  );
+});
+
 test("a key with slashes and spaces becomes a safe path with a stable suffix", () => {
   assert.equal(safeKey("1.2"), "1.2");
   assert.match(safeKey("a b/c"), /^a_b_c-[0-9a-f]{8}$/);

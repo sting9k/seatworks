@@ -8,10 +8,11 @@ import { Button } from "../kit/button.tsx";
 import { Card } from "../kit/card.tsx";
 import { Check } from "../kit/check.tsx";
 import { Label } from "../kit/row.tsx";
+import { Tag } from "../kit/tag.tsx";
 import { FONT, RADIUS, SPACE } from "../kit/theme.ts";
-import { sortLeftovers } from "../state/leftovers.ts";
+import { sortLeftovers, tagOf } from "../state/leftovers.ts";
 import { problemText } from "../state/problem-text.ts";
-import { bytesOf, dayOf, nameOf } from "../state/words.ts";
+import { agoOf, bytesOf, dayOf, nameOf } from "../state/words.ts";
 
 const KIND: Readonly<Record<Leftover["kind"], string>> = {
   copy: "Working copy",
@@ -23,6 +24,9 @@ const KIND: Readonly<Record<Leftover["kind"], string>> = {
 
 /** What a set of leftovers takes on disk together; what is no folder takes none. */
 const taken = (items: readonly Leftover[]) => items.reduce((sum, left) => sum + (left.bytes ?? 0), 0);
+
+/** How often the tab looks at the clock, to say how long ago it scanned. */
+const TICK_MS = 30_000;
 
 type Props = {
   readonly projects: readonly { readonly id: string; readonly repo: string }[];
@@ -42,6 +46,8 @@ export function CleanUpTab({ projects, theme, onCounted, onChanged }: Props) {
   const [confirming, setConfirming] = useState(false);
   const [kept, setKept] = useState<readonly string[]>([]);
   const [problem, setProblem] = useState<string | null>(null);
+  const [scannedAt, setScannedAt] = useState<number | null>(null);
+  const [now, setNow] = useState(() => Date.now());
   const attached = new Set(projects.map((project) => project.id));
   const names = new Map(projects.map((project) => [project.id, nameOf(project.repo)]));
   const sorted = sortLeftovers(found ?? [], attached);
@@ -57,6 +63,8 @@ export function CleanUpTab({ projects, theme, onCounted, onChanged }: Props) {
     try {
       setFound((await list({})).leftovers);
       setProblem(null);
+      setScannedAt(Date.now());
+      setNow(Date.now());
     } catch (failed) {
       setProblem(problemText(failed));
     } finally {
@@ -74,6 +82,14 @@ export function CleanUpTab({ projects, theme, onCounted, onChanged }: Props) {
   useEffect(() => {
     onCounted(total);
   }, [onCounted, total]);
+  useEffect(() => {
+    const ticking = setInterval(() => {
+      setNow(Date.now());
+    }, TICK_MS);
+    return () => {
+      clearInterval(ticking);
+    };
+  }, []);
 
   const remove = async () => {
     setBusy("remove");
@@ -87,58 +103,64 @@ export function CleanUpTab({ projects, theme, onCounted, onChanged }: Props) {
     await scan();
     onChanged();
   };
-  const group = (title: string, items: readonly Leftover[], reasons: boolean) =>
+  const group = (title: string, items: readonly Leftover[]) =>
     items.length > 0 ? (
       <View key={title} style={{ gap: SPACE.sm }}>
         <Label text={title} theme={theme}>
           <Text style={muted}>{items.length}</Text>
         </Label>
         <Card theme={theme}>
-          {items.map((left) => (
-            <View
-              key={left.id}
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: SPACE.md,
-                minHeight: 40,
-                paddingHorizontal: SPACE.lg,
-                paddingVertical: 6,
-              }}
-            >
-              <Check
-                label={`${KIND[left.kind]} ${left.label}`}
-                checked={picked.has(left.id)}
-                locked={!left.removable || busy !== null}
-                theme={theme}
-                onChange={(on) => {
-                  const next = new Set(picked);
-                  if (on) next.add(left.id);
-                  else next.delete(left.id);
-                  setPicked(next);
-                  setConfirming(false);
+          {items.map((left) => {
+            const tag = tagOf(left);
+            return (
+              <View
+                key={left.id}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: SPACE.md,
+                  minHeight: 40,
+                  paddingHorizontal: SPACE.lg,
+                  paddingVertical: 6,
                 }}
-              />
-              <Text style={[muted, { width: 92 }]} numberOfLines={1}>
-                {KIND[left.kind]}
-              </Text>
-              <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+              >
+                <Check
+                  label={`${KIND[left.kind]} ${left.label}`}
+                  checked={picked.has(left.id)}
+                  locked={!left.removable || busy !== null}
+                  theme={theme}
+                  onChange={(on) => {
+                    const next = new Set(picked);
+                    if (on) next.add(left.id);
+                    else next.delete(left.id);
+                    setPicked(next);
+                    setConfirming(false);
+                  }}
+                />
+                <Text style={[muted, { width: 92 }]} numberOfLines={1}>
+                  {KIND[left.kind]}
+                </Text>
                 <Text
-                  style={{ fontSize: FONT.base, color: left.removable ? foreground : foregroundMuted }}
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    fontSize: FONT.base,
+                    color: left.removable ? foreground : foregroundMuted,
+                  }}
                   numberOfLines={1}
                 >
                   {left.kind === "branch" || left.kind === "agent" ? left.label : nameOf(left.label)}
                 </Text>
-                {reasons ? <Text style={muted}>{left.why}</Text> : null}
+                {tag ? <Tag label={tag.label} tone={tag.tone} theme={theme} /> : null}
+                <Text style={muted} numberOfLines={1}>
+                  {left.at ? dayOf(left.at, thisYear) : (names.get(left.project) ?? "")}
+                </Text>
+                <Text style={[muted, { width: 64, textAlign: "right" }]} numberOfLines={1}>
+                  {left.bytes === null ? "" : bytesOf(left.bytes)}
+                </Text>
               </View>
-              <Text style={muted} numberOfLines={1}>
-                {left.at ? dayOf(left.at, thisYear) : (names.get(left.project) ?? "")}
-              </Text>
-              <Text style={[muted, { width: 64, textAlign: "right" }]} numberOfLines={1}>
-                {left.bytes === null ? "" : bytesOf(left.bytes)}
-              </Text>
-            </View>
-          ))}
+            );
+          })}
         </Card>
       </View>
     ) : null;
@@ -168,6 +190,9 @@ export function CleanUpTab({ projects, theme, onCounted, onChanged }: Props) {
               : `${total} left behind`}
         </Text>
         <Text style={[muted, { flex: 1 }]}>{taken(shown) > 0 ? bytesOf(taken(shown)) : ""}</Text>
+        {scannedAt !== null && busy !== "scan" ? (
+          <Text style={muted}>Scanned {agoOf(Math.max(0, now - scannedAt))}</Text>
+        ) : null}
         <Button
           label={busy === "scan" ? "Scanning" : "Scan again"}
           tone="quiet"
@@ -182,10 +207,10 @@ export function CleanUpTab({ projects, theme, onCounted, onChanged }: Props) {
           Kept: {line}
         </Text>
       ))}
-      {group("Safe to remove", sorted.safe, false)}
-      {group("Check first", sorted.check, true)}
-      {group("Kept", sorted.kept, true)}
-      {group("Records of removed projects", sorted.records, false)}
+      {group("Safe to remove", sorted.safe)}
+      {group("Check first", sorted.check)}
+      {group("Kept", sorted.kept)}
+      {group("Records of removed projects", sorted.records)}
       {picked.size > 0 ? (
         <View style={strip}>
           <Text style={{ fontSize: FONT.base, fontWeight: "500", color: foreground }}>{picked.size} picked</Text>

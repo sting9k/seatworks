@@ -6,7 +6,7 @@ import { readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, test } from "node:test";
-import { sortLeftovers } from "../../client/state/leftovers.ts";
+import { sortLeftovers, tagOf } from "../../client/state/leftovers.ts";
 import { Plugin } from "../../server/bridge/plugin.ts";
 import { parseBody } from "../../shared/contracts/commands.ts";
 import { agentTools } from "./agent-tools.ts";
@@ -106,8 +106,16 @@ test("the Human attaches a Paseo project, clears what a dropped task left, and r
   assert.equal(copy.removable, false, "and it is not offered while it does");
   const kept = left.find((l) => l.kind === "branch");
   assert.equal(kept?.label, branch, "its branch is left too, only the dropped task's");
-  assert.equal(kept.takesCommits, true, "its commit is on no other branch, so it is one to look at first");
-  assert.equal(copy.takesCommits, false);
+  assert.equal(kept.unmerged, 1, "its one commit is on no other branch, so it is one to look at first");
+  assert.equal(copy.unmerged, 0);
+  assert.deepEqual(
+    [tagOf(kept), tagOf(copy)],
+    [
+      { label: "1 commit not merged", tone: "warning" },
+      { label: "uncommitted work", tone: "neutral" },
+    ],
+    "each line says it in a word or two, where a sentence would be read past",
+  );
   assert.ok(
     copy.bytes !== null && copy.bytes >= "done\ndraft\n".length,
     `the copy says what it takes on disk, its two files among it: ${copy.bytes}`,

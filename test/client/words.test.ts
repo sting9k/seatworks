@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { bytesOf, dayOf } from "../../client/state/words.ts";
+import { agoOf, bytesOf, dayOf } from "../../client/state/words.ts";
 
 // Rows of spec/CONFORMANCE.md, The Human's surface.
 
@@ -15,4 +15,16 @@ test("a size is said in whole numbers of the unit that keeps it short, and a day
   ]);
   assert.equal(dayOf("2026-09-12T12:00:00.000Z", 2026), "12 Sep");
   assert.equal(dayOf("2025-12-03T12:00:00.000Z", 2026), "3 Dec 2025", "with its year when that is not this one");
+});
+
+test("how long ago a thing was done is said to the minute, then to the hour", () => {
+  assert.deepEqual([0, 59_000, 60_000, 14 * 60_000 + 30_000, 59 * 60_000, 60 * 60_000, 5 * 3_600_000].map(agoOf), [
+    "just now",
+    "just now",
+    "1 min ago",
+    "14 min ago",
+    "59 min ago",
+    "1 h ago",
+    "5 h ago",
+  ]);
 });
