@@ -55,6 +55,13 @@ function refusedOption(options: Record<string, unknown>): string | undefined {
 }
 
 /** An agent profile as Paseo keeps one: a model, a thinking option and a mode where the Human gave them. */
+type Page = { limit: number; cursor?: string };
+/** Paseo hands out 200 of a listing at most: a page asked larger is refused, as its own schema refuses it. */
+const tooBig = (page: Page | undefined): Promise<never> | null =>
+  page !== undefined && page.limit > 200
+    ? Promise.reject(new Error("Invalid message: page.limit: Too big: expected number to be <=200"))
+    : null;
+
 type Held = {
   id: string;
   name: string;
@@ -327,7 +334,8 @@ export function fakePaseo(
         }),
     },
     workspaces: {
-      list: (o: { filter?: { projectId?: string } } = {}) =>
+      list: (o: { filter?: { projectId?: string }; page?: Page } = {}) =>
+        tooBig(o.page) ??
         Promise.resolve({
           entries: workspaces
             .filter((kept) => !kept.archived)
@@ -412,24 +420,27 @@ export function fakePaseo(
             }),
     },
     agents: {
-      list: (o: { filter: { labels: Record<string, string> } }) => {
+      list: (o: { filter: { labels: Record<string, string> }; page?: Page }) => {
         if (down) {
           down = false;
           return Promise.reject(new Error("connection lost"));
         }
-        return Promise.resolve({
-          entries: created
-            .filter((c) => Object.entries(o.filter.labels).every(([k, v]) => c.labels[k] === v))
-            .map((c) => ({
-              agent: {
-                id: c.host,
-                title: c.title,
-                labels: c.labels,
-                archivedAt: archived.includes(c.host) ? "now" : null,
-              },
-            })),
-          pageInfo: { hasMore: false, nextCursor: null, prevCursor: null },
-        });
+        return (
+          tooBig(o.page) ??
+          Promise.resolve({
+            entries: created
+              .filter((c) => Object.entries(o.filter.labels).every(([k, v]) => c.labels[k] === v))
+              .map((c) => ({
+                agent: {
+                  id: c.host,
+                  title: c.title,
+                  labels: c.labels,
+                  archivedAt: archived.includes(c.host) ? "now" : null,
+                },
+              })),
+            pageInfo: { hasMore: false, nextCursor: null, prevCursor: null },
+          })
+        );
       },
       // An agent made with a folder alone gets a workspace of that folder, under a project of that very folder.
       create: (o: Asked) => makeAgent(o, workspaceAt(o.cwd, null)),

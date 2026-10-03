@@ -53,8 +53,10 @@ export class Workspace {
 
   /** Moves `branch` to `to` only from `from`, so nothing written in between is written over. */
   async advance(branch: string, from: string, to: string): Promise<Moved> {
-    // Asked again after it landed, as after a crash before the result was recorded: it landed.
-    if ((await sha(this.repo, `refs/heads/${branch}`)) === to) return { sha: to };
+    // What the branch holds already has landed, as it stands: asked again after a crash, or committed on the branch
+    // itself by one who shares it, with a neighbour's commits over it since.
+    const at = await sha(this.repo, `refs/heads/${branch}`);
+    if (at !== null && (await isAncestor(this.repo, to, at))) return { sha: at };
     const head = await git(this.repo, ["symbolic-ref", "-q", "--short", "HEAD"]);
     if (head.code === 0 && head.stdout.trim() === branch) {
       const status = await git(this.repo, ["status", "--porcelain", "--untracked-files=no"]);

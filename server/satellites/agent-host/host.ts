@@ -1,4 +1,10 @@
-import type { PaseoAgentConfig, PaseoAgentListResult, PaseoApi } from "@getpaseo/client";
+import type {
+  PaseoAgentConfig,
+  PaseoAgentListResult,
+  PaseoApi,
+  PaseoWorkspace,
+  PaseoWorkspaceListResult,
+} from "@getpaseo/client";
 import type { AgentTimelineItem } from "@getpaseo/protocol/agent-types";
 import { existsSync, realpathSync } from "node:fs";
 import { resolve } from "node:path";
@@ -169,9 +175,7 @@ export class PaseoHost {
     // Told a folder alone, Paseo makes a project of that very folder: it would stand beside its own repository.
     const projectId = await this.projectOf(api, spec.projectRoot);
     const cwd = real(spec.cwd);
-    const kept = (await api.workspaces.list({ filter: { projectId }, page: { limit: 200 } })).entries.find(
-      (one) => !one.archivingAt && real(one.workspaceDirectory) === cwd,
-    );
+    const kept = (await this.workspacesAt(api, cwd, projectId))[0];
     if (kept) return kept.id;
     const made = await api.workspaces.create({
       idempotencyKey: `${spec.key}:workspace`,
@@ -179,6 +183,21 @@ export class PaseoHost {
       source: { kind: "directory", path: spec.cwd, projectId },
     });
     return made.id;
+  }
+
+  /** The workspaces Paseo keeps for a folder and is not archiving, read page by page: it hands out 200 at most. */
+  private async workspacesAt(api: PaseoApi, at: string, projectId?: string): Promise<PaseoWorkspace[]> {
+    const found = [];
+    let cursor: string | null = null;
+    do {
+      const page: PaseoWorkspaceListResult = await api.workspaces.list({
+        ...(projectId === undefined ? {} : { filter: { projectId } }),
+        page: { limit: 200, ...(cursor ? { cursor } : {}) },
+      });
+      for (const one of page.entries) if (!one.archivingAt && real(one.workspaceDirectory) === at) found.push(one);
+      cursor = page.pageInfo.hasMore ? page.pageInfo.nextCursor : null;
+    } while (cursor);
+    return found;
   }
 
   /** The project Paseo keeps for a repository, by its id; one it keeps none for is opened there, as the Human adding it. */
@@ -225,10 +244,7 @@ export class PaseoHost {
   async closeWorktree(path: string): Promise<"done" | { failed: string } | Unavailable> {
     const api = this.link.current;
     if (!api) return UNAVAILABLE;
-    const at = real(path);
-    const kept = (await api.workspaces.list({ page: { limit: 500 } })).entries.filter(
-      (one) => !one.archivingAt && real(one.workspaceDirectory) === at,
-    );
+    const kept = await this.workspacesAt(api, real(path));
     if (kept.length === 0) return { failed: `Paseo keeps no workspace for ${path}` };
     for (const one of kept) {
       const archived = await api.workspaces.archive(one.id);

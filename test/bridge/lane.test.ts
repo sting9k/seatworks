@@ -242,18 +242,20 @@ test("two Peers of one lane work in its one worktree on its one branch: each is 
     [undefined, "1", undefined],
     "the root shares no worktree, and only the lane's owner takes a branch in by hand",
   );
-  const first = commitIn("src/a", "a's part\n");
-  const head = commitIn("src/b", "b's part\n");
   const [a, b] = [await agentTools(socketPath, one.env), await agentTools(socketPath, two.env)];
+  // The first hands back while the lane's branch is at its commit; its neighbour commits over it only after.
+  const first = commitIn("src/a", "a's part\n");
+  assert.ok((await a.call("hand_back", { commit: first, text: "part a" })).ok);
+  await plugin.idle();
+  await plugin.idle();
+  const head = commitIn("src/b", "b's part\n");
   const changed = (await a.call("diff", {})).text;
   assert.match(changed, /\+a's part/);
   assert.doesNotMatch(changed, /b's part/, "what its neighbour committed on the same branch is not its change");
-
-  // The first hands back a commit the lane's branch has since moved past: it is in, as the lane stands.
-  assert.ok((await a.call("hand_back", { commit: first, text: "part a" })).ok);
   assert.ok((await b.call("hand_back", { commit: head, text: "part b" })).ok);
   await plugin.idle();
   await plugin.idle();
+  // The first's commit is one the lane's branch has since moved past: it is in, as the lane stands.
   for (const task of ["1.1", "1.2"]) {
     const taken = await lead.call("integrate", { scope: task, evidence: [await proof(lead, task)] });
     assert.ok(taken.ok, `${task}: ${taken.text}`);

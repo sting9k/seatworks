@@ -86,7 +86,9 @@ and removes no working copy: a worktree is the agent host's.
 candidate(commit, onto, message) -> Result<{ candidate, parentHead } | conflict(paths)>
                                                           // made without touching a working copy; work `onto`
                                                           // already holds is taken in as `onto` stands
-advance(branch, fromSha, toSha) -> Result<sha>            // refuses if the branch moved, or is checked out dirty
+advance(branch, fromSha, toSha) -> Result<sha>            // refuses if the branch moved, or is checked out dirty;
+                                                          // a commit the branch holds already has landed, as
+                                                          // the branch stands
 headOf(ref) -> sha | none                                 // where a branch of the repository is
 trees(prefix) -> { path, branch, unsaved }[]              // each working copy a branch under the prefix is checked
 treeOf(branch) -> { path, branch, unsaved } | none        // out in, the Human's own among them

@@ -162,6 +162,8 @@ Read in the daemon the command line installs (`worktree-core.js`, `utils/worktre
 - Archiving a workspace ends every agent in it and removes a worktree Paseo owns with `git worktree remove --force`:
   nothing asks whether work in it is uncommitted, and its branch is left. A workspace whose folder is gone is
   archived on Paseo's own pass.
+- A listing of agents or of workspaces hands out 200 at most (`page.limit` in its request's schema), and a page asked
+  larger is refused whole. The agent host reads both page by page.
 - "Archive merged PR workspaces" (`daemon.autoArchiveAfterMerge`) archives a workspace when the pull request of its
   branch, seen open before, is merged, its folder is clean with nothing unpushed, and it is a worktree Paseo owns.
   It merges nothing. A lane lands by a merge the plugin makes on the machine, with no pull request, so it does not
