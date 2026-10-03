@@ -87,16 +87,21 @@ editor/           the template editor, a web page of its own that Paseo does not
 5. Open templates (`spec/TEMPLATE.md`, `spec/EDITOR.md`): the editor, installing and removing a template, outside
    tool servers, matching agent profiles, a project's own copy and Sync, the gallery's build, a report's sections as
    the profile's, the gallery's own repository and its page. Done.
-6. **Now: testing on a real Paseo, by the owner.** What only a live daemon can show is in `spec/PASEO.md` and
-   `spec/HARNESS.md`, To check. Anything the spec marks "to check" is checked against Paseo's published types or source
-   before it is built on, never by an agent running the daemon. The surface is type-checked and nothing more: what
-   it shows of templates, matching and Sync has not been seen on a real Paseo.
+6. **Now: testing on a real Paseo.** The owner tests on their own Paseo; whoever changes what rests on Paseo runs it
+   on a daemon of its own first (Working here). What only a live daemon can show is in `spec/PASEO.md` and
+   `spec/HARNESS.md`, To check. Anything the spec marks "to check" is checked against Paseo's published types or
+   source, or run on such a daemon, before it is built on. The surface is type-checked and nothing more: what it
+   shows of templates, matching and Sync has not been seen on a real Paseo.
 7. Anything more only when the record shows a failure that needs it.
 
 ## Working here
 
-- **Never start the daemon or launch agents to test.** They are real agents with broad permissions, and they cost
-  money. The tests, your reading, Paseo's source and `~/.paseo/daemon.log` are the evidence.
+- **Test on a Paseo daemon of your own, never on the owner's.** What a change rests on in Paseo is run before it is
+  called done, not left as a list for the owner: a daemon started for it with its own home and its own state root, a
+  throwaway repository, the smallest run that shows it, on the cheapest models that can do it. They are real agents
+  with broad permissions, and they cost money: say what a run cost, then stop the daemon and remove what it made.
+  The owner's own daemon and projects are never used for it: there the evidence is the tests, your reading, Paseo's
+  source and `~/.paseo/daemon.log`.
 - **Never print or cat a file that can hold a key:** the plugin's settings under Paseo's plugin settings directory,
   any `settings.json` of a project, `~/.paseo/config.json`, and any older `settings.json` under `~/.local/share/seatworks*`.
   A fake key in a test never starts with OpenRouter's real key prefix, so a scan for it before a push finds only a

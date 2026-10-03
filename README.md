@@ -238,7 +238,8 @@ npm run format   # lays the code out as Prettier wants it
 npm run editor   # the template editor, with a gallery built from templates/
 ```
 
-There is no CI and no build step. Tests run against a stand-in for Paseo and never start a real agent.
+There is no CI and no build step. Tests run against a stand-in for Paseo and never start a real agent; a change that
+rests on what Paseo does is run once on a daemon started for it, never on the one you work in.
 
 | Where              | What                                                                                              |
 | ------------------ | ------------------------------------------------------------------------------------------------- |
