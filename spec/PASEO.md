@@ -201,8 +201,8 @@ On 3 October 2026, Paseo 0.10.3, the owner's own daemon:
   and none reach a Pi agent (`HARNESS.md`). An agent of a provider Seatworks ships no harness file for keeps them
   until the Human gives its profile a provider with `paseoTools.enabled: false`: Oh My Pi is one, since Paseo
   registers them with its session itself. Seatworks writes one thing in Paseo's config, and only on the Human's
-  press: agent profiles, the ones a template names that Paseo lacks, and the model and effort of one the Human
-  changes on the plugin's page (`TEMPLATE.md`, Agent profiles on a machine).
+  press: agent profiles, the ones a template names that Paseo lacks, and the provider, model and effort of one the
+  Human changes on the plugin's page (`TEMPLATE.md`, Agent profiles on a machine).
 - Branch names and locking through `workspaces.create`, against what the workspace port needs.
 - That the daemon's `PATH` finds Paseo's command line, so the update check runs; when it does not, the surface says
   so and gives the command to run by hand.

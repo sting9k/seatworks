@@ -46,36 +46,46 @@ export const there = (has: readonly Has[], named: string): boolean =>
 export const namedBy = (bundle: Bundle): string[] =>
   [...new Set([...bundle.profile.roles.values()].flatMap((role) => role.models))].sort();
 
-/** The names a listed profile's roles give; only a listed name is joined into a path, since it comes from the surface. */
-function namedIn(stateRoot: string, profile: string): { ok: true; named: string[] } | Refused {
+/** A listed profile's files; only a listed name is joined into a path, since it comes from the surface. */
+function installed(stateRoot: string, profile: string): { ok: true; bundle: Bundle } | Refused {
   if (!listProfiles(stateRoot).some((listed) => listed.name === profile))
     return { ok: false, says: `no profile named ${profile} is installed` };
   try {
-    return { ok: true, named: namedBy(loadBundle(profilePath(stateRoot, profile)!)) };
+    return { ok: true, bundle: loadBundle(profilePath(stateRoot, profile)!) };
   } catch (error) {
     return { ok: false, says: `${profile} does not load: ${error instanceof Error ? error.message : String(error)}` };
   }
 }
 
+/** Each name a profile's roles give as it stands here: the roles that name it, the profile it runs on, what that runs. */
+export function agentsOf(bundle: Bundle, matching: Matching, has: readonly Has[]): ProfileAgents["agents"] {
+  return namedBy(bundle).map((agent) => {
+    const runs = runsOn(matching, agent);
+    const on = has.find((profile) => profile.id === runs || profile.name === runs);
+    return {
+      name: agent,
+      roles: [...bundle.profile.roles].filter(([, role]) => role.models.includes(agent)).map(([name]) => name),
+      runsOn: runs,
+      there: on !== undefined,
+      provider: on?.provider ?? null,
+      model: on?.model ?? null,
+      effort: on?.effort ?? null,
+    };
+  });
+}
+
 /** Every profile a project may be attached with, each with what its agent profiles run on here. */
 export function agentsByProfile(stateRoot: string, has: readonly Has[]): ProfileAgents[] {
   return listProfiles(stateRoot).map(({ name, title }) => {
-    const read = namedIn(stateRoot, name);
+    const read = installed(stateRoot, name);
     if (!read.ok) return { name, title, problem: read.says, agents: [] };
     const kept = matchingOf(matchingFile(stateRoot, name));
-    const agents = read.named.map((agent) => {
-      const runs = runsOn(kept.ok ? kept.matching : {}, agent);
-      const on = has.find((profile) => profile.id === runs || profile.name === runs);
-      return {
-        name: agent,
-        runsOn: runs,
-        there: on !== undefined,
-        provider: on?.provider ?? null,
-        model: on?.model ?? null,
-        effort: on?.effort ?? null,
-      };
-    });
-    return { name, title, problem: kept.ok ? null : kept.says, agents };
+    return {
+      name,
+      title,
+      problem: kept.ok ? null : kept.says,
+      agents: agentsOf(read.bundle, kept.ok ? kept.matching : {}, has),
+    };
   });
 }
 
@@ -85,12 +95,12 @@ export function lacking(
   profile: string,
   has: readonly Has[],
 ): { readonly ok: true; readonly names: readonly string[]; readonly matching: Matching } | Refused {
-  const read = namedIn(stateRoot, profile);
+  const read = installed(stateRoot, profile);
   if (!read.ok) return read;
   const kept = matchingOf(matchingFile(stateRoot, profile));
   // A matching that does not read matches nothing: every name then stands for the profile of its own name.
   const matching = kept.ok ? kept.matching : {};
-  const names = read.named.filter((agent) => !there(has, runsOn(matching, agent)));
+  const names = namedBy(read.bundle).filter((agent) => !there(has, runsOn(matching, agent)));
   return {
     ok: true,
     names,
@@ -105,10 +115,11 @@ export function match(
   matching: Matching,
   has: readonly Has[],
 ): { readonly ok: true } | Refused {
-  const read = namedIn(stateRoot, profile);
+  const read = installed(stateRoot, profile);
   if (!read.ok) return read;
+  const named = namedBy(read.bundle);
   for (const [agent, runs] of Object.entries(matching)) {
-    if (!read.named.includes(agent)) return { ok: false, says: `${agent} is not an agent profile ${profile} names` };
+    if (!named.includes(agent)) return { ok: false, says: `${agent} is not an agent profile ${profile} names` };
     if (!there(has, runs)) return { ok: false, says: `Paseo has no agent profile named ${runs} to run ${agent} on` };
   }
   const file = matchingFile(stateRoot, profile);

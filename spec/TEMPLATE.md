@@ -384,11 +384,13 @@ agent profile the Human already has, for every profile installed.
   touched by this, and a name that was matched to a profile since removed stands for the profile of its own name
   again. Nothing is written where nothing is lacking, where the provider, the model or the effort is not one Paseo
   has, or where the template is not installed.
-- **What each name runs is said on its line, and set there.** Its provider, its model and its effort, or that Paseo
-  has no such profile, or that the profile names no model and so can seat no agent. Opened, the line sets the
-  profile it runs on, and the model and the effort of that profile: one of the Human's own in Paseo, changed in
-  that one place and nowhere else, to a model and an effort its provider has. A different model for two of a
-  template's names is often the point. These two, making a profile and shaping one, are all the plugin writes in
+- **What each name runs is said on its line, and set there.** The roles that name it, its provider, its model and
+  its effort, or that Paseo has no such profile, or that the profile names no model and so can seat no agent.
+  Opened, the line sets the profile it runs on, and the provider, the model and the effort of that profile: one of
+  the Human's own in Paseo, changed in that one place and nowhere else, to a provider Paseo finds on the machine
+  and a model and an effort that provider has. A mode and feature values are one provider's own, so they go from a
+  profile whose provider changes and stay on one whose provider does not. A different provider or model for two of
+  a template's names is often the point. These two, making a profile and shaping one, are all the plugin writes in
   Paseo's config (`PASEO.md`).
 - **It is the Human's and their machine's**, so it is kept beside the profiles, in `agents/<profile>.json` under the
   state root, and never in the template. A template's files and hash stay as shared, and one installed again keeps

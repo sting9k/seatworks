@@ -43,8 +43,8 @@ type InstalledProps = {
   readonly onMatch: (matching: Record<string, string>) => void;
   /** Makes in Paseo an agent profile for each name it has none for, running a model at an effort. */
   readonly onCreate: (provider: string, model: string, effort: string | null) => void;
-  /** Gives one of the Human's agent profiles another model and effort. */
-  readonly onShape: (agent: string, model: string, effort: string | null) => void;
+  /** Gives one of the Human's agent profiles another provider, model and effort. */
+  readonly onShape: (agent: string, provider: string, model: string, effort: string | null) => void;
   readonly onRemove: () => void;
 };
 
@@ -114,7 +114,7 @@ function Installed(props: InstalledProps) {
                 onMatch(oneOn(profile.agents, agent.name, runsOn));
               }}
               onShape={(model, effort) => {
-                onShape(agent.runsOn, model, effort);
+                if (agent.provider !== null) onShape(agent.runsOn, agent.provider, model, effort);
               }}
             />
           ))
@@ -253,8 +253,8 @@ export function TemplatesTab({ matching, projects, theme, onChanged }: Props) {
                     return made;
                   }, onChanged);
                 }}
-                onShape={(agent, model, effort) => {
-                  act(() => shape({ agent, model, ...(effort ? { effort } : {}) }), onChanged);
+                onShape={(agent, provider, model, effort) => {
+                  act(() => shape({ agent, provider, model, ...(effort ? { effort } : {}) }), onChanged);
                 }}
                 onRemove={() => {
                   act(() => remove({ name: profile.name }), onChanged);

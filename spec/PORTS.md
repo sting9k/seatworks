@@ -50,7 +50,7 @@ agentProfiles() -> { id, name, provider, model?, effort? }[] // the agent profil
 providers() -> provider[]                                   // an agent can start on each; none if Paseo cannot say
 models(provider) -> Result<{ id, label, efforts, ... }[]>   // what a profile on it may run
 addProfiles(names, { provider, model, effort? }) -> Result<added>  // never touches a profile already there
-shapeProfile(name, model, effort?) -> Result                // that one profile's model and effort, nothing else
+shapeProfile(name, { provider, model, effort? }) -> Result  // what that one profile runs, and no other profile
 ```
 
 - An agent profile that names no model makes no agent, and the host says which profile it is: Paseo's own refusal
@@ -163,7 +163,7 @@ upkeep: attach(repository, profile), folderAt(dir), gitOffer(dir), setUpGit(dir)
         createRemote(project, visibility), profiles, presets,
         templateOffer(from), installTemplate(from, hash),
         removeTemplate(name), syncTemplate(project), agents(match), models(provider),
-        createAgents(profile, provider, model, effort), shapeAgent(agent, model, effort), leftovers,
+        createAgents(profile, provider, model, effort), shapeAgent(agent, provider, model, effort), leftovers,
         clean(picked), checkUpdate
 ```
 

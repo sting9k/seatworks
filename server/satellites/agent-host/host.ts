@@ -225,12 +225,8 @@ export class PaseoHost {
     return { added };
   }
 
-  /** Gives one agent profile the Human keeps another model and effort; every other field of it, and every other profile, stays. */
-  async shapeProfile(
-    named: string,
-    model: string,
-    effort: string | null,
-  ): Promise<{ shaped: true } | { failed: string } | Unavailable> {
+  /** Gives one agent profile the Human keeps another provider, model and effort; every other profile stays as it is. */
+  async shapeProfile(named: string, runs: Runs): Promise<{ shaped: true } | { failed: string } | Unavailable> {
     const api = this.link.current;
     if (!api) return UNAVAILABLE;
     const held = (await api.config.get()).config.agentProfiles ?? [];
@@ -238,8 +234,16 @@ export class PaseoHost {
       return { failed: `Paseo has no agent profile named ${named}` };
     const shaped = held.map((profile) => {
       if (profile.id !== named && profile.name !== named) return profile;
-      const { thinkingOptionId: _was, ...rest } = profile;
-      return { ...rest, model, ...(effort === null ? {} : { thinkingOptionId: effort }) };
+      const { thinkingOptionId: _effort, modeId, featureValues, ...rest } = profile;
+      return {
+        ...rest,
+        // A mode and feature values are one provider's own: they go when the provider does.
+        ...(runs.provider === profile.provider && modeId !== undefined ? { modeId } : {}),
+        ...(runs.provider === profile.provider && featureValues !== undefined ? { featureValues } : {}),
+        provider: runs.provider,
+        model: runs.model,
+        ...(runs.effort === null ? {} : { thinkingOptionId: runs.effort }),
+      };
     });
     try {
       await api.config.patch({ agentProfiles: shaped });

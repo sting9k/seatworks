@@ -132,10 +132,11 @@ const ProfileAgentsSchema = z.object({
   name: z.string(),
   title: z.string(),
   problem: z.string().nullable(),
-  /** Each name its roles give: the Human's profile it runs on, whether Paseo has it, and what that profile runs. */
+  /** Each name its roles give: the roles that name it, the Human's profile it runs on, and what that profile runs. */
   agents: z.array(
     z.object({
       name: z.string(),
+      roles: z.array(z.string()),
       runsOn: z.string(),
       there: z.boolean(),
       provider: z.string().nullable(),
@@ -343,10 +344,15 @@ export const RPC = {
       models: z.array(ProviderModelSchema),
     }),
   },
-  /** Gives one of the Human's agent profiles in Paseo another model and effort. */
+  /** Gives one of the Human's agent profiles in Paseo another provider, model and effort. */
   shapeAgent: {
     name: "seatworks.shape_agent",
-    input: z.object({ agent: z.string().min(1), model: z.string().min(1), effort: z.string().min(1).optional() }),
+    input: z.object({
+      agent: z.string().min(1),
+      provider: z.string().min(1),
+      model: z.string().min(1),
+      effort: z.string().min(1).optional(),
+    }),
     output: z.object({ ok: z.boolean(), text: z.string() }),
   },
   checkUpdate: {

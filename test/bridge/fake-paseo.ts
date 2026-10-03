@@ -44,11 +44,27 @@ function refusedOption(options: Record<string, unknown>): string | undefined {
   return Object.keys(permission).find((key) => !OPENCODE_PERMISSIONS.has(key));
 }
 
-/** An agent profile as Paseo keeps one: a model and a thinking option where the Human gave them. */
-type Held = { id: string; name: string; provider: string; model?: string; thinkingOptionId?: string };
+/** An agent profile as Paseo keeps one: a model, a thinking option and a mode where the Human gave them. */
+type Held = {
+  id: string;
+  name: string;
+  provider: string;
+  model?: string;
+  thinkingOptionId?: string;
+  modeId?: string;
+  featureValues?: Record<string, unknown>;
+};
+
+type Model = {
+  id: string;
+  label: string;
+  isDefault?: boolean;
+  thinkingOptions?: { id: string; label: string }[];
+  defaultThinkingOptionId?: string;
+};
 
 /** The models the stand-in's provider has, each with the thinking options Paseo lists for it. */
-const MODELS = [
+const MODELS: Model[] = [
   {
     id: "sonnet",
     label: "Sonnet",
@@ -71,6 +87,8 @@ export function fakePaseo(
 ) {
   /** The agent profiles Paseo holds, as the Human shaped them; a patch takes the list whole, as Paseo's own store does. */
   const held: Held[] = profiles.map((name) => ({ id: name, name, provider, model: name }));
+  /** The providers Paseo finds here, each with its models; a test adds another the Human has installed. */
+  const providers = new Map<string, Model[]>([[provider, MODELS]]);
   const patches: unknown[] = [];
   const created: Created[] = [];
   const sent: Sent[] = [];
@@ -172,16 +190,18 @@ export function fakePaseo(
       },
     },
     providers: {
-      listModels: (asked: string) =>
-        asked === provider
-          ? Promise.resolve({ provider: asked, models: MODELS.map((model) => ({ provider: asked, ...model })) })
-          : Promise.resolve({ provider: asked, error: `no provider named ${asked}` }),
+      listModels: (asked: string) => {
+        const models = providers.get(asked);
+        return models
+          ? Promise.resolve({ provider: asked, models: models.map((model) => ({ provider: asked, ...model })) })
+          : Promise.resolve({ provider: asked, error: `no provider named ${asked}` });
+      },
       listAvailable: () =>
         gate.providersFail
           ? Promise.reject(new Error("provider discovery timed out"))
           : Promise.resolve({
               providers: [
-                { provider, available: true },
+                ...[...providers.keys()].map((found) => ({ provider: found, available: true })),
                 { provider: "not-installed", available: false, error: "its command is not on PATH" },
               ],
             }),
@@ -279,6 +299,7 @@ export function fakePaseo(
   return {
     api: api as unknown as PaseoApi,
     held,
+    providers,
     patches,
     created,
     sent,

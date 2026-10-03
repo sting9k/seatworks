@@ -67,6 +67,7 @@ test("an agent profile a profile's roles name is matched to one the Human has, S
   const before = await shown(plugin, "slp");
   assert.deepEqual(before.of("slp-peer-alt"), {
     name: "slp-peer-alt",
+    roles: ["peer"],
     runsOn: "slp-peer-alt",
     there: false,
     provider: null,
@@ -77,6 +78,7 @@ test("an agent profile a profile's roles name is matched to one the Human has, S
     before.of("slp-supervisor"),
     {
       name: "slp-supervisor",
+      roles: ["supervisor"],
       runsOn: "slp-supervisor",
       there: true,
       provider: "claude",
@@ -85,6 +87,7 @@ test("an agent profile a profile's roles name is matched to one the Human has, S
     },
     "with what the profile it runs on is: its provider, its model, its effort",
   );
+  assert.deepEqual(before.of("slp-peer")?.roles, ["peer", "reviewer"], "and every role that names it");
   assert.ok(before.available.includes("slp-lead"));
 
   const matching = { "slp-supervisor": "slp-lead", "slp-peer-alt": "slp-peer" };
@@ -141,6 +144,7 @@ test("a name matched to an agent profile the Human has since removed: the page s
   keptIn(root, "slp", JSON.stringify({ "slp-supervisor": "long-gone" }));
   assert.deepEqual((await shown(plugin, "slp")).of("slp-supervisor"), {
     name: "slp-supervisor",
+    roles: ["supervisor"],
     runsOn: "long-gone",
     there: false,
     provider: null,
@@ -263,7 +267,7 @@ test("the model and the effort an agent profile runs are changed from the page: 
   const { plugin, paseo } = await started();
   const others = structuredClone(paseo.held.filter((profile) => profile.name !== "slp-lead"));
 
-  const shaped = await plugin.shapeAgent("slp-lead", "opus", "max");
+  const shaped = await plugin.shapeAgent("slp-lead", { provider: "claude", model: "opus", effort: "max" });
   assert.ok(shaped.ok, shaped.ok ? "" : shaped.says);
   assert.deepEqual(
     paseo.held.find((profile) => profile.name === "slp-lead"),
@@ -273,7 +277,7 @@ test("the model and the effort an agent profile runs are changed from the page: 
     paseo.held.filter((profile) => profile.name !== "slp-lead"),
     others,
   );
-  const plain = await plugin.shapeAgent("slp-lead", "haiku", null);
+  const plain = await plugin.shapeAgent("slp-lead", { provider: "claude", model: "haiku", effort: null });
   assert.ok(plain.ok, plain.ok ? "" : plain.says);
   assert.deepEqual(
     paseo.held.find((profile) => profile.name === "slp-lead"),
@@ -286,8 +290,51 @@ test("the model and the effort an agent profile runs are changed from the page: 
     ["slp-lead", "gpt-9", null, /no model named gpt-9/],
     ["slp-lead", "haiku", "max", /haiku has no effort named max/],
   ] as const) {
-    const refused = await plugin.shapeAgent(agent, model, effort);
+    const refused = await plugin.shapeAgent(agent, { provider: "claude", model, effort });
     assert.ok(!refused.ok);
+    assert.match(refused.says, says);
+  }
+  assert.equal(paseo.patches.length, 2, "what is refused writes nothing");
+});
+
+test("the provider an agent profile runs on is changed from the page, to one Paseo finds here and a model of it; what was the old provider's own goes with it", async () => {
+  const { plugin, paseo } = await started();
+  paseo.providers.set("codex", [
+    { id: "gpt", label: "GPT", isDefault: true, thinkingOptions: [{ id: "medium", label: "Medium" }] },
+  ]);
+  const lead = paseo.held.find((profile) => profile.name === "slp-lead")!;
+  Object.assign(lead, { modeId: "plan", featureValues: { fast: true }, thinkingOptionId: "high" });
+
+  const kept = await plugin.shapeAgent("slp-lead", { provider: "claude", model: "opus", effort: null });
+  assert.ok(kept.ok, kept.ok ? "" : kept.says);
+  assert.deepEqual(
+    paseo.held.find((profile) => profile.name === "slp-lead"),
+    {
+      id: "slp-lead",
+      name: "slp-lead",
+      provider: "claude",
+      model: "opus",
+      modeId: "plan",
+      featureValues: { fast: true },
+    },
+    "on the same provider its mode and its feature values stay",
+  );
+
+  const moved = await plugin.shapeAgent("slp-lead", { provider: "codex", model: "gpt", effort: "medium" });
+  assert.ok(moved.ok, moved.ok ? "" : moved.says);
+  assert.deepEqual(
+    paseo.held.find((profile) => profile.name === "slp-lead"),
+    { id: "slp-lead", name: "slp-lead", provider: "codex", model: "gpt", thinkingOptionId: "medium" },
+  );
+  assert.equal((await shown(plugin, "slp")).of("slp-lead")?.provider, "codex", "and the page reads it back");
+
+  for (const [provider, model, says] of [
+    ["not-installed", "sonnet", /finds no provider named not-installed/],
+    ["nowhere", "sonnet", /finds no provider named nowhere/],
+    ["codex", "sonnet", /codex has no model named sonnet/],
+  ] as const) {
+    const refused = await plugin.shapeAgent("slp-peer", { provider, model, effort: null });
+    assert.ok(!refused.ok, `${provider}/${model}`);
     assert.match(refused.says, says);
   }
   assert.equal(paseo.patches.length, 2, "what is refused writes nothing");
@@ -311,7 +358,7 @@ test("an agent profile that names no model seats no agent, and the seat says whi
     "which the page shows as stuck, in words",
   );
 
-  const shaped = await plugin.shapeAgent("slp-supervisor", "sonnet", null);
+  const shaped = await plugin.shapeAgent("slp-supervisor", { provider: "claude", model: "sonnet", effort: null });
   assert.ok(shaped.ok, shaped.ok ? "" : shaped.says);
   const again = await plugin.human(opened.project, {
     type: "reseat",

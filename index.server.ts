@@ -169,9 +169,10 @@ export default function contribute(server: PluginServerContext) {
   });
   server.handle(RPC.shapeAgent, async (input, { paseo }) => {
     plugin.saw(paseo);
-    const shaped = await plugin.shapeAgent(input.agent, input.model, input.effort ?? null);
+    const { agent, provider, model } = input;
+    const shaped = await plugin.shapeAgent(agent, { provider, model, effort: input.effort ?? null });
     return shaped.ok
-      ? { ok: true, text: `${input.agent} runs ${input.model}${input.effort ? `, ${input.effort}` : ""}.` }
+      ? { ok: true, text: `${agent} runs ${provider}/${model}${input.effort ? `, ${input.effort}` : ""}.` }
       : { ok: false, text: `Not changed: ${shaped.says}.` };
   });
   server.handle(RPC.checkUpdate, () => checkUpdate(PLUGIN_ID));

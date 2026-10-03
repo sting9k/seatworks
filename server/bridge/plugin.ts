@@ -370,20 +370,19 @@ export class Plugin {
     return kept.ok ? { ok: true, made: added.added } : kept;
   }
 
-  /** Gives one of the Human's agent profiles another model and effort, both ones its provider has. */
-  async shapeAgent(
-    agent: string,
-    model: string,
-    effort: string | null,
-  ): Promise<{ ok: true } | { ok: false; says: string }> {
+  /** Gives one of the Human's agent profiles another provider, model and effort: ones Paseo finds here and lists. */
+  async shapeAgent(agent: string, runs: Runs): Promise<{ ok: true } | { ok: false; says: string }> {
     const { host } = await this.whenReady();
-    const has = await host.agentProfiles();
-    if ("unavailable" in has) return { ok: false, says: UNREACHED };
+    const [has, providers] = await Promise.all([host.agentProfiles(), host.providers()]);
+    if ("unavailable" in has || "unavailable" in providers) return { ok: false, says: UNREACHED };
     const held = has.find((profile) => profile.id === agent || profile.name === agent);
     if (!held) return { ok: false, says: `Paseo has no agent profile named ${agent}` };
-    const unfit = await this.unfit({ provider: held.provider, model, effort });
+    // The provider a profile already runs on is kept even where Paseo cannot say which it finds.
+    if (runs.provider !== held.provider && !providers.includes(runs.provider))
+      return { ok: false, says: `Paseo finds no provider named ${runs.provider} on this machine` };
+    const unfit = await this.unfit(runs);
     if (unfit !== null) return { ok: false, says: unfit };
-    const shaped = await host.shapeProfile(agent, model, effort);
+    const shaped = await host.shapeProfile(agent, runs);
     if ("unavailable" in shaped) return { ok: false, says: UNREACHED };
     return "failed" in shaped ? { ok: false, says: shaped.failed } : { ok: true };
   }
