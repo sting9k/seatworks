@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { blankTemplate } from "../../editor/template/blank.ts";
 import { notesOf } from "../../editor/template/checks.ts";
+import { addRole, applied, setJob, together, wired } from "../../editor/template/edits.ts";
 import { graphOf } from "../../editor/template/graph.ts";
 import { readTemplate } from "../../editor/template/read-template.ts";
 
@@ -33,6 +34,13 @@ test("a template started from nothing loads: one role the Human works with, wire
     ],
     "its notes say what is left to do, and none says it asks for a tool it is refused or lacks one it needs",
   );
+
+  const grown = applied(
+    read.template,
+    together(addRole("helper"), setJob("first", "delegates"), wired("spawns", "role:first", "role:helper", true)),
+  );
+  assert.ok(grown.ok, grown.ok ? "it is added to as any template is" : grown.says);
+  assert.deepEqual([...grown.template.profile.roles.get("first")!.spawns], ["helper"]);
 });
 
 test("a template is not started under a name with no letter or digit, which it could not be installed under", () => {
