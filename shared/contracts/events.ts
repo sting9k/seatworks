@@ -67,7 +67,14 @@ export type EventBody =
   | { type: "finding_withdrawn"; finding: FindingId; reason: string }
   | { type: "claim_made"; claim: Claim }
   | { type: "candidate_ready"; scope: ScopeId; commit: string; candidate: string; parentHead: string }
-  | { type: "candidate_conflict"; scope: ScopeId; commit: string; paths: readonly string[] }
+  | {
+      type: "candidate_conflict";
+      scope: ScopeId;
+      commit: string;
+      paths: readonly string[];
+      /** What the parent's branch took in, in those files, since the scope began: a line a commit. */
+      since: readonly string[];
+    }
   | { type: "evidence_requested"; scope: ScopeId; subject: string; steps: readonly Check[]; by: Party }
   | { type: "evidence_recorded"; evidence: Evidence; wake: readonly Party[] }
   | {

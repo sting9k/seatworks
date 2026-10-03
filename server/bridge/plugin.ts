@@ -83,7 +83,8 @@ import { pin, pinnedDir, templateOf } from "../profile/pinned.ts";
 import { listPresets } from "../profile/presets.ts";
 import { listProfiles, type Listed as ListedProfile, removeProfile } from "../profile/profiles.ts";
 import { Dispatcher } from "./dispatcher.ts";
-import { type Wiring, branchesOf, handlersFor, scratchFor, seatDir, seatEnv, agentEnv } from "./effects.ts";
+import { type Wiring, handlersFor, scratchFor, seatDir, seatEnv, agentEnv } from "./effects.ts";
+import { branchesOf, keepHeld } from "./lane.ts";
 import { type Kept, leftoverId, leftoversOf, projectLeftover, refOf } from "./leftovers.ts";
 import { Project, type Submitted } from "./project.ts";
 import { Reflex, WORKS_ON } from "./reflex.ts";
@@ -1019,7 +1020,7 @@ export class Plugin {
     if (!actor || !scope || !role) return null;
     const cwd = await seatDir(runtime.wiring, runtime.project.view, scope);
     if (cwd === null) return null;
-    const env = seatEnv(runtime.wiring, actor.id, cwd, role.writes);
+    const env = seatEnv(runtime.wiring, runtime.project.view, { actor: actor.id, scope, cwd, writes: role.writes });
     return { ...agentEnv(runtime.wiring, env), ...this.harness(provider)?.env };
   }
 
@@ -1132,6 +1133,8 @@ export class Plugin {
     this.index(id, runtime);
     runtime.stops.push(
       project.onCommitted((events) => {
+        // Before any effect of these events is sent: an agent made of them reads the file from its first command.
+        keepHeld(scratch, project.view);
         runtime.loaded.reflex?.onEvents(id, events, project.view);
         runtime.lastActive = Date.now();
         this.index(id, runtime);

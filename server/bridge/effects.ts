@@ -7,6 +7,7 @@ import type { Keys } from "../core/keys.ts";
 import { humanRules } from "../core/rules.ts";
 import { matchingOf, runsOn } from "../profile/agents.ts";
 import { ownOf } from "../profile/own-runs.ts";
+import { heldFile, laneBranch, laneOf, shares } from "./lane.ts";
 import type { PaseoHost } from "../satellites/agent-host/host.ts";
 import { type Recorded, renderBatch } from "../satellites/delivery/render.ts";
 import type { EvidenceRunner } from "../satellites/evidence/runner.ts";
@@ -48,20 +49,6 @@ export type Wiring = {
 
 const WAIT: Handled = { status: "wait" };
 
-/** The scope under the root that a scope's work belongs to: the root's own for the root. */
-function laneOf(state: State, scope: Scope): Scope {
-  let at = scope;
-  for (let up = at.parent; up !== null && up !== ROOT; up = at.parent) {
-    const parent = state.scopes.get(up);
-    if (!parent) break;
-    at = parent;
-  }
-  return at;
-}
-
-/** The branch a lane's work is done on, checked out in the worktree made for the lane. */
-const laneBranch = (project: string, lane: string): string => `${branchesOf(project)}${lane}`;
-
 /** Where a seat's agent works: the root in the repository itself, a watch in the scratch, every other in its lane's worktree. */
 export async function seatDir(
   w: Pick<Wiring, "project" | "workspace" | "scratch">,
@@ -73,21 +60,25 @@ export async function seatDir(
   return (await w.workspace.treeOf(laneBranch(w.project, laneOf(state, scope).id)))?.path ?? null;
 }
 
-/** What an agent's tools need to know of its seat: who it is, its key, whether it writes, where it works and the plugin. */
+/** What an agent's tools and its git need to know of its seat: who it is, its key, where it works and what it may do there. */
 export function seatEnv(
-  w: Pick<Wiring, "project" | "keys" | "team">,
-  actor: string,
-  cwd: string,
-  writes: boolean,
+  w: Pick<Wiring, "project" | "keys" | "team" | "scratch">,
+  state: State,
+  seat: { readonly actor: string; readonly scope: Scope; readonly cwd: string; readonly writes: boolean },
 ): Record<string, string> {
+  const shared = shares(state, seat.scope, seat.writes);
   return {
     SEATWORKS_PROJECT: w.project,
-    SEATWORKS_ACTOR: actor,
-    SEATWORKS_KEY: w.keys.keyOf(w.project, actor),
-    SEATWORKS_WRITES: writes ? "1" : "0",
-    SEATWORKS_COPY: cwd,
+    SEATWORKS_ACTOR: seat.actor,
+    SEATWORKS_KEY: w.keys.keyOf(w.project, seat.actor),
+    SEATWORKS_WRITES: seat.writes ? "1" : "0",
+    SEATWORKS_COPY: seat.cwd,
     SEATWORKS_SHIM_DIR: w.team.shimDir,
     SEATWORKS_SOCKET: w.team.socket,
+    // In a folder others work in, its git is held to its own: this file says which paths are a neighbour's.
+    ...(shared ? { SEATWORKS_HELD: heldFile(w.scratch, seat.actor) } : {}),
+    // Whoever owns a lane takes its parent's branch in by hand when the two conflict, though it writes nothing else.
+    ...(shared && laneOf(state, seat.scope).id === seat.scope.id ? { SEATWORKS_MERGES: "1" } : {}),
   };
 }
 
@@ -166,7 +157,7 @@ export function handlersFor(w: Wiring): Handlers {
         const why = `the worktree scope ${actor.scope} works in is gone`;
         return { status: "failed", why, facts: [gone(actor.id, why)] };
       }
-      const env = seatEnv(w, actor.id, cwd, role.writes);
+      const env = seatEnv(w, state, { actor: actor.id, scope, cwd, writes: role.writes });
       const given = filledIn(w.bundle.servers.get(actor.role) ?? [], process.env);
       if (!given.ok) return { status: "failed", why: given.says, facts: [gone(actor.id, given.says)] };
       const kept = matchingOf(w.agents);
@@ -258,7 +249,14 @@ export function handlersFor(w: Wiring): Handlers {
         return {
           status: "failed",
           why: r.failed,
-          facts: [{ type: "record_candidate", scope: scope.id, commit: e.commit, result: { conflict: [r.failed] } }],
+          facts: [
+            {
+              type: "record_candidate",
+              scope: scope.id,
+              commit: e.commit,
+              result: { conflict: [r.failed], since: [] },
+            },
+          ],
         };
       return done({ type: "record_candidate", scope: scope.id, commit: e.commit, result: r });
     },
@@ -314,11 +312,6 @@ export function handlersFor(w: Wiring): Handlers {
       return Promise.resolve(done());
     },
   };
-}
-
-/** Where every branch the plugin makes for a project's scopes lives. */
-export function branchesOf(project: string): string {
-  return `sw/${project}/`;
 }
 
 export function scratchFor(root: string, project: string): string {

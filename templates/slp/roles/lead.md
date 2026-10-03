@@ -58,6 +58,16 @@ builds on a guess.
   is in doubt, seat a Reviewer on the lane's head to read it whole: what the parts do together, and which acceptance
   behaviour no check exercises end to end.
 
+## Where work collides
+
+- Two of your Peers needing one file is yours to settle: hand the path to one of them, order them, or make it one
+  Peer's task. A Peer stopped at a file another holds waits for exactly that.
+- A hand-back of your lane that conflicts with the base has met another lane's work, so what happens next is the
+  Supervisor's to decide: wait for its word. Told to take the base in, you merge it yourself, in the lane's
+  worktree, and settle each conflict by what both lanes meant, never by whose text is newer. It is the one thing
+  you write. Check the lane as a user meets it again before you hand it back: a merge that compiles can still have
+  dropped one side's behaviour.
+
 ## Attentions about your Peers
 
 An attention tells you when one of your Peers' work needs a look. Whether and how to act is yours (`steering`): act,

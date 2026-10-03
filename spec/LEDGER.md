@@ -302,7 +302,7 @@ the shell and never reaches `decide`.
 | `record_turn`          | `actor, outcome: done \| failed \| cancelled, why?, began?, tokensSoFar, usdSoFar, seen` | `turn_ended`, `attention_climbed`\* |
 | `record_gone`          | `actor, why`                                                            | `actor_gone`, `obligation_moved`\*, `obligation_closed`\* (its permissions) |
 | `record_delivery`      | `to, messages, attentions`: the reader the batch was sent to; what has moved to another reader since is not delivered by it | `message_delivered`\*, `attention_delivered`\* |
-| `record_candidate`     | `scope, commit, result: { candidate, parentHead } \| { conflict: paths }` | `candidate_ready` or `candidate_conflict` |
+| `record_candidate`     | `scope, commit, result: { candidate, parentHead } \| { conflict: paths, since }` | `candidate_ready` or `candidate_conflict` |
 | `record_evidence`      | `scope, subject, ok, steps, heldMachine, asked`: `asked` is whoever asked for the run with `run_checks`, as its effect named them; none for the project's checks on a hand-back | `evidence_recorded`, by `asked` or by the bridge |
 | `record_integration`   | `scope, result: { sha } \| { moved } \| { failed: why }`                | `integrated` or `integration_refused` |
 | `record_profile`       | `profileHash`: the files the project now runs                                | `profile_taken`; nothing when it is the hash the record has |
@@ -340,7 +340,7 @@ Every event, with its payload. `evolve` handles each; an unknown type stops the 
 | `finding_withdrawn`   | `finding, reason`                                                                            |
 | `claim_made`          | `claim: Claim`                                                                               |
 | `candidate_ready`     | `scope, commit, candidate, parentHead`                                                       |
-| `candidate_conflict`  | `scope, commit, paths`                                                                       |
+| `candidate_conflict`  | `scope, commit, paths, since`: what the parent's branch took in, in those files, since the two parted |
 | `evidence_requested`  | `scope, subject, steps, by`                                                                  |
 | `evidence_recorded`   | `evidence: Evidence, wake`                                                                   |
 | `integration_started` | `scope, candidate, parentHead, evidence, reason`                                             |
@@ -454,6 +454,8 @@ Whoever a command changes something for is told, in the tool's own words and not
 | `brief_amended` by leave of `mayChange` | The owner of the scope's parent: who amended it, from which scope, and why | Yes |
 | `published`, `publish_refused` | The root's owner: the branch, the remote and the commit, with the head it asked at when the ledger's own commits are over it, or why it was refused. Whether a landing reached the remote is theirs to know, whoever asked | Yes |
 | `integration_refused`         | The owner of the scope's parent, who asked: over a parent that moved, that another candidate is being made; for any other reason, the reason and that the candidate stands | Yes |
+| `candidate_conflict`          | The owner of the scope's parent: the commit, the branch it conflicts with, the files, that nothing was merged and the scope waits on its decision, and what that branch took in there since. Two pieces of work that meet in one file are decided between by whoever stands over both | Yes |
+| `candidate_conflict`          | The scope's owner: the same files, that nothing was merged, and who decides what is done next. It has nothing to do until then, so it is not woken for it | No |
 
 An integration the workspace refuses for anything but a parent that moved (a base checked out with uncommitted
 changes, or in another working copy) leaves the candidate as it was: the parent's head did not move, so the same

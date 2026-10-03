@@ -33,9 +33,11 @@ differs from the brief.
 
 ## Building
 
-- You work in your lane's worktree, on its branch, beside its other Peers, and their unfinished files are in that
-  folder too. Stage and commit your own paths only. Never undo or rewrite what is not yours: a reset, a rebase or a
-  clean over the whole tree takes their work with it.
+- Your lane's other Peers work in the same folder, on the same branch, and their unfinished files are there too. A
+  build or a test that fails may be failing on theirs: find out whose it is before you change anything, and say so
+  rather than fix what is not yours.
+- When your change needs a file another scope holds, stop there and tell your Lead which file and why: it settles
+  who writes it. Reaching it another way undoes the split the lane runs on.
 - Build the final shape: change the contract, then every caller and test it breaks. No stub, shim, fallback or second
   copy of state to make half-done work fit.
 - A test, and any fake it builds, names only what the code already has or your brief states. A test that needs an

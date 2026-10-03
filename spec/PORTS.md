@@ -114,8 +114,16 @@ từ lead mà": an epic is cut into tickets, a ticket is a lane, and a lane's te
 - **Work under a lane is committed on the lane's branch.** Taking such a scope in moves nothing: its commit is in
   the branch already, so its candidate is the branch as it stands and its checks run there. What it changed is read
   from where it began and under its own paths, since a neighbour's commits lie beside its own; sibling scopes whose
-  paths overlap are ordered already (I3), so two never write one file at once. Undoing one scope's work is a revert
-  of its commits by a writer, not a branch thrown away.
+  paths overlap are ordered already (I3), so two never write one file at once, and each seat's git is held to
+  what is its own there (`HARNESS.md`, Guards). Undoing one scope's work is a revert of its commits by a writer,
+  not a branch thrown away.
+- **A conflict stops, and is decided by whoever stands over both sides.** A lane's hand-back that conflicts with the
+  base has met another lane's work: nothing is merged, the root's owner is asked with the files and what the base
+  took in there since, and the lane waits. Where it decides the lane takes the base in, the lane's owner merges by
+  hand in the lane's worktree and hands back what it settled. Inside a lane there is one branch and so no merge to
+  conflict: two tasks needing one file is a task stopped by its git at a neighbour's path, and the lane's owner
+  settles it, by handing the path over or ordering them. The owner's words: "nếu conflict thì sẽ ngưng và đưa lead
+  merge tay (peer conflict), còn các lead conflict với nhau supervisor sẽ là người đưa ra quyết định".
 - **A lane taken in is merged into the base, and its worktree and branch go with that**: the worktree closed by the
   agent host, the branch deleted once the base holds it. Dropped, its worktree is closed and a branch with commits
   nothing else holds stays for the Human to look at. A worktree holding uncommitted work is never closed.

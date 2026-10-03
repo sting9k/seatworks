@@ -187,9 +187,26 @@ export function react(e: Event, s: State): readonly Effect[] {
       break;
     }
     case "candidate_conflict": {
-      const text = `Scope ${e.scope}'s ${e.commit} conflicts with its parent in: ${e.paths.join(", ")}. Merge the parent into your branch and hand back again.`;
-      tell(s.scopes.get(e.scope)?.writer ?? null, "note", text, true);
-      tell(parentOwner(e.scope), "note", `Scope ${e.scope} conflicts with its parent in: ${e.paths.join(", ")}.`);
+      const scope = s.scopes.get(e.scope);
+      const onto = (scope?.parent == null ? undefined : s.scopes.get(scope.parent)?.branch) ?? "its parent's branch";
+      const above = parentOwner(e.scope);
+      const where = `conflicts with ${onto} in: ${e.paths.join(", ")}. Nothing was merged`;
+      const took =
+        e.since.length > 0
+          ? `\nSince scope ${e.scope} began, ${onto} took in, in those files:\n${e.since.map((line) => `- ${line}`).join("\n")}`
+          : "";
+      // Two pieces of work that meet in one file are decided between by whoever stands over both: nobody merges alone.
+      tell(
+        above,
+        "note",
+        `Scope ${e.scope}'s ${e.commit} ${where}, and scope ${e.scope} waits on what you decide.${took}`,
+        true,
+      );
+      tell(
+        scope?.owner ?? null,
+        "note",
+        `Your hand-back ${e.commit} ${where}. What is done next is ${above ?? "your parent's owner"}'s to decide.`,
+      );
       break;
     }
     case "evidence_requested":

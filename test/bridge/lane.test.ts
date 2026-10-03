@@ -232,6 +232,16 @@ test("two Peers of one lane work in its one worktree on its one branch: each is 
     git(laneCopy, "commit", "-q", "-m", dir);
     return git(laneCopy, "rev-parse", "HEAD");
   };
+  assert.equal(
+    readFileSync(one.env.SEATWORKS_HELD!, "utf8"),
+    "src/b/\t1.2\n",
+    "each is told which paths its neighbour holds, for its git to keep off them",
+  );
+  assert.deepEqual(
+    [paseo.created[0]!.env.SEATWORKS_HELD, paseo.created[1]!.env.SEATWORKS_MERGES, one.env.SEATWORKS_MERGES],
+    [undefined, "1", undefined],
+    "the root shares no worktree, and only the lane's owner takes a branch in by hand",
+  );
   const first = commitIn("src/a", "a's part\n");
   const head = commitIn("src/b", "b's part\n");
   const [a, b] = [await agentTools(socketPath, one.env), await agentTools(socketPath, two.env)];
@@ -248,6 +258,8 @@ test("two Peers of one lane work in its one worktree on its one branch: each is 
     const taken = await lead.call("integrate", { scope: task, evidence: [await proof(lead, task)] });
     assert.ok(taken.ok, `${task}: ${taken.text}`);
     await plugin.idle();
+    if (task === "1.1")
+      assert.equal(readFileSync(two.env.SEATWORKS_HELD!, "utf8"), "", "a neighbour taken in holds nothing any more");
   }
   assert.equal(git(repo, "rev-parse", `sw/${project}/1`), head, "taking them in moved nothing: no merge was made");
   assert.ok(existsSync(laneCopy), "and the worktree is the lane's, not theirs to take away");
@@ -265,6 +277,98 @@ test("two Peers of one lane work in its one worktree on its one branch: each is 
   );
   assert.equal(existsSync(laneCopy), false, "and the lane's worktree went with its landing");
   for (const tools of [supervisor, lead, a, b]) tools.close();
+});
+
+test("two lanes that meet in one file: the second's hand-back conflicts, nothing is merged, the root's owner is asked with what the base took in and the lane's owner told it waits; the lane takes the base in by hand and lands", async () => {
+  const repo = mkdtempSync(join(tmpdir(), "sw-meet-"));
+  git(repo, "init", "-q", "-b", "main");
+  writeFileSync(join(repo, "shared.txt"), "start\n");
+  git(repo, "add", ".");
+  git(repo, "commit", "-q", "-m", "start");
+  const plugin = new Plugin(stateRoot());
+  plugins.push(plugin);
+  const paseo = fakePaseo(pluginDir);
+  plugin.saw(paseo.api);
+  const { socketPath } = await plugin.whenReady();
+  await plugin.openProject(repo, "main");
+  await plugin.idle();
+  const supervisorAgent = paseo.created[0]!;
+  const supervisor = await agentTools(socketPath, supervisorAgent.env);
+  assert.ok(
+    (await supervisor.call("set_checks", { checks: [{ name: "there", run: ["test", "-f", "shared.txt"] }] })).ok,
+  );
+  // Each lane names paths of its own, and both come to change a file neither named: what the base then cannot merge.
+  const lane = (goal: string, path: string) => ({
+    parent: "root",
+    role: "lead",
+    paths: [path],
+    brief: { goal: { text: goal }, kind: "discovery" },
+  });
+  for (const [goal, path] of [
+    ["One", "src/one/"],
+    ["Two", "src/two/"],
+  ] as const) {
+    const opened = await supervisor.call("open_scope", lane(goal, path));
+    assert.ok(opened.ok, opened.text);
+  }
+  await plugin.idle();
+  const seated = (on: string) => paseo.created.find((agent) => agent.labels["seatworks.scope"] === on)!;
+  const [one, two] = [seated("1"), seated("2")];
+  assert.notEqual(one.cwd, two.cwd, "work the root judged could run side by side is two lanes, a worktree each");
+  const told = (host: string) => paseo.sent.filter((sent) => sent.host === host).map((sent) => sent.text);
+  const proof = async (on: string) => {
+    const said = (await supervisor.call("status", { scope: on })).text;
+    const id = /(e\d+) check on [0-9a-f]+: ok/.exec(said)?.[1];
+    assert.ok(id, said);
+    return id;
+  };
+  const write = (dir: string, text: string, message: string) => {
+    writeFileSync(join(dir, "shared.txt"), text);
+    git(dir, "commit", "-q", "-am", message);
+    return git(dir, "rev-parse", "HEAD");
+  };
+
+  const [first, second] = [await agentTools(socketPath, one.env), await agentTools(socketPath, two.env)];
+  assert.ok((await first.call("hand_back", { commit: write(one.cwd, "one's\n", "One's way"), text: "one" })).ok);
+  await plugin.idle();
+  await plugin.idle();
+  assert.ok((await supervisor.call("integrate", { scope: "1", evidence: [await proof("1")] })).ok);
+  await plugin.idle();
+  const landed = git(repo, "rev-parse", "main");
+
+  const clash = write(two.cwd, "two's\n", "Two's way");
+  assert.ok((await second.call("hand_back", { commit: clash, text: "two" })).ok);
+  await plugin.idle();
+  await plugin.idle();
+  assert.equal(git(repo, "rev-parse", "main"), landed, "nothing is merged for them");
+  assert.match(
+    told(supervisorAgent.host).at(-1) ?? "",
+    new RegExp(
+      `^Scope 2's ${clash} conflicts with main in: shared\\.txt\\. Nothing was merged, and scope 2 waits on what you decide\\.\\nSince scope 2 began, main took in, in those files:\\n- ${landed.slice(0, 7)} One's way$`,
+    ),
+    "whoever stands over both lanes is asked, with what the base took in",
+  );
+  assert.equal(told(two.host).length, 0, "the lane's owner is not woken to wait: it has nothing to do yet");
+  assert.match((await supervisor.call("integrate", { scope: "2", evidence: ["e1"] })).text, /^Refused/);
+
+  // The decision made and said, the lane's owner reads with it that its hand-back had conflicted, and on whom it waited.
+  const decided = { to: two.labels["seatworks.actor"], text: "Take main in and keep both ways.", asks: true };
+  assert.ok((await supervisor.call("send_message", decided)).ok);
+  await plugin.idle();
+  assert.match(
+    told(two.host).join("\n"),
+    /Your hand-back [0-9a-f]+ conflicts with main in: shared\.txt\. Nothing was merged\. What is done next is a1's to decide\./,
+  );
+  // The lane takes the base in by hand, in its own worktree, and hands back what it settled.
+  assert.throws(() => git(two.cwd, "merge", "-q", "main"));
+  const settled = write(two.cwd, "one's and two's\n", "Take main in");
+  assert.ok((await second.call("hand_back", { commit: settled, text: "two, with main in it" })).ok);
+  await plugin.idle();
+  await plugin.idle();
+  assert.ok((await supervisor.call("integrate", { scope: "2", evidence: [await proof("2")] })).ok);
+  await plugin.idle();
+  assert.equal(readFileSync(join(repo, "shared.txt"), "utf8"), "one's and two's\n");
+  for (const tools of [supervisor, first, second]) tools.close();
 });
 
 test("a lane whose branch is there already, from a start that was cut short, is given its worktree on that branch", async () => {

@@ -90,9 +90,13 @@ test("a candidate takes the moved parent in without a checkout; a conflict names
   assert.equal(run(root, "show", `${merged.candidate}:b.txt`), "peer");
   assert.equal(run(root, "show", `${merged.candidate}:c.txt`), "base moved");
 
-  commitIn(root, "a.txt", "base edit\n");
+  const landed = commitIn(root, "a.txt", "base edit\n");
   const clash = commitIn(copy, "a.txt", "peer edit\n");
-  assert.deepEqual(await ws.candidate(clash, "main", "Integrate 1"), { conflict: ["a.txt"] });
+  assert.deepEqual(
+    await ws.candidate(clash, "main", "Integrate 1"),
+    { conflict: ["a.txt"], since: [`${landed.slice(0, 7)} edit a.txt`] },
+    "with what the parent took in, in that file, since the two parted: not what it took in elsewhere",
+  );
 });
 
 test("work committed on the parent's own branch is taken in as the parent stands: no merge is made of it", async () => {

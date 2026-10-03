@@ -36,9 +36,9 @@ agent's tools reach it) in a home's files, `{git}` (the repository's git directo
 1. **Worktrees.** The root's agent works in the repository. Every other agent works in its lane's worktree, which
    the lane's writers and readers share (`PORTS.md`, Workspace). The first build gave every role that does not write
    a throwaway copy, so an edit there landed where nothing read it and the copy was the guard. In a shared worktree
-   it is not: a reader's edit lies in the folder a writer commits from. What holds is that a reader cannot commit
-   and that a writer stages its own paths; what stops the edit itself is the reader's prompt and no more. No agent's
-   tools are cut for it yet (To check).
+   it is not: a reader's edit lies in the folder a writer commits from. What holds is the git guard below: a reader
+   cannot commit, and a writer can take nothing a neighbour holds into a commit. What stops the edit itself is the
+   reader's prompt and no more. No agent's tools are cut for it yet (To check).
 2. **Only commits count.** The kernel integrates a writer's commits and nothing else (I4, I5), so no stray edit
    reaches a lane.
 3. **One git guard.** The shim first on every agent's `PATH` refuses push, pull, checkout, switch, update-ref,
@@ -46,6 +46,18 @@ agent's tools reach it) in a home's files, `{git}` (the repository's git directo
    fetch into a local branch, an alias that runs a shell, and git outside the agent's own copy. For a role without `writes` it also refuses what makes a commit or moves the
    branch: commit, merge, reset, rebase, cherry-pick, revert and am. It reads the role's properties from the
    agent's environment, so the five per-agent git deny lists of V1 go.
+4. **Its own, in a worktree others work in.** The owner asked that Paseo's worktrees be used strictly, with nothing
+   left loose: "quản lý chặt việc sử dụng worktree của paseo nhé không thả lỏng ra". So where a seat shares its
+   worktree, any seat of a lane but a writer that has the lane to itself, the same shim holds its git to what is its
+   own. The plugin keeps a file for each such seat, written again as the record moves, of the paths its neighbours
+   hold: the open scopes of its lane that are neither over it nor under it. To stage, commit or drop the edits of a
+   file a neighbour holds is refused, naming the file, the scope and the path it holds; what git would take is read
+   from git's own dry run, so `add -A` and `commit -a` are held as a named file is. Reset, rebase, clean and
+   amending a commit are refused there outright: each takes away or rewrites more than one's own. A file nobody
+   holds is anyone's to write.
+5. **A lane's owner merges by hand.** It writes nothing, but one thing: when its lane must take its parent's branch
+   in, it runs the merge itself and concludes it, settling any file whoever holds it. The shim lets it merge, and
+   commit only while a merge waits to be concluded.
 
 Rules that match a command's text (Claude's `Bash(git push *)`, Codex's exec policy, OpenCode's `shell` rules)
 are passed by `git -C`, an alias or a full path; Seatworks does not rely on them.

@@ -354,7 +354,10 @@ export const COMMANDS = {
   record_candidate: z.object({
     scope: id,
     commit: sha,
-    result: z.union([z.object({ candidate: sha, parentHead: sha }), z.object({ conflict: z.array(z.string()) })]),
+    result: z.union([
+      z.object({ candidate: sha, parentHead: sha }),
+      z.object({ conflict: z.array(z.string()), since: z.array(z.string()).default([]) }),
+    ]),
   }),
   record_evidence: z.object({
     scope: id,

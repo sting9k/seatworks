@@ -3,7 +3,7 @@ import type { Leftover } from "../../shared/contracts/rpc.ts";
 import type { State } from "../../shared/kernel/state.ts";
 import { sizeOf } from "../core/disk.ts";
 import type { Workspace } from "../satellites/workspace/workspace.ts";
-import { branchesOf } from "./effects.ts";
+import { branchesOf } from "./lane.ts";
 
 /** An agent Paseo still keeps for a project, as the agent host lists it. */
 export type Kept = {

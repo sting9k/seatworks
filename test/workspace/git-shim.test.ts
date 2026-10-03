@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { delimiter, join } from "node:path";
 import { test } from "node:test";
@@ -18,7 +18,8 @@ function copy() {
   return root;
 }
 
-function gitAs(cwd: string, writes: boolean, ...args: string[]) {
+/** Runs git as a seat does, through the shim; `seat` is what its seat adds to its environment. */
+function gitIn(cwd: string, writes: boolean, seat: Record<string, string>, ...args: string[]) {
   const env = {
     ...process.env,
     PATH: `${shimDir}${delimiter}${process.env.PATH ?? ""}`,
@@ -29,9 +30,19 @@ function gitAs(cwd: string, writes: boolean, ...args: string[]) {
     GIT_AUTHOR_EMAIL: "t@t",
     GIT_COMMITTER_NAME: "t",
     GIT_COMMITTER_EMAIL: "t@t",
+    ...seat,
   };
   const run = spawnSync("git", args, { cwd, env, encoding: "utf8" });
   return { code: run.status, err: run.stderr };
+}
+
+const gitAs = (cwd: string, writes: boolean, ...args: string[]) => gitIn(cwd, writes, {}, ...args);
+
+/** A file that says which paths a seat's neighbours hold, as the plugin keeps one for each seat. */
+function heldFile(lines: string): string {
+  const file = join(mkdtempSync(join(tmpdir(), "sw-held-")), "a3");
+  writeFileSync(file, lines);
+  return file;
 }
 
 test("the launcher runs the plugin's executable as Node even when it is an Electron binary", () => {
@@ -78,4 +89,99 @@ test("git pointed outside the agent's own copy is refused", () => {
   const other = copy();
   assert.match(gitAs(cwd, true, "-C", other, "status").err, /outside your own copy/);
   assert.match(gitAs(cwd, true, `--git-dir=${join(other, ".git")}`, "status").err, /another repository/);
+});
+
+test("in a worktree others work in, a seat's git takes nothing that is a neighbour's: to stage, commit or drop the edits of a file another scope holds is refused, naming the scope; its own passes", () => {
+  const cwd = copy();
+  for (const dir of ["src/a", "src/b"]) mkdirSync(join(cwd, dir), { recursive: true });
+  writeFileSync(join(cwd, "src/a/one.txt"), "one\n");
+  writeFileSync(join(cwd, "src/b/two.txt"), "two\n");
+  const seat = { SEATWORKS_HELD: heldFile("src/b/\t1.2\n") };
+  const theirs = /src\/b\/two\.txt is scope 1\.2's to write \(it holds src\/b\/\)/;
+
+  assert.match(gitIn(cwd, true, seat, "add", "-A").err, theirs, "everything in the folder is not its own");
+  assert.match(gitIn(cwd, true, seat, "add", ".").err, theirs);
+  assert.equal(gitIn(cwd, true, seat, "add", "src/a").code, 0, "its own, by name");
+  assert.equal(gitIn(cwd, true, seat, "commit", "-q", "-m", "mine").code, 0);
+  assert.equal(
+    execFileSync("git", ["show", "--name-only", "--format=", "HEAD"], { cwd, encoding: "utf8" }).trim(),
+    "src/a/one.txt",
+  );
+
+  // Its neighbour commits its own file, then edits it again: the edit lies in the folder both work in.
+  execFileSync("git", ["add", "src/b"], { cwd });
+  execFileSync("git", ["-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-m", "theirs"], { cwd });
+  writeFileSync(join(cwd, "src/b/two.txt"), "two, half done\n");
+  writeFileSync(join(cwd, "src/a/one.txt"), "one, more\n");
+  assert.match(
+    gitIn(cwd, true, seat, "commit", "-a", "-m", "all of it").err,
+    theirs,
+    "all that changed is not its own",
+  );
+  assert.match(gitIn(cwd, true, seat, "restore", ".").err, theirs, "nor is it its own to throw away");
+  assert.equal(gitIn(cwd, true, seat, "commit", "-q", "-m", "mine again", "src/a/one.txt").code, 0);
+  assert.equal(
+    readFileSync(join(cwd, "src/b/two.txt"), "utf8"),
+    "two, half done\n",
+    "the neighbour's edit is as it was",
+  );
+
+  for (const [args, says] of [
+    [["reset", "--hard"], /`git reset`: others work in this worktree/],
+    [["rebase", "HEAD~1"], /`git rebase`: others build on this branch's commits/],
+    [["clean", "-fd"], /`git clean`: others work in this worktree/],
+    [["commit", "--amend", "-m", "again"], /`git commit --amend`: the last commit here may be another's/],
+  ] as const)
+    assert.match(gitIn(cwd, true, seat, ...args).err, says);
+
+  writeFileSync(join(cwd, "src/b/new.txt"), "new\n");
+  assert.equal(
+    gitIn(cwd, true, { SEATWORKS_HELD: heldFile("") }, "add", "-A").code,
+    0,
+    "with no neighbour, all is its",
+  );
+  assert.equal(
+    gitIn(cwd, true, {}, "reset", "-q", "--hard").code,
+    0,
+    "and a seat alone in its worktree resets as it likes",
+  );
+});
+
+test("a lane's owner, which writes nothing, takes a branch in by hand: it merges, settles what conflicts in any file, and concludes the merge; no other commit is its to make", () => {
+  const cwd = copy();
+  execFileSync("git", ["branch", "base"], { cwd });
+  const commit = (text: string) => {
+    writeFileSync(join(cwd, "a.txt"), text);
+    execFileSync("git", ["-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-am", text.trim()], { cwd });
+  };
+  commit("the lane's\n");
+  execFileSync("git", ["checkout", "-q", "base"], { cwd });
+  commit("the base's\n");
+  execFileSync("git", ["checkout", "-q", "main"], { cwd });
+  const owner = { SEATWORKS_HELD: heldFile("a.txt\t1.1\n"), SEATWORKS_MERGES: "1" };
+
+  assert.match(gitIn(cwd, false, { SEATWORKS_HELD: owner.SEATWORKS_HELD }, "merge", "base").err, /you do not write/);
+  writeFileSync(join(cwd, "b.txt"), "b\n");
+  assert.equal(gitIn(cwd, false, owner, "add", "b.txt").code, 0);
+  assert.match(
+    gitIn(cwd, false, owner, "commit", "-m", "its own").err,
+    /you do not write/,
+    "with no merge to conclude",
+  );
+  execFileSync("git", ["rm", "-q", "--cached", "b.txt"], { cwd });
+
+  const merged = gitIn(cwd, false, owner, "merge", "base");
+  assert.doesNotMatch(merged.err, /refused/);
+  assert.notEqual(merged.code, 0, "git stops at the conflict, for a hand to settle");
+  writeFileSync(join(cwd, "a.txt"), "both\n");
+  assert.equal(
+    gitIn(cwd, false, owner, "add", "a.txt").code,
+    0,
+    "whoever merges settles a file a task of the lane holds",
+  );
+  assert.equal(gitIn(cwd, false, owner, "commit", "-q", "-m", "take the base in").code, 0);
+  assert.equal(
+    execFileSync("git", ["log", "-1", "--format=%p"], { cwd, encoding: "utf8" }).trim().split(" ").length,
+    2,
+  );
 });

@@ -40,6 +40,11 @@ the Human.
   waits. Everything else you decide, or the Lead does.
 - An attention from the watch: use `attention`. Smallest step first, and never a fix.
 - A missing foundation, or a branch a lane has found, is a lane of its own; a lane is never widened to hold it.
+- A lane whose hand-back conflicts with the base has met another lane's work in the same files, and nothing is
+  merged until you decide. Read what the base took in there and what each lane was for before you choose. The lane
+  takes the base in and its Lead settles it by hand, told what must survive from each side; or the two were one
+  piece of work cut in two, and one waits for the other or gives its part up; or one is dropped. Decide by what the
+  goal needs, never by which landed first, and say in the plan what the cut should have been.
 - A report is a claim until the evidence beside it shows it. Land a lane only on evidence of the very head that lands.
 
 ## With the Human

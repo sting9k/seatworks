@@ -5,7 +5,7 @@ import { AS_PLUGIN, PLUGIN_EMAIL, git, isAncestor, said, sha } from "./git.ts";
 
 /** A working copy of the repository a branch is checked out in, and whether it holds work not yet committed. */
 export type Tree = { readonly path: string; readonly branch: string; readonly unsaved: boolean };
-export type Candidate = { candidate: string; parentHead: string } | { conflict: string[] };
+export type Candidate = { candidate: string; parentHead: string } | { conflict: string[]; since: string[] };
 export type Moved = { sha: string } | { refused: string };
 
 const DIFF_CAP = 60_000;
@@ -39,7 +39,12 @@ export class Workspace {
     // Work committed on the parent's own branch is in it already: it is taken in as the parent stands.
     if (await isAncestor(this.repo, tip, parentHead)) return { candidate: parentHead, parentHead };
     const merged = await git(this.repo, ["merge-tree", "--write-tree", "--name-only", parentHead, tip]);
-    if (merged.code === 1) return { conflict: conflictsOf(merged.stdout) };
+    if (merged.code === 1) {
+      const conflict = conflictsOf(merged.stdout);
+      // What the parent took in, in those files, that the commit does not hold: what whoever decides weighs it against.
+      const took = await git(this.repo, ["log", "-10", "--format=%h %s", `${tip}..${parentHead}`, "--", ...conflict]);
+      return { conflict, since: took.stdout.split("\n").filter(Boolean) };
+    }
     if (merged.code !== 0) return { failed: said(merged) };
     const tree = merged.stdout.split("\n")[0]?.trim() ?? "";
     const made = await git(this.repo, [...AS_PLUGIN, "commit-tree", tree, "-p", parentHead, "-p", tip, "-m", message]);

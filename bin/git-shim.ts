@@ -1,8 +1,9 @@
 // First on every agent's PATH as `git`: refuses what only the plugin does, then runs the real git. It guards against
 // mistakes, not intent: a git named by its full path, or one git itself starts, runs the real one (HARNESS.md).
 import { spawnSync } from "node:child_process";
-import { accessSync, constants, realpathSync } from "node:fs";
+import { accessSync, constants, existsSync, readFileSync, realpathSync } from "node:fs";
 import { delimiter, dirname, isAbsolute, join, relative, resolve } from "node:path";
+import { holds } from "../shared/kernel/paths.ts";
 
 const ALWAYS_REFUSED: Record<string, string> = {
   push: "pushing is the plugin's: the root's owner or the Human publishes",
@@ -15,6 +16,13 @@ const ALWAYS_REFUSED: Record<string, string> = {
   worktree: "worktrees are made and removed by the plugin",
 };
 const WRITERS_ONLY = new Set(["commit", "merge", "reset", "rebase", "cherry-pick", "revert", "am"]);
+/** What takes away or rewrites more than one's own, in a worktree others work in. */
+const SHARED_REFUSED: Record<string, string> = {
+  reset:
+    "others work in this worktree, and a reset takes their work with it; `git restore --staged <path>` unstages, `git restore <path>` drops your own edit, `git revert` undoes a commit",
+  rebase: "others build on this branch's commits; they are never rewritten",
+  clean: "others work in this worktree, and the files a clean removes may be theirs; remove your own by name",
+};
 const BRANCH_MOVES = new Set([
   "-d",
   "-D",
@@ -93,9 +101,59 @@ if (alias?.startsWith("!")) refuse(`the alias \`${named}\` runs a shell command`
 const sub = alias ? (alias.split(/\s+/)[0] ?? named) : named;
 const why = ALWAYS_REFUSED[sub];
 if (why) refuse(`\`git ${sub}\`: ${why}`);
-if (WRITERS_ONLY.has(sub) && process.env.SEATWORKS_WRITES !== "1")
-  refuse(`\`git ${sub}\`: you do not write in this scope; your copy is for reading and running`);
 const given = (alias ? alias.split(/\s+/).slice(1) : []).concat(rest);
+/** What git would answer in the directory it was asked in, read and never changed. */
+const ask = (...asked: string[]) =>
+  spawnSync(git, ["-C", cwd, "-c", "core.quotePath=false", ...asked], { encoding: "utf8" });
+/** Whether a merge is being concluded there: whoever merges settles every file it touched. */
+const merging = ask("rev-parse", "-q", "--verify", "MERGE_HEAD").status === 0;
+// A lane's owner takes its parent's branch in by hand when the two conflict, and writes nothing else.
+const mayMerge = process.env.SEATWORKS_MERGES === "1" && (sub === "merge" || (sub === "commit" && merging));
+if (WRITERS_ONLY.has(sub) && process.env.SEATWORKS_WRITES !== "1" && !mayMerge)
+  refuse(`\`git ${sub}\`: you do not write in this scope; your copy is for reading and running`);
+
+/** The files a command would stage, commit or drop the edits of, as git's own dry run or listing names them. */
+function taken(): string[] {
+  const lines = (run: { stdout: string }) => run.stdout.split("\n").filter((line) => line !== "");
+  if (sub === "add")
+    return lines(ask("add", "--dry-run", ...given)).flatMap((line) => /^(?:add|remove) '(.+)'$/.exec(line)?.[1] ?? []);
+  if (sub === "commit")
+    return lines(ask("commit", "--dry-run", "--porcelain", ...given))
+      .filter((line) => !" ?!".includes(line.charAt(0)))
+      .flatMap((line) => line.slice(3).split(" -> "));
+  if (sub === "restore") {
+    const specs = given.filter((a, at) => !a.startsWith("-") && !["-s", "--source"].includes(given[at - 1] ?? ""));
+    const staged = given.some((a) => a === "--staged" || /^-[A-Za-z]*S/.test(a));
+    return [
+      ...lines(ask("diff", "--name-only", "--", ...specs)),
+      ...(staged ? lines(ask("diff", "--cached", "--name-only", "--", ...specs)) : []),
+    ];
+  }
+  return [];
+}
+
+const heldAt = process.env.SEATWORKS_HELD;
+if (heldAt !== undefined) {
+  const shared = SHARED_REFUSED[sub];
+  if (shared) refuse(`\`git ${sub}\`: ${shared}`);
+  if (sub === "commit" && given.includes("--amend"))
+    refuse("`git commit --amend`: the last commit here may be another's, and others build on it; make a new commit");
+  // Each line is a path another scope of the lane holds, and the scope: kept by the plugin as the team's record moves.
+  const held = existsSync(heldAt)
+    ? readFileSync(heldAt, "utf8")
+        .split("\n")
+        .filter((line) => line !== "")
+        .map((line) => line.split("\t") as [string, string])
+    : [];
+  if (!merging && held.length > 0)
+    for (const file of taken()) {
+      const by = held.find(([path]) => holds(path, file));
+      if (by)
+        refuse(
+          `\`git ${sub}\`: ${file} is scope ${by[1]}'s to write (it holds ${by[0]}). Name your own files; what another holds is settled by your lane's owner`,
+        );
+    }
+}
 /** A branch option that moves, copies or deletes, alone or among short flags run together such as `-Df`. */
 const moves = (a: string) =>
   BRANCH_MOVES.has(a) ||

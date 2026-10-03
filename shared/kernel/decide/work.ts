@@ -160,7 +160,13 @@ export function candidateFact(ctx: Of<"record_candidate">): Refusal | undefined 
   if (!claim || claim.commit !== ctx.body.commit || scope.status !== "open") return undefined;
   const r = ctx.body.result;
   if ("conflict" in r)
-    ctx.emit({ type: "candidate_conflict", scope: scope.id, commit: ctx.body.commit, paths: r.conflict });
+    ctx.emit({
+      type: "candidate_conflict",
+      scope: scope.id,
+      commit: ctx.body.commit,
+      paths: r.conflict,
+      since: r.since,
+    });
   else
     ctx.emit({
       type: "candidate_ready",
