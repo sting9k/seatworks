@@ -143,9 +143,9 @@ own review rules go in `.opencodereview/rule.json` in its repository.
 - **A note in `AGENTS.md`**, between the plugin's markers, committed on your base branch as a commit of that file
   alone, so every agent in the repository, the team's or your own, knows the team is there. It never writes over a
   file you are editing; the note waits until you commit.
-- **Branches** under `sw/<project>/`, one per piece of work a writer is given, in worktrees under the plugin's state directory, never
-  in your checkout. Only the plugin makes, merges and deletes them; a git guard on every agent refuses push, pull,
-  checkout and the like.
+- **Branches** under `sw/<project>/`, one per lane, each checked out in a worktree Paseo makes and keeps where it
+  keeps its own, never in your checkout. No agent makes, merges or deletes them, the plugin does: a git guard on
+  every agent refuses push, pull, checkout and the like.
 - **What the template's agents keep.** For SLP: `GLOSSARY.md`, the words the project is spoken of in, and
   `docs/adr/`, each written by the agent whose work settled it, in the commit it explains. While the team runs, the
   plugin commits nothing more than the note: your base moves only when work lands.
@@ -226,10 +226,14 @@ settings, whose `env` every agent of it is given.
 - **Agents.** Claude Code and Pi have been run in a team. Codex and OpenCode (version 2) have their settings and
   have not been run. Nothing is shipped for any other, Oh My Pi among them: Paseo refuses to make an agent of any
   other kind with the team's tools.
-- **A message never lands inside an agent's turn.** It waits, and everything waiting is delivered as one message
-  when the turn ends. Only you can stop a turn, with Paseo's own stop.
-- The plugin makes worktrees with git, not through Paseo's worktree setup, so a copy has no `node_modules` or `.env`
-  until the project's checks install them. Say so when the checks are set.
+- **Mail waits for a pause.** What is sent to an agent in the middle of a turn is delivered when the turn ends,
+  everything waiting as one message. A template may let some of it in sooner, and SLP does: on Claude Code and Pi,
+  what cannot wait (a direction, anything you say, an answer the agent asked for) enters between two of its steps,
+  and a question from below once it has waited two minutes. On Codex and OpenCode everything still waits for the
+  turn's end. Only you can stop a turn, with Paseo's own stop.
+- **A lane's worktree is Paseo's.** Paseo makes it and then runs the repository's own set-up there, in the
+  background (`worktree.setup` in its `paseo.json`). A worktree has no `node_modules` or `.env` unless that set-up
+  or the project's checks put them there. Say so when the checks are set.
 - What the plugin keeps (the record, settings) has no stable format yet: a new release may start it over, and a
   project attached under an older build is removed and attached again.
 - Something wrong? `~/.paseo/daemon.log` has what the plugin said, and the Activity tab what the team did.
