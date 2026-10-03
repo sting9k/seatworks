@@ -207,7 +207,11 @@ upkeep: attach(repository, profile), profiles, presets, templateOffer(from), ins
     line, sent as the program and its arguments, since a check runs with no shell; quotes keep an argument whole.
   - **A Team tab**, beside Files and Changes and as a tab of the workspace, is the whole team of the project a
     workspace belongs to: every seat a line with one word for what it is doing now, what waits on the Human answered
-    in place, and the record folded under its headings. What is stuck and a standing alarm come first.
+    in place, and the record folded under its headings. What is stuck and a standing alarm come first. Where it is
+    wide, as a tab of the workspace is, the tree and one seat sit side by side: the seat says who sits in it, opens
+    its chat and answers what waits on the Human from it alone. A press on a line shows that seat there; beside
+    Files and Changes, where there is no room for one, it opens the seat's chat. The seat shown is the one picked,
+    else the first that needs the Human, else the root.
   - **A pill** on the chat of each agent the plugin started says the most pressing thing: what is stuck, then what
     waits on the Human, then a held team, then who works, then that all has landed: something was taken in and no
     work is open under the root. Its popover answers what waits, opens the Team tab, holds

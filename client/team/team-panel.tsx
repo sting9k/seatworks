@@ -7,17 +7,22 @@ import { RPC } from "../../shared/contracts/rpc.ts";
 import { Waiting } from "../decide/waiting.tsx";
 import { Banner } from "../kit/banner.tsx";
 import { Button } from "../kit/button.tsx";
+import { Card } from "../kit/card.tsx";
 import { Meter } from "../kit/meter.tsx";
 import { Tabs } from "../kit/tabs.tsx";
 import { FONT, SPACE } from "../kit/theme.ts";
 import { problemText } from "../state/problem-text.ts";
 import { useProjectView } from "../state/project-view.ts";
 import { useSeatAgents } from "../state/seat-agents.ts";
-import { seatsOf, waitingOf } from "../state/team.ts";
+import { seatsOf, shownSeat, waitingOf } from "../state/team.ts";
+import { nameOf, titled } from "../state/words.ts";
 import { Record } from "./record.tsx";
+import { SeatDetail } from "./seat-detail.tsx";
 import { Tree } from "./tree.tsx";
 
 type TabId = "team" | "needs" | "record";
+/** From this width the tab has room for two columns: as a tab of the workspace, not beside Files and Changes. */
+const WIDE = 840;
 
 /** Seatworks' tab beside Files and Changes, and a tab of the workspace: the whole team, what needs the Human, the record. */
 export function teamPanel(client: Pick<PluginClientContext, "openSurface">) {
@@ -42,6 +47,8 @@ export function teamPanel(client: Pick<PluginClientContext, "openSurface">) {
     const agents = useSeatAgents(project ?? null);
     const [picked, setPicked] = useState<TabId | null>(null);
     const [facts, setFacts] = useState(false);
+    const [width, setWidth] = useState(0);
+    const [seat, setSeat] = useState<string | null>(null);
     const human = view?.human ?? null;
     const muted = { fontSize: FONT.small, color: theme.colors.foregroundMuted };
     const page = () => {
@@ -69,8 +76,10 @@ export function teamPanel(client: Pick<PluginClientContext, "openSurface">) {
         </View>
       );
 
+    const wide = width >= WIDE;
     const waiting = waitingOf(human);
-    const tab = picked ?? (waiting > 0 ? "needs" : "team");
+    // Where it is wide the seat that needs the Human is shown beside the tree, so the tab opens on the team.
+    const tab = picked ?? (waiting > 0 && !wide ? "needs" : "team");
     const template = view.template;
     const drifted = template !== null && (template.state !== "current" || template.edited);
     const open = (owner: string) => {
@@ -81,9 +90,38 @@ export function teamPanel(client: Pick<PluginClientContext, "openSurface">) {
           }
         : undefined;
     };
+    const seats = seatsOf(human, agents.running);
+    const shown = shownSeat(seats, seat);
+    const rootChat = human.root?.owner ? open(human.root.owner) : undefined;
+    const { foreground } = theme.colors;
     return (
-      <ScrollView contentContainerStyle={{ flexGrow: 1, padding: SPACE.md }}>
-        <View style={{ flexGrow: 1, width: "100%", maxWidth: 720, alignSelf: "center", gap: SPACE.md }}>
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1, padding: wide ? SPACE.xl : SPACE.md }}
+        onLayout={(event) => {
+          setWidth(event.nativeEvent.layout.width);
+        }}
+      >
+        <View style={{ flexGrow: 1, width: "100%", maxWidth: wide ? 1120 : 720, alignSelf: "center", gap: SPACE.md }}>
+          {wide ? (
+            <View style={{ flexDirection: "row", alignItems: "center", gap: SPACE.lg }}>
+              <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+                <Text style={{ fontSize: FONT.title, fontWeight: "600", color: foreground }} numberOfLines={1}>
+                  {nameOf(root ?? project)}
+                </Text>
+                <Text style={muted} numberOfLines={1}>
+                  {[seats[0]?.title, template ? `works by ${template.name}` : null]
+                    .filter((part) => part !== null && part !== undefined)
+                    .join(" · ")}
+                </Text>
+              </View>
+              <View style={{ width: 280 }}>
+                <Meter usd={human.spent.usd} of={human.spent.appetiteUsd} theme={theme} />
+              </View>
+              {human.root && rootChat ? (
+                <Button label={`${titled(human.root.role)}'s chat`} theme={theme} onPress={rootChat} />
+              ) : null}
+            </View>
+          ) : null}
           <Tabs
             tabs={[
               { id: "team", label: "Team" },
@@ -126,7 +164,37 @@ export function teamPanel(client: Pick<PluginClientContext, "openSurface">) {
               onPress={page}
             />
           ) : null}
-          {tab === "team" ? <Tree seats={seatsOf(human, agents.running)} theme={theme} onOpen={open} /> : null}
+          {tab === "team" && !wide ? (
+            <Tree seats={seats} theme={theme} onPress={(one) => (one.owner === null ? undefined : open(one.owner))} />
+          ) : null}
+          {tab === "team" && wide ? (
+            <View style={{ flexDirection: "row", alignItems: "flex-start", gap: SPACE.xl }}>
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Card theme={theme}>
+                  <Tree
+                    seats={seats}
+                    theme={theme}
+                    shown={shown?.scope ?? null}
+                    onPress={(one) => () => {
+                      setSeat(one.scope);
+                    }}
+                  />
+                </Card>
+              </View>
+              <View style={{ flex: 1, minWidth: 0 }}>
+                {shown ? (
+                  <SeatDetail
+                    seat={shown}
+                    project={project}
+                    human={human}
+                    theme={theme}
+                    onOpen={shown.owner === null ? undefined : open(shown.owner)}
+                    onAnswered={() => void reload()}
+                  />
+                ) : null}
+              </View>
+            </View>
+          ) : null}
           {tab === "needs" ? (
             waiting > 0 ? (
               <Waiting project={project} human={human} theme={theme} onAnswered={() => void reload()} />
@@ -135,10 +203,14 @@ export function teamPanel(client: Pick<PluginClientContext, "openSurface">) {
             )
           ) : null}
           {tab === "record" ? <Record view={view} theme={theme} /> : null}
-          <View style={{ flexGrow: 1 }} />
-          <View style={{ paddingHorizontal: SPACE.xs }}>
-            <Meter usd={human.spent.usd} of={human.spent.appetiteUsd} theme={theme} />
-          </View>
+          {wide ? null : (
+            <>
+              <View style={{ flexGrow: 1 }} />
+              <View style={{ paddingHorizontal: SPACE.xs }}>
+                <Meter usd={human.spent.usd} of={human.spent.appetiteUsd} theme={theme} />
+              </View>
+            </>
+          )}
         </View>
       </ScrollView>
     );

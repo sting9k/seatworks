@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { setupOf } from "../../client/state/setup.ts";
-import { pillOf, seatsOf } from "../../client/state/team.ts";
+import { pillOf, seatsOf, shownSeat, waitingAt, waitingOf } from "../../client/state/team.ts";
 import { humanView } from "../../shared/views/human.ts";
-import { SHA, team } from "../kernel/ledger.ts";
+import { Ledger, SHA, slpProfile, team } from "../kernel/ledger.ts";
 
 test("a seat says one word for what it is doing now: the Human's turn, held, handed back, then working or idle", () => {
   const { ledger, supervisor, peer } = team();
@@ -53,6 +53,29 @@ test("once the record holds what landed and no work is open under the root, the 
   ledger.must(ledger.as(supervisor, "open_scope", { parent: "root", role: "watcher", over: "all" }));
   assert.equal(pill(1), "Team · all landed", "a watch still open is no work left to land");
   assert.equal(pill(0), "Team · idle", "a team that has landed nothing has not landed it all");
+});
+
+test("beside the tree a seat shows who sits in it and what waits on the Human from it alone; the seat shown is the one picked, else the first that needs them, else the root", () => {
+  // A template may give a role under the root a door to the Human: here the lane's owner has one.
+  const profile = slpProfile();
+  const lane = profile.roles.get("lead")!;
+  const door = { ...lane, humanDoor: true, tools: new Set([...lane.tools, "ask_human"]) };
+  const { ledger, lead } = team(new Ledger({ ...profile, roles: new Map([...profile.roles, ["lead", door]]) }));
+  const seats = () => seatsOf(humanView(ledger.state), new Set());
+
+  assert.equal(shownSeat(seats(), null)?.scope, "root", "with nothing waiting, the root");
+  ledger.must(
+    ledger.as(lead, "ask_human", { text: "Stream the file, or email a link?", options: [], recommend: null }),
+  );
+  const human = humanView(ledger.state);
+  const shown = shownSeat(seats(), null);
+  assert.deepEqual([shown?.scope, shown?.role, shown?.owner, shown?.says], ["1", "lead", lead, "needs you"]);
+  assert.equal(shownSeat(seats(), "1.1")?.scope, "1.1", "a seat the Human picked stays shown");
+  assert.equal(shownSeat(seats(), "7")?.scope, "1", "and one that is gone gives way");
+  assert.deepEqual(
+    [waitingOf(waitingAt(human, "1")), waitingOf(waitingAt(human, "root")), waitingAt(human, "1").questions[0]?.text],
+    [1, 0, "Stream the file, or email a link?"],
+  );
 });
 
 test("matching agents is not done before a template is installed, whatever else is", () => {

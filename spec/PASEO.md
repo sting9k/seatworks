@@ -196,7 +196,8 @@ On 2 October 2026, Paseo 0.10.2, a daemon run for it with a home of its own (`HA
 - That `projects.list` lists every project the Human opened in Paseo, each `projectRootPath` the checkout's root.
 - The surface as it was rewritten on 3 October 2026, read in Paseo 0.10.3's types and source and not yet seen on a
   live Paseo: a header button and three slash commands; `openPanel` called from a button and from a command; the
-  Team panel in the `workspace` location as well as the explorer; `useSettings` on a surface, which is built on the
-  same `useRpc` a surface already uses; and a listed agent's `status` read as whether it is in a turn. A slash
-  command's name is the plugin's to choose and may meet an agent's own: `/team`, `/team-hold` and `/team-resume`
-  were chosen to stay clear of an agent's `/resume`.
+  Team panel in the `workspace` location as well as the explorer, which a panel is not told, so it lays out in two
+  columns by its own measured width; `useSettings` on a surface, which is built on the same `useRpc` a surface
+  already uses; and a listed agent's `status` read as whether it is in a turn. A slash command's name is the
+  plugin's to choose and may meet an agent's own: `/team`, `/team-hold` and `/team-resume` were chosen to stay
+  clear of an agent's `/resume`.
