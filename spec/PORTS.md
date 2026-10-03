@@ -183,7 +183,8 @@ upkeep: attach(repository, profile), profiles, presets, templateOffer(from), ins
   copies and branches; its record is set aside, since a look back reads the log after the team is gone (P14), and is
   listed as a leftover of its own until the Human deletes it. Attached again, the project starts from nothing. What is
   a folder says what it takes on disk, the bytes of its files with no link followed, and a record says when its
-  project was removed: what the Human weighs a removal by. A branch and an agent take nothing to say.
+  project was removed: what the Human weighs a removal by. A branch and an agent take nothing to say, and a project
+  still attached is not measured: it is removed from its own row, and the copies its team works in are no leftover.
 - A template is installed from a file on the Human's machine: read first for what it would bring, then installed
   once they agree, the same file by its hash (`TEMPLATE.md`, Installing).
 - The update check reads Paseo's own and installs nothing.

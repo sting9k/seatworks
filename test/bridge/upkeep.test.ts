@@ -115,6 +115,7 @@ test("the Human attaches a Paseo project, clears what a dropped task left, and r
   assert.deepEqual([kept.bytes, kept.at, copy.at], [null, null, null], "a branch is no folder, and neither has a day");
   const whole = left.find((l) => l.kind === "project");
   assert.equal(whole?.label, repo);
+  assert.equal(whole.bytes, null, "an attached project is not measured: it is removed from its row, not weighed here");
   const sorted = sortLeftovers(left, new Set([project]));
   assert.deepEqual(
     [sorted.safe, sorted.check, sorted.kept, sorted.records].map((group) => group.map((l) => l.kind)),

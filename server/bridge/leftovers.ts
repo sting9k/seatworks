@@ -84,8 +84,8 @@ export async function leftoversOf(
   return found;
 }
 
-/** The whole project as one leftover: what removing it ends and deletes, and what its folder takes on disk. */
-export function projectLeftover(project: string, repo: string, view: State | null, bytes: number): Leftover {
+/** The whole project as one leftover: what removing it ends and deletes; `bytes` where its folder was measured. */
+export function projectLeftover(project: string, repo: string, view: State | null, bytes: number | null): Leftover {
   const seated = view ? [...view.actors.values()].filter((a) => a.status === "seated").length : 0;
   const open = view ? [...view.scopes.values()].filter((s) => s.status === "open" && s.id !== ROOT).length : 0;
   const why =

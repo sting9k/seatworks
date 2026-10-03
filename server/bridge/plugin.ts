@@ -454,7 +454,8 @@ export class Plugin {
       const runtime = this.runtimes.get(id) ?? this.open(id, ready);
       found.push(
         ...(await leftoversOf(id, runtime.project.view, runtime.workspace, kept)),
-        projectLeftover(id, repo, runtime.project.view, await sizeOf(join(dir, id))),
+        // Not measured: an attached project is removed from its own row, and its copies in use are no leftover.
+        projectLeftover(id, repo, runtime.project.view, null),
       );
     }
     const shelf = archiveDir(this.root);
