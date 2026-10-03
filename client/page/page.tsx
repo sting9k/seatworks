@@ -56,7 +56,9 @@ export function Page({ theme, layout, navigation }: PluginSurfaceProps) {
     listed && matching && settings.status === "ready"
       ? setupOf({
           templates: listed.profiles.length,
-          unmatched: matching.profiles.flatMap((profile) => profile.agents).filter((agent) => !agent.there).length,
+          unmatched: matching.profiles
+            .flatMap((profile) => profile.agents)
+            .filter((agent) => !agent.there || agent.model === null).length,
           classifierSettled: !settings.values.on || settings.values.key !== "",
           projects: listed.projects.length,
         })

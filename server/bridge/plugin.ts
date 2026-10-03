@@ -49,7 +49,7 @@ import { sizeOf } from "../core/disk.ts";
 import { archiveDir, projectDir } from "../core/paths.ts";
 import { rulesDir } from "../core/rules.ts";
 import { installShim } from "../core/shim.ts";
-import { type Harness, PaseoHost } from "../satellites/agent-host/host.ts";
+import { type Harness, type Model, PaseoHost, type Runs } from "../satellites/agent-host/host.ts";
 import { PaseoLink } from "../satellites/agent-host/paseo-link.ts";
 import { EvidenceRunner } from "../satellites/evidence/runner.ts";
 import { MachineHolds } from "../satellites/machine/holds.ts";
@@ -319,11 +319,30 @@ export class Plugin {
     };
   }
 
+  /** The models a provider has, as Paseo lists them. */
+  async models(provider: string): Promise<{ ok: true; models: readonly Model[] } | { ok: false; says: string }> {
+    const read = await (await this.whenReady()).host.models(provider);
+    if ("unavailable" in read) return { ok: false, says: UNREACHED };
+    return "failed" in read ? { ok: false, says: read.failed } : { ok: true, models: read.models };
+  }
+
+  /** Why a provider cannot run this model at this effort, or null when it can. */
+  private async unfit(runs: Runs): Promise<string | null> {
+    const read = await this.models(runs.provider);
+    if (!read.ok) return read.says;
+    const model = read.models.find((one) => one.id === runs.model);
+    if (!model) return `${runs.provider} has no model named ${runs.model}`;
+    return runs.effort === null || model.efforts.some((one) => one.id === runs.effort)
+      ? null
+      : `${runs.model} has no effort named ${runs.effort}`;
+  }
+
   /** Makes in Paseo, on the Human's word, an agent profile for each name a profile gives that Paseo has none for. */
   async createAgents(
     profile: string,
     provider: string,
-    model: string | null,
+    model: string,
+    effort: string | null,
   ): Promise<{ ok: true; made: readonly string[] } | { ok: false; says: string }> {
     const { host } = await this.whenReady();
     const [has, providers] = await Promise.all([host.agentProfiles(), host.providers()]);
@@ -332,14 +351,35 @@ export class Plugin {
     if (!lacks.ok) return lacks;
     if (!providers.includes(provider))
       return { ok: false, says: `Paseo finds no provider named ${provider} on this machine` };
+    const runs = { provider, model, effort };
+    const unfit = await this.unfit(runs);
+    if (unfit !== null) return { ok: false, says: unfit };
     if (lacks.names.length === 0) return { ok: true, made: [] };
-    const added = await host.addProfiles(lacks.names, provider, model);
+    const added = await host.addProfiles(lacks.names, runs);
     if ("unavailable" in added) return { ok: false, says: UNREACHED };
     if ("failed" in added) return { ok: false, says: added.failed };
     // A name that stood for a profile since removed now stands for the one of its own name, which Paseo holds.
     const named = lacks.names.map((name) => ({ id: name, name }));
     const kept = match(this.root, profile, lacks.matching, [...has, ...named]);
     return kept.ok ? { ok: true, made: added.added } : kept;
+  }
+
+  /** Gives one of the Human's agent profiles another model and effort, both ones its provider has. */
+  async shapeAgent(
+    agent: string,
+    model: string,
+    effort: string | null,
+  ): Promise<{ ok: true } | { ok: false; says: string }> {
+    const { host } = await this.whenReady();
+    const has = await host.agentProfiles();
+    if ("unavailable" in has) return { ok: false, says: UNREACHED };
+    const held = has.find((profile) => profile.id === agent || profile.name === agent);
+    if (!held) return { ok: false, says: `Paseo has no agent profile named ${agent}` };
+    const unfit = await this.unfit({ provider: held.provider, model, effort });
+    if (unfit !== null) return { ok: false, says: unfit };
+    const shaped = await host.shapeProfile(agent, model, effort);
+    if ("unavailable" in shaped) return { ok: false, says: UNREACHED };
+    return "failed" in shaped ? { ok: false, says: shaped.failed } : { ok: true };
   }
 
   /** The profile a repository would be attached with: the one named, or the only one installed; null once attached. */

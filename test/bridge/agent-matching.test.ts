@@ -65,8 +65,26 @@ const keptIn = (root: string, profile: string, text: string) => {
 test("an agent profile a profile's roles name is matched to one the Human has, SLP's too: its agent is made from that one", async () => {
   const { plugin, paseo } = await started();
   const before = await shown(plugin, "slp");
-  assert.deepEqual(before.of("slp-peer-alt"), { name: "slp-peer-alt", runsOn: "slp-peer-alt", there: false });
-  assert.deepEqual(before.of("slp-supervisor"), { name: "slp-supervisor", runsOn: "slp-supervisor", there: true });
+  assert.deepEqual(before.of("slp-peer-alt"), {
+    name: "slp-peer-alt",
+    runsOn: "slp-peer-alt",
+    there: false,
+    provider: null,
+    model: null,
+    effort: null,
+  });
+  assert.deepEqual(
+    before.of("slp-supervisor"),
+    {
+      name: "slp-supervisor",
+      runsOn: "slp-supervisor",
+      there: true,
+      provider: "claude",
+      model: "slp-supervisor",
+      effort: null,
+    },
+    "with what the profile it runs on is: its provider, its model, its effort",
+  );
   assert.ok(before.available.includes("slp-lead"));
 
   const matching = { "slp-supervisor": "slp-lead", "slp-peer-alt": "slp-peer" };
@@ -78,7 +96,10 @@ test("an agent profile a profile's roles name is matched to one the Human has, S
   assert.equal(paseo.created[0]?.provider, "claude/slp-lead");
   assert.deepEqual((await plugin.view(opened.project))?.stuck, []);
   const after = await shown(plugin, "slp");
-  assert.deepEqual(after.of("slp-peer-alt"), { name: "slp-peer-alt", runsOn: "slp-peer", there: true });
+  assert.deepEqual(
+    [after.of("slp-peer-alt")?.runsOn, after.of("slp-peer-alt")?.there, after.of("slp-peer-alt")?.model],
+    ["slp-peer", true, "slp-peer"],
+  );
   assert.equal(after.problem, null);
 });
 
@@ -122,6 +143,9 @@ test("a name matched to an agent profile the Human has since removed: the page s
     name: "slp-supervisor",
     runsOn: "long-gone",
     there: false,
+    provider: null,
+    model: null,
+    effort: null,
   });
 
   const opened = await plugin.openProject(repository(), "main");
@@ -145,12 +169,12 @@ test("the names a template gives that Paseo has no profile for are made in Paseo
   );
   const mine = structuredClone(paseo.held);
 
-  const made = await plugin.createAgents("slp", "claude", "sonnet");
+  const made = await plugin.createAgents("slp", "claude", "sonnet", "high");
   assert.ok(made.ok, made.ok ? "" : made.says);
   assert.deepEqual(made.made, ["slp-peer-alt"], "a name Paseo holds a profile of is not made again");
   assert.deepEqual(paseo.held.slice(0, mine.length), mine, "every profile Paseo held goes back as the Human shaped it");
   assert.deepEqual(paseo.held.slice(mine.length), [
-    { id: "slp-peer-alt", name: "slp-peer-alt", provider: "claude", model: "sonnet" },
+    { id: "slp-peer-alt", name: "slp-peer-alt", provider: "claude", model: "sonnet", thinkingOptionId: "high" },
   ]);
   const after = await shown(plugin, "slp");
   assert.deepEqual(
@@ -169,15 +193,15 @@ test("the names a template gives that Paseo has no profile for are made in Paseo
     "and a name is still matched by itself after, the rest as they were",
   );
 
-  const again = await plugin.createAgents("slp", "claude", null);
+  const again = await plugin.createAgents("slp", "claude", "sonnet", null);
   assert.ok(again.ok, again.ok ? "" : again.says);
   assert.deepEqual([again.made, paseo.patches.length], [[], 1], "with nothing lacking, nothing is written");
 });
 
-test("where Paseo holds no agent profile, every name a template gives is made at once, and with no model where none was given", async () => {
+test("where Paseo holds no agent profile, every name a template gives is made at once, each on the model named and with no effort where none was", async () => {
   const { plugin, paseo } = await started([]);
 
-  const made = await plugin.createAgents("slp", "claude", null);
+  const made = await plugin.createAgents("slp", "claude", "opus", null);
 
   assert.ok(made.ok, made.ok ? "" : made.says);
   assert.deepEqual(
@@ -186,6 +210,7 @@ test("where Paseo holds no agent profile, every name a template gives is made at
       id: name,
       name,
       provider: "claude",
+      model: "opus",
     })),
   );
   assert.deepEqual(
@@ -194,19 +219,92 @@ test("where Paseo holds no agent profile, every name a template gives is made at
   );
 });
 
-test("agent profiles are not made on a provider Paseo does not find here, nor for a template nobody installed: nothing is written", async () => {
+test("agent profiles are not made on a provider Paseo does not find here, on a model or an effort it does not have, nor for a template nobody installed: nothing is written", async () => {
   const { plugin, paseo } = await started([]);
   const refused = [
-    ["slp", "not-installed", /not-installed/],
-    ["slp", "nowhere", /nowhere/],
-    ["../slp", "claude", /no profile named/],
+    ["slp", "not-installed", "sonnet", null, /not-installed/],
+    ["slp", "nowhere", "sonnet", null, /nowhere/],
+    ["slp", "claude", "gpt-9", null, /no model named gpt-9/],
+    ["slp", "claude", "opus", "low", /opus has no effort named low/],
+    ["../slp", "claude", "sonnet", null, /no profile named/],
   ] as const;
-  for (const [profile, provider, says] of refused) {
-    const made = await plugin.createAgents(profile, provider, null);
-    assert.ok(!made.ok, `${profile} on ${provider}`);
+  for (const [profile, provider, model, effort, says] of refused) {
+    const made = await plugin.createAgents(profile, provider, model, effort);
+    assert.ok(!made.ok, `${profile} on ${provider}/${model}`);
     assert.match(made.says, says);
   }
   assert.deepEqual(paseo.patches, []);
+});
+
+test("the models a provider has are read for the page, each with its efforts and which it starts on", async () => {
+  const { plugin } = await started();
+  const read = await plugin.models("claude");
+  assert.ok(read.ok, read.ok ? "" : read.says);
+  assert.deepEqual(read.models, [
+    {
+      id: "sonnet",
+      label: "Sonnet",
+      isDefault: true,
+      efforts: [
+        { id: "low", label: "Low" },
+        { id: "high", label: "High" },
+      ],
+      defaultEffort: "low",
+    },
+    { id: "opus", label: "Opus", isDefault: false, efforts: [{ id: "max", label: "Max" }], defaultEffort: null },
+    { id: "haiku", label: "Haiku", isDefault: false, efforts: [], defaultEffort: null },
+  ]);
+  const none = await plugin.models("nowhere");
+  assert.ok(!none.ok);
+  assert.match(none.says, /nowhere/);
+});
+
+test("the model and the effort an agent profile runs are changed from the page: that profile alone changes in Paseo", async () => {
+  const { plugin, paseo } = await started();
+  const others = structuredClone(paseo.held.filter((profile) => profile.name !== "slp-lead"));
+
+  const shaped = await plugin.shapeAgent("slp-lead", "opus", "max");
+  assert.ok(shaped.ok, shaped.ok ? "" : shaped.says);
+  assert.deepEqual(
+    paseo.held.find((profile) => profile.name === "slp-lead"),
+    { id: "slp-lead", name: "slp-lead", provider: "claude", model: "opus", thinkingOptionId: "max" },
+  );
+  assert.deepEqual(
+    paseo.held.filter((profile) => profile.name !== "slp-lead"),
+    others,
+  );
+  const plain = await plugin.shapeAgent("slp-lead", "haiku", null);
+  assert.ok(plain.ok, plain.ok ? "" : plain.says);
+  assert.deepEqual(
+    paseo.held.find((profile) => profile.name === "slp-lead"),
+    { id: "slp-lead", name: "slp-lead", provider: "claude", model: "haiku" },
+    "an effort taken away is no longer named",
+  );
+
+  for (const [agent, model, effort, says] of [
+    ["nobody", "sonnet", null, /no agent profile named nobody/],
+    ["slp-lead", "gpt-9", null, /no model named gpt-9/],
+    ["slp-lead", "haiku", "max", /haiku has no effort named max/],
+  ] as const) {
+    const refused = await plugin.shapeAgent(agent, model, effort);
+    assert.ok(!refused.ok);
+    assert.match(refused.says, says);
+  }
+  assert.equal(paseo.patches.length, 2, "what is refused writes nothing");
+});
+
+test("an agent profile that names no model seats no agent, and the seat says which profile needs one", async () => {
+  const { plugin, paseo } = await started();
+  paseo.held.splice(0, paseo.held.length, { id: "slp-supervisor", name: "slp-supervisor", provider: "claude" });
+
+  const opened = await plugin.openProject(repository(), "main");
+  await plugin.idle();
+
+  assert.deepEqual(paseo.created, []);
+  assert.match(
+    JSON.stringify(await plugin.view(opened.project)),
+    /the Paseo agent profile slp-supervisor names no model/,
+  );
 });
 
 test("a Paseo that cannot say which providers it finds: the page still reads what each name runs on, and offers none to make a profile on", async () => {
@@ -216,7 +314,7 @@ test("a Paseo that cannot say which providers it finds: the page still reads wha
   const read = await shown(plugin, "slp");
 
   assert.deepEqual(read.providers, []);
-  assert.deepEqual(read.of("slp-supervisor"), { name: "slp-supervisor", runsOn: "slp-supervisor", there: true });
+  assert.deepEqual([read.of("slp-supervisor")?.runsOn, read.of("slp-supervisor")?.there], ["slp-supervisor", true]);
 });
 
 test("a template installed again keeps the matching of its name", async () => {

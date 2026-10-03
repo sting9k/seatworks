@@ -45,6 +45,29 @@ export type Harness = {
   servers: boolean;
 };
 export type Unavailable = { unavailable: true };
+/** An agent profile the Human keeps in Paseo: what a role's model may call it by, and what it runs. */
+export type Kept = {
+  readonly id: string;
+  readonly name: string;
+  readonly provider: string;
+  readonly model: string | null;
+  readonly effort: string | null;
+};
+
+/** A model a provider has: the efforts it may think at, and the one it starts on. */
+export type Model = {
+  readonly id: string;
+  readonly label: string;
+  readonly isDefault: boolean;
+  readonly efforts: readonly { readonly id: string; readonly label: string }[];
+  readonly defaultEffort: string | null;
+};
+
+/** What an agent profile runs: a provider, a model of it, and an effort or the model's own. */
+export type Runs = { readonly provider: string; readonly model: string; readonly effort: string | null };
+
+const said = (error: unknown): string => (error instanceof Error ? error.message : String(error));
+
 const UNAVAILABLE: Unavailable = { unavailable: true };
 
 /** The agent host on Paseo: the one place, with the bridge, that imports `@getpaseo/*` (PASEO.md rule 1). */
@@ -66,6 +89,9 @@ export class PaseoHost {
     const daemon = await api.config.get();
     const profile = (daemon.config.agentProfiles ?? []).find((p) => p.id === spec.profile || p.name === spec.profile);
     if (!profile) return { failed: `no Paseo agent profile named ${spec.profile}: add one in Paseo's settings` };
+    // Paseo makes no agent of a provider alone, and says so in words no Human can act on.
+    if (!profile.model)
+      return { failed: `the Paseo agent profile ${profile.name} names no model: give it one on Seatworks' page` };
     const harness = this.harness(profile.provider);
     const outside = spec.servers.map((given) => given.name);
     if (outside.length > 0 && harness?.servers === false)
@@ -124,11 +150,39 @@ export class PaseoHost {
     }
   }
 
-  /** The agent profiles the Human keeps in Paseo, each by the id and the name a role's model may call it by. */
-  async agentProfiles(): Promise<readonly { id: string; name: string }[] | Unavailable> {
+  /** The agent profiles the Human keeps in Paseo: the id and name a role's model may call each by, and what it runs. */
+  async agentProfiles(): Promise<readonly Kept[] | Unavailable> {
     const api = this.link.current;
     if (!api) return UNAVAILABLE;
-    return ((await api.config.get()).config.agentProfiles ?? []).map(({ id, name }) => ({ id, name }));
+    return ((await api.config.get()).config.agentProfiles ?? []).map((profile) => ({
+      id: profile.id,
+      name: profile.name,
+      provider: profile.provider,
+      model: profile.model ?? null,
+      effort: profile.thinkingOptionId ?? null,
+    }));
+  }
+
+  /** The models a provider has, each with the efforts Paseo lists for it and the one it starts on. */
+  async models(provider: string): Promise<{ models: readonly Model[] } | { failed: string } | Unavailable> {
+    const api = this.link.current;
+    if (!api) return UNAVAILABLE;
+    try {
+      const listed = await api.providers.listModels(provider);
+      if (!listed.models)
+        return { failed: `Paseo lists no model for ${provider}: ${listed.error ?? "it gave no reason"}` };
+      return {
+        models: listed.models.map((model) => ({
+          id: model.id,
+          label: model.label,
+          isDefault: model.isDefault === true,
+          efforts: (model.thinkingOptions ?? []).map(({ id, label }) => ({ id, label })),
+          defaultEffort: model.defaultThinkingOptionId ?? null,
+        })),
+      };
+    } catch (error) {
+      return { failed: `Paseo did not list the models of ${provider}: ${said(error)}` };
+    }
   }
 
   /** The providers Paseo finds on this machine, each one an agent can be started on; none where it cannot say. */
@@ -144,11 +198,10 @@ export class PaseoHost {
     }
   }
 
-  /** Adds agent profiles of these names to Paseo on one provider; a name it holds is left as the Human shaped it. */
+  /** Adds agent profiles of these names to Paseo, each running one model; a name it holds is left as the Human shaped it. */
   async addProfiles(
     names: readonly string[],
-    provider: string,
-    model: string | null,
+    runs: Runs,
   ): Promise<{ added: readonly string[] } | { failed: string } | Unavailable> {
     const api = this.link.current;
     if (!api) return UNAVAILABLE;
@@ -156,16 +209,44 @@ export class PaseoHost {
     const known = new Set(held.flatMap((profile) => [profile.id, profile.name]));
     const added = names.filter((name) => !known.has(name));
     if (added.length === 0) return { added };
-    const made = added.map((name) => ({ id: name, name, provider, ...(model === null ? {} : { model }) }));
+    const made = added.map((name) => ({
+      id: name,
+      name,
+      provider: runs.provider,
+      model: runs.model,
+      ...(runs.effort === null ? {} : { thinkingOptionId: runs.effort }),
+    }));
     try {
       // Paseo takes the list whole and not as a merge, so what it holds goes back with what is added.
       await api.config.patch({ agentProfiles: [...held, ...made] });
     } catch (error) {
-      return {
-        failed: `Paseo did not take the agent profiles: ${error instanceof Error ? error.message : String(error)}`,
-      };
+      return { failed: `Paseo did not take the agent profiles: ${said(error)}` };
     }
     return { added };
+  }
+
+  /** Gives one agent profile the Human keeps another model and effort; every other field of it, and every other profile, stays. */
+  async shapeProfile(
+    named: string,
+    model: string,
+    effort: string | null,
+  ): Promise<{ shaped: true } | { failed: string } | Unavailable> {
+    const api = this.link.current;
+    if (!api) return UNAVAILABLE;
+    const held = (await api.config.get()).config.agentProfiles ?? [];
+    if (!held.some((profile) => profile.id === named || profile.name === named))
+      return { failed: `Paseo has no agent profile named ${named}` };
+    const shaped = held.map((profile) => {
+      if (profile.id !== named && profile.name !== named) return profile;
+      const { thinkingOptionId: _was, ...rest } = profile;
+      return { ...rest, model, ...(effort === null ? {} : { thinkingOptionId: effort }) };
+    });
+    try {
+      await api.config.patch({ agentProfiles: shaped });
+    } catch (error) {
+      return { failed: `Paseo did not take the change to ${named}: ${said(error)}` };
+    }
+    return { shaped: true };
   }
 
   /** The agent a create with these labels made, if one did. */

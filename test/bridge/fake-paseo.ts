@@ -42,8 +42,24 @@ function refusedOption(options: Record<string, unknown>): string | undefined {
   return Object.keys(permission).find((key) => !OPENCODE_PERMISSIONS.has(key));
 }
 
-/** An agent profile as Paseo keeps one; its model is the provider's own where none is named. */
-type Held = { id: string; name: string; provider: string; model?: string };
+/** An agent profile as Paseo keeps one: a model and a thinking option where the Human gave them. */
+type Held = { id: string; name: string; provider: string; model?: string; thinkingOptionId?: string };
+
+/** The models the stand-in's provider has, each with the thinking options Paseo lists for it. */
+const MODELS = [
+  {
+    id: "sonnet",
+    label: "Sonnet",
+    isDefault: true,
+    thinkingOptions: [
+      { id: "low", label: "Low" },
+      { id: "high", label: "High" },
+    ],
+    defaultThinkingOptionId: "low",
+  },
+  { id: "opus", label: "Opus", thinkingOptions: [{ id: "max", label: "Max" }] },
+  { id: "haiku", label: "Haiku" },
+];
 
 /** The part of Paseo's API the plugin uses, recording what it was asked; `gate` makes creates and reads fail. */
 export function fakePaseo(
@@ -154,6 +170,10 @@ export function fakePaseo(
       },
     },
     providers: {
+      listModels: (asked: string) =>
+        asked === provider
+          ? Promise.resolve({ provider: asked, models: MODELS.map((model) => ({ provider: asked, ...model })) })
+          : Promise.resolve({ provider: asked, error: `no provider named ${asked}` }),
       listAvailable: () =>
         gate.providersFail
           ? Promise.reject(new Error("provider discovery timed out"))
@@ -202,6 +222,9 @@ export function fakePaseo(
         };
       }) => {
         if (gate.refuse !== null) return Promise.reject(new Error(gate.refuse));
+        // Paseo makes no agent of a provider alone: seen on a live 0.10.3, for a profile that named no model.
+        if (!o.config.provider.includes("/"))
+          return Promise.reject(new Error('Expected config.provider in "provider/model" format'));
         // Paseo refuses these for every other provider, and a create that sends them makes no agent.
         const kind = o.config.provider.split("/")[0]!;
         if (o.config.toolPolicy && !TAKES_SERVERS.has(kind))

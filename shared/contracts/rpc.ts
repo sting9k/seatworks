@@ -132,9 +132,29 @@ const ProfileAgentsSchema = z.object({
   name: z.string(),
   title: z.string(),
   problem: z.string().nullable(),
-  agents: z.array(z.object({ name: z.string(), runsOn: z.string(), there: z.boolean() })),
+  /** Each name its roles give: the Human's profile it runs on, whether Paseo has it, and what that profile runs. */
+  agents: z.array(
+    z.object({
+      name: z.string(),
+      runsOn: z.string(),
+      there: z.boolean(),
+      provider: z.string().nullable(),
+      model: z.string().nullable(),
+      effort: z.string().nullable(),
+    }),
+  ),
 });
 export type ProfileAgents = z.infer<typeof ProfileAgentsSchema>;
+
+/** A model a provider has: the efforts it may think at, and the one it starts on. */
+const ProviderModelSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  isDefault: z.boolean(),
+  efforts: z.array(z.object({ id: z.string(), label: z.string() })),
+  defaultEffort: z.string().nullable(),
+});
+export type ProviderModel = z.infer<typeof ProviderModelSchema>;
 
 /** The Human's surface calls these (PORTS.md, Human surface); shaped as Paseo's plugin RPC contracts. */
 export const RPC = {
@@ -255,15 +275,33 @@ export const RPC = {
       providers: z.array(z.string()),
     }),
   },
-  /** Makes in Paseo an agent profile for each name a profile gives that Paseo has none for, on one provider. */
+  /** Makes in Paseo an agent profile for each name a profile gives that Paseo has none for, each running one model. */
   createAgents: {
     name: "seatworks.create_agents",
     input: z.object({
       profile: z.string().min(1),
       provider: z.string().min(1),
-      /** The model each runs; with none, the provider's own. */
-      model: z.string().min(1).optional(),
+      /** Paseo makes no agent of a provider alone, so a profile is never made without a model. */
+      model: z.string().min(1),
+      /** How hard the model thinks; with none, the model's own. */
+      effort: z.string().min(1).optional(),
     }),
+    output: z.object({ ok: z.boolean(), text: z.string() }),
+  },
+  /** The models a provider has, each with the efforts it may think at: what a profile is given to run. */
+  models: {
+    name: "seatworks.models",
+    input: z.object({ provider: z.string().min(1) }),
+    output: z.object({
+      ok: z.boolean(),
+      text: z.string(),
+      models: z.array(ProviderModelSchema),
+    }),
+  },
+  /** Gives one of the Human's agent profiles in Paseo another model and effort. */
+  shapeAgent: {
+    name: "seatworks.shape_agent",
+    input: z.object({ agent: z.string().min(1), model: z.string().min(1), effort: z.string().min(1).optional() }),
     output: z.object({ ok: z.boolean(), text: z.string() }),
   },
   checkUpdate: {

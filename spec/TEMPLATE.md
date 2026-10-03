@@ -378,12 +378,18 @@ agent profile the Human already has, for every profile installed.
 - **The names Paseo has no profile for are made in Paseo, on the Human's press.** A Human with no agent profile of
   their own had six to make by hand in Paseo's settings before SLP's first team could be seated. So the page makes
   them: an agent profile for each name a template gives that Paseo lacks, under that very name, on a provider the
-  Human picks among those Paseo finds on the machine, and a model if they name one. What a team runs on is the
-  Human's, never the template's: a template gives names and no provider. A profile Paseo holds is never touched,
-  and a name that was matched to a profile since removed stands for the profile of its own name again. It is the
-  one thing the plugin writes in Paseo's config (`PASEO.md`), and nothing is written where nothing is lacking, a
-  provider Paseo does not find is named, or the template is not installed. Each is the Human's to shape in Paseo
-  after: a different model for two of them is often the point.
+  Human picks among those Paseo finds on the machine, a model of it and an effort, both from what Paseo lists and
+  offered at the provider's own. Never without a model: Paseo makes no agent of a provider alone. What a team runs
+  on is the Human's, never the template's: a template gives names and no provider. A profile Paseo holds is never
+  touched by this, and a name that was matched to a profile since removed stands for the profile of its own name
+  again. Nothing is written where nothing is lacking, where the provider, the model or the effort is not one Paseo
+  has, or where the template is not installed.
+- **What each name runs is said on its line, and set there.** Its provider, its model and its effort, or that Paseo
+  has no such profile, or that the profile names no model and so can seat no agent. Opened, the line sets the
+  profile it runs on, and the model and the effort of that profile: one of the Human's own in Paseo, changed in
+  that one place and nowhere else, to a model and an effort its provider has. A different model for two of a
+  template's names is often the point. These two, making a profile and shaping one, are all the plugin writes in
+  Paseo's config (`PASEO.md`).
 - **It is the Human's and their machine's**, so it is kept beside the profiles, in `agents/<profile>.json` under the
   state root, and never in the template. A template's files and hash stay as shared, and one installed again keeps
   the matching of its name.

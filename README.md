@@ -90,9 +90,9 @@ Open Seatworks in the sidebar. A strip at the top of its page shows the four ste
 1. **Install a template.** On the Templates tab, read SLP and install it. Nothing runs until a template is
    installed.
 2. **Give it agent profiles.** On the same tab, open the template. One press creates in Paseo an agent profile
-   for each name it gives that you do not have yet, on the provider you pick and the model you name; nothing you
-   already have is touched. Or match a name to an agent profile of yours instead. Then shape each in Paseo's
-   settings: give each an explicit model.
+   for each name it gives that you do not have yet, on the provider, model and effort you pick; nothing you already
+   have is touched. Each name is a line that says what it runs: open one to give it another model or effort, or to
+   run it on an agent profile of yours instead.
 3. **Set a key for the template's classifier**, if you have one, on the Classifier tab, or switch it off there.
 
 SLP names these:

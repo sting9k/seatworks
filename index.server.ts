@@ -119,11 +119,25 @@ export default function contribute(server: PluginServerContext) {
   });
   server.handle(RPC.createAgents, async (input, { paseo }) => {
     plugin.saw(paseo);
-    const made = await plugin.createAgents(input.profile, input.provider, input.model ?? null);
+    const made = await plugin.createAgents(input.profile, input.provider, input.model, input.effort ?? null);
     if (!made.ok) return { ok: false, text: `Not made: ${made.says}.` };
     return made.made.length === 0
       ? { ok: true, text: "Paseo already holds every agent profile it names." }
-      : { ok: true, text: `Made in Paseo, on ${input.provider}: ${made.made.join(", ")}.` };
+      : { ok: true, text: `Made in Paseo, on ${input.provider}/${input.model}: ${made.made.join(", ")}.` };
+  });
+  server.handle(RPC.models, async (input, { paseo }) => {
+    plugin.saw(paseo);
+    const read = await plugin.models(input.provider);
+    return read.ok
+      ? { ok: true, text: "", models: [...read.models].map((model) => ({ ...model, efforts: [...model.efforts] })) }
+      : { ok: false, text: `Not read: ${read.says}.`, models: [] };
+  });
+  server.handle(RPC.shapeAgent, async (input, { paseo }) => {
+    plugin.saw(paseo);
+    const shaped = await plugin.shapeAgent(input.agent, input.model, input.effort ?? null);
+    return shaped.ok
+      ? { ok: true, text: `${input.agent} runs ${input.model}${input.effort ? `, ${input.effort}` : ""}.` }
+      : { ok: false, text: `Not changed: ${shaped.says}.` };
   });
   server.handle(RPC.checkUpdate, () => checkUpdate(PLUGIN_ID));
   server.handle(RPC.view, async (input, { paseo }) => {

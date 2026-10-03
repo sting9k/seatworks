@@ -1,7 +1,6 @@
 import type { PluginTheme } from "@getpaseo/plugin";
 import { openExternalUrl, useRpc } from "@getpaseo/plugin/client";
 import { Icon, useToast } from "@getpaseo/plugin/client/react-native";
-import { SettingsSelect } from "@getpaseo/plugin/client/ui";
 import { useCallback, useEffect, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import {
@@ -19,6 +18,8 @@ import { Tag } from "../kit/tag.tsx";
 import { FONT, SPACE } from "../kit/theme.ts";
 import { oneOn } from "../state/matching.ts";
 import { problemText } from "../state/problem-text.ts";
+import { AgentRow } from "./agent-row.tsx";
+import { CreateAgents } from "./create-agents.tsx";
 
 /** Where templates are made and shared: the gallery's page, which carries the editor. */
 const EDITOR = "https://sting9k.github.io/seatworks-gallery/";
@@ -37,24 +38,35 @@ type InstalledProps = {
   readonly theme: PluginTheme;
   readonly busy: boolean;
   readonly onMatch: (matching: Record<string, string>) => void;
-  /** Makes in Paseo an agent profile for each name it has none for, on a provider and a model, or the provider's own. */
-  readonly onCreate: (provider: string, model: string) => void;
+  /** Makes in Paseo an agent profile for each name it has none for, running a model at an effort. */
+  readonly onCreate: (provider: string, model: string, effort: string | null) => void;
+  /** Gives one of the Human's agent profiles another model and effort. */
+  readonly onShape: (agent: string, model: string, effort: string | null) => void;
   readonly onRemove: () => void;
 };
 
-/** One installed template on a line; opened, each agent profile its roles name and the one of the Human's it runs on. */
-function Installed({ profile, available, providers, theme, busy, onMatch, onCreate, onRemove }: InstalledProps) {
-  const unmatched = profile.agents.filter((agent) => !agent.there).length;
-  const [open, setOpen] = useState(unmatched > 0);
+/** One installed template on a line; opened, each agent profile its roles name and what it runs. */
+function Installed({
+  profile,
+  available,
+  providers,
+  theme,
+  busy,
+  onMatch,
+  onCreate,
+  onShape,
+  onRemove,
+}: InstalledProps) {
+  const missing = profile.agents.filter((agent) => !agent.there).length;
+  const bare = profile.agents.filter((agent) => agent.there && agent.model === null).length;
+  const [open, setOpen] = useState(missing + bare > 0);
   const [removing, setRemoving] = useState(false);
-  const [picked, setPicked] = useState<string | null>(null);
-  const [model, setModel] = useState("");
-  const provider = picked !== null && providers.includes(picked) ? picked : providers[0];
   const { foregroundMuted, statusDanger, border } = theme.colors;
   return (
     <View>
       <Row title={profile.title} meta={`${profile.agents.length} agent profiles`} theme={theme}>
-        {unmatched > 0 ? <Tag label={`${unmatched} to match`} tone="warning" theme={theme} /> : null}
+        {missing > 0 ? <Tag label={`${missing} to create`} tone="warning" theme={theme} /> : null}
+        {bare > 0 ? <Tag label={`${bare} with no model`} tone="warning" theme={theme} /> : null}
         <Button
           label={removing ? "Press again to remove" : "Remove"}
           tone="quiet"
@@ -84,72 +96,26 @@ function Installed({ profile, available, providers, theme, busy, onMatch, onCrea
           {profile.problem}
         </Text>
       ) : null}
-      {open && unmatched > 0 ? (
+      {open && missing > 0 ? (
         <View style={{ borderTopWidth: 1, borderTopColor: border }}>
-          {provider === undefined ? (
-            <Text style={{ fontSize: FONT.small, color: foregroundMuted, padding: SPACE.lg }}>
-              Paseo finds no provider here to run an agent on.
-            </Text>
-          ) : (
-            <>
-              <SettingsSelect
-                label={
-                  unmatched === 1
-                    ? "Create the one missing in Paseo, on"
-                    : `Create the ${unmatched} missing in Paseo, on`
-                }
-                value={provider}
-                options={providers.map((name) => ({ label: name, value: name }))}
-                disabled={busy}
-                onValueChange={setPicked}
-              />
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: SPACE.sm,
-                  paddingHorizontal: SPACE.lg,
-                  paddingBottom: SPACE.md,
-                }}
-              >
-                <Field
-                  value={model}
-                  placeholder="Model, or none for the provider's own"
-                  theme={theme}
-                  disabled={busy}
-                  onChange={setModel}
-                />
-                <Button
-                  label={`Create ${unmatched}`}
-                  tone="accent"
-                  theme={theme}
-                  disabled={busy}
-                  onPress={() => {
-                    onCreate(provider, model.trim());
-                  }}
-                />
-              </View>
-            </>
-          )}
+          <CreateAgents missing={missing} providers={providers} theme={theme} busy={busy} onCreate={onCreate} />
         </View>
       ) : null}
       {open
         ? profile.agents.map((agent) => (
-            <View key={agent.name} style={{ borderTopWidth: 1, borderTopColor: border }}>
-              <SettingsSelect
-                label={agent.name}
-                error={agent.there ? null : `Paseo has no agent profile named ${agent.runsOn}`}
-                value={agent.runsOn}
-                options={[...new Set([...available, agent.name, agent.runsOn])].map((name) => ({
-                  label: name,
-                  value: name,
-                }))}
-                disabled={busy}
-                onValueChange={(runsOn) => {
-                  onMatch(oneOn(profile.agents, agent.name, runsOn));
-                }}
-              />
-            </View>
+            <AgentRow
+              key={`${agent.name}:${agent.runsOn}`}
+              agent={agent}
+              available={available}
+              theme={theme}
+              busy={busy}
+              onMatch={(runsOn) => {
+                onMatch(oneOn(profile.agents, agent.name, runsOn));
+              }}
+              onShape={(model, effort) => {
+                onShape(agent.runsOn, model, effort);
+              }}
+            />
           ))
         : null}
     </View>
@@ -203,6 +169,7 @@ export function TemplatesTab({ matching, theme, onChanged }: Props) {
   const remove = useRpc(RPC.removeTemplate);
   const ask = useRpc(RPC.agents);
   const create = useRpc(RPC.createAgents);
+  const shape = useRpc(RPC.shapeAgent);
   const toast = useToast();
   const [presets, setPresets] = useState<readonly Preset[]>([]);
   const [path, setPath] = useState("");
@@ -264,12 +231,20 @@ export function TemplatesTab({ matching, theme, onChanged }: Props) {
                 onMatch={(match) => {
                   act(() => ask({ match: { profile: profile.name, matching: match } }), onChanged);
                 }}
-                onCreate={(provider, model) => {
+                onCreate={(provider, model, effort) => {
                   act(async () => {
-                    const made = await create({ profile: profile.name, provider, ...(model === "" ? {} : { model }) });
+                    const made = await create({
+                      profile: profile.name,
+                      provider,
+                      model,
+                      ...(effort ? { effort } : {}),
+                    });
                     if (made.ok) toast.show(made.text, { variant: "success" });
                     return made;
                   }, onChanged);
+                }}
+                onShape={(agent, model, effort) => {
+                  act(() => shape({ agent, model, ...(effort ? { effort } : {}) }), onChanged);
                 }}
                 onRemove={() => {
                   act(() => remove({ name: profile.name }), onChanged);

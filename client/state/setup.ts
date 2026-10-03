@@ -8,7 +8,7 @@ export type Step = {
 type Has = {
   /** Templates installed on this machine. */
   readonly templates: number;
-  /** Agent profiles an installed template names that Paseo does not have. */
+  /** Agent profiles an installed template names that Paseo does not have, or has with no model to run. */
   readonly unmatched: number;
   /** Whether the classifier is switched off or has its key. */
   readonly classifierSettled: boolean;

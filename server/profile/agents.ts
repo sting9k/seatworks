@@ -8,8 +8,14 @@ import { listProfiles, profilePath } from "./profiles.ts";
 /** The Human's matching for one profile: each agent profile its roles name that runs on one of the Human's own. */
 export type Matching = Readonly<Record<string, string>>;
 
-/** An agent profile the Human keeps in Paseo, which a name may call by its id or its name. */
-export type Has = { readonly id: string; readonly name: string };
+/** An agent profile the Human keeps in Paseo, which a name may call by its id or its name; what it runs, where known. */
+export type Has = {
+  readonly id: string;
+  readonly name: string;
+  readonly provider?: string;
+  readonly model?: string | null;
+  readonly effort?: string | null;
+};
 
 type Refused = { readonly ok: false; readonly says: string };
 
@@ -59,7 +65,15 @@ export function agentsByProfile(stateRoot: string, has: readonly Has[]): Profile
     const kept = matchingOf(matchingFile(stateRoot, name));
     const agents = read.named.map((agent) => {
       const runs = runsOn(kept.ok ? kept.matching : {}, agent);
-      return { name: agent, runsOn: runs, there: there(has, runs) };
+      const on = has.find((profile) => profile.id === runs || profile.name === runs);
+      return {
+        name: agent,
+        runsOn: runs,
+        there: on !== undefined,
+        provider: on?.provider ?? null,
+        model: on?.model ?? null,
+        effort: on?.effort ?? null,
+      };
     });
     return { name, title, problem: kept.ok ? null : kept.says, agents };
   });

@@ -46,11 +46,15 @@ history(agentId, since) -> events
 answerPermission(agentId, requestId, allow, reason)
 archive(agentId)
 labelled(labels) -> { agentId, title, labels }[]            // every agent not archived that carries all of them
-agentProfiles() -> { id, name }[]                           // the agent profiles the Human keeps
+agentProfiles() -> { id, name, provider, model?, effort? }[] // the agent profiles the Human keeps
 providers() -> provider[]                                   // an agent can start on each; none if Paseo cannot say
-addProfiles(names, provider, model?) -> Result<added>       // never touches a profile already there
+models(provider) -> Result<{ id, label, efforts, ... }[]>   // what a profile on it may run
+addProfiles(names, { provider, model, effort? }) -> Result<added>  // never touches a profile already there
+shapeProfile(name, model, effort?) -> Result                // that one profile's model and effort, nothing else
 ```
 
+- An agent profile that names no model makes no agent, and the host says which profile it is: Paseo's own refusal
+  names a format, which nobody can act on.
 - `sandbox` is built from role properties (`writes`, `reading`), never from a role's name. Each agent's own format
   lives in `agent-host/harness/<agent>/`.
 - A prompt and a tool set are fixed when an agent is created: a change of either is a new agent.
@@ -156,8 +160,9 @@ views: whatTheHumanNeeds, sinceTheyLooked, chainOfChange, openObligations, statu
 commands: answer_question, send_message, hold_scope, resume_scope, amend_plan (lines of theirs), answer_permission,
           set_checks, publish
 upkeep: attach(repository, profile), profiles, presets, templateOffer(from), installTemplate(from, hash),
-        removeTemplate(name), syncTemplate(project), agents(match), createAgents(profile, provider, model),
-        leftovers, clean(picked), checkUpdate
+        removeTemplate(name), syncTemplate(project), agents(match), models(provider),
+        createAgents(profile, provider, model, effort), shapeAgent(agent, model, effort), leftovers,
+        clean(picked), checkUpdate
 ```
 
 - It shows only what the kernel's views and the agents said. It writes no summary of its own.
