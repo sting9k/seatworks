@@ -177,7 +177,8 @@ To make one:
   [`test/templates/pair/`](test/templates/pair) is a small one of three roles. [`spec/TEMPLATE.md`](spec/TEMPLATE.md)
   says what each file is, [`spec/KERNEL.md`](spec/KERNEL.md) §2 what a role's properties and tools mean, and
   [`spec/REFLEX.md`](spec/REFLEX.md) and [`spec/WATCH.md`](spec/WATCH.md) how a question and a moment are written.
-- **Or draw it.** `npm run editor` opens a template as a graph of nodes and wires: change it, read its notes, export.
+- **Or draw it.** `npm run editor` opens a template as a graph of nodes and wires, or starts one from nothing:
+  change it, read its notes, export.
   The same editor, with the templates others have shared, is at https://sting9k.github.io/seatworks-gallery/.
 - **Check and pack it** from a checkout of this repository:
 

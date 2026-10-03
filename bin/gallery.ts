@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { galleryOf } from "../editor/template/gallery.ts";
 import { filesUnder } from "../server/profile/template-files.ts";
 
@@ -22,7 +22,10 @@ const templates = new Map(
     .filter((one) => !twice.some((other) => other.name === one.name))
     .map(({ name, dir }): [string, Map<string, string>] => [name, new Map(filesUnder(join(dir, name)))]),
 );
-const built = galleryOf(templates);
+// What is built from the plugin's own templates comes with it; any other directory is where others share theirs.
+const own = resolve(import.meta.dirname, "..", "templates");
+const comes = new Set(found.filter(({ dir }) => resolve(dir) === own).map(({ name }) => name));
+const built = galleryOf(templates, comes);
 rmSync(out, { recursive: true, force: true });
 mkdirSync(out, { recursive: true });
 for (const [file, text] of built.files) writeFileSync(join(out, file), text);

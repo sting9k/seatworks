@@ -352,6 +352,7 @@ A template's files in, what a person sees out (`EDITOR.md`).
 | Two roles one role seats, each with more beside it than it is tall | Laid out far enough apart for each to open all of it          |
 | A role's opened skills, tool groups and servers             | In a column at its left, clear of the role and of what is one rank before it, about the role's middle |
 | A role's job changed to another, then to none; a job a role that seats others cannot leave | The old job's tools go and the new one's come, in one change; none leaves it no job; the last is not made, saying why |
+| A template started from nothing under a name; under a name with no letter or digit | It loads as the plugin would load it: one role that is the root and may ask the Human, wired to the Human, and nothing else; its notes are an agent profile to name and a prompt to write, and none of a tool it lacks or is refused; the second is not started, saying why |
 | The SLP profile packed with nothing changed, and opened again | Every file as it was, to the byte                                  |
 | A template whose nodes were put somewhere, then saved       | The places are in `template.json` and in no other file; opened again, each node is where it was put |
 | A file that is not a packed template                        | Not opened, saying so                                               |
@@ -441,9 +442,9 @@ Template directories in, what a page lists out (`TEMPLATE.md`, The gallery).
 
 | Case                                                        | Expect                                                              |
 | ----------------------------------------------------------- | ------------------------------------------------------------------- |
-| A gallery built from two template directories               | An index naming each by its directory, with its name and tags, and each as the one file it is shared as; a page reads back the very files |
+| A gallery built from two template directories, one of them named as the plugin's own | An index naming each by its directory, with its name and tags and where it is from, the plugin's own as coming with Seatworks and the other as shared, and each as the one file it is shared as; a page reads back the very files |
 | A template that does not load, or whose directory is not the name it would be installed under | Left out of the gallery, and said with why |
 | A page with no gallery beside it; with a wrong index; with a listed template whose file is gone or does not load | The page says why; the card of that template says why |
 | The build command on a directory of template directories    | The gallery written; with a template that does not load among them, it fails naming it and writes the rest |
-| The build command on two directories of template directories; then with a template of one name in both | The templates of both are listed; the one both hold is left out, saying where each is, and the build fails |
+| The build command on two directories of template directories; on the plugin's own `templates/` and another; then with a template of one name in both | The templates of both are listed, each as shared; SLP as coming with Seatworks and the other as shared; the one both hold is left out, saying where each is, and the build fails |
 | The page built                                              | Every script and style it asks for is beside it, by a relative path, so it is served from any path, as a repository's own page is; the three families it is set in are files beside it, and no style asks another host for one |

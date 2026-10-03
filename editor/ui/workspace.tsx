@@ -44,7 +44,7 @@ import { readTemplate, type Template } from "../template/read-template.ts";
 import { AskName, PickNode, PickTools } from "./dialogs.tsx";
 import { type Editing, EditingContext, isMakeable, type Makeable, NotesContext } from "./editing.ts";
 import { download } from "./files.ts";
-import { CLEAR, Menu, ZoomTools } from "./floating.tsx";
+import { FITTED, Menu, ZoomTools } from "./floating.tsx";
 import { Icon } from "./icons.tsx";
 import { Inspector, type Mark } from "./inspector.tsx";
 import { BETWEEN_ROLES, FAN, fanned, laidOut } from "./layout.ts";
@@ -218,7 +218,7 @@ function Opened({
   // Fitted on the frame after the layout is drawn: before it, every node is still where it was measured.
   useEffect(() => {
     if (!arrangedOnce) return;
-    const frame = requestAnimationFrame(() => void flow.fitView({ padding: CLEAR }));
+    const frame = requestAnimationFrame(() => void flow.fitView(FITTED));
     return () => {
       cancelAnimationFrame(frame);
     };
@@ -230,7 +230,7 @@ function Opened({
     const wanted = [sought, ...beside];
     const sized = new Set(nodes.flatMap((node) => (node.measured?.width ? [node.id] : [])));
     if (!wanted.every((id) => sized.has(id))) return;
-    void flow.fitView({ nodes: wanted.map((id) => ({ id })), duration: 300, maxZoom: 1, padding: CLEAR });
+    void flow.fitView({ ...FITTED, nodes: wanted.map((id) => ({ id })), duration: 300 });
     setSought(null);
   }, [sought, view, nodes, flow]);
 

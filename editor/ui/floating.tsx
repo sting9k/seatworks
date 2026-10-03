@@ -2,8 +2,8 @@ import { useReactFlow, useViewport } from "@xyflow/react";
 import { type ReactNode, useState } from "react";
 import { Icon } from "./icons.tsx";
 
-/** The room a fitted graph leaves at the canvas's edges, clear of the bars that float over its top and bottom. */
-export const CLEAR = { x: "32px", y: "76px" } as const;
+/** How a graph is fitted to the canvas: clear of the bars that float over it, and never larger than it is drawn. */
+export const FITTED = { padding: { x: "32px", y: "76px" }, maxZoom: 1 } as const;
 
 /** A button that opens a list of things to do under it, and closes when one is done or the page is clicked. */
 export function Menu({ label, children }: { label: ReactNode; children: ReactNode }) {
@@ -53,7 +53,7 @@ export function ZoomTools({ map, onMap }: { map: boolean; onMap: () => void }) {
         className="tool"
         title="Fit the graph"
         onClick={() => {
-          void flow.fitView({ padding: CLEAR, duration: 250 });
+          void flow.fitView({ ...FITTED, duration: 250 });
         }}
       >
         <Icon name="fit" />

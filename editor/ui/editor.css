@@ -165,6 +165,15 @@ hr {
   background: var(--hover);
 }
 
+.pill-button.signal {
+  gap: 8px;
+  border-color: var(--signal);
+}
+
+.pill-button.signal:hover {
+  background: var(--signal);
+}
+
 .pill-button input {
   display: none;
 }
@@ -202,8 +211,7 @@ hr {
   background: var(--ground);
 }
 
-.segments button,
-.segment {
+.segments button {
   height: 28px;
   padding: 0 12px;
   border-radius: 999px;
@@ -212,8 +220,7 @@ hr {
   font-weight: 600;
 }
 
-.segments button.on,
-.segment.on {
+.segments button.on {
   background: var(--signal);
   color: var(--signal-ink);
 }
@@ -366,16 +373,23 @@ hr {
 .filters {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin-top: 16px;
 }
 
-.filters .segment {
-  background: var(--hover);
+.filters .segments {
+  background: var(--raised);
 }
 
-.filters .segment.on {
+.filters .tag {
+  cursor: pointer;
+}
+
+.filters .tag.on {
   background: var(--signal);
+  color: var(--signal-ink);
 }
 
 .cards {
@@ -396,12 +410,63 @@ hr {
   background: var(--raised);
 }
 
+/* Where a template is from, over its cover. */
+.from {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--hover);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* The way to start a template from nothing: a card that holds none yet. */
+.card.start {
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 232px;
+  padding: 24px;
+  border-style: dashed;
+  background: none;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+}
+
+.card.start:hover {
+  background: var(--raised);
+}
+
+.card.start i {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  background: var(--hover);
+  color: var(--text);
+}
+
+.card.start b {
+  color: var(--text);
+  font: 600 18px var(--display);
+}
+
+.card.start span {
+  max-width: 260px;
+}
+
 .card.broken {
   padding: 24px;
   color: var(--muted);
 }
 
 .picture {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;

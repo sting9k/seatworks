@@ -58,9 +58,14 @@ After ComfyUI's own pages, so a person who knows one finds their way in the othe
 
 - A strip of tabs over everything: the gallery, and a tab for each template open, marked while it holds a change
   that has not been exported.
-- The gallery is a grid of cards, searched by a template's name, its roles and its tags, and narrowed by a tag. A
-  card is covered by the template's own team, drawn small: its roles and the Human as named pills, wired as one
-  seats another. No picture is kept beside a template, so a cover is never out of step with what it covers.
+- The gallery is a grid of cards, searched by a template's name, its roles and its tags, and narrowed by a tag and
+  by where a template is from: it comes with Seatworks, it was shared, or it is the person's own, open in the page
+  from a file, a folder or a new start. A card is covered by the template's own team, drawn small: its roles and
+  the Human as named pills, wired as one seats another. No picture is kept beside a template, so a cover is never
+  out of step with what it covers.
+- A template is started from nothing by a button over the gallery and by the last card of its grid: it is asked a
+  name and opens with one role the Human works with, its prompt a skeleton, and nothing else. It is marked as not
+  exported from the start, since it is nowhere but in the page.
 - Down the left of a template, a rail of icons that opens one panel beside it: the nodes, the files, or the notes.
   The nodes panel has two tabs, the nodes of this template to find one by, and the kinds of node to add, dragged
   onto the graph.
@@ -217,6 +222,10 @@ person leaves it; a Markdown file is also read there as a reader sees it. HTML w
 never run: a template may come from anyone.
 
 A skill's panel lists what is in its folder and takes a file dropped on it, kept beside `SKILL.md`.
+
+A new template starts as one role that is the root, may ask the Human and speaks to them, with the tools that
+follow those and no job yet: its notes say what is left to do, an agent profile to name and a prompt to write. A
+name with no letter or digit, which it could not be installed under, is not taken.
 
 A new role, skill, question, moment or section starts from a skeleton: the five parts of a prompt and the form of a
 skill (`TEMPLATE.md`, Each kind of file); for a question or a moment, the fields `REFLEX.md` asks for; for a section,

@@ -12,6 +12,8 @@ const EntrySchema = z
     tags: z.array(z.string()),
     /** The file it is shared as, beside the index. */
     file: z.string().min(1),
+    /** Where it is from: it comes with the plugin, or someone shared it in the gallery. */
+    source: z.enum(["seatworks", "shared"]),
   })
   .strict();
 export type Entry = z.infer<typeof EntrySchema>;
@@ -19,8 +21,11 @@ const IndexSchema = z.object({ templates: z.array(EntrySchema) }).strict();
 
 const INDEX = "index.json";
 
-/** A gallery's files built from template directories; one that does not load or is misnamed is left out, with why. */
-export function galleryOf(templates: ReadonlyMap<string, TemplateFiles>): {
+/** A gallery's files from template directories, `comes` naming the plugin's own; what does not load is left out, with why. */
+export function galleryOf(
+  templates: ReadonlyMap<string, TemplateFiles>,
+  comes: ReadonlySet<string>,
+): {
   readonly files: ReadonlyMap<string, string>;
   readonly refused: readonly { readonly id: string; readonly says: string }[];
 } {
@@ -41,7 +46,7 @@ export function galleryOf(templates: ReadonlyMap<string, TemplateFiles>): {
     else {
       const file = `${id}.template.json`;
       files.set(file, packed(template));
-      entries.push({ id, name, description, tags, file });
+      entries.push({ id, name, description, tags, file, source: comes.has(id) ? "seatworks" : "shared" });
     }
   }
   files.set(INDEX, `${JSON.stringify({ templates: entries } satisfies z.infer<typeof IndexSchema>, null, 2)}\n`);

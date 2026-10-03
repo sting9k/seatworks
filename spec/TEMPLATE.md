@@ -290,7 +290,7 @@ server and no accounts. SLP is the only one at first.
 <gallery repository>/
   templates/<name>/     a template's directory, as What a template holds lays it out
 <built beside the page>/gallery/
-  index.json            each template's directory name, its name, description and tags, and its file
+  index.json            each template's directory name, its name, description and tags, its file, and where it is from
   <name>.template.json  the template as the one file it is shared as
 ```
 
@@ -311,6 +311,9 @@ server and no accounts. SLP is the only one at first.
   listed template whose file is gone or does not load says why on its own card.
 - **This repository builds a gallery of its own from `templates/`**, which holds SLP, each time the editor is
   served or built (`npm run gallery`). So SLP is in the gallery from the one place it is kept, and never copied.
+- **The index says where each template is from.** What is built from the plugin's own `templates/` comes with
+  Seatworks; what is built from any other directory was shared. The build tells them apart by the directory alone,
+  so the gallery's repository says nothing more than where its templates are.
 
 The gallery's repository builds its page with this one, and keeps no copy of it. Its build checks Seatworks out
 beside itself, builds the gallery from Seatworks' `templates/` and from its own (`npm run gallery -- <its

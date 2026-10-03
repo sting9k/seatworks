@@ -12,8 +12,11 @@ type Tab = {
   readonly past: readonly TemplateFiles[];
   readonly files: TemplateFiles;
   readonly future: readonly TemplateFiles[];
-  readonly exported: TemplateFiles;
+  /** Its files as they were last exported; none for one started here and never exported. */
+  readonly exported: TemplateFiles | null;
   readonly opened: TemplateFiles;
+  /** Whether it is the person's own and not the gallery's: opened from a file or a folder, or started here. */
+  readonly own: boolean;
 };
 
 const changedIn = (tab: Tab) => tab.files !== tab.exported;
@@ -173,11 +176,22 @@ export function App() {
       ) : (
         <Gallery
           gallery={gallery}
-          onOpen={(files) => {
-            setTabs((all) => [...all, { id: opened, past: [], files, future: [], exported: files, opened: files }]);
+          mine={tabs.filter((other) => other.own)}
+          onOpen={(files, from) => {
+            const fresh: Tab = {
+              id: opened,
+              past: [],
+              files,
+              future: [],
+              exported: from === "new" ? null : files,
+              opened: files,
+              own: from !== "gallery",
+            };
+            setTabs((all) => [...all, fresh]);
             setActive(opened);
             setOpened(opened + 1);
           }}
+          onShow={setActive}
         />
       )}
     </div>

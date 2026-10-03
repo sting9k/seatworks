@@ -33,6 +33,8 @@ export function Cover({ graph }: { graph: Graph }) {
     <svg
       className="cover"
       viewBox={`-24 -24 ${drawn.width + 48} ${drawn.height + 48}`}
+      // A small team is drawn at its own size: a cover grows no pill past the size it is read at.
+      style={{ maxWidth: drawn.width + 48, maxHeight: drawn.height + 48 }}
       role="img"
       aria-label="Its team"
     >

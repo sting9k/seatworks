@@ -28,6 +28,7 @@ test("a gallery built from template directories lists each by its directory's na
       ["slp", slpFiles()],
       ["night-crew", crew()],
     ]),
+    new Set(["slp"]),
   );
   assert.deepEqual(built.refused, []);
   assert.deepEqual([...built.files.keys()].sort(), ["index.json", "night-crew.template.json", "slp.template.json"]);
@@ -36,8 +37,9 @@ test("a gallery built from template directories lists each by its directory's na
 
   assert.ok(read.ok, read.ok ? "" : read.says);
   assert.deepEqual(
-    read.templates.map(({ entry }) => `${entry.id}: ${entry.name} [${entry.tags.join(",")}]`),
-    ["night-crew: Night Crew [night]", "slp: SLP [team,lanes,review]"],
+    read.templates.map(({ entry }) => `${entry.id}: ${entry.name} [${entry.tags.join(",")}], ${entry.source}`),
+    ["night-crew: Night Crew [night], shared", "slp: SLP [team,lanes,review], seatworks"],
+    "each says where it is from: it comes with Seatworks, or someone shared it",
   );
   const slp = read.templates.find(({ entry }) => entry.id === "slp")!;
   assert.ok(slp.ok);
@@ -51,6 +53,7 @@ test("a template that does not load, or whose directory is not the name it is in
       ["broken", twoRoots()],
       ["crew", crew()],
     ]),
+    new Set(),
   );
 
   assert.deepEqual(
@@ -77,6 +80,7 @@ test("a page says why when there is no gallery beside it, when the index is wron
         ["slp", slpFiles()],
         ["night-crew", crew()],
       ]),
+      new Set(),
     ).files,
   );
   built.delete("night-crew.template.json");
@@ -123,6 +127,19 @@ test("the build command takes several directories: the templates of each are lis
 
   execFileSync(process.execPath, [...command, out, ours, theirs]);
   assert.deepEqual(readdirSync(out).sort(), ["index.json", "night-crew.template.json", "slp.template.json"]);
+  const sources = () =>
+    Object.fromEntries(
+      (
+        JSON.parse(readFileSync(join(out, "index.json"), "utf8")) as { templates: { id: string; source: string }[] }
+      ).templates.map((entry) => [entry.id, entry.source]),
+    );
+  assert.deepEqual(sources(), { "night-crew": "shared", slp: "shared" });
+  execFileSync(process.execPath, [...command, out, join(repo, "templates"), theirs]);
+  assert.deepEqual(
+    [sources().slp, sources()["night-crew"]],
+    ["seatworks", "shared"],
+    "what is built from the plugin's own templates comes with Seatworks; the rest was shared",
+  );
 
   cpSync(join(ours, "slp"), join(theirs, "slp"), { recursive: true });
   const failed = spawnSync(process.execPath, [...command, out, ours, theirs], { encoding: "utf8" });
