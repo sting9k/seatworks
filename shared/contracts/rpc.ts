@@ -212,6 +212,26 @@ export const RPC = {
     input: z.object({ dir: z.string().min(1) }),
     output: z.object({ ok: z.boolean(), text: z.string() }),
   },
+  /** Where a project's repository is published, and the GitHub account that could put it there from this machine. */
+  remoteOf: {
+    name: "seatworks.remote_of",
+    input: z.object({ project: z.string().min(1) }),
+    output: z.object({
+      ok: z.boolean(),
+      text: z.string(),
+      remotes: z.array(z.string()),
+      /** The account GitHub's command line is signed in as; none where it is not. */
+      github: z.string().nullable(),
+      /** The name a new repository would take: the folder's own. */
+      name: z.string(),
+    }),
+  },
+  /** Puts a project with no remote on GitHub under the Human's account, and publishes its base there. */
+  createRemote: {
+    name: "seatworks.create_remote",
+    input: z.object({ project: z.string().min(1), visibility: z.enum(["private", "public"]) }),
+    output: z.object({ ok: z.boolean(), text: z.string() }),
+  },
   view: {
     name: "seatworks.view",
     input: z.object({ project: z.string().min(1) }),

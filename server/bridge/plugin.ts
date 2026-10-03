@@ -59,6 +59,7 @@ import { turnOf } from "../satellites/agent-host/items.ts";
 import { type Asker, Classifier } from "../satellites/reflex/classifier.ts";
 import { loadReflex } from "../satellites/reflex/config.ts";
 import { git } from "../satellites/workspace/git.ts";
+import { createOnGitHub, githubLogin, publishedAt, remotesOf } from "../satellites/workspace/forge.ts";
 import { commitAll, firstCommitOf, type GitState, gitStateOf } from "../satellites/workspace/setup.ts";
 import { Workspace } from "../satellites/workspace/workspace.ts";
 import { agentsByProfile, lacking, match, type Matching, matchingFile } from "../profile/agents.ts";
@@ -435,7 +436,7 @@ export class Plugin {
       {
         type: "open_project",
         base: branch,
-        remote: null,
+        remote: await publishedAt(real),
         profile: runtime.wiring.profile,
         profileHash: bundle.hash,
         model: [...bundle.profile.root.models][0] ?? "",
@@ -579,6 +580,32 @@ export class Plugin {
       });
     }
     return found;
+  }
+
+  /** Where a project's repository is published, and the account that could put it on GitHub from here. */
+  async remoteOf(
+    project: string,
+  ): Promise<{ ok: true; remotes: string[]; github: string | null; name: string } | { ok: false; says: string }> {
+    const kept = this.projects().find((p) => p.id === project);
+    if (!kept) return { ok: false, says: `no project ${project} is attached` };
+    return { ok: true, remotes: await remotesOf(kept.repo), github: await githubLogin(), name: basename(kept.repo) };
+  }
+
+  /** Puts a project with no remote on GitHub, on the Human's word, and publishes its base there. */
+  async createRemote(
+    project: string,
+    visibility: "private" | "public",
+  ): Promise<{ ok: true; url: string } | { ok: false; says: string }> {
+    const at = await this.remoteOf(project);
+    if (!at.ok) return at;
+    if (at.remotes.length > 0) return { ok: false, says: `it already has a remote, ${at.remotes.join(", ")}` };
+    if (at.github === null) return { ok: false, says: "GitHub's command line, gh, is not signed in on this machine" };
+    const repo = this.projects().find((p) => p.id === project)!.repo;
+    const made = await createOnGitHub(repo, at.name, visibility);
+    if ("refused" in made) return { ok: false, says: made.refused };
+    // The base is pushed as any publish is, so the record holds where the project is published from now on.
+    const pushed = await this.human(project, { type: "publish", remote: "origin" });
+    return pushed.ok ? { ok: true, url: made.created } : { ok: false, says: pushed.refused.says };
   }
 
   /** Removes what the Human picked, each checked again against what is left over now. */

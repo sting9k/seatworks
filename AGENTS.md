@@ -173,6 +173,7 @@ The skills hold the recipes. The rules:
 - **The kernel** is tested with no I/O and no mocks, and with fast-check running random command sequences and
   checking every invariant after each. Recorded logs are folded by new code, as replay tests.
 - **A race is decided by a gate the test holds and releases**, never by a sleep or a count of ticks.
+- **No test runs the owner's own `gh`.** One that reaches GitHub's command line puts a stand-in first on `PATH`.
 - **A fresh state root has no template installed.** A bridge test that opens a project starts from
   `test/bridge/state-root.ts`, which has SLP installed as the Human would have it.
 - Never: a test with no assertion, an expected value the code under test computed, a mock that does the behaviour,

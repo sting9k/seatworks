@@ -159,7 +159,8 @@ Shows the Human the kernel's views and the agents' own words, and takes the Huma
 views: whatTheHumanNeeds, sinceTheyLooked, chainOfChange, openObligations, status, signals, stuck, template
 commands: answer_question, send_message, hold_scope, resume_scope, amend_plan (lines of theirs), answer_permission,
           set_checks, publish
-upkeep: attach(repository, profile), folderAt(dir), gitOffer(dir), setUpGit(dir), profiles, presets,
+upkeep: attach(repository, profile), folderAt(dir), gitOffer(dir), setUpGit(dir), remoteOf(project),
+        createRemote(project, visibility), profiles, presets,
         templateOffer(from), installTemplate(from, hash),
         removeTemplate(name), syncTemplate(project), agents(match), models(provider),
         createAgents(profile, provider, model, effort), shapeAgent(agent, model, effort), leftovers,
@@ -187,6 +188,12 @@ upkeep: attach(repository, profile), folderAt(dir), gitOffer(dir), setUpGit(dir)
   hold, how many files and whether anything is ignored; the second commits them in the Human's name, signed where
   they sign. Nothing is committed by being told. Hiding what had no git left a Human with a project and a page that
   said Paseo had none.
+- A project takes the remote its repository has as where it is published: `origin` where there is one, else its
+  only remote; with two and no `origin` the Human names one when they publish. A project with no remote is put on
+  GitHub from its row, private or public, in two presses, the second after it is said which account, which name and
+  which visibility: GitHub's own command line makes the repository under the account the Human signed it in as,
+  never one of the plugin's, and the base is pushed there by an ordinary `publish`, so the record holds the remote
+  from then on. Where that command line is not signed in the row says so and offers nothing.
 - An attached project's row says in words what is stuck, each fact a line, and gives the way on: a root with nobody
   seated is seated again by the Human's `reseat`, and the row opens the Team tab of the project's workspace where
   Paseo has one.

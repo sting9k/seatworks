@@ -114,7 +114,8 @@ give one answer.
   folder by its path. One with no git yet is set up there: it says what a first commit would hold, then makes it.
   Attach with the template the button names, or run "Open a Seatworks team here" from the command center in a
   workspace. That seats the template's first agent; talk to it in its chat. A project's row says what is stuck, in
-  words, and seats its first agent again when it could not be made.
+  words, and seats its first agent again when it could not be made. A project with no remote can be put on GitHub
+  from its row, private or public, through GitHub's `gh` under the account you signed it in as.
 - **The pill** on every chat of a team says the most pressing thing: what is stuck, what needs you, a held team,
   or how many agents are working. Its popover answers what waits on you, shows the team, holds or resumes it, and
   sends a word to the first agent. The same three are typed as `/team`, `/team-hold` and `/team-resume`.

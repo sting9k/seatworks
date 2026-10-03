@@ -230,6 +230,9 @@ A call as an agent's tool server sends it, the answer read back.
 | Paseo lists a repository with a commit, a plain folder, a repository with no commit, and a folder inside the first | Each is offered with how it stands with git: ready, not yet, not yet, and a part of another's |
 | A folder with two files and an ignored one, set up from the page                  | First it is made a repository and says a first commit would hold two files, with something ignored, and nothing is committed; then one commit of those two, in the Human's name, and it is ready |
 | A folder given by its path; a path that is no folder; git asked for in a part of a repository; the folder once attached | Offered as Paseo's own are; each of the others says why not |
+| A team attached to a repository with no remote, with one, with `origin` among two, with two and no `origin` | The project is published nowhere yet, at that one, at `origin`, and nowhere until the Human names one |
+| A project with no remote put on GitHub as private from the page; then asked for a second | A repository of the folder's name is asked of GitHub's command line as private, named `origin`; the base is pushed there and the record holds the remote; the second is refused |
+| GitHub's command line not signed in on the machine                                | The page is told nobody is signed in, and no repository is made      |
 | A task is dropped with a commit on its branch and a draft in its copy             | Its copy listed and not removable; its branch listed as one whose commits would go with it |
 | A project is attached                                                             | `AGENTS.md` on its base carries the note after the project's own rules, in a commit of that file alone; what the Human staged stays staged |
 | The Human removes a project while a copy holds uncommitted work                   | Refused, naming the copy; nothing touched, its agents still at work |

@@ -19,6 +19,7 @@ import { countsOf, seatsOf, waitingOf } from "../state/team.ts";
 import { nameOf, titled } from "../state/words.ts";
 import { ChecksEditor } from "./checks-editor.tsx";
 import { FolderRow } from "./folder-row.tsx";
+import { RemoteRow } from "./remote-row.tsx";
 
 type Theme = PluginSurfaceProps["theme"];
 type Navigation = PluginSurfaceProps["navigation"];
@@ -250,6 +251,7 @@ function Attached({ project, repo, theme, navigation, onTeam, onChanged }: Attac
               }}
             />
           ) : null}
+          <RemoteRow project={project} theme={theme} onChanged={() => void reload()} />
           <Row kind="Remove" title="Its agents, copies and branches" dimmed theme={theme} indent>
             {whole ? null : <Button label="Remove" tone="quiet" theme={theme} disabled={busy} onPress={askToRemove} />}
           </Row>

@@ -99,6 +99,20 @@ export default function contribute(server: PluginServerContext) {
       ? { ok: true, text: "It is a git repository now, with one commit of what it held." }
       : { ok: false, text: `Not committed: ${made.says}.` };
   });
+  server.handle(RPC.remoteOf, async (input, { paseo }) => {
+    plugin.saw(paseo);
+    const at = await plugin.remoteOf(input.project);
+    return at.ok
+      ? { ok: true, text: "", remotes: at.remotes, github: at.github, name: at.name }
+      : { ok: false, text: `Not read: ${at.says}.`, remotes: [], github: null, name: "" };
+  });
+  server.handle(RPC.createRemote, async (input, { paseo }) => {
+    plugin.saw(paseo);
+    const made = await plugin.createRemote(input.project, input.visibility);
+    return made.ok
+      ? { ok: true, text: `It is on GitHub, ${input.visibility}: ${made.url}` }
+      : { ok: false, text: `Not put on GitHub: ${made.says}.` };
+  });
   server.handle(RPC.leftovers, async (_input, { paseo }) => {
     plugin.saw(paseo);
     return { leftovers: await plugin.leftovers() };
