@@ -45,6 +45,7 @@ import { type Home, type Places, layHome } from "../core/home.ts";
 import { KeyedQueue } from "../core/keyed-queue.ts";
 import { Keys } from "../core/keys.ts";
 import { daemonLog } from "../core/logger.ts";
+import { sizeOf } from "../core/disk.ts";
 import { archiveDir, projectDir } from "../core/paths.ts";
 import { rulesDir } from "../core/rules.ts";
 import { installShim } from "../core/shim.ts";
@@ -438,6 +439,8 @@ export class Plugin {
           why: "a folder with no project in it",
           removable: true,
           takesCommits: false,
+          bytes: await sizeOf(join(dir, id)),
+          at: null,
         });
         continue;
       }
@@ -445,13 +448,13 @@ export class Plugin {
       const agents = await ready.host.labelled({ [PROJECT_LABEL]: id });
       const kept: readonly Kept[] = "unavailable" in agents ? [] : agents;
       if (!existsSync(repo)) {
-        found.push(projectLeftover(id, repo, null));
+        found.push(projectLeftover(id, repo, null, await sizeOf(join(dir, id))));
         continue;
       }
       const runtime = this.runtimes.get(id) ?? this.open(id, ready);
       found.push(
         ...(await leftoversOf(id, runtime.project.view, runtime.workspace, kept)),
-        projectLeftover(id, repo, runtime.project.view),
+        projectLeftover(id, repo, runtime.project.view, await sizeOf(join(dir, id))),
       );
     }
     const shelf = archiveDir(this.root);
@@ -468,6 +471,8 @@ export class Plugin {
         why: `the record of a project removed${removedAt ? ` on ${removedAt.slice(0, 10)}` : ""}: removing deletes it for good`,
         removable: true,
         takesCommits: false,
+        bytes: await sizeOf(join(shelf, name)),
+        at: removedAt ?? null,
       });
     }
     return found;

@@ -76,6 +76,10 @@ export const LeftoverSchema = z.object({
   removable: z.boolean(),
   /** Whether commits on no other branch go with it, so the Human looks before picking it. */
   takesCommits: z.boolean(),
+  /** What it takes on disk; none for what is no folder: a branch, an agent. */
+  bytes: z.number().nullable(),
+  /** When it was left behind, where the record says: a record's own project was removed then. */
+  at: z.string().nullable(),
 });
 export type Leftover = z.infer<typeof LeftoverSchema>;
 

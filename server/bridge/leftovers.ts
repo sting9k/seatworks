@@ -1,6 +1,7 @@
 import { ACTOR_LABEL, ROOT } from "../../shared/contracts/ids.ts";
 import type { Leftover } from "../../shared/contracts/rpc.ts";
 import type { State } from "../../shared/kernel/state.ts";
+import { sizeOf } from "../core/disk.ts";
 import type { Workspace } from "../satellites/workspace/workspace.ts";
 import { branchesOf } from "./effects.ts";
 
@@ -45,6 +46,8 @@ export async function leftoversOf(
           : "no open scope uses it",
         removable: !copy.unsaved,
         takesCommits: false,
+        bytes: await sizeOf(copy.path),
+        at: null,
       });
   for (const b of await workspace.branchesUnder(branchesOf(project), base))
     if (!usedBranches.has(b.branch))
@@ -58,6 +61,8 @@ export async function leftoversOf(
           : `no open scope uses it, and it is not merged into ${base ?? "the base"}: its commits go with it`,
         removable: true,
         takesCommits: !b.merged,
+        bytes: null,
+        at: null,
       });
   for (const a of agents) {
     const actor = view.actors.get(a.labels[ACTOR_LABEL] ?? "");
@@ -72,13 +77,15 @@ export async function leftoversOf(
           : "no seat of the project names it",
         removable: true,
         takesCommits: false,
+        bytes: null,
+        at: null,
       });
   }
   return found;
 }
 
-/** The whole project as one leftover: what removing it ends and deletes. */
-export function projectLeftover(project: string, repo: string, view: State | null): Leftover {
+/** The whole project as one leftover: what removing it ends and deletes, and what its folder takes on disk. */
+export function projectLeftover(project: string, repo: string, view: State | null, bytes: number): Leftover {
   const seated = view ? [...view.actors.values()].filter((a) => a.status === "seated").length : 0;
   const open = view ? [...view.scopes.values()].filter((s) => s.status === "open" && s.id !== ROOT).length : 0;
   const why =
@@ -95,5 +102,7 @@ export function projectLeftover(project: string, repo: string, view: State | nul
     why,
     removable: true,
     takesCommits: false,
+    bytes,
+    at: null,
   };
 }

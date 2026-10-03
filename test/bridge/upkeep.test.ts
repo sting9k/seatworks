@@ -108,6 +108,11 @@ test("the Human attaches a Paseo project, clears what a dropped task left, and r
   assert.equal(kept?.label, branch, "its branch is left too, only the dropped task's");
   assert.equal(kept.takesCommits, true, "its commit is on no other branch, so it is one to look at first");
   assert.equal(copy.takesCommits, false);
+  assert.ok(
+    copy.bytes !== null && copy.bytes >= "done\ndraft\n".length,
+    `the copy says what it takes on disk, its two files among it: ${copy.bytes}`,
+  );
+  assert.deepEqual([kept.bytes, kept.at, copy.at], [null, null, null], "a branch is no folder, and neither has a day");
   const whole = left.find((l) => l.kind === "project");
   assert.equal(whole?.label, repo);
   const sorted = sortLeftovers(left, new Set([project]));
@@ -165,6 +170,11 @@ test("the Human attaches a Paseo project, clears what a dropped task left, and r
   assert.equal(record?.kind, "record", "the record is kept aside for a look back");
   assert.deepEqual(sortLeftovers([record], new Set()).records, [record], "and sorted apart from what a team left");
   assert.equal(record.label, repo);
+  assert.ok(record.bytes !== null && record.bytes > 0, "the record says what it takes on disk");
+  assert.ok(
+    record.at !== null && Math.abs(Date.now() - Date.parse(record.at)) < 60_000,
+    `and when its project was removed: ${record.at}`,
+  );
   const shelved = join(root, "archive", record.project, "ledger.db");
   assert.ok(existsSync(shelved), "with its log");
   const deleted = await plugin.clean([record.id]);

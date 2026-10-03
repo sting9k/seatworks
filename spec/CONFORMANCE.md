@@ -238,6 +238,8 @@ A call as an agent's tool server sends it, the answer read back.
 | A removal that stops part way, such as an archive that throws                     | The project stays attached, its note back; its agents archived meanwhile recorded gone |
 | The Human removes a project whose repository is gone, while one of its agents holds the machine | It leaves memory, and every other project's work that waited starts |
 | The Human removes a project                                                       | Its agents archived, every branch made for it and its note gone, its record kept aside; offered to attach again |
+| A scan after a task was dropped with a draft in its copy; another once the project is removed | The copy says what it takes on disk, its files among it, and the branch nothing; the record says what it takes and when its project was removed |
+| A folder holding two files, one nested, and links to a file and a folder outside it; a folder that is not there | The bytes of the two files, no link followed; nothing |
 | Paseo's check says a newer release is out                                         | Shown with its review links and the command that applies it; nothing installed |
 | Paseo's command line is not on the daemon's PATH                                  | Said, with the command to run by hand                               |
 | `install.sh --ref` or `--dir` once Seatworks is installed                         | Says the option was not used, and how to install from elsewhere      |
@@ -256,6 +258,7 @@ screens themselves are type-checked and no more, until seen on a live Paseo.
 | A scan that finds a copy holding a draft, a branch not merged and the attached project itself | Sorted as kept, to check first, and left out; the project is never among what is picked for the Human, whatever the surface knows of what is attached |
 | Setting up with no template installed                                                     | Matching agents is not done, whatever else is                        |
 | A check's command typed on one line, an argument in quotes; any arguments shown as a line and typed back | The program and its arguments, the quoted one whole; the same arguments |
+| Sizes from nothing to past a GB, and a day of this year and of last                       | A whole number of the unit that keeps it short, a tenth more past a GB; the day's number and month, with its year when that is not this one |
 
 ## Reflex
 

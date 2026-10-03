@@ -11,7 +11,7 @@ import { Label } from "../kit/row.tsx";
 import { FONT, RADIUS, SPACE } from "../kit/theme.ts";
 import { sortLeftovers } from "../state/leftovers.ts";
 import { problemText } from "../state/problem-text.ts";
-import { nameOf } from "../state/words.ts";
+import { bytesOf, dayOf, nameOf } from "../state/words.ts";
 
 const KIND: Readonly<Record<Leftover["kind"], string>> = {
   copy: "Working copy",
@@ -20,6 +20,9 @@ const KIND: Readonly<Record<Leftover["kind"], string>> = {
   project: "Project folder",
   record: "Record",
 };
+
+/** What a set of leftovers takes on disk together; what is no folder takes none. */
+const taken = (items: readonly Leftover[]) => items.reduce((sum, left) => sum + (left.bytes ?? 0), 0);
 
 type Props = {
   readonly projects: readonly { readonly id: string; readonly repo: string }[];
@@ -42,7 +45,10 @@ export function CleanUpTab({ projects, theme, onCounted, onChanged }: Props) {
   const attached = new Set(projects.map((project) => project.id));
   const names = new Map(projects.map((project) => [project.id, nameOf(project.repo)]));
   const sorted = sortLeftovers(found ?? [], attached);
-  const total = sorted.safe.length + sorted.check.length + sorted.kept.length + sorted.records.length;
+  const shown = [...sorted.safe, ...sorted.check, ...sorted.kept, ...sorted.records];
+  const total = shown.length;
+  const pickedBytes = taken(shown.filter((left) => picked.has(left.id)));
+  const thisYear = new Date().getFullYear();
   const { surface1, border, foreground, foregroundMuted, statusDanger, statusSuccess } = theme.colors;
   const muted = { fontSize: FONT.small, color: foregroundMuted };
 
@@ -126,7 +132,10 @@ export function CleanUpTab({ projects, theme, onCounted, onChanged }: Props) {
                 {reasons ? <Text style={muted}>{left.why}</Text> : null}
               </View>
               <Text style={muted} numberOfLines={1}>
-                {names.get(left.project) ?? ""}
+                {left.at ? dayOf(left.at, thisYear) : (names.get(left.project) ?? "")}
+              </Text>
+              <Text style={[muted, { width: 64, textAlign: "right" }]} numberOfLines={1}>
+                {left.bytes === null ? "" : bytesOf(left.bytes)}
               </Text>
             </View>
           ))}
@@ -149,7 +158,7 @@ export function CleanUpTab({ projects, theme, onCounted, onChanged }: Props) {
     <>
       <View style={strip}>
         {found && total === 0 ? <Icon name="CircleCheck" size={16} color={statusSuccess} /> : null}
-        <Text style={{ flex: 1, fontSize: FONT.base, fontWeight: "500", color: foreground }}>
+        <Text style={{ fontSize: FONT.base, fontWeight: "500", color: foreground }}>
           {!found
             ? problem
               ? "Not scanned"
@@ -158,6 +167,7 @@ export function CleanUpTab({ projects, theme, onCounted, onChanged }: Props) {
               ? "Nothing left behind"
               : `${total} left behind`}
         </Text>
+        <Text style={[muted, { flex: 1 }]}>{taken(shown) > 0 ? bytesOf(taken(shown)) : ""}</Text>
         <Button
           label={busy === "scan" ? "Scanning" : "Scan again"}
           tone="quiet"
@@ -180,7 +190,7 @@ export function CleanUpTab({ projects, theme, onCounted, onChanged }: Props) {
         <View style={strip}>
           <Text style={{ fontSize: FONT.base, fontWeight: "500", color: foreground }}>{picked.size} picked</Text>
           <Text style={[muted, { flex: 1 }, confirming ? { color: statusDanger } : null]}>
-            {confirming ? "cannot be undone" : ""}
+            {confirming ? "cannot be undone" : pickedBytes > 0 ? bytesOf(pickedBytes) : ""}
           </Text>
           {confirming ? (
             <Button

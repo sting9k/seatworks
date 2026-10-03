@@ -181,7 +181,9 @@ upkeep: attach(repository, profile), profiles, presets, templateOffer(from), ins
   against what is left over at that moment. A copy holding uncommitted work on its branch is listed and never
   removed, and a project with one is not removed at all. Removing a project archives its agents and deletes its
   copies and branches; its record is set aside, since a look back reads the log after the team is gone (P14), and is
-  listed as a leftover of its own until the Human deletes it. Attached again, the project starts from nothing.
+  listed as a leftover of its own until the Human deletes it. Attached again, the project starts from nothing. What is
+  a folder says what it takes on disk, the bytes of its files with no link followed, and a record says when its
+  project was removed: what the Human weighs a removal by. A branch and an agent take nothing to say.
 - A template is installed from a file on the Human's machine: read first for what it would bring, then installed
   once they agree, the same file by its hash (`TEMPLATE.md`, Installing).
 - The update check reads Paseo's own and installs nothing.
