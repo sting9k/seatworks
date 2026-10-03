@@ -224,11 +224,31 @@ Peer on Claude Code under the root.
 - **`look` at an agent whose seat has ended** finds nothing: the record no longer has its agent. Whoever takes a lane
   in cannot ask its owner anything once it is in.
 
+On 3 October 2026, on Paseo 0.10.3, the same way, with every agent on Claude Code and each lane in a worktree
+Paseo made (`PASEO.md`, Seen on a live daemon):
+
+- **The git guard in a shared worktree.** A Peer that held `notes/a/` wrote a file under its neighbour's `notes/b/`
+  and ran `git add` on it: refused, naming the neighbour's scope and what it holds. A Peer's `git commit --amend`
+  was refused, a Lead's `git commit` and `git checkout`, and `git worktree` for everyone. A Lead told to take the
+  base in ran `git merge main` in the lane's worktree, settled the file by hand, and its commit that concluded the
+  merge passed.
+- **Two lanes that met.** Each appended a line to a file neither held. The first landed; nothing was merged for
+  the second, the root's owner was told the file and the commit the base had taken in, sent the lane back with its
+  decision, and the lane landed with both lines after its Lead's merge.
+- **A Lead wrote.** Two Leads of five wrote their lane's files themselves, in the worktree they share with their
+  Peer, staged them and tried to commit, which was refused. One left its files there: the Peer seated after found
+  them and committed them. So the edit of a role that does not write does reach a commit, through a writer beside
+  it.
+- **Waiting.** Told only that it would be told of an outcome, an agent stayed in its turn, where nothing reaches it
+  (`COMMUNICATION.md`, When a reader is woken). With the first words that say how it waits, a Lead did a lane in
+  five calls.
+
 ## To check before building on it
 
 - A role that does not write, held from writing in the worktree it shares: which of each provider's own settings
   does it (a read-only sandbox, denied edit tools) without stopping what a Lead or a Reviewer runs to decide, such
-  as a build or a test that writes its own output. Until then its prompt is all that holds it.
+  as a build or a test that writes its own output, and without stopping the lane's owner from settling a merge by
+  hand. Until then its prompt is all that holds it, and on a live run it did not (Seen on a live Paseo).
 - On a live Codex: that a writer commits with the repository's git directory among its writable roots, and that
   `features.multi_agent = false` leaves it no tool to start an agent with.
 - On a live OpenCode: that the team's server is connected before the first turn, that the shim is first on the

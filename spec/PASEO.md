@@ -239,6 +239,28 @@ On 3 October 2026, Paseo 0.10.3, the owner's own daemon:
   copy before this is the Human's to remove. Paseo archives a workspace whose folder is gone on its own pass
   (`workspace-reconciliation-service.js`), so a copy removed takes its workspace with it.
 
+On 3 October 2026, Paseo 0.10.3, a daemon run for it with a home of its own: every agent on Claude Code (the
+Supervisor and the Leads on Sonnet 5, the Peers on Haiku 4.5), a throwaway repository with a bare remote, SLP as it
+comes. Three runs, each landed and published: a lane of two Peers; two lanes at once that met in one file; a lane of
+one Peer.
+
+- A lane's worktree, made by `workspaces.create` with a `worktree` source and the project's id, is a workspace of
+  the repository's project, of kind `worktree` and Paseo's own, at `<home>/worktrees/<hash>/<slug>`, on the branch
+  the plugin named and under the title it gave. Its Lead and its Peers were made in that one workspace and are listed
+  in it together; two lanes stood as two workspaces beside the repository's own. A slug an earlier lane had used was
+  taken again.
+- `workspaces.archive` removed the worktree and ended its agents, when a lane landed and from the page's clean-up
+  alike. The branch was left for the plugin, which deleted it. The agents stay in Paseo, archived.
+- A listing asked for 500 workspaces in one page was refused, `Too big: expected number to be <=200`, and a landed
+  lane's worktree stayed until the host read by pages.
+- A project removed and attached again had its root's create refused: the key had made the first attachment's agent,
+  with another request (`agent_request_key_conflict`). Keys and labels now name the attachment.
+- A Claude agent that calls `ScheduleWakeup` stays in one turn through each sleep: in seventeen minutes one
+  `turn_ended` reached the plugin and seven deliveries waited. `paseo stop` ended the turn as `cancelled`, and they
+  were delivered. The tool is denied since (`HARNESS.md`).
+- Not seen: how the app draws any of it, since the app was not opened on that daemon; an agent started while a
+  repository's set-up still ran, since the repository had no `paseo.json`.
+
 ## To check before building on it
 
 - Per-agent control of Paseo's tools: today it is per provider ID (`paseoTools` on a custom provider) and injection
@@ -251,11 +273,8 @@ On 3 October 2026, Paseo 0.10.3, the owner's own daemon:
 - That the daemon's `PATH` finds Paseo's command line, so the update check runs; when it does not, the surface says
   so and gives the command to run by hand.
 - That `projects.list` lists every project the Human opened in Paseo, each `projectRootPath` the checkout's root.
-- A lane's worktree made through `workspaces.create` from a plugin, several agents made in its one workspace, and
-  its closing through `workspaces.archive`: read in 0.10.3's types and daemon and held against the stand-in, which
-  makes and removes real worktrees; none seen on a live Paseo. Nor whether an agent that starts while the
-  repository's set-up still runs meets a folder half set up, nor that a title and a branch the plugin gave stay as
-  given.
+- Whether an agent that starts while a repository's `paseo.json` set-up still runs meets a folder half set up, and
+  how the app's sidebar draws a lane's workspace with several agents in it: neither was in the live runs.
 - An agent made in a workspace of another project's than its folder's own: `workspace.create` with a `directory`
   source and a `projectId`, then the workspace's `agents.create`, were read in 0.10.3's types and daemon and held
   against the stand-in; not seen on a live Paseo, nor how the sidebar lists a workspace whose folder is outside its
