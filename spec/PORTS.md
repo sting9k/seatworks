@@ -281,6 +281,12 @@ upkeep: attach(repository, profile), folderAt(dir), gitOffer(dir), setUpGit(dir)
     published, its checks, what its team left behind, and removing it. A project's checks are changed there: each
     a name and its command on one line, sent as the program and its arguments, since a check runs with no shell;
     quotes keep an argument whole.
+  - **A tab's fields are described on demand**, by an "i" at the end of its tabs: each field as the tab names it,
+    and what it is. That description alone is in two languages, English and Vietnamese, the one last picked on the
+    device, else the device's own; every other word of the surface is English. A sentence under every row was read
+    past, and none left a first-time Human guessing what a check is.
+  - **What can grow opens in a place of its own.** A project's checks are edited in the host's modal, not among the
+    rows of its settings, where a fifth check would push the rest of the page away.
   - **A choice on a line is a pick**: a chip as wide as its word, which opens the host's own modal with what there
     is to choose. The host has no small menu of its own to give a plugin, and a row of settings for each choice
     made a template's six agent profiles a screen and a half long.

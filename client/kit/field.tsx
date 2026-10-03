@@ -20,6 +20,8 @@ export function Field({ value, placeholder, theme, disabled, multiline, secret, 
     <TextInput
       style={{
         flex: multiline ? undefined : 1,
+        // An input is as wide as twenty letters unless told it may be narrower: it then runs over what is beside it.
+        minWidth: 0,
         minHeight: multiline ? 56 : 32,
         paddingHorizontal: 10,
         paddingVertical: SPACE.sm,

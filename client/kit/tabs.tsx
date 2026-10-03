@@ -1,4 +1,5 @@
 import type { PluginTheme } from "@getpaseo/plugin";
+import type { ReactNode } from "react";
 import { Pressable, Text, View } from "react-native";
 import { CONTROL, FONT, RADIUS, SPACE, useStyles } from "./theme.ts";
 
@@ -9,12 +10,14 @@ type Props<Id extends string> = {
   readonly active: Id;
   readonly theme: PluginTheme;
   readonly onPick: (id: Id) => void;
+  /** What stands at the end of the row, such as what describes the tab shown. */
+  readonly children?: ReactNode;
 };
 
 /** One job a tab, drawn as the host draws a workspace's own tabs: a row of chips, the chosen one raised. */
-export function Tabs<Id extends string>({ tabs, active, theme, onPick }: Props<Id>) {
+export function Tabs<Id extends string>({ tabs, active, theme, onPick, children }: Props<Id>) {
   const styles = useStyles(theme, (colors) => ({
-    row: { flexDirection: "row" as const, flexWrap: "wrap" as const, gap: SPACE.xs },
+    row: { flexDirection: "row" as const, flexWrap: "wrap" as const, alignItems: "center" as const, gap: SPACE.xs },
     tab: {
       minHeight: CONTROL.small,
       justifyContent: "center" as const,
@@ -44,6 +47,7 @@ export function Tabs<Id extends string>({ tabs, active, theme, onPick }: Props<I
           </Pressable>
         );
       })}
+      {children ? <View style={{ flex: 1, alignItems: "flex-end", paddingRight: SPACE.xs }}>{children}</View> : null}
     </View>
   );
 }

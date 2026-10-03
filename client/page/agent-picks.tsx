@@ -14,7 +14,7 @@ type Props = {
   /** The name the picks are for, said over the choices. */
   readonly name: string;
   readonly runs: Runs;
-  /** Which of the three are this project's own; left out where all are simply set. */
+  /** Which of the three are picked here over a default from elsewhere; left out where there is no such default. */
   readonly own?: { readonly provider: boolean; readonly model: boolean; readonly effort: boolean };
   /** The providers Paseo finds here. */
   readonly providers: readonly string[];
@@ -34,7 +34,7 @@ const OWN = "";
 /** What a name runs, as three picks on its line: a provider, a model of it, an effort of that model. */
 export function AgentPicks({ name, runs, own, providers, models, read, columns, theme, busy, onWant }: Props) {
   const { provider, model, effort } = runs;
-  const state = (mine: boolean | undefined) => (mine === false ? "inherited" : "set");
+  const state = (mine: boolean | undefined) => (mine === true ? "own" : "set");
   const listed = models?.find((one) => one.id === model);
   const efforts = listed?.efforts ?? [];
   const cell = (width: number | undefined) => ({ width, flexDirection: "row" as const, alignItems: "center" as const });

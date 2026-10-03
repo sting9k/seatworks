@@ -5,7 +5,6 @@ import { Pressable, View } from "react-native";
 import type { HumanView } from "../../shared/contracts/rpc.ts";
 import { Button } from "../kit/button.tsx";
 import { Field } from "../kit/field.tsx";
-import { UNDER_KIND } from "../kit/row.tsx";
 import { SPACE } from "../kit/theme.ts";
 import { argvOf, lineOf } from "../state/checks.ts";
 
@@ -21,7 +20,7 @@ type Props = {
   readonly onSave: (checks: Check[]) => void;
 };
 
-/** A project's checks to change: each a name and the command it runs, typed on one line. */
+/** A project's checks to change, in a place of their own however many there are: each a name and the command it runs. */
 export function ChecksEditor({ checks, theme, busy, onCancel, onSave }: Props) {
   const [drafts, setDrafts] = useState<readonly Draft[]>(() =>
     checks.map((check, key) => ({ key, name: check.name, line: lineOf(check.run) })),
@@ -34,10 +33,10 @@ export function ChecksEditor({ checks, theme, busy, onCancel, onSave }: Props) {
   const whole = written.every((check) => check.name !== "" && check.run.length > 0);
   const { foregroundMuted } = theme.colors;
   return (
-    <View style={{ gap: SPACE.sm, paddingBottom: SPACE.md, paddingRight: SPACE.lg, paddingLeft: UNDER_KIND }}>
+    <View style={{ gap: SPACE.sm }}>
       {drafts.map((draft) => (
         <View key={draft.key} style={{ flexDirection: "row", alignItems: "center", gap: SPACE.sm }}>
-          <View style={{ width: 140, flexDirection: "row" }}>
+          <View style={{ width: 160, flexDirection: "row" }}>
             <Field
               value={draft.name}
               placeholder="Name"

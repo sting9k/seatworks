@@ -5,8 +5,10 @@ import { Text, View } from "react-native";
 import { RPC } from "../../shared/contracts/rpc.ts";
 import { reflexSettings } from "../../shared/contracts/settings.ts";
 import { Banner } from "../kit/banner.tsx";
+import { Info } from "../kit/info.tsx";
 import { type Tab, Tabs } from "../kit/tabs.tsx";
 import { FONT, SPACE } from "../kit/theme.ts";
+import { type Lang, keepLang, startLang } from "../state/info.ts";
 import { problemText } from "../state/problem-text.ts";
 import { type Step, setupOf } from "../state/setup.ts";
 import { ClassifierTab } from "./classifier-tab.tsx";
@@ -36,6 +38,11 @@ export function pageOf(client: Pick<PluginClientContext, "openPanel">) {
     const [picked, setPicked] = useState<TabId | null>(null);
     /** The project whose own page is shown in place of the tabs. */
     const [opened, setOpened] = useState<string | null>(null);
+    const [lang, setLang] = useState<Lang>(startLang);
+    const pickLang = (next: Lang) => {
+      keepLang(next);
+      setLang(next);
+    };
     const [listed, setListed] = useState<Listed | null>(null);
     const [matching, setMatching] = useState<Matching | null>(null);
     const [leftBehind, setLeftBehind] = useState(0);
@@ -90,8 +97,10 @@ export function pageOf(client: Pick<PluginClientContext, "openPanel">) {
               project={project}
               template={listed?.profiles.find((profile) => profile.name === project.profile)?.title ?? project.profile}
               compact={layout.compact}
+              lang={lang}
               theme={theme}
               navigation={navigation}
+              onLang={pickLang}
               onBack={() => {
                 setOpened(null);
                 setPicked("projects");
@@ -124,7 +133,15 @@ export function pageOf(client: Pick<PluginClientContext, "openPanel">) {
                     }}
                   />
                 ) : null}
-                <Tabs tabs={tabs} active={tab} theme={theme} onPick={setPicked} />
+                <Tabs tabs={tabs} active={tab} theme={theme} onPick={setPicked}>
+                  <Info
+                    tab={tab}
+                    title={tabs.find((one) => one.id === tab)!.label}
+                    lang={lang}
+                    theme={theme}
+                    onLang={pickLang}
+                  />
+                </Tabs>
               </View>
               {problem ? (
                 <Banner tone="danger" text={`Seatworks did not answer: ${problem}`} theme={theme} onPress={changed} />

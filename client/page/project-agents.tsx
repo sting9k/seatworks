@@ -14,10 +14,10 @@ import { ownFor } from "../state/runs.ts";
 import { AgentHead, AgentLine } from "./agent-line.tsx";
 import { AgentPicks, type Columns } from "./agent-picks.tsx";
 
-const COLUMNS: Columns = { provider: 100, model: 140, effort: 90 };
+const COLUMNS: Columns = { provider: 100, model: 150, effort: 96 };
 const NARROW: Columns = { provider: 76, model: 96, effort: 72 };
-/** How wide the end of a line is: whether it is the project's own, and the way back. */
-const STATE = 84;
+/** How wide the end of a line is: the way back to the default, where the line is the project's own. */
+const BACK = 14;
 
 type Read = { readonly agents: readonly ProjectAgent[]; readonly providers: readonly string[] };
 
@@ -69,7 +69,7 @@ export function ProjectAgents({ project, compact, theme }: Props) {
       ) : null}
       <Card theme={theme}>
         <View>
-          <AgentHead text="Agent profile" columns={columns} tail={STATE} first theme={theme} />
+          <AgentHead text="Agent profile" columns={columns} tail={BACK} first theme={theme} />
           {read.agents.map((agent) => {
             const runs = laidOver(agent, agent.own);
             return (
@@ -79,24 +79,19 @@ export function ProjectAgents({ project, compact, theme }: Props) {
                 compact={compact}
                 theme={theme}
                 tail={
-                  <View style={{ width: STATE, flexDirection: "row", alignItems: "center", gap: 6 }}>
-                    {agent.own === null ? (
-                      <Text style={small}>{agent.there ? "default" : ""}</Text>
-                    ) : (
-                      <>
-                        <Tag label="custom" theme={theme} />
-                        <Pressable
-                          accessibilityRole="button"
-                          accessibilityLabel={`Run ${agent.name} as the default again`}
-                          hitSlop={8}
-                          disabled={busy}
-                          onPress={() => {
-                            void load({ agent: agent.name, runs: null });
-                          }}
-                        >
-                          <Icon name="X" size={14} color={foregroundMuted} />
-                        </Pressable>
-                      </>
+                  <View style={{ width: BACK }}>
+                    {agent.own === null ? null : (
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel={`Run ${agent.name} as the default again`}
+                        hitSlop={8}
+                        disabled={busy}
+                        onPress={() => {
+                          void load({ agent: agent.name, runs: null });
+                        }}
+                      >
+                        <Icon name="RotateCcw" size={14} color={foregroundMuted} />
+                      </Pressable>
                     )}
                   </View>
                 }
@@ -130,10 +125,6 @@ export function ProjectAgents({ project, compact, theme }: Props) {
           })}
         </View>
       </Card>
-      <Text style={[small, { paddingHorizontal: SPACE.xs }]}>
-        Outlined is the template&apos;s default, set on the Templates tab. What is picked here is this project&apos;s
-        alone, for agents seated from then on.
-      </Text>
     </>
   );
 }

@@ -411,9 +411,9 @@ agent profile the Human already has, for every profile installed.
   feature values name nothing and are left out. It is refused, and nothing kept, for a name the project's template
   does not give, a profile Paseo lacks, a provider Paseo does not find, a model the provider lacks or an effort the
   model lacks. A file of it that does not read seats no agent and says so on the seat and the page, as a matching
-  does; picked again, it is written anew. On the project's page each name is a line as on the Templates tab: what
-  is the Human's profile's is drawn as an outline, what is the project's own is filled and marked, with the way
-  back to the default beside it. The page keeps the least that runs what was picked: nothing where the profile
+  does; picked again, it is written anew. On the project's page each name is a line as on the Templates tab: every
+  pick looks the same, what is the project's own has an edge of colour, and the way back to the default is at the end
+  of its line. The page keeps the least that runs what was picked: nothing where the profile
   already does, and picking the profile's own provider again takes the whole line back to it.
 - **What goes wrong later is said, and stops one seat only.** A name matched to an agent profile the Human has since
   removed, or a matching whose file no longer reads, leaves that agent not seated with the reason on its seat, as a

@@ -7,9 +7,11 @@ import type { Attached } from "../../shared/contracts/rpc.ts";
 import { useHumanCommand } from "../decide/send.ts";
 import { Banner } from "../kit/banner.tsx";
 import { Button } from "../kit/button.tsx";
-import { Tabs } from "../kit/tabs.tsx";
+import { Info } from "../kit/info.tsx";
+import { type Tab, Tabs } from "../kit/tabs.tsx";
 import { Tag } from "../kit/tag.tsx";
 import { FONT, SPACE } from "../kit/theme.ts";
+import type { Lang } from "../state/info.ts";
 import { useProjectView } from "../state/project-view.ts";
 import { useRepoWorkspace } from "../state/repo-workspace.ts";
 import { useSeatAgents } from "../state/seat-agents.ts";
@@ -21,6 +23,11 @@ import { ProjectSettings } from "./project-settings.tsx";
 import { StandingTag } from "./standing-tag.tsx";
 
 type TabId = "overview" | "agents" | "settings";
+const TABS: readonly Tab<TabId>[] = [
+  { id: "overview", label: "Overview" },
+  { id: "agents", label: "Agents" },
+  { id: "settings", label: "Settings" },
+];
 
 type Props = {
   readonly project: Attached;
@@ -28,6 +35,9 @@ type Props = {
   readonly template: string | null;
   /** Whether the page has little room across. */
   readonly compact: boolean;
+  /** The language a tab's fields are described in. */
+  readonly lang: Lang;
+  readonly onLang: (lang: Lang) => void;
   readonly theme: PluginSurfaceProps["theme"];
   readonly navigation: PluginSurfaceProps["navigation"];
   readonly onBack: () => void;
@@ -41,7 +51,8 @@ type Props = {
 
 /** One project's own page: where its team stands, what its agents run here, and what it is set up with. */
 export function ProjectPage(props: Props) {
-  const { project, template, compact, theme, navigation, onBack, onTeam, onCleanUp, onRemoved } = props;
+  const { project, template, compact, lang, theme, navigation } = props;
+  const { onLang, onBack, onTeam, onCleanUp, onRemoved } = props;
   const { view, error, reload } = useProjectView(project.id);
   const agents = useSeatAgents(project.id);
   const workspace = useRepoWorkspace(project.repo);
@@ -119,16 +130,9 @@ export function ProjectPage(props: Props) {
         <Text style={small} numberOfLines={1}>
           {[project.repo, ...(lands ? [lands] : [])].join(" · ")}
         </Text>
-        <Tabs
-          tabs={[
-            { id: "overview", label: "Overview" },
-            { id: "agents", label: "Agents" },
-            { id: "settings", label: "Settings" },
-          ]}
-          active={tab}
-          theme={theme}
-          onPick={setTab}
-        />
+        <Tabs tabs={TABS} active={tab} theme={theme} onPick={setTab}>
+          <Info tab={tab} title={TABS.find((one) => one.id === tab)!.label} lang={lang} theme={theme} onLang={onLang} />
+        </Tabs>
       </View>
       {error ? (
         <Banner tone="danger" text={`Seatworks did not answer: ${error}`} theme={theme} onPress={refresh} />

@@ -91,8 +91,8 @@ type PickProps = {
   readonly title: string;
   /** What the chip says: the chosen one, or what to do where nothing is chosen. */
   readonly label: string;
-  /** `unset` asks to be picked; `inherited` is a default from elsewhere, drawn as an outline. */
-  readonly state?: "set" | "unset" | "inherited";
+  /** `unset` asks to be picked; `own` is picked here over a default from elsewhere, and has an edge of colour. */
+  readonly state?: "set" | "unset" | "own";
   readonly choices: readonly Choice[];
   readonly value: string | null;
   readonly theme: PluginTheme;
@@ -103,8 +103,8 @@ type PickProps = {
 /** A choice on a line, as small as its word: a press opens what there is to choose. */
 export function Pick({ title, label, state = "set", choices, value, theme, disabled, onPick }: PickProps) {
   const [open, setOpen] = useState(false);
-  const { foreground, foregroundMuted, surface2, border, statusWarning } = theme.colors;
-  const color = { set: foreground, unset: statusWarning, inherited: foregroundMuted }[state];
+  const { foreground, foregroundMuted, surface2, accent, statusWarning } = theme.colors;
+  const color = state === "unset" ? statusWarning : foreground;
   return (
     <>
       <Pressable
@@ -125,8 +125,8 @@ export function Pick({ title, label, state = "set", choices, value, theme, disab
             paddingHorizontal: 10,
             borderRadius: RADIUS.control,
             borderWidth: 1,
-            borderColor: state === "inherited" ? border : "transparent",
-            backgroundColor: { set: surface2, unset: faded(statusWarning, 0.16), inherited: "transparent" }[state],
+            borderColor: state === "own" ? accent : "transparent",
+            backgroundColor: state === "unset" ? faded(statusWarning, 0.16) : surface2,
           },
           pressState(disabled, pressed),
         ]}

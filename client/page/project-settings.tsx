@@ -1,6 +1,6 @@
 import type { PluginTheme } from "@getpaseo/plugin";
 import { useRpc } from "@getpaseo/plugin/client";
-import { useToast } from "@getpaseo/plugin/client/react-native";
+import { Modal, useToast } from "@getpaseo/plugin/client/react-native";
 import { useEffect, useState } from "react";
 import { Text, View } from "react-native";
 import { type HumanView, type Leftover, RPC, type ViewOutput } from "../../shared/contracts/rpc.ts";
@@ -16,6 +16,10 @@ import { ChecksEditor } from "./checks-editor.tsx";
 import { RemoteRow } from "./remote-row.tsx";
 
 const ROW = 48;
+
+/** A project's checks on its line: their names while they are few, their number once a line cannot hold them. */
+const checksSaid = (names: readonly string[]): string =>
+  names.length === 0 ? "None set" : names.length > 3 ? `${names.length} checks` : names.join(" · ");
 
 type Props = {
   readonly project: string;
@@ -103,7 +107,7 @@ export function ProjectSettings({ project, view, human, template, theme, onReloa
         <View>
           <Row
             kind="Checks"
-            title={human.checks.length > 0 ? human.checks.map((check) => check.name).join(" · ") : "None set"}
+            title={checksSaid(human.checks.map((check) => check.name))}
             dimmed={human.checks.length === 0}
             height={ROW}
             theme={theme}
@@ -121,26 +125,36 @@ export function ProjectSettings({ project, view, human, template, theme, onReloa
             )}
           </Row>
           {checking ? (
-            <ChecksEditor
-              checks={human.checks}
-              theme={theme}
-              busy={busy}
-              onCancel={() => {
-                setChecking(false);
+            <Modal
+              title="Checks"
+              open
+              onOpenChange={(next) => {
+                if (!next) setChecking(false);
               }}
-              onSave={(checks) => {
-                act(
-                  async () => {
-                    const said = await command({ project, type: "set_checks", args: { checks } });
-                    return said.ok ? { ok: true, text: "The checks are set." } : said;
-                  },
-                  () => {
+            >
+              <Modal.Content contentContainerStyle={{ padding: SPACE.lg }}>
+                <ChecksEditor
+                  checks={human.checks}
+                  theme={theme}
+                  busy={busy}
+                  onCancel={() => {
                     setChecking(false);
-                    onReload();
-                  },
-                );
-              }}
-            />
+                  }}
+                  onSave={(checks) => {
+                    act(
+                      async () => {
+                        const said = await command({ project, type: "set_checks", args: { checks } });
+                        return said.ok ? { ok: true, text: "The checks are set." } : said;
+                      },
+                      () => {
+                        setChecking(false);
+                        onReload();
+                      },
+                    );
+                  }}
+                />
+              </Modal.Content>
+            </Modal>
           ) : null}
         </View>
         <Row
