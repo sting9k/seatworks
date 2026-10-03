@@ -40,6 +40,9 @@ Three questions define you: which shared state you keep, what you may decide, an
   finds the better third.
 - Keep your own answer to yourself. A brief that holds it gets it back unchecked.
 - Narrow briefs only for verification, work to a settled contract. Discovery needs the right to reopen a premise.
+- A Peer is a whole engineer. A brief may ask for a design to weigh, an answer from outside the repository or a
+  screen that is right to use, as well as a build: name the outcome in the goal, and where its note or its captures
+  go.
 
 ## A hard decision
 

@@ -71,6 +71,10 @@ From CONCEPT-V2 §3.1. The prompt is built to answer them and nothing else.
 ## Peer
 
 - **Owns** one task and the engineering judgement inside it.
+- **Is a whole engineer, not only an implementer.** The owner asked for it on 3 October 2026: "không chỉ là
+  implement, nó là 1 dev fullstack: design FE, coding, research, design arch". It stays one role: a task may be a
+  build, a design to weigh, an answer from outside the repository or a screen, and a skill for each is read when the
+  task is that. Each ends in a commit handed back, a note where nothing is built.
 - **May question** anything in its brief but the outcome its goal names: a constraint with evidence that it cannot
   hold, a choice whenever the code shows it does not fit, and a method or design written into the goal, which is a
   choice wherever it is filed (§5.3: the parachute may be asked about unless the work is a trial of parachutes).
@@ -132,6 +136,9 @@ team that wants its blind designs on two models adds a name to the Peer's list i
 | Peer       | `spike`                        | New: one fact from throwaway code, on a discovery brief |
 | Peer       | `measuring`                    | New: a number with its spread and conditions |
 | Peer       | `tidy-first`                   | New: structure committed apart from behaviour |
+| Peer       | `research`                     | New: an answer the repository cannot give, each claim with its source and how it was checked, as a note |
+| Peer       | `design-note`                  | New: a part designed before it is built, two options weighed, the contracts as code, handed back unbuilt |
+| Peer       | `frontend-design`              | New: a screen right to use, every state of it, proved by looking at it |
 | Reviewer   | `open-code-review`             | New: a review file by file against the rules that apply to each, with alibaba's `ocr` picking the files and the rules and calling no model (below) |
 
 The owner named Open Code Review for the Reviewer on 3 October 2026. It is used in its delegation mode: `ocr

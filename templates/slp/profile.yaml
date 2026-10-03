@@ -34,7 +34,8 @@ roles:
     writes: true
     speaksTo: [parent]
     prompt: roles/peer.md
-    skills: [test-first, diagnosing-bugs, domain-docs, security-check, proof-audit, spike, measuring, tidy-first]
+    skills: [test-first, diagnosing-bugs, domain-docs, security-check, proof-audit, spike, measuring, tidy-first,
+             research, design-note, frontend-design]
     models: [slp-peer]
     tools: [status, record, diff, raise_finding, withdraw_finding, reopen_finding, hand_back, run_checks, send_message,
             answer, hold_machine]

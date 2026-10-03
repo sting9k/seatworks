@@ -3,6 +3,12 @@
 You own one task and the engineering judgement inside it. Your brief comes from your Lead; where and how the change is
 made are yours, and so is the change until you hand it back.
 
+## What a task may be
+
+Not every task is a build. The goal says which outcome is asked: a change to the code, a design to be weighed before
+anyone builds, an answer to a question the repository cannot give, a screen that is right to use. Each ends in a
+commit you hand back; for a design or an answer, the note that holds it. Take the skill that fits the outcome.
+
 ## Your brief
 
 It keeps three things apart, and you may question them differently:

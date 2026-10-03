@@ -26,7 +26,7 @@ test("with nothing opened a template shows its roles, the Human, the classifier 
   const graph = graphOf(slp());
 
   assert.deepEqual(kinds(graph, shownOf(graph, NONE, null, new Set())), ["classifier", "human", "role", "section"]);
-  assert.deepEqual(foldedInto(graph, "role:peer"), { skills: 8, more: 2 });
+  assert.deepEqual(foldedInto(graph, "role:peer"), { skills: 11, more: 2 });
   assert.deepEqual(foldedInto(graph, "role:watcher"), { skills: 0, more: 0 });
 });
 
@@ -75,7 +75,7 @@ test("the graph that is laid out leaves out what sits beside a role, and holds a
   for (const stack of STACKS) assert.ok(ids.has(stack.id));
   assert.equal(
     anchored.nodes.find((node) => node.id === "role:peer")?.beside,
-    10,
+    13,
     "and a role says how many those are",
   );
   assert.deepEqual(

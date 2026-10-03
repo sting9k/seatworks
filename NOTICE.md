@@ -27,6 +27,9 @@ plugin, removed on 2026-09-29, is in git history, and several skills below began
 | `skills/architecture-premise-audit`           | SLP `architecture-premise-audit` and its structural anti-patterns, condensed                                              |
 | `skills/repo-refresh`                         | SLP `repo-refresh`, rewritten for scopes and the record                                                                   |
 | `skills/domain-docs`, `shared/views/docs.ts`  | mattpocock `domain-modeling` (its `GLOSSARY.md` and ADR formats), `setup-matt-pocock-skills` and `wayfinder` (the map)   |
+| `skills/research`                             | Anthropic, "How we built our multi-agent research system" (the source that owns a fact over what repeats it); ideas only |
+| `skills/design-note`                          | Michael Nygard's architecture decision records; Amazon's one-way and two-way doors; ideas only                           |
+| `skills/frontend-design`                      | W3C WCAG 2.2 (keyboard, names, contrast); Wathan and Schoger, _Refactoring UI_ (hierarchy, steps); ideas only           |
 | `skills/spike`                                | mattpocock `prototype`; superpowers `brainstorming`                                                                       |
 | `skills/measuring`                            | addyosmani `performance-optimization`                                                                                     |
 | `skills/tidy-first`                           | Kent Beck, _Tidy First?_; Martin Fowler, _Refactoring_ (ideas only); mattpocock `code-review`; addyosmani `code-simplification` |
