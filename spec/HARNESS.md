@@ -125,6 +125,7 @@ Everything through Paseo; no config directory of Seatworks' own, so the Human's 
 | No subagents        | `providerOptions.settings.permissions.deny`: `Agent`, `Workflow`                              |
 | Team tools          | `mcpServers` and `toolPolicy`                                                                 |
 | No prompts          | `modeId: bypassPermissions`; deny rules still win                                             |
+| No sleep in a turn  | `permissions.deny`: `ScheduleWakeup`. Paseo keeps the turn open while the agent sleeps, and mail waits for a turn's end |
 | Writer              | `providerOptions.sandbox`: `enabled`, `failIfUnavailable`, `allowUnsandboxedCommands: false`   |
 | Context             | Claude reads `AGENTS.md` itself since 2.1.277: V1's CLAUDE.md import goes                     |
 

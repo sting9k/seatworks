@@ -187,6 +187,12 @@ test("no agent is left Paseo's own tools or its command line: its process is poi
   assert.deepEqual({ PASEO_HOST: env?.PASEO_HOST, PASEO_HOME: env?.PASEO_HOME }, nowhere);
 });
 
+test("a Claude agent is made without the tool that parks a turn until a time it names: mail waits for a turn's end", async () => {
+  const { paseo } = await openedOn("claude");
+  const denied = (paseo.created[0]!.config.options?.settings as { permissions: { deny: string[] } }).permissions.deny;
+  assert.ok(denied.includes("ScheduleWakeup"), denied.join(", "));
+});
+
 test("a permission asked while the plugin was down is on the record once it starts, and once only", async () => {
   const { plugin, paseo, root } = await openedOn("claude");
   const project = plugin.projects()[0]!.id;

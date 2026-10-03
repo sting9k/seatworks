@@ -4,7 +4,7 @@
     "options": {
       "settings": {
         "permissions": {
-          "deny": ["Agent", "Workflow", "AskUserQuestion", "mcp__paseo", "Bash(paseo *)"]
+          "deny": ["Agent", "Workflow", "AskUserQuestion", "ScheduleWakeup", "mcp__paseo", "Bash(paseo *)"]
         }
       }
     }
