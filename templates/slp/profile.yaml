@@ -43,7 +43,7 @@ roles:
     reading: true
     speaksTo: [parent]
     prompt: roles/reviewer.md
-    skills: [security-check, proof-audit]
+    skills: [open-code-review, security-check, proof-audit]
     models: [slp-reviewer]
     tools: [status, record, diff, record_verdict, raise_finding, withdraw_finding, reopen_finding, send_message, answer,
             hold_machine]

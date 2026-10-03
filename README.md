@@ -100,6 +100,16 @@ Open Seatworks in the sidebar. A strip at the top of its page shows the four ste
 
 SLP names one for each role: `slp-supervisor`, `slp-lead`, `slp-peer`, `slp-reviewer` and `slp-watcher`.
 
+SLP's Reviewer reviews by rule with [Open Code Review](https://github.com/alibaba/open-code-review) where it finds
+it, and by the diff alone where it does not. To have it:
+
+```sh
+npm install -g @alibaba-group/open-code-review
+```
+
+It asks no model and needs no key of its own: it picks the files and the rules, and the Reviewer reads. A project's
+own review rules go in `.opencodereview/rule.json` in its repository.
+
 ## Using it
 
 - **Attach a project.** On Seatworks' page, the Projects tab lists every project you have in Paseo and takes any

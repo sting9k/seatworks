@@ -283,6 +283,13 @@ Paseo made (`PASEO.md`, Seen on a live daemon):
   made: it entered six seconds later, after a tool's result, and the fourth file on followed it. Left to itself that
   Peer ended its turn after every file, since its brief said a message might come, and mail reached it between turns
   as it always has.
+- **A review by rule.** A commit with three planted faults, an injection and two functions that contradict their own
+  comments, was reviewed three times by a Reviewer with the `open-code-review` skill, `ocr` 1.12.11 on its `PATH`.
+  Each ran `ocr delegate preview --commit` and `ocr delegate rule`. On Claude Haiku 4.5 it found the injection and
+  called the other two correct. On Claude Sonnet 5 and on Pi (`zai/glm-5.3-flash`) it found all three, running the
+  commit's own file to show two of them. The method held on both agents; what a review finds is its model's.
+  A Claude agent asked its own `Skill` tool for the skill first and was told there was none, so the list of skills
+  now says each is a file to read.
 - **Waiting.** Told only that it would be told of an outcome, an agent stayed in its turn, where nothing reaches it
   (`COMMUNICATION.md`, When a reader is woken). With the first words that say how it waits, a Lead did a lane in
   five calls.

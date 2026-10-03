@@ -33,7 +33,7 @@ test("with nothing opened a template shows its roles, the Human, the classifier 
 test("a role opened shows what is wired into it, a skill two roles share among it, and a role picked opens nothing; a stack opened shows its family", () => {
   const graph = graphOf(slp());
   const opened = shownOf(graph, { ...NONE, roles: new Set(["role:reviewer"]) }, null, new Set());
-  assert.deepEqual(skillsOf(graph, opened), ["skill:proof-audit", "skill:security-check"]);
+  assert.deepEqual(skillsOf(graph, opened), ["skill:open-code-review", "skill:proof-audit", "skill:security-check"]);
   assert.deepEqual(skillsOf(graph, shownOf(graph, NONE, "role:supervisor", new Set())), []);
 
   const asked = shownOf(graph, { ...NONE, stacks: new Set(["question"]) }, null, new Set());

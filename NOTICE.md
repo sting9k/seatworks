@@ -21,6 +21,7 @@ plugin, removed on 2026-09-29, is in git history, and several skills below began
 | `skills/blind-design`                         | SLP `council`, rewritten so the designs never share a room                                                                |
 | `skills/test-first`                           | superpowers `test-driven-development`; mattpocock `tdd`; SLP material and talk                                            |
 | `skills/diagnosing-bugs`                      | mattpocock `diagnosing-bugs`; superpowers `systematic-debugging`, `condition-based-waiting` and `find-polluter`            |
+| `skills/open-code-review`                     | alibaba `open-code-review` (Apache-2.0): its delegation steps and its second reading of each finding, reworded; its `ocr` is run, not shipped |
 | `skills/security-check`                       | addyosmani `security-and-hardening`; trailofbits `sharp-edges` (ideas only)                                               |
 | `skills/proof-audit`                          | SLP `test-proof-debt-audit` and its catalog; OpenClaw `test-audit` (MIT), through `.claude/skills/test-audit`, reworded   |
 | `skills/architecture-premise-audit`           | SLP `architecture-premise-audit` and its structural anti-patterns, condensed                                              |

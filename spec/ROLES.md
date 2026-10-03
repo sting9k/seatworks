@@ -132,6 +132,16 @@ team that wants its blind designs on two models adds a name to the Peer's list i
 | Peer       | `spike`                        | New: one fact from throwaway code, on a discovery brief |
 | Peer       | `measuring`                    | New: a number with its spread and conditions |
 | Peer       | `tidy-first`                   | New: structure committed apart from behaviour |
+| Reviewer   | `open-code-review`             | New: a review file by file against the rules that apply to each, with alibaba's `ocr` picking the files and the rules and calling no model (below) |
+
+The owner named Open Code Review for the Reviewer on 3 October 2026. It is used in its delegation mode: `ocr
+delegate preview` lists the changed files worth a review and `ocr delegate rule` the review rules that apply to each,
+a project's own from `.opencodereview/rule.json`, and the Reviewer reads with the model its profile runs. Its full
+mode runs a model of its own, behind an endpoint and a key of its own that the record would never see the cost of,
+so it is not used. The skill adds one step of that tool's own design, a second reading of each finding against the
+diff alone that only takes findings away, and keeps SLP's ranking by what a user meets. `ocr` is the Human's to
+install; without it the Reviewer reviews by the diff and says no rules were applied. Its telemetry is off unless
+switched on, with no address written into it (read in its source at 1.12.11).
 
 Folded in rather than added: where scopes meet, into `planning-lanes`; wayfinding through fog, into `grilling`; a
 failure that comes and goes, into `diagnosing-bugs`; reading designs in reverse and settling a fact by running it,
