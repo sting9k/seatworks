@@ -1,5 +1,5 @@
 import type { PluginAgentCommandContext, PluginClientContext } from "@getpaseo/plugin/client";
-import { Page } from "./client/page/page.tsx";
+import { pageOf } from "./client/page/page.tsx";
 import { addTeamButtons } from "./client/pill/buttons.tsx";
 import { teamPanel } from "./client/team/team-panel.tsx";
 import { PROJECT_LABEL, ROOT } from "./shared/contracts/ids.ts";
@@ -23,7 +23,7 @@ const holding = (type: "hold_scope" | "resume_scope") => async (ctx: PluginAgent
 export default function contribute(client: PluginClientContext) {
   const buttons = addTeamButtons(client);
   const cleanups = [
-    client.addSurface("main", Page),
+    client.addSurface("main", pageOf(client)),
     client.addSidebarItem({ id: "seatworks", title: "Seatworks", icon: "Users", surface: "main" }),
     client.addWorkspacePanel({
       id: "team",

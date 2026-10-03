@@ -2,14 +2,15 @@ import { createHash } from "node:crypto";
 import {
   existsSync,
   mkdirSync,
-  readdirSync,
   readFileSync,
+  readdirSync,
   realpathSync,
   renameSync,
   rmSync,
+  statSync,
   writeFileSync,
 } from "node:fs";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import type { PaseoApi } from "@getpaseo/client";
 import type { AgentTimelineItem } from "@getpaseo/protocol/agent-types";
 import type { Caller, CommandBody } from "../../shared/contracts/commands.ts";
@@ -58,6 +59,7 @@ import { turnOf } from "../satellites/agent-host/items.ts";
 import { type Asker, Classifier } from "../satellites/reflex/classifier.ts";
 import { loadReflex } from "../satellites/reflex/config.ts";
 import { git } from "../satellites/workspace/git.ts";
+import { commitAll, firstCommitOf, type GitState, gitStateOf } from "../satellites/workspace/setup.ts";
 import { Workspace } from "../satellites/workspace/workspace.ts";
 import { agentsByProfile, lacking, match, type Matching, matchingFile } from "../profile/agents.ts";
 import { type Bundle, loadBundle } from "../profile/bundle.ts";
@@ -73,6 +75,9 @@ import { Reflex, WORKS_ON } from "./reflex.ts";
 import { type ProjectPort, TeamSocket } from "./team-socket.ts";
 
 export const PLUGIN_ID = "seatworks";
+
+/** A folder a team may be attached to: one of Paseo's projects or one given by its path, and how it stands with git. */
+export type Folder = { readonly name: string; readonly root: string; readonly git: GitState };
 /** How long a check may run before it is killed with what it started. */
 const CHECK_TIMEOUT_MS = 30 * 60 * 1000;
 /** How often the plugin lets go of what long use leaves behind: idle projects in memory, settled outbox rows. */
@@ -470,28 +475,54 @@ export class Plugin {
   }
 
   /** Every project the plugin keeps, open in memory or not. */
-  projects(): { id: string; repo: string; open: boolean }[] {
+  projects(): { id: string; repo: string; open: boolean; profile: string | null }[] {
     const dir = join(this.root, "projects");
     if (!existsSync(dir)) return [];
     return readdirSync(dir).flatMap((id) => {
       const file = join(dir, id, "project.json");
       if (!existsSync(file)) return [];
-      const { repo } = JSON.parse(readFileSync(file, "utf8")) as { repo: string };
-      return [{ id, repo, open: this.runtimes.has(id) }];
+      const { repo, profile } = JSON.parse(readFileSync(file, "utf8")) as { repo: string; profile?: string };
+      return [{ id, repo, open: this.runtimes.has(id), profile: profile ?? null }];
     });
   }
 
-  /** Paseo's git projects no team is attached to yet, for the Human to attach one. */
-  async unattached(): Promise<{ name: string; root: string }[]> {
+  /** Paseo's projects no team is attached to yet, each with how it stands with git, for the Human to attach one. */
+  async unattached(): Promise<Folder[]> {
     const api = this.link.current;
     if (!api) return [];
     const attached = new Set(this.projects().map((p) => p.repo));
     const listed = await api.projects.list();
-    return listed.projects.flatMap((p) => {
-      if (p.projectKind !== "git" || !existsSync(p.projectRootPath)) return [];
+    const found: Folder[] = [];
+    for (const p of listed.projects) {
+      if (!existsSync(p.projectRootPath)) continue;
       const root = realpathSync(p.projectRootPath);
-      return attached.has(root) ? [] : [{ name: p.projectDisplayName, root }];
-    });
+      if (!attached.has(root)) found.push({ name: p.projectDisplayName, root, git: await gitStateOf(root) });
+    }
+    return found;
+  }
+
+  /** A folder given by its path, as one of Paseo's projects is offered; one that is none, or has a team, says so. */
+  async folderAt(dir: string): Promise<{ ok: true; folder: Folder } | { ok: false; says: string; folder?: never }> {
+    if (!existsSync(dir) || !statSync(dir).isDirectory()) return { ok: false, says: `there is no folder at ${dir}` };
+    const root = realpathSync(dir);
+    if (this.projects().some((p) => p.repo === root)) return { ok: false, says: `${root} already has a team` };
+    return { ok: true, folder: { name: basename(root), root, git: await gitStateOf(root) } };
+  }
+
+  /** What a first commit of a folder would hold, once it is made a repository: read before the Human agrees to one. */
+  async gitOffer(dir: string): Promise<{ ok: true; files: number; ignores: boolean } | { ok: false; says: string }> {
+    const at = await this.folderAt(dir);
+    if (!at.ok) return at;
+    const offer = await firstCommitOf(at.folder.root);
+    return "refused" in offer ? { ok: false, says: offer.refused } : { ok: true, ...offer };
+  }
+
+  /** Makes a folder a repository with one commit of what it holds, the Human's own, so a team can be attached. */
+  async setUpGit(dir: string): Promise<{ ok: true } | { ok: false; says: string }> {
+    const offer = await this.gitOffer(dir);
+    if (!offer.ok) return offer;
+    const made = await commitAll(realpathSync(dir));
+    return "refused" in made ? { ok: false, says: made.refused } : { ok: true };
   }
 
   /** What every project's team left behind, and each project itself, for the Human to pick from. */

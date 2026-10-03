@@ -300,11 +300,29 @@ test("an agent profile that names no model seats no agent, and the seat says whi
   const opened = await plugin.openProject(repository(), "main");
   await plugin.idle();
 
-  assert.deepEqual(paseo.created, []);
+  assert.equal(paseo.created.length, 0);
   assert.match(
     JSON.stringify(await plugin.view(opened.project)),
     /the Paseo agent profile slp-supervisor names no model/,
   );
+  assert.match(
+    (await plugin.view(opened.project))!.stuck.join("\n"),
+    /Scope root is open with nobody seated/,
+    "which the page shows as stuck, in words",
+  );
+
+  const shaped = await plugin.shapeAgent("slp-supervisor", "sonnet", null);
+  assert.ok(shaped.ok, shaped.ok ? "" : shaped.says);
+  const again = await plugin.human(opened.project, {
+    type: "reseat",
+    scope: "root",
+    reason: "its profile has a model now",
+    model: null,
+  });
+  assert.ok(again.ok, again.ok ? "" : again.refused.says);
+  await plugin.idle();
+  assert.equal(paseo.created[0]?.provider, "claude/sonnet", "seated again on the Human's word, it gets its agent");
+  assert.deepEqual((await plugin.view(opened.project))!.stuck, []);
 });
 
 test("a Paseo that cannot say which providers it finds: the page still reads what each name runs on, and offers none to make a profile on", async () => {

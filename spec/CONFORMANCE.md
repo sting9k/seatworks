@@ -227,6 +227,9 @@ A call as an agent's tool server sends it, the answer read back.
 | Case                                                                              | Expect                                                              |
 | --------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
 | Paseo lists a git project no team is attached to                                  | Offered to attach; once attached, no longer offered                 |
+| Paseo lists a repository with a commit, a plain folder, a repository with no commit, and a folder inside the first | Each is offered with how it stands with git: ready, not yet, not yet, and a part of another's |
+| A folder with two files and an ignored one, set up from the page                  | First it is made a repository and says a first commit would hold two files, with something ignored, and nothing is committed; then one commit of those two, in the Human's name, and it is ready |
+| A folder given by its path; a path that is no folder; git asked for in a part of a repository; the folder once attached | Offered as Paseo's own are; each of the others says why not |
 | A task is dropped with a commit on its branch and a draft in its copy             | Its copy listed and not removable; its branch listed as one whose commits would go with it |
 | A project is attached                                                             | `AGENTS.md` on its base carries the note after the project's own rules, in a commit of that file alone; what the Human staged stays staged |
 | The Human removes a project while a copy holds uncommitted work                   | Refused, naming the copy; nothing touched, its agents still at work |
@@ -434,7 +437,7 @@ What the plugin reads of a profile that a template adds (`TEMPLATE.md`).
 | Agent profiles asked for on a provider Paseo says is not available, on one it does not know, on a model the provider lacks, at an effort the model lacks, or for a template nobody installed | Each refused, saying which; nothing is written in Paseo |
 | The models of a provider read for the page; of a provider Paseo does not know | Each with its label, its efforts, the one it starts on, and whether it is the provider's own; refused, naming the provider |
 | The model and effort of one of the Human's agent profiles changed from the page; then to a model with no effort; then a profile Paseo lacks, a model the provider lacks, an effort the model lacks | That profile alone changes in Paseo, every other as it was; the effort is no longer named; each refused, and nothing written |
-| A Paseo agent profile that names no model, on the root's role | No agent is made, and the seat says which profile names no model |
+| A Paseo agent profile that names no model, on the root's role; then the profile is given a model and the Human seats the root again | No agent is made, the seat says which profile names no model, and the page says the root has nobody seated; seated again, it gets its agent on that model and nothing is stuck |
 | The page is shown what the names of a template run | Each with the profile it runs on, whether Paseo has it, and that profile's provider, model and effort |
 | A Paseo that cannot say which providers it finds                | The page still reads what each name runs on, and offers no provider to make a profile on |
 | A template installed again                                  | The matching of its name is as it was                               |

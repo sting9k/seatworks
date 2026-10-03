@@ -110,8 +110,11 @@ give one answer.
 
 ## Using it
 
-- **Attach a project.** On Seatworks' page, attach one of your Paseo projects, or run "Open a Seatworks team here"
-  from the command center in a workspace. That seats the template's first agent; talk to it in its chat.
+- **Attach a project.** On Seatworks' page, the Projects tab lists every project you have in Paseo and takes any
+  folder by its path. One with no git yet is set up there: it says what a first commit would hold, then makes it.
+  Attach with the template the button names, or run "Open a Seatworks team here" from the command center in a
+  workspace. That seats the template's first agent; talk to it in its chat. A project's row says what is stuck, in
+  words, and seats its first agent again when it could not be made.
 - **The pill** on every chat of a team says the most pressing thing: what is stuck, what needs you, a held team,
   or how many agents are working. Its popover answers what waits on you, shows the team, holds or resumes it, and
   sends a word to the first agent. The same three are typed as `/team`, `/team-hold` and `/team-resume`.

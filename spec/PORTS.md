@@ -159,7 +159,8 @@ Shows the Human the kernel's views and the agents' own words, and takes the Huma
 views: whatTheHumanNeeds, sinceTheyLooked, chainOfChange, openObligations, status, signals, stuck, template
 commands: answer_question, send_message, hold_scope, resume_scope, amend_plan (lines of theirs), answer_permission,
           set_checks, publish
-upkeep: attach(repository, profile), profiles, presets, templateOffer(from), installTemplate(from, hash),
+upkeep: attach(repository, profile), folderAt(dir), gitOffer(dir), setUpGit(dir), profiles, presets,
+        templateOffer(from), installTemplate(from, hash),
         removeTemplate(name), syncTemplate(project), agents(match), models(provider),
         createAgents(profile, provider, model, effort), shapeAgent(agent, model, effort), leftovers,
         clean(picked), checkUpdate
@@ -177,9 +178,18 @@ upkeep: attach(repository, profile), profiles, presets, templateOffer(from), ins
   a seated actor whose agent never started; a seated actor that ended a turn while its agent's tool server never
   reached the plugin, so it has none of the team's tools. Facts only; it changes nothing and suggests nothing.
 - A message the Human types here or straight into an agent's chat is the same message on the record.
-- Attaching opens a project for one of Paseo's projects with the profile named, asked for only when more than one is
-  installed, and starts its root's agent. The plugin serves only attached
-  projects: every hook passes over an agent it did not start.
+- Attaching opens a project with the profile named, which the button that attaches always names, and starts its
+  root's agent. The plugin serves only attached projects: every hook passes over an agent it did not start.
+- A team may be attached to any folder: each of Paseo's projects, whatever Paseo says of its git, and any folder
+  given by its path. Each says how it stands with git, as git itself answers: ready, with a commit to branch from;
+  none of that yet; or a part of another's repository, which is attached whole and not by a part. A folder with no
+  git is set up from the page, in two presses: the first makes it a repository and says what a first commit would
+  hold, how many files and whether anything is ignored; the second commits them in the Human's name, signed where
+  they sign. Nothing is committed by being told. Hiding what had no git left a Human with a project and a page that
+  said Paseo had none.
+- An attached project's row says in words what is stuck, each fact a line, and gives the way on: a root with nobody
+  seated is seated again by the Human's `reseat`, and the row opens the Team tab of the project's workspace where
+  Paseo has one.
 - Attaching also commits the profile's `project.md` into the project's `AGENTS.md` on its base, between the plugin's
   markers, as a commit of that file alone, so every agent in the repository, the team's or the Human's own, knows the
   team is there and which branches are its. Removing the project takes it out the same way. A file the Human is

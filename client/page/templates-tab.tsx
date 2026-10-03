@@ -18,6 +18,7 @@ import { Tag } from "../kit/tag.tsx";
 import { FONT, SPACE } from "../kit/theme.ts";
 import { oneOn } from "../state/matching.ts";
 import { problemText } from "../state/problem-text.ts";
+import { nameOf } from "../state/words.ts";
 import { AgentRow } from "./agent-row.tsx";
 import { CreateAgents } from "./create-agents.tsx";
 
@@ -33,6 +34,8 @@ export type Matching = {
 
 type InstalledProps = {
   readonly profile: ProfileAgents;
+  /** The projects that run it, each by the name of its folder. */
+  readonly usedBy: readonly string[];
   readonly available: readonly string[];
   readonly providers: readonly string[];
   readonly theme: PluginTheme;
@@ -46,17 +49,8 @@ type InstalledProps = {
 };
 
 /** One installed template on a line; opened, each agent profile its roles name and what it runs. */
-function Installed({
-  profile,
-  available,
-  providers,
-  theme,
-  busy,
-  onMatch,
-  onCreate,
-  onShape,
-  onRemove,
-}: InstalledProps) {
+function Installed(props: InstalledProps) {
+  const { profile, usedBy, available, providers, theme, busy, onMatch, onCreate, onShape, onRemove } = props;
   const missing = profile.agents.filter((agent) => !agent.there).length;
   const bare = profile.agents.filter((agent) => agent.there && agent.model === null).length;
   const [open, setOpen] = useState(missing + bare > 0);
@@ -64,7 +58,14 @@ function Installed({
   const { foregroundMuted, statusDanger, border } = theme.colors;
   return (
     <View>
-      <Row title={profile.title} meta={`${profile.agents.length} agent profiles`} theme={theme}>
+      <Row
+        title={profile.title}
+        meta={[
+          `${profile.agents.length} agent profiles`,
+          ...(usedBy.length > 0 ? [`runs ${usedBy.join(", ")}`] : []),
+        ].join(" · ")}
+        theme={theme}
+      >
         {missing > 0 ? <Tag label={`${missing} to create`} tone="warning" theme={theme} /> : null}
         {bare > 0 ? <Tag label={`${bare} with no model`} tone="warning" theme={theme} /> : null}
         <Button
@@ -159,10 +160,16 @@ function offerRows(offer: TemplateOffer, theme: PluginTheme) {
   ];
 }
 
-type Props = { readonly matching: Matching | null; readonly theme: PluginTheme; readonly onChanged: () => void };
+type Props = {
+  readonly matching: Matching | null;
+  /** The projects attached, each with the template it runs: a template says which run it. */
+  readonly projects: readonly { readonly repo: string; readonly profile: string | null }[];
+  readonly theme: PluginTheme;
+  readonly onChanged: () => void;
+};
 
-/** The templates on this machine, the agents their roles run as, and the way to bring in another. */
-export function TemplatesTab({ matching, theme, onChanged }: Props) {
+/** The templates on this machine, the projects that run each, what their roles run as, and the way to bring in another. */
+export function TemplatesTab({ matching, projects, theme, onChanged }: Props) {
   const listPresets = useRpc(RPC.presets);
   const read = useRpc(RPC.templateOffer);
   const install = useRpc(RPC.installTemplate);
@@ -224,6 +231,9 @@ export function TemplatesTab({ matching, theme, onChanged }: Props) {
               <Installed
                 key={profile.name}
                 profile={profile}
+                usedBy={projects
+                  .filter((project) => project.profile === profile.name)
+                  .map((project) => nameOf(project.repo))}
                 available={matching.available}
                 providers={matching.providers}
                 theme={theme}

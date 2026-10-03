@@ -2,26 +2,30 @@ import { type PluginSurfaceProps, useRpc } from "@getpaseo/plugin/client";
 import { Icon, useToast } from "@getpaseo/plugin/client/react-native";
 import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
-import { type Leftover, RPC } from "../../shared/contracts/rpc.ts";
+import { ROOT } from "../../shared/contracts/ids.ts";
+import { type Folder, type Leftover, RPC } from "../../shared/contracts/rpc.ts";
 import { Banner } from "../kit/banner.tsx";
 import { Button } from "../kit/button.tsx";
 import { Card } from "../kit/card.tsx";
+import { Field } from "../kit/field.tsx";
 import { Label, Row } from "../kit/row.tsx";
 import { Tag } from "../kit/tag.tsx";
 import { FONT, SPACE } from "../kit/theme.ts";
 import { problemText } from "../state/problem-text.ts";
 import { useProjectView } from "../state/project-view.ts";
+import { useRepoWorkspace } from "../state/repo-workspace.ts";
 import { useSeatAgents } from "../state/seat-agents.ts";
 import { countsOf, seatsOf, waitingOf } from "../state/team.ts";
-import { nameOf } from "../state/words.ts";
+import { nameOf, titled } from "../state/words.ts";
 import { ChecksEditor } from "./checks-editor.tsx";
+import { FolderRow } from "./folder-row.tsx";
 
 type Theme = PluginSurfaceProps["theme"];
 type Navigation = PluginSurfaceProps["navigation"];
 
 export type Listed = {
-  readonly projects: readonly { readonly id: string; readonly repo: string }[];
-  readonly unattached: readonly { readonly name: string; readonly root: string }[];
+  readonly projects: readonly { readonly id: string; readonly repo: string; readonly profile: string | null }[];
+  readonly unattached: readonly Folder[];
   readonly profiles: readonly { readonly name: string; readonly title: string }[];
 };
 
@@ -30,13 +34,16 @@ type AttachedProps = {
   readonly repo: string;
   readonly theme: Theme;
   readonly navigation: Navigation;
+  /** Opens the Team tab of a workspace. */
+  readonly onTeam: (workspaceId: string) => void;
   readonly onChanged: () => void;
 };
 
 /** One attached project on a line: its template, where its team stands, the way into its chat; opened, its settings. */
-function Attached({ project, repo, theme, navigation, onChanged }: AttachedProps) {
+function Attached({ project, repo, theme, navigation, onTeam, onChanged }: AttachedProps) {
   const { view, reload } = useProjectView(project);
   const agents = useSeatAgents(project);
+  const workspace = useRepoWorkspace(repo);
   const sync = useRpc(RPC.syncTemplate);
   const command = useRpc(RPC.human);
   const list = useRpc(RPC.leftovers);
@@ -50,8 +57,10 @@ function Attached({ project, repo, theme, navigation, onChanged }: AttachedProps
   const template = view?.template ?? null;
   const waiting = human ? waitingOf(human) : 0;
   const working = human ? countsOf(seatsOf(human, agents.running)).working : 0;
+  const stuck = view?.stuck ?? [];
   const chat = human?.root?.owner ? agents.ids[human.root.owner] : undefined;
-  const { foregroundMuted, surface0, border } = theme.colors;
+  const seats = human ? seatsOf(human, agents.running) : [];
+  const { foregroundMuted, surface0, border, statusDanger } = theme.colors;
 
   /** Runs one press to its end, saying what came of it and reading the project again. */
   const act = (work: () => Promise<{ ok: boolean; text: string }>, then: () => void) => {
@@ -88,9 +97,7 @@ function Attached({ project, repo, theme, navigation, onChanged }: AttachedProps
     <View>
       <Row title={nameOf(repo)} meta={repo} theme={theme}>
         {template ? <Tag label={template.name} theme={theme} /> : null}
-        {view && view.stuck.length > 0 ? (
-          <Tag label={`${view.stuck.length} stuck`} tone="danger" theme={theme} />
-        ) : null}
+        {stuck.length > 0 ? <Tag label={`${stuck.length} stuck`} tone="danger" theme={theme} /> : null}
         {waiting > 0 ? (
           <Tag label={`${waiting} need${waiting === 1 ? "s" : ""} you`} tone="warning" theme={theme} />
         ) : working > 0 ? (
@@ -124,6 +131,61 @@ function Attached({ project, repo, theme, navigation, onChanged }: AttachedProps
       ) : null}
       {open ? (
         <View style={{ backgroundColor: surface0, borderTopWidth: 1, borderTopColor: border }}>
+          {stuck.length > 0 ? (
+            <View
+              style={{ gap: SPACE.xs, paddingVertical: SPACE.md, paddingRight: SPACE.lg, paddingLeft: SPACE.lg * 2 }}
+            >
+              {stuck.map((fact) => (
+                <Text key={fact} style={{ fontSize: FONT.small, color: statusDanger }}>
+                  {fact}
+                </Text>
+              ))}
+            </View>
+          ) : null}
+          {human?.root ? (
+            <Row
+              kind="Team"
+              title={
+                human.root.owner === null
+                  ? `Nobody is seated as ${titled(human.root.role)}`
+                  : `${seats.length} seat${seats.length === 1 ? "" : "s"}`
+              }
+              dimmed={human.root.owner === null}
+              theme={theme}
+              indent
+            >
+              {human.root.owner === null ? (
+                <Button
+                  label="Seat it again"
+                  tone="accent"
+                  theme={theme}
+                  disabled={busy}
+                  onPress={() => {
+                    act(
+                      async () => {
+                        const said = await command({
+                          project,
+                          type: "reseat",
+                          args: { scope: ROOT, reason: "seated again by the Human" },
+                        });
+                        return said.ok ? { ok: true, text: `${titled(human.root!.role)} is seated again.` } : said;
+                      },
+                      () => void reload(),
+                    );
+                  }}
+                />
+              ) : null}
+              {workspace ? (
+                <Button
+                  label="Show the team"
+                  theme={theme}
+                  onPress={() => {
+                    onTeam(workspace);
+                  }}
+                />
+              ) : null}
+            </Row>
+          ) : null}
           {template ? (
             <Row kind="Template" title={template.name} theme={theme} indent>
               {template.state === "uninstalled" ? <Tag label="not installed" tone="warning" theme={theme} /> : null}
@@ -232,22 +294,46 @@ type Props = {
   readonly listed: Listed | null;
   readonly theme: Theme;
   readonly navigation: Navigation;
+  /** Opens the Team tab of a workspace. */
+  readonly onTeam: (workspaceId: string) => void;
   readonly onChanged: () => void;
   /** Leads to where a template is installed, which attaching needs. */
   readonly onTemplates: () => void;
 };
 
-/** The projects a team works in, and Paseo's projects a team can be attached to. */
-export function ProjectsTab({ listed, theme, navigation, onChanged, onTemplates }: Props) {
+/** The projects a team works in, and the folders one can be attached to: Paseo's projects, and any given by its path. */
+export function ProjectsTab({ listed, theme, navigation, onTeam, onChanged, onTemplates }: Props) {
   const attach = useRpc(RPC.openProject);
+  const find = useRpc(RPC.folderAt);
   const toast = useToast();
   const [attaching, setAttaching] = useState<string | null>(null);
+  const [path, setPath] = useState("");
+  const [added, setAdded] = useState<readonly Folder[]>([]);
   const muted = { fontSize: FONT.small, color: theme.colors.foregroundMuted, paddingHorizontal: SPACE.xs };
   if (!listed) return <Text style={muted}>Reading the projects.</Text>;
   const { projects, unattached, profiles } = listed;
-  const attachWith = (root: string, profile?: string) => {
+  const taken = new Set([...projects.map((project) => project.repo), ...unattached.map((folder) => folder.root)]);
+  const folders = [...unattached, ...added.filter((folder) => !taken.has(folder.root))];
+  /** Reads a folder given by its path, to offer it among the rest; what is no folder, or has a team, is said. */
+  const read = (dir: string) => {
+    setAttaching(dir);
+    void find({ dir })
+      .then((found) => {
+        const { folder } = found;
+        if (!folder) toast.show(found.text, { variant: "warning" });
+        else setAdded((all) => [...all.filter((other) => other.root !== folder.root), folder]);
+        if (folder) setPath("");
+      })
+      .catch((failed: unknown) => {
+        toast.error(problemText(failed));
+      })
+      .finally(() => {
+        setAttaching(null);
+      });
+  };
+  const attachWith = (root: string, profile: string) => {
     setAttaching(root);
-    void attach(profile === undefined ? { cwd: root } : { cwd: root, profile })
+    void attach({ cwd: root, profile })
       .then((said) => {
         toast.show(said.text, { variant: said.ok ? "success" : "warning" });
       })
@@ -270,12 +356,13 @@ export function ProjectsTab({ listed, theme, navigation, onChanged, onTemplates 
               repo={project.repo}
               theme={theme}
               navigation={navigation}
+              onTeam={onTeam}
               onChanged={onChanged}
             />
           ))}
         </Card>
       ) : null}
-      {unattached.length > 0 && profiles.length === 0 ? (
+      {folders.length > 0 && profiles.length === 0 ? (
         <Banner
           tone="warning"
           text="Install a template before attaching a project"
@@ -283,31 +370,49 @@ export function ProjectsTab({ listed, theme, navigation, onChanged, onTemplates 
           onPress={onTemplates}
         />
       ) : null}
-      {unattached.length > 0 ? (
-        <View style={{ gap: SPACE.sm }}>
-          <Label text="Not attached" theme={theme} />
-          <Card theme={theme}>
-            {unattached.map((project) => (
-              <Row key={project.root} title={project.name} meta={project.root} theme={theme}>
-                {profiles.map((profile) => (
-                  <Button
-                    key={profile.name}
-                    label={profiles.length > 1 ? `Attach with ${profile.title}` : "Attach"}
-                    theme={theme}
-                    disabled={attaching !== null}
-                    onPress={() => {
-                      attachWith(project.root, profiles.length > 1 ? profile.name : undefined);
-                    }}
-                  />
-                ))}
-              </Row>
-            ))}
-          </Card>
-        </View>
-      ) : null}
-      {projects.length === 0 && unattached.length === 0 ? (
-        <Text style={muted}>Paseo has no git project yet. Add one in Paseo and it shows here.</Text>
-      ) : null}
+      <View style={{ gap: SPACE.sm }}>
+        <Label text="Attach a team to" theme={theme} />
+        <Card theme={theme}>
+          {folders.map((folder) => (
+            <FolderRow
+              key={folder.root}
+              folder={folder}
+              templates={profiles}
+              theme={theme}
+              busy={attaching !== null}
+              onAttach={(template) => {
+                attachWith(folder.root, template);
+              }}
+              onSetUp={() => {
+                read(folder.root);
+                onChanged();
+              }}
+            />
+          ))}
+          <View style={{ flexDirection: "row", alignItems: "center", gap: SPACE.sm, padding: SPACE.md }}>
+            <Field
+              value={path}
+              onChange={setPath}
+              disabled={attaching !== null}
+              placeholder="Path of a folder on this machine"
+              theme={theme}
+            />
+            <Button
+              label="Add"
+              theme={theme}
+              disabled={attaching !== null || path.trim() === ""}
+              onPress={() => {
+                read(path.trim());
+              }}
+            />
+          </View>
+        </Card>
+        {folders.length === 0 ? (
+          <Text style={muted}>
+            Projects you add in Paseo show here: Add project, at the foot of its sidebar. Or give a folder&apos;s path.
+          </Text>
+        ) : null}
+      </View>
     </>
   );
 }

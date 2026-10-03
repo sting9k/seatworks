@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import type { PaseoApi } from "@getpaseo/client";
 
 type Sent = { host: string; text: string; messageId: string };
@@ -149,7 +151,7 @@ export function fakePaseo(
             projectId: root,
             projectDisplayName: root.split("/").pop(),
             projectRootPath: root,
-            projectKind: "git",
+            projectKind: existsSync(join(root, ".git")) ? "git" : "non_git",
           })),
         }),
     },

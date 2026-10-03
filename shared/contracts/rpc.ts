@@ -156,6 +156,10 @@ const ProviderModelSchema = z.object({
 });
 export type ProviderModel = z.infer<typeof ProviderModelSchema>;
 
+/** A folder a team may be attached to, and how it stands with git: ready, none of it yet, or a part of another's. */
+const FolderSchema = z.object({ name: z.string(), root: z.string(), git: z.enum(["ready", "none", "inside"]) });
+export type Folder = z.infer<typeof FolderSchema>;
+
 /** The Human's surface calls these (PORTS.md, Human surface); shaped as Paseo's plugin RPC contracts. */
 export const RPC = {
   openProject: {
@@ -181,11 +185,32 @@ export const RPC = {
     name: "seatworks.projects",
     input: z.object({}),
     output: z.object({
-      projects: z.array(z.object({ id: z.string(), repo: z.string(), open: z.boolean() })),
-      unattached: z.array(z.object({ name: z.string(), root: z.string() })),
+      /** Each attached project, with the name of the template it took when it was attached. */
+      projects: z.array(
+        z.object({ id: z.string(), repo: z.string(), open: z.boolean(), profile: z.string().nullable() }),
+      ),
+      unattached: z.array(FolderSchema),
       /** The profiles a project may be attached with: each the Human installed. */
       profiles: z.array(z.object({ name: z.string(), title: z.string(), description: z.string() })),
     }),
+  },
+  /** A folder by its path, as one of Paseo's projects is offered; one that is none, or has a team, says so. */
+  folderAt: {
+    name: "seatworks.folder_at",
+    input: z.object({ dir: z.string().min(1) }),
+    output: z.object({ ok: z.boolean(), text: z.string(), folder: FolderSchema.nullable() }),
+  },
+  /** Makes a folder a repository where it is none and says what a first commit of it would hold. */
+  gitOffer: {
+    name: "seatworks.git_offer",
+    input: z.object({ dir: z.string().min(1) }),
+    output: z.object({ ok: z.boolean(), text: z.string(), files: z.number(), ignores: z.boolean() }),
+  },
+  /** Commits a folder as it stands, as the Human's own first commit, so a team can be attached to it. */
+  setUpGit: {
+    name: "seatworks.set_up_git",
+    input: z.object({ dir: z.string().min(1) }),
+    output: z.object({ ok: z.boolean(), text: z.string() }),
   },
   view: {
     name: "seatworks.view",

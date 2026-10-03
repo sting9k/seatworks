@@ -78,6 +78,27 @@ export default function contribute(server: PluginServerContext) {
     plugin.saw(paseo);
     return { projects: plugin.projects(), unattached: await plugin.unattached(), profiles: plugin.profiles() };
   });
+  server.handle(RPC.folderAt, async (input, { paseo }) => {
+    plugin.saw(paseo);
+    const at = await plugin.folderAt(input.dir);
+    return at.ok
+      ? { ok: true, text: "", folder: at.folder }
+      : { ok: false, text: `Not added: ${at.says}.`, folder: null };
+  });
+  server.handle(RPC.gitOffer, async (input, { paseo }) => {
+    plugin.saw(paseo);
+    const offer = await plugin.gitOffer(input.dir);
+    return offer.ok
+      ? { ok: true, text: "", files: offer.files, ignores: offer.ignores }
+      : { ok: false, text: `Not set up: ${offer.says}.`, files: 0, ignores: false };
+  });
+  server.handle(RPC.setUpGit, async (input, { paseo }) => {
+    plugin.saw(paseo);
+    const made = await plugin.setUpGit(input.dir);
+    return made.ok
+      ? { ok: true, text: "It is a git repository now, with one commit of what it held." }
+      : { ok: false, text: `Not committed: ${made.says}.` };
+  });
   server.handle(RPC.leftovers, async (_input, { paseo }) => {
     plugin.saw(paseo);
     return { leftovers: await plugin.leftovers() };
