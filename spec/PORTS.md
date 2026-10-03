@@ -45,6 +45,9 @@ stream(agentId) -> events: turn_started, turn_ended(done | failed(why) | cancell
 history(agentId, since) -> events
 answerPermission(agentId, requestId, allow, reason)
 archive(agentId)
+openWorktree({ projectRoot, title, slug, branch, base? }) -> Result<path>  // the host makes it: a new branch off
+                                                            // `base`, or the branch checked out where it is there
+closeWorktree(path) -> Result                               // ends the agents in it and removes the worktree
 labelled(labels) -> { agentId, title, labels }[]            // every agent not archived that carries all of them
 agentProfiles() -> { id, name, provider, model?, effort? }[] // the agent profiles the Human keeps
 providers() -> provider[]                                   // an agent can start on each; none if Paseo cannot say
@@ -55,9 +58,12 @@ shapeProfile(name, { provider, model, effort? }) -> Result  // what that one pro
 
 - An agent profile that names no model makes no agent, and the host says which profile it is: Paseo's own refusal
   names a format, which nobody can act on.
-- `projectRoot` is the repository the agent's folder is a copy of. The host lists the agent under that repository's
-  project, in one workspace for the folder, and never lets the host's own rule make a project of a copy
+- `projectRoot` is the repository the agent works on. The host lists the agent under that repository's project, in
+  one workspace for the folder it works in, and never lets the host's own rule make a project of a worktree
   (`PASEO.md`, Seen on a live daemon).
+- A worktree is the host's to make and to remove: Paseo keeps it where it keeps its own, runs the repository's
+  set-up in it, and shows it as it shows any worktree of the project. The host removes one whatever it holds, so
+  whoever asks for it to be closed has asked the workspace first whether work in it is uncommitted.
 - `runs` is what this one agent runs in place of what its profile runs: a provider, a model, an effort, each left
   out where the profile's stands. The host is told it and asks nobody whose it is (`TEMPLATE.md`, Agent profiles on
   a machine).
@@ -73,39 +79,52 @@ shapeProfile(name, { provider, model, effort? }) -> Result  // what that one pro
 
 ## Workspace
 
-Gives each writer a copy, merges, and keeps writes where they belong.
+Knows one repository's branches: merges them, moves them, publishes one, and says where each is checked out. It makes
+and removes no working copy: a worktree is the agent host's.
 
 ```text
-create(key, base, branch) -> Result<path>                 // runs the project's setup before returning
-merge(path, from) -> Result<sha | conflict(paths)>        // a conflict is undone, never left half merged
-advance(branch, fromSha, toSha, how) -> Result<sha>       // how: squash | merge | ff; refuses if branch moved
-state(path) -> { head, branch, uncommitted }
+candidate(commit, onto, message) -> Result<{ candidate, parentHead } | conflict(paths)>
+                                                          // made without touching a working copy; work `onto`
+                                                          // already holds is taken in as `onto` stands
+advance(branch, fromSha, toSha) -> Result<sha>            // refuses if the branch moved, or is checked out dirty
 headOf(ref) -> sha | none                                 // where a branch of the repository is
-remove(key) -> Result<removed | kept(why)>                // keeps a copy holding uncommitted work
+trees(prefix) -> { path, branch, unsaved }[]              // each working copy a branch under the prefix is checked
+treeOf(branch) -> { path, branch, unsaved } | none        // out in, the Human's own among them
+dropMerged(branch, into)                                  // deletes a branch once `into` holds all of its work
 publish(branch, remote, expectedSha) -> Result<sha>       // never forced; refuses if the branch moved, or the remote
-onDisk() -> { key, path, branch, unsaved }[]              // every copy under the root, used or not
 branchesUnder(prefix, into) -> { branch, ahead }[]        // how many of its commits `into` does not hold
-removeBranch(branch) -> Result<removed | kept(why)>       // git refuses one checked out in a copy
-prune()                                                   // forgets copies git lists whose directory is gone
+removeBranch(branch) -> Result<removed | kept(why)>       // git refuses one checked out in a working copy
+diff(base, tip, within?) -> text                          // what `tip` changed since it left `base`, under paths
 putBlock(branch, file, marker, body | null) -> Result<sha | unchanged | refused(why)>
                                                           // one commit of that file alone; refuses a file with
                                                           // uncommitted changes where the branch is checked out
 ```
 
-Invariants, taken from Symphony's workspace safety rules:
+Where work is done, in the owner's words: "Supervisor ở project gốc, nó điều phối, các lead sinh ra để làm task bọn nó
+mới work trên worktree mới tại thời điểm đấy", and of a lane's Peers, "mỗi peer 1 worktree là sai, bọn nó cùng 1 task
+từ lead mà": an epic is cut into tickets, a ticket is a lane, and a lane's team shares the ticket's worktree.
 
-- The root's agent works in the repository itself, where the Human does. It coordinates and hands work out, so no
-  copy is made for it, and it reads the project as the Human has it. The owner's words: "Supervisor ở project gốc,
-  nó điều phối, các lead sinh ra để làm task bọn nó mới work trên worktree mới tại thời điểm đấy." The first build
-  gave the root a copy too, to hold any agent away from the Human's files; a copy with no work in it was a second
-  checkout of the project for nothing, and stood in Paseo as a project of its own.
-- Every agent under the root works only in a copy of its own, made when its scope is opened, and a copy's path stays
-  inside the workspace root. When its scope is taken in, its work is merged into its parent's branch, for a lane the
-  project's base, and its copy and branch are removed with that; dropped, the copy goes and a branch with commits
-  nothing holds stays for the Human to look at.
-- A key is sanitized to `[A-Za-z0-9._-]`, with a stable hash suffix when sanitizing changed it.
-- The git an agent runs refuses what only the workspace does (branch moves, pushes, switching, work outside its own
-  copy). It guards against mistakes, not intent.
+- **The root's agent works in the repository itself**, where the Human does. It coordinates and hands work out, so
+  no worktree is made for it, and it reads the project as the Human has it.
+- **A lane has one worktree, and everyone it seats works in it.** A lane is a scope opened under the root. Its
+  worktree is made when it is opened, by the agent host, on a branch of the lane's own off the project's base, or
+  off the commit a lane is seated to read. Its owner, its writers and its readers, at any depth under it, all work
+  in that one folder on that one branch. What the root judges can be done side by side it opens as two lanes: that
+  is where work runs in parallel, each in a worktree of its own.
+- **Work under a lane is committed on the lane's branch.** Taking such a scope in moves nothing: its commit is in
+  the branch already, so its candidate is the branch as it stands and its checks run there. What it changed is read
+  from where it began and under its own paths, since a neighbour's commits lie beside its own; sibling scopes whose
+  paths overlap are ordered already (I3), so two never write one file at once. Undoing one scope's work is a revert
+  of its commits by a writer, not a branch thrown away.
+- **A lane taken in is merged into the base, and its worktree and branch go with that**: the worktree closed by the
+  agent host, the branch deleted once the base holds it. Dropped, its worktree is closed and a branch with commits
+  nothing else holds stays for the Human to look at. A worktree holding uncommitted work is never closed.
+- The first build gave every scope a copy of its own, made and removed by this satellite under the plugin's state
+  root: a writer's on its own branch, a reader's detached. That put a worktree behind every task and a merge behind
+  every hand-back, kept them where Paseo could not show or manage them, and left the plugin its own code for what
+  Paseo does.
+- The git an agent runs refuses what only the workspace does (branch moves, pushes, switching, work outside the
+  folder it works in). It guards against mistakes, not intent.
 - The workspace's own git runs no hook or command a repository's config names.
 - A commit it returns is named whole, however it was named to it: a branch is moved to it and a publish looks for
   it by that name, and an abbreviation would match neither.

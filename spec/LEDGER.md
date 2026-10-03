@@ -462,9 +462,11 @@ and evidence on the old one does not speak for it (I4). This is the usual case a
 the base under every other candidate made before.
 
 A scope that waited for a sibling gets its copy and its agent when the sibling is integrated or dropped, or when the
-last `after` edge that made it wait is removed (`edge_removed`): no other event would start it. A scope whose copy
-could not be made (`workspace_failed`) has no agent, and `status` says so; a reseat asks for the copy again, and the
-actor it seats gets its agent once the copy is there. Without that a reseat would seat an actor nothing ever starts.
+last `after` edge that made it wait is removed (`edge_removed`): no other event would start it. Its copy is where it
+works: for a lane a worktree of its own, for a scope under a lane the lane's (`PORTS.md`, Workspace). A scope whose
+copy could not be made (`workspace_failed`) has no agent, and `status` says so; a reseat asks for the copy again, and
+the actor it seats gets its agent once the copy is there. Without that a reseat would seat an actor nothing ever
+starts.
 
 A command that only starts something says so in its reply: `run_checks`, `integrate` and `publish` each answer that
 their caller is told the outcome, which arrives as a note that wakes it. A live Supervisor took "integration started"
@@ -541,9 +543,9 @@ A project runs for months. Everything below is bounded by open work, not by hist
 
 **In git and Paseo.**
 
-- A task's worktree is removed when its scope is integrated or dropped, and its branch deleted once merged. A worktree
-  holding uncommitted work is kept and reported, never removed.
-- Throwaway copies of non-writers are removed with their scope or at release.
+- A lane's worktree is closed through Paseo when the lane is integrated or dropped, and its branch deleted once
+  merged. A worktree holding uncommitted work is kept and reported, never closed. A scope under a lane has none of
+  its own, so nothing is removed when it closes.
 - Candidate refs (`refs/sw/<scope>/candidate`) go when the scope closes.
 - Agents are archived in Paseo when their seat ends; Seatworks keeps no transcript of its own.
 

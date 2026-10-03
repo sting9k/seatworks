@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { chmodSync, existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
-import { Workspace, safeKey } from "../../server/satellites/workspace/workspace.ts";
+import { Workspace } from "../../server/satellites/workspace/workspace.ts";
 
 const run = (cwd: string, ...args: string[]) =>
   execFileSync("git", ["-c", "user.name=t", "-c", "user.email=t@t", "-c", "commit.gpgSign=false", ...args], {
@@ -18,7 +18,14 @@ function repo() {
   writeFileSync(join(root, "a.txt"), "one\n");
   run(root, "add", ".");
   run(root, "commit", "-q", "-m", "start");
-  return { root, ws: new Workspace(root, join(root, "..", `${root.split("/").pop()!}-copies`)) };
+  return { root: realpathSync(root), ws: new Workspace(realpathSync(root)) };
+}
+
+/** A worktree of the repository on a new branch off main, as the host makes one for work handed out. */
+function tree(root: string, branch: string): string {
+  const path = join(realpathSync(mkdtempSync(join(tmpdir(), "sw-trees-"))), branch.replaceAll("/", "-"));
+  run(root, "worktree", "add", "-q", "-b", branch, path, "main");
+  return path;
 }
 
 function commitIn(cwd: string, file: string, text: string): string {
@@ -28,28 +35,24 @@ function commitIn(cwd: string, file: string, text: string): string {
   return run(cwd, "rev-parse", "HEAD");
 }
 
-test("a writer gets a worktree on a branch of its own; asked again, the same copy", async () => {
-  const { ws } = repo();
-  const made = await ws.create("1.1", { kind: "writer", branch: "sw/p/1.1", from: "main" });
-  assert.ok(made.ok);
-  assert.equal(run(made.path, "symbolic-ref", "--short", "HEAD"), "sw/p/1.1");
-  assert.deepEqual(await ws.create("1.1", { kind: "writer", branch: "sw/p/1.1", from: "main" }), made);
-});
-
 test("the plugin's git runs no hook and no filter an agent planted in the repository", async () => {
   const { root, ws } = repo();
   const hook = join(root, "..", `hook-ran-${Date.now()}`);
-  writeFileSync(join(root, ".git", "hooks", "post-checkout"), `#!/bin/sh\ntouch ${hook}\n`);
-  chmodSync(join(root, ".git", "hooks", "post-checkout"), 0o755);
+  writeFileSync(join(root, ".git", "hooks", "post-merge"), `#!/bin/sh\ntouch ${hook}\n`);
+  chmodSync(join(root, ".git", "hooks", "post-merge"), 0o755);
   const smudge = join(root, "..", `smudge-ran-${Date.now()}`);
   run(root, "config", "filter.x.smudge", `touch ${smudge}; cat`);
   writeFileSync(join(root, ".gitattributes"), "*.txt filter=x\n");
   run(root, "add", ".");
   run(root, "commit", "-q", "-m", "attributes");
-  const made = await ws.create("1", { kind: "writer", branch: "sw/p/1", from: "main" });
-  assert.ok(made.ok);
+  const from = run(root, "rev-parse", "main");
+  const tip = commitIn(tree(root, "sw/p/1"), "b.txt", "work\n");
+  // The landing checks the work out in the Human's own folder, where a hook and a filter would run.
+  for (const ran of [hook, smudge]) if (existsSync(ran)) rmSync(ran);
+  assert.deepEqual(await ws.advance("main", from, tip), { sha: tip });
+  assert.equal(readFileSync(join(root, "b.txt"), "utf8"), "work\n", "the work is checked out there");
   assert.equal(existsSync(hook), false, "no hook ran");
-  assert.equal(existsSync(smudge), false, "no smudge filter ran on the copy's checkout");
+  assert.equal(existsSync(smudge), false, "no smudge filter ran on the checkout");
 });
 
 test("a note is not written over an instruction file the Human keeps ignored in their checkout", async () => {
@@ -67,9 +70,8 @@ test("a note is not written over an instruction file the Human keeps ignored in 
 
 test("a candidate takes the moved parent in without a checkout; a conflict names its files", async () => {
   const { root, ws } = repo();
-  const copy = await ws.create("1", { kind: "writer", branch: "sw/p/1", from: "main" });
-  assert.ok(copy.ok);
-  const work = commitIn(copy.path, "b.txt", "peer\n");
+  const copy = tree(root, "sw/p/1");
+  const work = commitIn(copy, "b.txt", "peer\n");
   const clean = await ws.candidate(work, "main", "Integrate 1");
   assert.deepEqual(
     clean,
@@ -89,16 +91,24 @@ test("a candidate takes the moved parent in without a checkout; a conflict names
   assert.equal(run(root, "show", `${merged.candidate}:c.txt`), "base moved");
 
   commitIn(root, "a.txt", "base edit\n");
-  const clash = commitIn(copy.path, "a.txt", "peer edit\n");
+  const clash = commitIn(copy, "a.txt", "peer edit\n");
   assert.deepEqual(await ws.candidate(clash, "main", "Integrate 1"), { conflict: ["a.txt"] });
+});
+
+test("work committed on the parent's own branch is taken in as the parent stands: no merge is made of it", async () => {
+  const { ws } = repo();
+  const lane = tree(ws.repo, "sw/p/1");
+  const first = commitIn(lane, "b.txt", "one peer\n");
+  const head = commitIn(lane, "c.txt", "another, after it\n");
+  assert.deepEqual(await ws.candidate(first, "sw/p/1", "Integrate 1.1"), { candidate: head, parentHead: head });
+  assert.deepEqual(await ws.candidate(head, "sw/p/1", "Integrate 1.2"), { candidate: head, parentHead: head });
+  assert.deepEqual(await ws.advance("sw/p/1", head, head), { sha: head }, "and the branch, checked out there, stays");
 });
 
 test("advance moves a branch only from the head it was read at, and a checked-out base only when clean", async () => {
   const { root, ws } = repo();
-  const copy = await ws.create("1", { kind: "writer", branch: "sw/p/1", from: "main" });
-  assert.ok(copy.ok);
   const from = run(root, "rev-parse", "main");
-  const tip = commitIn(copy.path, "b.txt", "x\n");
+  const tip = commitIn(tree(root, "sw/p/1"), "b.txt", "x\n");
   writeFileSync(join(root, "a.txt"), "dirty\n");
   assert.deepEqual(await ws.advance("main", from, tip), { refused: "main is checked out with uncommitted changes" });
   run(root, "checkout", "--", "a.txt");
@@ -149,27 +159,55 @@ test("publish pushes only the head it was asked at, and a moved tip is refused w
   assert.notEqual(theirs, over.sha);
 });
 
-test("a copy holding uncommitted work is kept; a clean one goes, with its branch once merged", async () => {
+test("a worktree is found by the branch checked out in it and says whether it holds work not yet committed; a branch goes once what it holds is merged", async () => {
   const { root, ws } = repo();
-  const copy = await ws.create("1", { kind: "writer", branch: "sw/p/1", from: "main" });
-  assert.ok(copy.ok);
-  writeFileSync(join(copy.path, "wip.txt"), "unsaved");
-  assert.ok("kept" in (await ws.remove("1", "sw/p/1", "main")));
-  run(copy.path, "add", ".");
-  run(copy.path, "commit", "-q", "-m", "wip");
+  const lane = tree(root, "sw/p/1");
+  const other = tree(root, "sw/p/10");
+  tree(root, "elsewhere");
+  assert.deepEqual(await ws.trees("sw/p/"), [
+    { path: lane, branch: "sw/p/1", unsaved: false },
+    { path: other, branch: "sw/p/10", unsaved: false },
+  ]);
+  writeFileSync(join(lane, "wip.txt"), "unsaved");
+  assert.deepEqual(await ws.treeOf("sw/p/1"), { path: lane, branch: "sw/p/1", unsaved: true }, "by its whole name");
+  assert.deepEqual(await ws.treeOf("main"), { path: root, branch: "main", unsaved: false }, "the Human's own too");
+  assert.equal(await ws.treeOf("sw/p/2"), null);
+
+  run(lane, "add", ".");
+  run(lane, "commit", "-q", "-m", "wip");
+  run(root, "worktree", "remove", "--force", lane);
+  await ws.dropMerged("sw/p/1", "main");
+  assert.notEqual(run(root, "branch", "--list", "sw/p/1"), "", "a branch whose work nothing else holds stays");
   run(root, "merge", "-q", "--ff-only", "sw/p/1");
-  assert.deepEqual(await ws.remove("1", "sw/p/1", "main"), { removed: true });
-  assert.equal(existsSync(copy.path), false);
-  assert.equal(run(root, "branch", "--list", "sw/p/1"), "");
+  await ws.dropMerged("sw/p/1", "main");
+  assert.equal(run(root, "branch", "--list", "sw/p/1"), "", "merged, it goes");
+});
+
+test("a scope's change is read against where it started, and under its own paths where others work on the same branch", async () => {
+  const { root, ws } = repo();
+  const lane = tree(root, "sw/p/1");
+  const start = run(lane, "rev-parse", "HEAD");
+  execFileSync("mkdir", ["-p", join(lane, "src/a"), join(lane, "src/b")]);
+  commitIn(lane, "src/a/one.txt", "mine\n");
+  const tip = commitIn(lane, "src/b/two.txt", "another's\n");
+  const whole = await ws.diff(start, tip);
+  assert.match(whole, /src\/a\/one\.txt/);
+  assert.match(whole, /src\/b\/two\.txt/);
+  const mine = await ws.diff(start, tip, ["src/a/"]);
+  assert.match(mine, /\+mine/);
+  assert.doesNotMatch(mine, /two\.txt/, "what another did under its own paths is not this scope's change");
+  assert.deepEqual(
+    (await ws.fileDiffs(start, tip, ["src/a/"])).map((file) => file.path),
+    ["src/a/one.txt"],
+  );
 });
 
 test("each branch made for a project says how many of its commits the base does not hold: none once merged, all where there is no base", async () => {
   const { root, ws } = repo();
   for (const key of ["1", "2"]) {
-    const copy = await ws.create(key, { kind: "writer", branch: `sw/p/${key}`, from: "main" });
-    assert.ok(copy.ok);
-    commitIn(copy.path, `${key}.txt`, "work");
-    if (key === "2") commitIn(copy.path, "more.txt", "more work");
+    const copy = tree(root, `sw/p/${key}`);
+    commitIn(copy, `${key}.txt`, "work");
+    if (key === "2") commitIn(copy, "more.txt", "more work");
   }
   run(root, "merge", "-q", "--ff-only", "sw/p/1");
 
@@ -188,12 +226,6 @@ test("each branch made for a project says how many of its commits the base does 
   );
 });
 
-test("a key with slashes and spaces becomes a safe path with a stable suffix", () => {
-  assert.equal(safeKey("1.2"), "1.2");
-  assert.match(safeKey("a b/c"), /^a_b_c-[0-9a-f]{8}$/);
-  assert.equal(safeKey("a b/c"), safeKey("a b/c"));
-});
-
 test("a name counts as settled when code outside the tests has it, at a revision or in a copy's working tree", async () => {
   const { root, ws } = repo();
   writeFileSync(join(root, "points.ts"), "export function addPoints() {}\n");
@@ -203,13 +235,12 @@ test("a name counts as settled when code outside the tests has it, at a revision
   run(root, "commit", "-q", "-m", "points");
   const tests = /(^|\/)test\/|\.test\.[a-z]+$/;
   assert.deepEqual([...(await ws.namesIn(root, "main", ["addPoints", "points", "missing"], tests))], ["addPoints"]);
-  const copy = await ws.create("1", { kind: "writer", branch: "sw/p/1", from: "main" });
-  assert.ok(copy.ok);
-  writeFileSync(join(copy.path, "user.ts"), "export type User = { points: number };\n");
-  assert.deepEqual([...(await ws.namesIn(copy.path, null, ["points", "missing"], tests))], ["points"]);
+  const copy = tree(root, "sw/p/1");
+  writeFileSync(join(copy, "user.ts"), "export type User = { points: number };\n");
+  assert.deepEqual([...(await ws.namesIn(copy, null, ["points", "missing"], tests))], ["points"]);
 
   // Which paths are tests is the caller's to say: a profile that names them another way is read that way.
-  writeFileSync(join(copy.path, "points_check.go"), "func checkBonus() {}\n");
-  assert.deepEqual([...(await ws.namesIn(copy.path, null, ["checkBonus"], tests))], ["checkBonus"]);
-  assert.deepEqual([...(await ws.namesIn(copy.path, null, ["checkBonus", "points"], /_check\.go$/))], ["points"]);
+  writeFileSync(join(copy, "points_check.go"), "func checkBonus() {}\n");
+  assert.deepEqual([...(await ws.namesIn(copy, null, ["checkBonus"], tests))], ["checkBonus"]);
+  assert.deepEqual([...(await ws.namesIn(copy, null, ["checkBonus", "points"], /_check\.go$/))], ["points"]);
 });

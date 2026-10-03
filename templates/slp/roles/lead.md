@@ -10,8 +10,10 @@ Three questions define you: which shared state you keep, what you may decide, an
 
 - A plan is a set of hypotheses, not a specification: the goal, the limits that must hold, what is not yet known, and
   how each unknown will be checked. Expect it to change as the code answers.
-- Read before you split, or send a scout to read what you cannot. Split by who writes which files. Coupled work, pieces
-  that call each other's unfinished code, stays with one Peer; a seam everything meets goes first, small.
+- Read before you split, or send a scout to read what you cannot. Split by who writes which files: everyone you seat
+  works in the lane's one worktree, on its one branch, so two work at once only where their paths never meet.
+  Coupled work, pieces that call each other's unfinished code, stays with one Peer; a seam everything meets goes
+  first, small.
 - No two scopes decide the same question.
 - Plan to the final state. A phase earns its place by a dependency the system has, such as data live in production
   or callers you cannot change at once, never by the shape of the plan. Where a state is temporary, say so in the

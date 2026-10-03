@@ -1,33 +1,20 @@
-import { existsSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { createHash } from "node:crypto";
 import { join } from "node:path";
 import { AS_PLUGIN, PLUGIN_EMAIL, git, isAncestor, said, sha } from "./git.ts";
 
-export type CopyKind =
-  { kind: "writer"; branch: string; from: string } | { kind: "reader"; at: string; branch: string | null };
+/** A working copy of the repository a branch is checked out in, and whether it holds work not yet committed. */
+export type Tree = { readonly path: string; readonly branch: string; readonly unsaved: boolean };
 export type Candidate = { candidate: string; parentHead: string } | { conflict: string[] };
 export type Moved = { sha: string } | { refused: string };
 
 const DIFF_CAP = 60_000;
-/** A key made safe for a path: `[A-Za-z0-9._-]`, with a stable hash when that changed it (Symphony's rule). */
-export function safeKey(key: string): string {
-  const clean = key.replace(/[^A-Za-z0-9._-]/g, "_");
-  return clean === key ? key : `${clean}-${createHash("sha256").update(key).digest("hex").slice(0, 8)}`;
-}
-
-/** Copies of one repository for its agents and the merges between their branches, never inside an agent's copy. */
+/** One repository's branches and the merges between them, made without touching any working copy an agent works in. */
 export class Workspace {
   readonly repo: string;
-  readonly copies: string;
 
-  constructor(repo: string, copies: string) {
+  constructor(repo: string) {
     this.repo = repo;
-    this.copies = copies;
-  }
-
-  pathOf(scope: string): string {
-    return join(this.copies, safeKey(scope));
   }
 
   /** The repository's git directory, which every worktree's commits are written into, wherever it is kept. */
@@ -41,39 +28,6 @@ export class Workspace {
     return sha(this.repo, ref);
   }
 
-  /** A writer's worktree on a branch of its own, or a reader's detached copy. Asked again, it answers what it made. */
-  async create(
-    scope: string,
-    copy: CopyKind,
-  ): Promise<{ ok: true; path: string; head: string } | { ok: false; why: string }> {
-    const path = this.pathOf(scope);
-    if (existsSync(path)) {
-      const at = await sha(path, "HEAD");
-      return at === null ? { ok: false, why: `${path} has no HEAD` } : { ok: true, path, head: at };
-    }
-    if (copy.kind === "writer") {
-      const from = await sha(this.repo, copy.from);
-      if (!from) return { ok: false, why: `${copy.from} does not exist` };
-      const exists = (await sha(this.repo, `refs/heads/${copy.branch}`)) !== null;
-      const run = await git(
-        this.repo,
-        ["worktree", "add", ...(exists ? [] : ["-b", copy.branch]), path, exists ? copy.branch : from],
-        300_000,
-      );
-      if (run.code !== 0) return { ok: false, why: said(run) };
-    } else {
-      if (copy.branch !== null && (await sha(this.repo, `refs/heads/${copy.branch}`)) === null) {
-        const made = await git(this.repo, ["branch", copy.branch, copy.at]);
-        if (made.code !== 0) return { ok: false, why: said(made) };
-      }
-      const run = await git(this.repo, ["worktree", "add", "--detach", path, copy.at], 300_000);
-      if (run.code !== 0) return { ok: false, why: said(run) };
-    }
-    await git(this.repo, ["worktree", "lock", "--reason", `seatworks scope ${scope}`, path]);
-    const head = await sha(path, "HEAD");
-    return head === null ? { ok: false, why: `${path} has no HEAD` } : { ok: true, path, head };
-  }
-
   /** The commit to integrate: `commit` with `onto` taken in, made without touching any working copy. */
   async candidate(commit: string, onto: string, message: string): Promise<Candidate | { failed: string }> {
     const parentHead = await sha(this.repo, onto);
@@ -82,6 +36,8 @@ export class Workspace {
     const tip = await sha(this.repo, commit);
     if (!tip) return { failed: `${commit} is not in the repository` };
     if (await isAncestor(this.repo, parentHead, tip)) return { candidate: tip, parentHead };
+    // Work committed on the parent's own branch is in it already: it is taken in as the parent stands.
+    if (await isAncestor(this.repo, tip, parentHead)) return { candidate: parentHead, parentHead };
     const merged = await git(this.repo, ["merge-tree", "--write-tree", "--name-only", parentHead, tip]);
     if (merged.code === 1) return { conflict: conflictsOf(merged.stdout) };
     if (merged.code !== 0) return { failed: said(merged) };
@@ -110,47 +66,30 @@ export class Workspace {
     return run.code === 0 ? { sha: to } : { refused: "moved" };
   }
 
-  /** Points a reader's copy at a branch's new head; what the reader changed there was never anyone's. */
-  async refresh(scope: string, branch: string): Promise<void> {
-    const path = this.pathOf(scope);
-    if (existsSync(path)) await git(path, ["checkout", "--detach", "--force", branch]);
-  }
-
-  /** Removes a scope's copy, and its branch once merged; a copy holding uncommitted work is kept and said so. */
-  async remove(
-    scope: string,
-    branch: string | null,
-    mergedInto: string | null,
-  ): Promise<{ removed: true } | { kept: string }> {
-    const path = this.pathOf(scope);
-    if (existsSync(path)) {
+  /** Each working copy a branch under `prefix` is checked out in, as git lists them, with whether it holds unsaved work. */
+  async trees(prefix: string): Promise<Tree[]> {
+    const listed = await git(this.repo, ["worktree", "list", "--porcelain"]);
+    const found: Tree[] = [];
+    for (const entry of listed.stdout.split("\n\n")) {
+      const path = /^worktree (.+)$/m.exec(entry)?.[1];
+      const branch = /^branch refs\/heads\/(.+)$/m.exec(entry)?.[1];
+      if (path === undefined || branch === undefined || !branch.startsWith(prefix) || !existsSync(path)) continue;
       const status = await git(path, ["status", "--porcelain"]);
-      const writer =
-        branch !== null && (await git(path, ["symbolic-ref", "-q", "--short", "HEAD"])).stdout.trim() === branch;
-      if (writer && status.stdout.trim() !== "") return { kept: `${path} holds uncommitted work` };
-      await git(this.repo, ["worktree", "unlock", path]);
-      const run = await git(this.repo, ["worktree", "remove", "--force", path], 120_000);
-      if (run.code !== 0) return { kept: said(run) };
+      found.push({ path, branch, unsaved: status.code !== 0 || status.stdout.trim() !== "" });
     }
-    if (branch !== null && mergedInto !== null && (await sha(this.repo, `refs/heads/${branch}`)) !== null) {
-      const tip = await sha(this.repo, branch);
-      if (tip && (await isAncestor(this.repo, tip, mergedInto))) await git(this.repo, ["branch", "-D", branch]);
-    }
-    return { removed: true };
+    // Git lists them by where they are kept, which says nothing: by their branches, the order is the same each time.
+    return found.sort((a, b) => a.branch.localeCompare(b.branch));
   }
 
-  /** Each copy on disk, its branch, and whether it holds unsaved work, which `remove` keeps. */
-  async onDisk(): Promise<{ key: string; path: string; branch: string | null; unsaved: boolean }[]> {
-    if (!existsSync(this.copies)) return [];
-    const found = [];
-    for (const key of readdirSync(this.copies)) {
-      const path = join(this.copies, key);
-      const head = await git(path, ["symbolic-ref", "-q", "--short", "HEAD"]);
-      const branch = head.code === 0 ? head.stdout.trim() || null : null;
-      const status = branch === null ? null : await git(path, ["status", "--porcelain"]);
-      found.push({ key, path, branch, unsaved: status !== null && (status.code !== 0 || status.stdout.trim() !== "") });
-    }
-    return found;
+  /** The working copy a branch is checked out in, the Human's own or a worktree; none where it is in none. */
+  async treeOf(branch: string): Promise<Tree | null> {
+    return (await this.trees(branch)).find((tree) => tree.branch === branch) ?? null;
+  }
+
+  /** Deletes a branch once `into` holds all of its work; one with commits nothing else holds stays. */
+  async dropMerged(branch: string, into: string): Promise<void> {
+    const tip = await sha(this.repo, `refs/heads/${branch}`);
+    if (tip !== null && (await isAncestor(this.repo, tip, into))) await git(this.repo, ["branch", "-D", branch]);
   }
 
   /** The branches under `prefix`, each with how many of its commits `into` does not hold: none once it is merged. */
@@ -194,7 +133,7 @@ export class Workspace {
     const before = shown.code === 0 ? shown.stdout : "";
     const after = withBlock(before, marker, body);
     if (after === before) return { unchanged: true };
-    const at = await this.checkedOutAt(branch);
+    const at = (await this.treeOf(branch))?.path;
     if (at) {
       // An ignored file is the Human's own, kept out of git: writing the note over it would lose it.
       const status = await git(at, ["status", "--porcelain", "--ignored", "--", file]);
@@ -235,27 +174,11 @@ export class Workspace {
     }
   }
 
-  /** The working copy that has `branch` checked out, the Human's own or a copy, if any does. */
-  private async checkedOutAt(branch: string): Promise<string | null> {
-    const listed = await git(this.repo, ["worktree", "list", "--porcelain"]);
-    let path: string | null = null;
-    for (const line of listed.stdout.split("\n")) {
-      if (line.startsWith("worktree ")) path = line.slice("worktree ".length);
-      else if (line.trim() === `branch refs/heads/${branch}`) return path;
-    }
-    return null;
-  }
-
-  /** Forgets copies git still lists whose directory is gone. */
-  async prune(): Promise<void> {
-    await git(this.repo, ["worktree", "prune"]);
-  }
-
   /** What `tip` changed since it left `base`, capped so a huge change never fills a reader's context. */
-  async diff(base: string, tip: string): Promise<string> {
-    const stat = await git(this.repo, ["diff", "--stat", `${base}...${tip}`]);
+  async diff(base: string, tip: string, within: readonly string[] = []): Promise<string> {
+    const stat = await git(this.repo, ["diff", "--stat", `${base}...${tip}`, "--", ...within]);
     if (stat.code !== 0) return `No diff: ${said(stat)}`;
-    const patch = await git(this.repo, ["diff", `${base}...${tip}`]);
+    const patch = await git(this.repo, ["diff", `${base}...${tip}`, "--", ...within]);
     const body =
       patch.stdout.length > DIFF_CAP
         ? `${patch.stdout.slice(0, DIFF_CAP)}\n… cut at ${DIFF_CAP} characters; read the files for the rest.`
@@ -291,8 +214,12 @@ export class Workspace {
   }
 
   /** Each file `tip` changed since it left `base`, with its own diff, capped per file and at twenty files. */
-  async fileDiffs(base: string, tip: string): Promise<{ path: string; text: string }[]> {
-    const listed = await git(this.repo, ["diff", "--name-only", `${base}...${tip}`]);
+  async fileDiffs(
+    base: string,
+    tip: string,
+    within: readonly string[] = [],
+  ): Promise<{ path: string; text: string }[]> {
+    const listed = await git(this.repo, ["diff", "--name-only", `${base}...${tip}`, "--", ...within]);
     if (listed.code !== 0) return [];
     const paths = listed.stdout
       .split("\n")

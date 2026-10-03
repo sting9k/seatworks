@@ -17,12 +17,12 @@ export function leftoverId(kind: Leftover["kind"], project: string, ref: string)
   return `${kind}:${project}:${ref}`;
 }
 
-/** What names the thing a leftover id points at: the copy's key, the branch, the agent's id, or nothing. */
+/** What names the thing a leftover id points at: the branch of a worktree or of itself, the agent's id, or nothing. */
 export function refOf(id: string): string {
   return id.split(":").slice(2).join(":");
 }
 
-/** What a team left behind: unused copies and branches, ended agents; a copy with unsaved work is never offered. */
+/** What a team left behind: worktrees and branches no open scope uses, ended agents; unsaved work is never offered. */
 export async function leftoversOf(
   project: string,
   view: State,
@@ -30,23 +30,22 @@ export async function leftoversOf(
   agents: readonly Kept[],
 ): Promise<Leftover[]> {
   const open = [...view.scopes.values()].filter((s) => s.status === "open");
-  const usedPaths = new Set(open.map((s) => workspace.pathOf(s.id)));
   const usedBranches = new Set(open.flatMap((s) => (s.branch ? [s.branch] : [])));
   const base = view.scopes.get(ROOT)?.branch ?? null;
   const found: Leftover[] = [];
-  for (const copy of await workspace.onDisk())
-    if (!usedPaths.has(copy.path))
+  for (const tree of await workspace.trees(branchesOf(project)))
+    if (!usedBranches.has(tree.branch))
       found.push({
-        id: leftoverId("copy", project, copy.key),
+        id: leftoverId("copy", project, tree.branch),
         kind: "copy",
         project,
-        label: copy.path,
-        why: copy.unsaved
-          ? `no open scope uses it, but ${copy.branch ?? "it"} has uncommitted work there: commit or move it first`
+        label: tree.path,
+        why: tree.unsaved
+          ? `no open scope uses it, but ${tree.branch} has uncommitted work there: commit or move it first`
           : "no open scope uses it",
-        removable: !copy.unsaved,
+        removable: !tree.unsaved,
         unmerged: 0,
-        bytes: await sizeOf(copy.path),
+        bytes: await sizeOf(tree.path),
         at: null,
       });
   for (const b of await workspace.branchesUnder(branchesOf(project), base))
@@ -93,8 +92,8 @@ export function projectLeftover(project: string, repo: string, view: State | nul
     view === null
       ? "its repository is gone: removing archives its agents and keeps its record aside"
       : seated > 0 || open > 0
-        ? `${seated} agents seated and ${open} scopes open: removing archives them, deletes the project's copies and branches, and keeps its record aside`
-        : "removing deletes the project's copies and branches, and keeps its record aside for a look back";
+        ? `${seated} agents seated and ${open} scopes open: removing archives them, removes the project's worktrees and branches, and keeps its record aside`
+        : "removing removes the project's worktrees and branches, and keeps its record aside for a look back";
   return {
     id: leftoverId("project", project, ""),
     kind: "project",

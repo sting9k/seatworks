@@ -8,7 +8,8 @@
 <p align="center"><b>A team of coding agents in Paseo, working the way you choose.</b></p>
 
 Seatworks is a plugin for [Paseo](https://paseo.sh). It lets several coding agents work on one repository as a team:
-each owns a piece of the work, writes in a copy of its own, and what it hands back is taken in only on evidence.
+each owns a piece of the work, each lane of it done in a worktree of its own, and what is handed back is taken in
+only on evidence.
 
 The plugin does not decide how the team works. It keeps the record of who owns what and why, refuses the few things
 that would break that record, carries what agents say to each other, and runs git, checks and agents for them. How
@@ -40,8 +41,9 @@ A piece of work goes like this:
 
 1. **You bring work.** The Supervisor asks until nothing you care about is assumed. Your answers become the plan's
    lines, marked as yours.
-2. **Lanes open**, one per independent outcome, and each Lead briefs its Peers. Every Peer works on its own branch in
-   its own worktree.
+2. **Lanes open**, one per independent outcome, and each Lead briefs its Peers. A lane has one worktree, made by
+   Paseo on a branch of the lane's own, and its Lead and Peers work in it together; the Supervisor stays in the
+   project's own folder.
 3. **A Peer hands back a commit.** The project's checks run on it. It raises a finding when the code contradicts its
    brief, and may refuse its Lead's framing with evidence.
 4. **Work is taken in on evidence.** A Lead integrates a task by citing evidence on that very commit, and the

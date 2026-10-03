@@ -34,7 +34,7 @@ from Paseo 0.10.1: the plugin SDK, `@getpaseo/client`, `@getpaseo/protocol`, the
 | A team's agents under the project they work on | `workspaces.create` with a `directory` source and the `projectId` of the repository's project, from `projects.list`; `workspaces.open` for a repository Paseo keeps no project for | —          |
 | A model per role                       | Paseo's agent profiles, read with `config.get()`: a role names a profile, the Human edits it in Paseo or on the plugin's page, new models arrive with Paseo's releases. On the Human's press the names a template gives that Paseo lacks are added with `config.patch()`, on a provider `providers.listAvailable` finds and a model and thinking option `providers.listModels` lists | Its own model lists and provider sync |
 | What models exist                      | `providers.snapshot`, `listModels`, `waitForReady`                                                       | Catalog files                      |
-| A copy per writer                      | `workspaces.create` with a worktree source, and Paseo's worktree setup; Seatworks keeps merge, advance and the git guard, which Paseo does not do | Most of its own copies             |
+| A worktree a lane                      | `workspaces.create` with a `worktree` source: the repository's `projectId`, a new branch off a base (`action: "branch-off"`, `refName`, `branchName`) or a branch there already (`action: "checkout"`), and a `worktreeSlug`. Paseo keeps it under its own worktrees root, runs the repository's `paseo.json` set-up in it, shows it as any worktree of the project, and on `workspaces.archive` ends its agents, runs the teardown and removes it. Seatworks keeps the merge, the advance, the branch and the git guard, which Paseo does not do | Its own copies, a writer's and a reader's |
 | Deliver a message                      | `agent.send`, when the handle's `activeTurn` is empty                                                    | Its own turn tracking              |
 | Turn state, cost, context              | `agent.turn_started`, `agent.turn_ended`; the handle's `activeTurn` and `lastUsage` (tokens, cost, context window) | Parsing history for spend          |
 | Permissions                            | `agent.permission_requested`, `respondToPermission` while the agent's `pendingPermissions` still hold the request, and `agent.permission_resolved` for one answered in the agent's own prompt | —                                  |
@@ -141,6 +141,32 @@ from Paseo 0.10.1: the plugin SDK, `@getpaseo/client`, `@getpaseo/protocol`, the
 - Whether a provider takes MCP servers (`supportsMcpServers`) is a capability of an agent once made; the provider
   snapshot the API lists before that carries none. So Seatworks keeps which providers cannot in its harness files.
 
+## Checked in Paseo 0.10.3's source: worktrees
+
+Read in the daemon the command line installs (`worktree-core.js`, `utils/worktree.js`, `worktree-session.js`,
+`workspace-archive-service.js`, `auto-archive-on-merge/`), before a lane's worktree was given to Paseo to make.
+
+- A worktree is kept at `<worktrees root>/<hash of the repository>/<slug>`, `~/.paseo/worktrees` unless the Human
+  set another root. That path is what Paseo counts as its own: only such a folder is removed when its workspace is
+  archived.
+- A worktree always has a branch checked out; none is detached. Branch-off runs `git worktree add -b <branch>
+  --no-track <base>`, the base found as a local branch first, then `origin`'s, then any revision, a commit among
+  them; `HEAD` is refused. Where the branch asked for is there already, Paseo branches a new one off it, named for
+  the slug. Checkout takes an existing branch, or a new one off it where it is checked out elsewhere. So the plugin
+  asks for a branch-off only where the branch is not there, and counts a worktree only on the branch it asked for.
+- The worktree is there when the call answers. The repository's `paseo.json` `worktree.setup` commands then run in
+  the background, and `worktree.teardown` when it is archived. A `paseo.json` git does not track is copied into the
+  worktree. Paseo's own notes on a worktree are written in its git directory, never in its files.
+- Paseo names a workspace and its branch after the first agent's prompt only when the create carries that prompt.
+  The plugin makes the workspace with its own title and branch, and its agents after.
+- Archiving a workspace ends every agent in it and removes a worktree Paseo owns with `git worktree remove --force`:
+  nothing asks whether work in it is uncommitted, and its branch is left. A workspace whose folder is gone is
+  archived on Paseo's own pass.
+- "Archive merged PR workspaces" (`daemon.autoArchiveAfterMerge`) archives a workspace when the pull request of its
+  branch, seen open before, is merged, its folder is clean with nothing unpushed, and it is a worktree Paseo owns.
+  It merges nothing. A lane lands by a merge the plugin makes on the machine, with no pull request, so it does not
+  reach a team's worktrees unless the Human lands a lane by one.
+
 ## What Paseo takes for which provider
 
 Read in Paseo 0.10.2's source (`packages/server/src/server/agent`), the same at 0.10.1 and, for what is said of
@@ -217,10 +243,14 @@ On 3 October 2026, Paseo 0.10.3, the owner's own daemon:
   registers them with its session itself. Seatworks writes one thing in Paseo's config, and only on the Human's
   press: agent profiles, the ones a template names that Paseo lacks, and the provider, model and effort of one the
   Human changes on the plugin's page (`TEMPLATE.md`, Agent profiles on a machine).
-- Branch names and locking through `workspaces.create`, against what the workspace port needs.
 - That the daemon's `PATH` finds Paseo's command line, so the update check runs; when it does not, the surface says
   so and gives the command to run by hand.
 - That `projects.list` lists every project the Human opened in Paseo, each `projectRootPath` the checkout's root.
+- A lane's worktree made through `workspaces.create` from a plugin, several agents made in its one workspace, and
+  its closing through `workspaces.archive`: read in 0.10.3's types and daemon and held against the stand-in, which
+  makes and removes real worktrees; none seen on a live Paseo. Nor whether an agent that starts while the
+  repository's set-up still runs meets a folder half set up, nor that a title and a branch the plugin gave stay as
+  given.
 - An agent made in a workspace of another project's than its folder's own: `workspace.create` with a `directory`
   source and a `projectId`, then the workspace's `agents.create`, were read in 0.10.3's types and daemon and held
   against the stand-in; not seen on a live Paseo, nor how the sidebar lists a workspace whose folder is outside its

@@ -1,4 +1,6 @@
-import { existsSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { existsSync, mkdtempSync, realpathSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { PaseoApi } from "@getpaseo/client";
 
@@ -131,14 +133,75 @@ export function fakePaseo(
   const responded: string[] = [];
   /** The project roots Paseo lists; a test adds the ones the Human opened in Paseo. */
   const projects: string[] = [];
-  /** The workspaces Paseo keeps: each a folder, filed under the project of one root. */
-  const workspaces: { id: string; project: string; directory: string; title: string | null }[] = [];
+  /** The workspaces Paseo keeps: each a folder, filed under the project of one root; a worktree is one Paseo made. */
+  const workspaces: {
+    id: string;
+    project: string;
+    directory: string;
+    title: string | null;
+    worktree: boolean;
+    archived: boolean;
+  }[] = [];
   /** A folder given with no project is filed under a project of that very folder, made where Paseo has none (0.10.3). */
-  const workspaceAt = (directory: string, title: string | null, project?: string) => {
+  const workspaceAt = (directory: string, title: string | null, project?: string, worktree = false) => {
     if (project === undefined && !projects.includes(directory)) projects.push(directory);
-    const made = { id: `workspace-${workspaces.length + 1}`, project: project ?? directory, directory, title };
+    const made = {
+      id: `workspace-${workspaces.length + 1}`,
+      project: project ?? directory,
+      directory,
+      title,
+      worktree,
+      archived: false,
+    };
     workspaces.push(made);
     return made;
+  };
+  /** Where Paseo keeps the worktrees it makes: a folder of its own, a worktree a slug (0.10.3, `utils/worktree.js`). */
+  const worktreesRoot = realpathSync(mkdtempSync(join(tmpdir(), "sw-paseo-worktrees-")));
+  const gitIn = (repo: string, ...args: string[]) =>
+    execFileSync("git", args, { cwd: repo, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
+  const has = (repo: string, ref: string) => {
+    try {
+      gitIn(repo, "rev-parse", "--verify", "-q", ref);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+  /** A name no branch has yet, as Paseo finds one: the name itself, else with a number after it. */
+  const unused = (repo: string, name: string) => {
+    let free = name;
+    for (let n = 1; has(repo, `refs/heads/${free}`); n++) free = `${name}-${n}`;
+    return free;
+  };
+  type Worktree = {
+    kind: "worktree";
+    projectId?: string;
+    action?: "branch-off" | "checkout";
+    refName?: string;
+    branchName?: string;
+    worktreeSlug?: string;
+  };
+  /** A worktree as Paseo makes one: always on a branch, a new one off a base or an existing one checked out. */
+  const worktreeAt = (source: Worktree, title: string | null) => {
+    const repo = source.projectId;
+    if (repo === undefined || !projects.includes(repo)) throw new Error(`Unknown project: ${repo ?? "none"}`);
+    const slug = source.worktreeSlug ?? source.branchName ?? "worktree";
+    let path = join(worktreesRoot, slug);
+    for (let n = 1; existsSync(path); n++) path = join(worktreesRoot, `${slug}-${n}`);
+    const ref = source.refName ?? "main";
+    if (source.action === "checkout") {
+      const taken = gitIn(repo, "worktree", "list", "--porcelain").includes(`branch refs/heads/${ref}\n`);
+      if (taken) gitIn(repo, "worktree", "add", path, "-b", unused(repo, ref), "--no-track", ref);
+      else gitIn(repo, "worktree", "add", path, ref);
+    } else {
+      const named = source.branchName ?? slug;
+      // A name a branch already has is not taken again: the new branch is named for the slug, off that branch.
+      if (has(repo, `refs/heads/${named}`))
+        gitIn(repo, "worktree", "add", path, "-b", unused(repo, slug), "--no-track", named);
+      else gitIn(repo, "worktree", "add", path, "-b", named, "--no-track", ref);
+    }
+    return workspaceAt(realpathSync(path), title, repo, true);
   };
   /** What each agent's timeline holds, oldest first; a test puts an agent's turns here. */
   const timelines = new Map<string, unknown[]>();
@@ -267,27 +330,47 @@ export function fakePaseo(
       list: (o: { filter?: { projectId?: string } } = {}) =>
         Promise.resolve({
           entries: workspaces
+            .filter((kept) => !kept.archived)
             .filter((kept) => o.filter?.projectId === undefined || kept.project === o.filter.projectId)
             .map((kept) => ({ id: kept.id, projectId: kept.project, workspaceDirectory: kept.directory })),
           pageInfo: { hasMore: false, nextCursor: null },
         }),
       // Opening a folder finds the workspace Paseo keeps for it, or makes one, with a project of the folder.
       open: (cwd: string) => {
-        const kept = workspaces.find((one) => one.directory === cwd) ?? workspaceAt(cwd, null);
-        return Promise.resolve({ id: kept.id, projectId: kept.project });
+        const kept = workspaces.find((one) => !one.archived && one.directory === cwd) ?? workspaceAt(cwd, null);
+        return Promise.resolve({ id: kept.id, projectId: kept.project, directory: kept.directory });
       },
-      create: (o: { title?: string; source: { kind: "directory"; path: string; projectId?: string } }) => {
+      create: (o: { title?: string; source: { kind: "directory"; path: string; projectId?: string } | Worktree }) => {
+        if (o.source.kind === "worktree") {
+          try {
+            const made = worktreeAt(o.source, o.title ?? null);
+            return Promise.resolve({ id: made.id, projectId: made.project, directory: made.directory });
+          } catch (error) {
+            return Promise.reject(error instanceof Error ? error : new Error(String(error)));
+          }
+        }
         const { path, projectId } = o.source;
         if (projectId !== undefined && !projects.includes(projectId))
           return Promise.reject(new Error(`Unknown project: ${projectId}`));
         const made = workspaceAt(path, o.title ?? null, projectId);
-        return Promise.resolve({ id: made.id, projectId: made.project });
+        return Promise.resolve({ id: made.id, projectId: made.project, directory: made.directory });
+      },
+      // Archiving ends the workspace's agents and removes a worktree Paseo made, whatever it holds uncommitted.
+      archive: (id: string) => {
+        const kept = workspaces.find((one) => one.id === id);
+        if (!kept) return Promise.resolve({ workspaceId: id, archivedAt: null, error: `Workspace not found: ${id}` });
+        kept.archived = true;
+        for (const agent of created)
+          if (agent.workspace === id && !archived.includes(agent.host)) archived.push(agent.host);
+        if (kept.worktree && existsSync(kept.directory))
+          gitIn(kept.project, "worktree", "remove", "--force", kept.directory);
+        return Promise.resolve({ workspaceId: id, archivedAt: "now", error: null });
       },
       ref: (id: string) => ({
         id,
         agents: {
           create: (o: Omit<Asked, "cwd">) => {
-            const at = workspaces.find((one) => one.id === id);
+            const at = workspaces.find((one) => one.id === id && !one.archived);
             return at
               ? makeAgent({ ...o, cwd: at.directory }, at)
               : Promise.reject(new Error(`Unknown workspace: ${id}`));

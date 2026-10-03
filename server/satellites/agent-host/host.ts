@@ -18,7 +18,7 @@ export type AgentSpec = {
   /** What this agent runs in place of what its profile runs; what is left out is the profile's. */
   readonly runs: Partial<Runs>;
   readonly cwd: string;
-  /** The repository the agent's folder is a copy of: Paseo lists the agent under that repository's project. */
+  /** The repository the agent works on: Paseo lists the agent under that repository's project, wherever its folder is. */
   readonly projectRoot: string;
   readonly systemPrompt: string;
   readonly prompt: string;
@@ -73,6 +73,9 @@ export type Model = {
 export type Runs = { readonly provider: string; readonly model: string; readonly effort: string | null };
 
 const said = (error: unknown): string => (error instanceof Error ? error.message : String(error));
+
+/** A path as it really is, so two spellings of one folder are told to be one. */
+const real = (path: string): string => (existsSync(path) ? realpathSync(path) : resolve(path));
 
 const UNAVAILABLE: Unavailable = { unavailable: true };
 
@@ -163,13 +166,8 @@ export class PaseoHost {
 
   /** The workspace Paseo keeps for an agent's folder under its repository's project: the one there, else one made there. */
   private async workspaceFor(api: PaseoApi, spec: Pick<AgentSpec, "projectRoot" | "cwd" | "title" | "key">) {
-    const real = (path: string) => (existsSync(path) ? realpathSync(path) : resolve(path));
-    const root = real(spec.projectRoot);
-    const listed = (await api.projects.list()).projects.find((project) => real(project.projectRootPath) === root);
-    // Told a folder alone, Paseo makes a project of that very folder: a copy would stand beside its own repository.
-    // A repository Paseo keeps no project for is opened there first, as the Human adding it would.
-    const projectId = listed?.projectId ?? (await api.workspaces.open(spec.projectRoot)).projectId;
-    if (!projectId) throw new Error(`Paseo keeps no project for ${spec.projectRoot}`);
+    // Told a folder alone, Paseo makes a project of that very folder: it would stand beside its own repository.
+    const projectId = await this.projectOf(api, spec.projectRoot);
     const cwd = real(spec.cwd);
     const kept = (await api.workspaces.list({ filter: { projectId }, page: { limit: 200 } })).entries.find(
       (one) => !one.archivingAt && real(one.workspaceDirectory) === cwd,
@@ -181,6 +179,63 @@ export class PaseoHost {
       source: { kind: "directory", path: spec.cwd, projectId },
     });
     return made.id;
+  }
+
+  /** The project Paseo keeps for a repository, by its id; one it keeps none for is opened there, as the Human adding it. */
+  private async projectOf(api: PaseoApi, root: string): Promise<string> {
+    const listed = (await api.projects.list()).projects.find((project) => real(project.projectRootPath) === real(root));
+    const projectId = listed?.projectId ?? (await api.workspaces.open(root)).projectId;
+    if (!projectId) throw new Error(`Paseo keeps no project for ${root}`);
+    return projectId;
+  }
+
+  /** Has Paseo make a worktree of a repository for work handed out: a new branch off a base, or a branch there already. */
+  async openWorktree(asked: {
+    readonly key: string;
+    readonly projectRoot: string;
+    readonly title: string;
+    readonly slug: string;
+    readonly branch: string;
+    /** What the new branch starts from; none where the branch is there already and is only checked out. */
+    readonly base: string | null;
+  }): Promise<{ path: string } | { failed: string } | Unavailable> {
+    const api = this.link.current;
+    if (!api) return UNAVAILABLE;
+    const projectId = await this.projectOf(api, asked.projectRoot);
+    try {
+      const made = await api.workspaces.create({
+        idempotencyKey: asked.key,
+        title: asked.title,
+        source: {
+          kind: "worktree",
+          projectId,
+          worktreeSlug: asked.slug,
+          ...(asked.base === null
+            ? { action: "checkout", refName: asked.branch }
+            : { action: "branch-off", refName: asked.base, branchName: asked.branch }),
+        },
+      });
+      return made.directory ? { path: made.directory } : { failed: "Paseo made a workspace with no folder" };
+    } catch (error) {
+      return { failed: `Paseo could not make the worktree: ${said(error)}` };
+    }
+  }
+
+  /** Has Paseo archive the workspaces it keeps for a folder: their agents end, and a worktree it made is removed. */
+  async closeWorktree(path: string): Promise<"done" | { failed: string } | Unavailable> {
+    const api = this.link.current;
+    if (!api) return UNAVAILABLE;
+    const at = real(path);
+    const kept = (await api.workspaces.list({ page: { limit: 500 } })).entries.filter(
+      (one) => !one.archivingAt && real(one.workspaceDirectory) === at,
+    );
+    if (kept.length === 0) return { failed: `Paseo keeps no workspace for ${path}` };
+    for (const one of kept) {
+      const archived = await api.workspaces.archive(one.id);
+      if (archived.error !== null)
+        return { failed: `Paseo did not archive the workspace of ${path}: ${archived.error}` };
+    }
+    return "done";
   }
 
   /** The agent profiles the Human keeps in Paseo: the id and name a role's model may call each by, and what it runs. */

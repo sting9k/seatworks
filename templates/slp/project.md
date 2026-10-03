@@ -2,8 +2,9 @@
 
 A Seatworks team works in this repository: a Supervisor, Leads and Peers, each an agent Paseo runs.
 
-- Branches under `{branches}` are the team's, each worked in a copy of its own. Leave them to Seatworks: it makes,
-  merges and removes them, and a change made by hand there is one the team's record does not know.
+- Branches under `{branches}` are the team's, each a piece of work done in a worktree Paseo keeps for it. Leave them
+  to Seatworks: it has them made, merges and removes them, and a change made by hand there is one the team's record
+  does not know.
 - The team's work lands on `{base}` through Seatworks, which never moves a checked-out branch over uncommitted
   changes. Commit your own work so the team's can land.
 - To ask the team for something, write to its Supervisor, in its chat or on the Seatworks panel.

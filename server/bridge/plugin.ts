@@ -28,6 +28,8 @@ import {
   scopeRecordText,
   signalsOf,
 } from "../../shared/views/record.ts";
+import type { Scope } from "../../shared/contracts/ledger.ts";
+import type { State } from "../../shared/kernel/state.ts";
 import type {
   Folder,
   HumanView,
@@ -81,7 +83,7 @@ import { pin, pinnedDir, templateOf } from "../profile/pinned.ts";
 import { listPresets } from "../profile/presets.ts";
 import { listProfiles, type Listed as ListedProfile, removeProfile } from "../profile/profiles.ts";
 import { Dispatcher } from "./dispatcher.ts";
-import { type Wiring, branchesOf, handlersFor, scratchFor, seatEnv, agentEnv } from "./effects.ts";
+import { type Wiring, branchesOf, handlersFor, scratchFor, seatDir, seatEnv, agentEnv } from "./effects.ts";
 import { type Kept, leftoverId, leftoversOf, projectLeftover, refOf } from "./leftovers.ts";
 import { Project, type Submitted } from "./project.ts";
 import { Reflex, WORKS_ON } from "./reflex.ts";
@@ -210,8 +212,10 @@ export class Plugin {
     const rest = names.filter((n) => !settled.has(n));
     for (const n of await runtime.workspace.namesIn(runtime.workspace.repo, parent?.branch ?? "HEAD", rest, tests))
       settled.add(n);
-    const own = runtime.workspace.pathOf(scope.id);
-    if (existsSync(own)) for (const n of await runtime.workspace.namesIn(own, null, rest, tests)) settled.add(n);
+    // The root writes nothing of its own; every other scope's code is in the worktree it works in.
+    const own = scope.id === ROOT ? null : await seatDir(runtime.wiring, view, scope);
+    if (own !== null && existsSync(own))
+      for (const n of await runtime.workspace.namesIn(own, null, rest, tests)) settled.add(n);
     return settled;
   }
 
@@ -540,7 +544,7 @@ export class Plugin {
     });
   }
 
-  /** Whether a folder is inside the plugin's own state, where a team's copies are. */
+  /** Whether a folder is inside the plugin's own state, such as the scratch a watch works in. */
   private keeps(real: string): boolean {
     const own = realpathSync(this.root);
     return real === own || real.startsWith(`${own}/`) || real.startsWith(`${own}\\`);
@@ -556,7 +560,7 @@ export class Plugin {
     for (const p of listed.projects) {
       if (!existsSync(p.projectRootPath)) continue;
       const root = realpathSync(p.projectRootPath);
-      // What the plugin keeps for itself, a team's copies among it, is no folder of the Human's to attach a team to.
+      // What the plugin keeps for itself is no folder of the Human's to attach a team to.
       if (attached.has(root) || this.keeps(root) || found.some((one) => one.root === root)) continue;
       found.push({ name: p.projectDisplayName, root, ...(await gitStateOf(root)) });
     }
@@ -619,7 +623,7 @@ export class Plugin {
       const runtime = this.runtimes.get(id) ?? this.open(id, ready);
       found.push(
         ...(await leftoversOf(id, runtime.project.view, runtime.workspace, kept)),
-        // Not measured: an attached project is removed from its own row, and its copies in use are no leftover.
+        // Not measured: an attached project is removed from its own page, and its worktrees in use are no leftover.
         projectLeftover(id, repo, runtime.project.view, null),
       );
     }
@@ -705,8 +709,14 @@ export class Plugin {
     } else if (!workspace) done = { kept: "Its project is no longer open." };
     else if (item.kind === "branch") done = await workspace.removeBranch(ref);
     else {
-      const copy = (await workspace.onDisk()).find((c) => c.key === ref);
-      done = copy ? await workspace.remove(ref, copy.branch, null) : { removed: true };
+      const tree = await workspace.treeOf(ref);
+      if (tree === null) done = { removed: true };
+      else if (tree.unsaved) done = { kept: `${tree.path} holds uncommitted work` };
+      else {
+        const closed = await (await this.whenReady()).host.closeWorktree(tree.path);
+        if (closed === "done") done = { removed: true };
+        else done = { kept: "unavailable" in closed ? "Paseo is not reachable yet." : closed.failed };
+      }
     }
     return "removed" in done ? { ok: true, text: `Removed ${item.label}.` } : { ok: false, text: done.kept };
   }
@@ -733,9 +743,9 @@ export class Plugin {
     const { repo } = JSON.parse(readFileSync(file, "utf8")) as { repo: string };
     const present = existsSync(repo);
     const runtime = this.runtimes.get(id) ?? (present ? this.open(id, ready) : null);
-    // With its repository gone there are no copies, branches or note to take out: only memory and agents.
+    // With its repository gone there are no worktrees, branches or note to take out: only memory and agents.
     const workspace = present ? (runtime?.workspace ?? null) : null;
-    const unsaved = workspace ? (await workspace.onDisk()).filter((c) => c.unsaved) : [];
+    const unsaved = workspace ? (await workspace.trees(branchesOf(id))).filter((c) => c.unsaved) : [];
     if (unsaved.length > 0)
       return {
         ok: false,
@@ -763,11 +773,10 @@ export class Plugin {
       }
       const kept: string[] = [];
       if (workspace) {
-        for (const c of await workspace.onDisk()) {
-          const r = await workspace.remove(c.key, c.branch, null);
-          if ("kept" in r) kept.push(r.kept);
+        for (const tree of await workspace.trees(branchesOf(id))) {
+          const closed = await ready.host.closeWorktree(tree.path);
+          if (closed !== "done") kept.push("unavailable" in closed ? "Paseo is not reachable yet." : closed.failed);
         }
-        await workspace.prune();
         if (kept.length === 0)
           for (const b of await workspace.branchesUnder(branchesOf(id), null)) {
             const r = await workspace.removeBranch(b.branch);
@@ -871,7 +880,7 @@ export class Plugin {
     };
   }
 
-  /** The attached project a directory belongs to: its repository, or one of the copies made for it. */
+  /** The attached project a directory belongs to: its repository, or a folder the plugin keeps for it. */
   projectAt(dir: string): string | null {
     if (!existsSync(dir)) return null;
     const real = realpathSync(dir);
@@ -1008,7 +1017,9 @@ export class Plugin {
     const scope = actor ? runtime.project.view.scopes.get(actor.scope) : undefined;
     const role = actor ? runtime.wiring.bundle.profile.roles.get(actor.role) : undefined;
     if (!actor || !scope || !role) return null;
-    const { env } = seatEnv(runtime.wiring, actor.id, scope, role.writes);
+    const cwd = await seatDir(runtime.wiring, runtime.project.view, scope);
+    if (cwd === null) return null;
+    const env = seatEnv(runtime.wiring, actor.id, cwd, role.writes);
     return { ...agentEnv(runtime.wiring, env), ...this.harness(provider)?.env };
   }
 
@@ -1075,7 +1086,7 @@ export class Plugin {
       store.close();
       throw error;
     }
-    const workspace = new Workspace(repo, join(dir, "copies"));
+    const workspace = new Workspace(repo);
     const scratch = scratchFor(this.root, id);
     mkdirSync(scratch, { recursive: true });
     const evidence = new EvidenceRunner(repo, join(scratch, "evidence"));
@@ -1197,9 +1208,8 @@ export class Plugin {
         diffs: async (project, scope, commit) => {
           const runtime = this.runtimes.get(project);
           const s = runtime?.project.view.scopes.get(scope);
-          const parent = s?.parent ? runtime?.project.view.scopes.get(s.parent) : undefined;
-          if (!runtime || !parent?.branch) return [];
-          return runtime.workspace.fileDiffs(parent.branch, commit);
+          const since = runtime && s ? changeOf(runtime.project.view, s) : null;
+          return runtime && since ? runtime.workspace.fileDiffs(since.base, commit, since.within) : [];
         },
       },
     );
@@ -1261,11 +1271,11 @@ export class Plugin {
     if (name === "diff") {
       const scope = view.scopes.get(a.scope ?? own);
       if (!scope || isUnseen(view, actor, scope)) return `No scope ${a.scope ?? own} is open.`;
-      const parent = scope.parent ? view.scopes.get(scope.parent) : undefined;
-      if (!parent?.branch) return `Scope ${scope.id} has no parent branch to compare with.`;
+      const since = changeOf(view, scope);
+      if (!since) return `Scope ${scope.id} has no parent branch to compare with.`;
       const tip = a.commit ?? scope.branch ?? scope.commit;
       if (!tip) return `Scope ${scope.id} has no branch or commit.`;
-      return runtime.workspace.diff(parent.branch, tip);
+      return runtime.workspace.diff(since.base, tip, since.within);
     }
     const ready = await this.whenReady();
     const target = view.actors.get(a.actor ?? "");
@@ -1280,6 +1290,16 @@ export class Plugin {
   private async submitAs(runtime: Runtime, caller: Caller, body: CommandBody): Promise<Submitted> {
     return runtime.project.submit({ id: crypto.randomUUID(), at: new Date().toISOString(), caller, body });
   }
+}
+
+/** What a scope's change is read against: its parent's branch, or where it started and its own paths on a branch it shares. */
+function changeOf(view: State, scope: Scope): { base: string; within: readonly string[] } | null {
+  const parent = scope.parent ? view.scopes.get(scope.parent) : undefined;
+  if (!parent?.branch) return null;
+  // Work done on the parent's own branch has no branch to tell it by: it is what changed under its paths since it began.
+  return scope.branch === parent.branch && scope.head !== null
+    ? { base: scope.head, within: scope.paths }
+    : { base: parent.branch, within: [] };
 }
 
 /** What `work` gives, or null when it takes longer than `ms`. */

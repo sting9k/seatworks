@@ -27,15 +27,18 @@ agent's tools reach it) in a home's files, `{git}` (the repository's git directo
 
 | Property  | Means for the agent                                                                            |
 | --------- | ---------------------------------------------------------------------------------------------- |
-| `writes`  | Works in its scope's own worktree and commits there.                                           |
-| otherwise | Works in a throwaway copy at the commit it reads, with its agent's own tools, so a Lead or a Reviewer can run what a decision or a review needs; what it changes there reaches nothing. |
+| `writes`  | Works in its lane's worktree and commits there, on the lane's branch.                          |
+| otherwise | Works in that same worktree, or in the repository itself at the root, with its agent's own tools, so a Lead or a Reviewer can run what a decision or a review needs. It cannot commit. |
 | always    | No native subagents. The team's tools. Its role prompt. No push, no branch move, no git outside its copy, or outside the repository for the root's agent. |
 
 ## Guards that hold on every agent
 
-1. **Copies.** A writer's cwd is its own worktree. Every other role's cwd is a throwaway copy at the commit it reads,
-   removed with its scope. An edit there lands where nothing reads it, so no agent's tools are cut for a role that
-   does not write: the copy is the guard, on every agent alike.
+1. **Worktrees.** The root's agent works in the repository. Every other agent works in its lane's worktree, which
+   the lane's writers and readers share (`PORTS.md`, Workspace). The first build gave every role that does not write
+   a throwaway copy, so an edit there landed where nothing read it and the copy was the guard. In a shared worktree
+   it is not: a reader's edit lies in the folder a writer commits from. What holds is that a reader cannot commit
+   and that a writer stages its own paths; what stops the edit itself is the reader's prompt and no more. No agent's
+   tools are cut for it yet (To check).
 2. **Only commits count.** The kernel integrates a writer's commits and nothing else (I4, I5), so no stray edit
    reaches a lane.
 3. **One git guard.** The shim first on every agent's `PATH` refuses push, pull, checkout, switch, update-ref,
@@ -121,7 +124,7 @@ Everything through Paseo; no config directory of Seatworks' own, so the Human's 
 | Team tools          | `mcpServers` and `toolPolicy`: Paseo enables only the tools named and approves each           |
 | No prompts          | `modeId: auto` with the option `approval_policy: never`: its sandbox holds, and nothing asks  |
 | Writer              | `sandbox_workspace_write.writable_roots` gains the repository's git directory (`{git}`), which Codex keeps read-only inside a worktree otherwise, so a commit can be made |
-| Not writing         | The same, in its throwaway copy, without the git directory among its writable roots            |
+| Not writing         | The same, in the worktree it shares, without the git directory among its writable roots        |
 | No subagents        | `features.multi_agent_v2: false` through Paseo. `features.multi_agent`, which Codex 0.154 has on, is not among the options Paseo takes, so it is switched off in one `config.toml`, shared by every Seatworks Codex agent through `CODEX_HOME` |
 
 The shared `CODEX_HOME` holds that `config.toml` and a link to the Human's `auth.json`, nothing per role. The Human's
@@ -210,6 +213,9 @@ Peer on Claude Code under the root.
 
 ## To check before building on it
 
+- A role that does not write, held from writing in the worktree it shares: which of each provider's own settings
+  does it (a read-only sandbox, denied edit tools) without stopping what a Lead or a Reviewer runs to decide, such
+  as a build or a test that writes its own output. Until then its prompt is all that holds it.
 - On a live Codex: that a writer commits with the repository's git directory among its writable roots, and that
   `features.multi_agent = false` leaves it no tool to start an agent with.
 - On a live OpenCode: that the team's server is connected before the first turn, that the shim is first on the

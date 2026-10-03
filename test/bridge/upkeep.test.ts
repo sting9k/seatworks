@@ -86,26 +86,22 @@ test("the Human attaches a Paseo project, clears what a dropped task left, and r
   const lane = { parent: "root", role: "lead", paths: ["src/"], brief: { goal: { text: "Lane" }, kind: "discovery" } };
   assert.ok((await supervisor.call("open_scope", lane)).ok);
   await plugin.idle();
-  const lead = await agentTools(socketPath, paseo.created[1]!.env);
-  const task = { parent: "1", role: "peer", paths: ["src/"], brief: { goal: { text: "Task" }, kind: "verification" } };
-  assert.ok((await lead.call("open_scope", task)).ok);
-  await plugin.idle();
-  const peerCopy = paseo.created[2]!.cwd;
-  mkdirSync(join(peerCopy, "src"));
-  writeFileSync(join(peerCopy, "src/done.txt"), "done\n");
-  git(peerCopy, "add", ".");
-  git(peerCopy, "commit", "-q", "-m", "half a task");
-  writeFileSync(join(peerCopy, "src/draft.txt"), "draft\n");
-  assert.ok((await lead.call("drop_scope", { scope: "1.1", reason: "not needed after all" })).ok);
+  const laneCopy = paseo.created[1]!.cwd;
+  mkdirSync(join(laneCopy, "src"));
+  writeFileSync(join(laneCopy, "src/done.txt"), "done\n");
+  git(laneCopy, "add", ".");
+  git(laneCopy, "commit", "-q", "-m", "half a task");
+  writeFileSync(join(laneCopy, "src/draft.txt"), "draft\n");
+  assert.ok((await supervisor.call("drop_scope", { scope: "1", reason: "not needed after all" })).ok);
   await plugin.idle();
 
-  const branch = `sw/${project}/1.1`;
+  const branch = `sw/${project}/1`;
   const left = await plugin.leftovers();
   const copy = left.find((l) => l.kind === "copy");
-  assert.equal(copy?.label, peerCopy, "the dropped task's copy is left, since it holds a draft");
+  assert.equal(copy?.label, laneCopy, "the dropped lane's worktree is left, since it holds a draft");
   assert.equal(copy.removable, false, "and it is not offered while it does");
   const kept = left.find((l) => l.kind === "branch");
-  assert.equal(kept?.label, branch, "its branch is left too, only the dropped task's");
+  assert.equal(kept?.label, branch, "its branch is left too, only the dropped lane's");
   assert.equal(kept.unmerged, 1, "its one commit is on no other branch, so it is one to look at first");
   assert.equal(copy.unmerged, 0);
   assert.deepEqual(
@@ -138,7 +134,7 @@ test("the Human attaches a Paseo project, clears what a dropped task left, and r
 
   const refused = await plugin.clean([whole.id]);
   assert.equal(refused[0]?.ok, false);
-  assert.match(refused[0].text, new RegExp(peerCopy.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  assert.match(refused[0].text, new RegExp(laneCopy.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   assert.ok(existsSync(join(root, "projects", project, "ledger.db")), "a refused removal touches nothing");
   assert.deepEqual(
     paseo.archived.filter((h) => h === paseo.created[0]!.host),
@@ -146,14 +142,14 @@ test("the Human attaches a Paseo project, clears what a dropped task left, and r
     "the Supervisor still works",
   );
 
-  rmSync(join(peerCopy, "src/draft.txt"));
+  rmSync(join(laneCopy, "src/draft.txt"));
   const cleared = await plugin.clean([copy.id, kept.id]);
   assert.deepEqual(
     cleared.map((r) => r.ok),
     [true, true],
     cleared.map((r) => r.text).join("; "),
   );
-  assert.equal(existsSync(peerCopy), false);
+  assert.equal(existsSync(laneCopy), false, "Paseo removed the worktree it had made");
   assert.throws(() => git(repo, "rev-parse", "--verify", branch), "the branch is gone");
 
   writeFileSync(join(repo, "AGENTS.md"), `${git(repo, "show", "main:AGENTS.md")}\nThe Human's edit in progress.\n`);
@@ -190,7 +186,7 @@ test("the Human attaches a Paseo project, clears what a dropped task left, and r
   assert.ok(deleted[0]?.ok, deleted[0]?.text);
   assert.equal(existsSync(shelved), false, "deleted only when picked");
   assert.deepEqual(await plugin.leftovers(), []);
-  for (const t of [supervisor, lead]) t.close();
+  supervisor.close();
 });
 
 function repoWith(name: string) {

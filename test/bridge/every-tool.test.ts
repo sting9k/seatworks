@@ -53,7 +53,7 @@ test("the scope tools: open, amend a brief, handover, hold and resume, reseat, r
     brief: brief("A", { constraints: [{ text: "Stay small" }] }),
   });
   const opened = await status(keeper, "1.1");
-  assert.match(opened, /^Branch: sw\/[0-9a-f]+\/1\.1$/m, "a writer works on a branch of its own");
+  assert.match(opened, /^Branch: sw\/[0-9a-f]+\/1$/m, "a writer under a lane works on the lane's branch");
   assert.doesNotMatch(opened, /Reads commit/, "a commit named for it is no seat: only a reader is seated on one");
   await did(c, keeper, "open_scope", { parent: "1", role: "maker", paths: ["src/b/", "src/c/"], brief: brief("B") });
   assert.match(

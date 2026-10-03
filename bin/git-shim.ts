@@ -7,12 +7,12 @@ import { delimiter, dirname, isAbsolute, join, relative, resolve } from "node:pa
 const ALWAYS_REFUSED: Record<string, string> = {
   push: "pushing is the plugin's: the root's owner or the Human publishes",
   pull: "your branch is taken in by the plugin; hand back instead",
-  checkout: "you stay on your own branch; `git restore` or `git switch` are not needed for your work",
-  switch: "you stay on your own branch",
+  checkout: "you stay on the branch your work is done on; `git restore` or `git switch` are not needed for it",
+  switch: "you stay on the branch your work is done on",
   stash: "stashes outlive the copy they were made in; commit instead",
   "update-ref": "branches move only through the plugin",
   "symbolic-ref": "branches move only through the plugin",
-  worktree: "copies are made and removed by the plugin",
+  worktree: "worktrees are made and removed by the plugin",
 };
 const WRITERS_ONLY = new Set(["commit", "merge", "reset", "rebase", "cherry-pick", "revert", "am"]);
 const BRANCH_MOVES = new Set([

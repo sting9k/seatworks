@@ -48,31 +48,46 @@ export type Wiring = {
 
 const WAIT: Handled = { status: "wait" };
 
-/** Where a seat's agent works: the root in the repository itself, a watch in the scratch, every other in a copy of its own. */
-function seatDir(w: Pick<Wiring, "workspace" | "scratch">, scope: Scope): string {
-  if (scope.kind === "watch") return w.scratch;
-  return scope.id === ROOT ? w.workspace.repo : w.workspace.pathOf(scope.id);
+/** The scope under the root that a scope's work belongs to: the root's own for the root. */
+function laneOf(state: State, scope: Scope): Scope {
+  let at = scope;
+  for (let up = at.parent; up !== null && up !== ROOT; up = at.parent) {
+    const parent = state.scopes.get(up);
+    if (!parent) break;
+    at = parent;
+  }
+  return at;
 }
 
-/** What an agent's tools need to know of its seat: who it is, its key, whether it writes, its copy and the plugin. */
-export function seatEnv(
-  w: Pick<Wiring, "project" | "keys" | "team" | "workspace" | "scratch">,
-  actor: string,
+/** The branch a lane's work is done on, checked out in the worktree made for the lane. */
+const laneBranch = (project: string, lane: string): string => `${branchesOf(project)}${lane}`;
+
+/** Where a seat's agent works: the root in the repository itself, a watch in the scratch, every other in its lane's worktree. */
+export async function seatDir(
+  w: Pick<Wiring, "project" | "workspace" | "scratch">,
+  state: State,
   scope: Scope,
+): Promise<string | null> {
+  if (scope.kind === "watch") return w.scratch;
+  if (scope.id === ROOT) return w.workspace.repo;
+  return (await w.workspace.treeOf(laneBranch(w.project, laneOf(state, scope).id)))?.path ?? null;
+}
+
+/** What an agent's tools need to know of its seat: who it is, its key, whether it writes, where it works and the plugin. */
+export function seatEnv(
+  w: Pick<Wiring, "project" | "keys" | "team">,
+  actor: string,
+  cwd: string,
   writes: boolean,
-): { cwd: string; env: Record<string, string> } {
-  const cwd = seatDir(w, scope);
+): Record<string, string> {
   return {
-    cwd,
-    env: {
-      SEATWORKS_PROJECT: w.project,
-      SEATWORKS_ACTOR: actor,
-      SEATWORKS_KEY: w.keys.keyOf(w.project, actor),
-      SEATWORKS_WRITES: writes ? "1" : "0",
-      SEATWORKS_COPY: cwd,
-      SEATWORKS_SHIM_DIR: w.team.shimDir,
-      SEATWORKS_SOCKET: w.team.socket,
-    },
+    SEATWORKS_PROJECT: w.project,
+    SEATWORKS_ACTOR: actor,
+    SEATWORKS_KEY: w.keys.keyOf(w.project, actor),
+    SEATWORKS_WRITES: writes ? "1" : "0",
+    SEATWORKS_COPY: cwd,
+    SEATWORKS_SHIM_DIR: w.team.shimDir,
+    SEATWORKS_SOCKET: w.team.socket,
   };
 }
 
@@ -91,36 +106,52 @@ const gone = (actor: string, why: string): CommandBody => ({ type: "record_gone"
 
 /** Each effect the kernel asks for, carried to the satellite that does it, and what it found brought back as facts. */
 export function handlersFor(w: Wiring): Handlers {
-  const branchOf = (scope: string) => `${branchesOf(w.project)}${scope}`;
   const parentBranch = (state: State, scope: Scope) =>
     scope.parent === null ? null : (state.scopes.get(scope.parent)?.branch ?? null);
 
   return {
-    "workspace.create": async (e, { state }) => {
+    "workspace.create": async (e, { state, key }) => {
       const scope = state.scopes.get(e.scope);
       if (!scope || scope.status !== "open") return { status: "dropped", why: `scope ${e.scope} is gone` };
-      const role = w.bundle.profile.roles.get(scope.role);
-      const from = parentBranch(state, scope);
-      if (scope.id === ROOT) {
-        // The root is seated where the Human works, in the repository itself: a copy is made for work under it.
-        const base = scope.branch ?? "HEAD";
-        const head = await w.workspace.headOf(base);
-        const why = `the repository has no ${base} to work from`;
+      const ready = async (branch: string | null) => {
+        const head = await w.workspace.headOf(branch ?? "HEAD");
+        const why = `the repository has no ${branch ?? "HEAD"} to work from`;
         return head === null
-          ? done({ type: "record_workspace", scope: ROOT, ok: false, branch: null, head: null, why })
-          : done({ type: "record_workspace", scope: ROOT, ok: true, branch: scope.branch, head, why: null });
+          ? done({ type: "record_workspace", scope: scope.id, ok: false, branch: null, head: null, why })
+          : done({ type: "record_workspace", scope: scope.id, ok: true, branch, head, why: null });
+      };
+      // The root is seated where the Human works, in the repository itself: a worktree is for work handed out.
+      if (scope.id === ROOT) return ready(scope.branch);
+      const lane = laneOf(state, scope);
+      const branch = laneBranch(w.project, lane.id);
+      // Work under a lane is done in the lane's own worktree, on its branch, by everyone the lane seats.
+      if (lane.id !== scope.id || (await w.workspace.treeOf(branch)) !== null) return ready(branch);
+      const exists = (await w.workspace.headOf(`refs/heads/${branch}`)) !== null;
+      const made = await w.host.openWorktree({
+        key: `${w.project}:${key}`,
+        projectRoot: w.workspace.repo,
+        title: scope.brief?.goal.text ?? `${scope.id} · ${scope.role}`,
+        slug: branch.replaceAll("/", "-"),
+        branch,
+        // A lane that reads one commit starts from it; any other from where its parent's branch stands.
+        base: exists ? null : (scope.commit ?? parentBranch(state, scope) ?? "HEAD"),
+      });
+      if ("unavailable" in made) return WAIT;
+      if ("failed" in made)
+        return done({
+          type: "record_workspace",
+          scope: scope.id,
+          ok: false,
+          branch: null,
+          head: null,
+          why: made.failed,
+        });
+      // Paseo names a branch anew where the name was taken: the worktree counts only on the branch asked for.
+      if ((await w.workspace.treeOf(branch)) === null) {
+        const why = `Paseo made ${made.path} on another branch than ${branch}`;
+        return done({ type: "record_workspace", scope: scope.id, ok: false, branch: null, head: null, why });
       }
-      let made;
-      if (scope.commit !== null)
-        made = await w.workspace.create(scope.id, { kind: "reader", at: scope.commit, branch: null });
-      else if (role?.writes)
-        made = await w.workspace.create(scope.id, { kind: "writer", branch: branchOf(scope.id), from: from ?? "HEAD" });
-      else
-        made = await w.workspace.create(scope.id, { kind: "reader", at: from ?? "HEAD", branch: branchOf(scope.id) });
-      const branch = scope.commit !== null ? null : branchOf(scope.id);
-      return made.ok
-        ? done({ type: "record_workspace", scope: scope.id, ok: true, branch, head: made.head, why: null })
-        : done({ type: "record_workspace", scope: scope.id, ok: false, branch: null, head: null, why: made.why });
+      return ready(branch);
     },
 
     "agent.create": async (e, { state, key }) => {
@@ -130,7 +161,12 @@ export function handlersFor(w: Wiring): Handlers {
       const scope = state.scopes.get(actor.scope);
       const role = w.bundle.profile.roles.get(actor.role);
       if (!scope || !role) return { status: "dropped", why: `${e.actor}'s scope or role is gone` };
-      const { cwd, env } = seatEnv(w, actor.id, scope, role.writes);
+      const cwd = await seatDir(w, state, scope);
+      if (cwd === null) {
+        const why = `the worktree scope ${actor.scope} works in is gone`;
+        return { status: "failed", why, facts: [gone(actor.id, why)] };
+      }
+      const env = seatEnv(w, actor.id, cwd, role.writes);
       const given = filledIn(w.bundle.servers.get(actor.role) ?? [], process.env);
       if (!given.ok) return { status: "failed", why: given.says, facts: [gone(actor.id, given.says)] };
       const kept = matchingOf(w.agents);
@@ -252,13 +288,20 @@ export function handlersFor(w: Wiring): Handlers {
       const branch = scope ? parentBranch(state, scope) : null;
       if (!scope || branch === null) return { status: "dropped", why: `scope ${e.scope} has no parent branch` };
       const moved = await w.workspace.advance(branch, e.from, e.to);
-      if ("sha" in moved && scope.parent !== null) await w.workspace.refresh(scope.parent, branch);
       return done({ type: "record_integration", scope: scope.id, result: moved });
     },
 
     "workspace.remove": async (e) => {
-      const r = await w.workspace.remove(e.scope, e.branch, e.mergedInto);
-      return "removed" in r ? done() : { status: "failed", why: r.kept };
+      // Only a lane has a worktree and a branch of its own: work under it was done in the lane's, which stays.
+      if (e.branch !== laneBranch(w.project, e.scope)) return done();
+      const tree = await w.workspace.treeOf(e.branch);
+      if (tree?.unsaved) return { status: "failed", why: `${tree.path} holds uncommitted work` };
+      if (tree) {
+        const closed = await w.host.closeWorktree(tree.path);
+        if (closed !== "done") return "unavailable" in closed ? WAIT : { status: "failed", why: closed.failed };
+      }
+      if (e.mergedInto !== null) await w.workspace.dropMerged(e.branch, e.mergedInto);
+      return done();
     },
 
     "workspace.publish": async (e) => {
