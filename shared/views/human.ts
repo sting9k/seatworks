@@ -91,6 +91,6 @@ export function humanView(state: State): HumanView {
       appetiteUsd: root?.plan?.appetite.usd ?? null,
     },
     root: root ? { role: root.role, owner: root.owner } : null,
-    checks: (state.project?.checks ?? []).map((check) => check.name),
+    checks: (state.project?.checks ?? []).map((check) => ({ name: check.name, run: [...check.run] })),
   };
 }

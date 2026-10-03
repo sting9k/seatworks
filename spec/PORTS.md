@@ -159,7 +159,7 @@ upkeep: attach(repository, profile), profiles, presets, templateOffer(from), ins
 - It shows only what the kernel's views and the agents said. It writes no summary of its own.
 - What the Human needs lists every scope, the root first and each before what is under it, so the surface draws the
   team as a tree, and says of each whether it is work, a reading or a watch. A question and a permission each name
-  the scope they came from, and the view carries the names of the project's checks.
+  the scope they came from, and the view carries the project's checks, each with the program and arguments it runs.
 - Beside it the surface is told how many scopes the record holds as taken in. The state keeps open work alone and
   forgets a scope once it has landed (`LEDGER.md` §3), so that a team has finished is read from the log, by a count
   the store answers from an index.
@@ -200,7 +200,8 @@ upkeep: attach(repository, profile), profiles, presets, templateOffer(from), ins
 - It sits in Paseo's own places, each with one job.
   - **A page in the sidebar** is set-up and upkeep, a job a tab: the projects, the templates and the agent profiles
     their roles run on, the classifier's switch and key, what teams left behind, and whether a newer release is
-    out. A team is not followed there.
+    out. A team is not followed there. A project's checks are changed on its row: each a name and its command on one
+    line, sent as the program and its arguments, since a check runs with no shell; quotes keep an argument whole.
   - **A Team tab**, beside Files and Changes and as a tab of the workspace, is the whole team of the project a
     workspace belongs to: every seat a line with one word for what it is doing now, what waits on the Human answered
     in place, and the record folded under its headings. What is stuck and a standing alarm come first.

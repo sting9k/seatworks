@@ -93,7 +93,8 @@ on an implementation without the rule before it is trusted.
 | `drop_scope` while the scope's merge is in flight                                       | Refused: the record cannot call it dropped once the integration is physical                |
 | `send_back` while the scope's merge is in flight, and once it is integrated             | Refused both times: its writer would be told it was sent back, and then let go as integrated |
 | A profile where the root's role hands back                                              | Its claim waits on the Human, shown to them; their `send_back` or a `published` settles it |
-| The Human's view of a team three levels deep, its scopes opened out of the tree's order | Every scope, the root first and each before what is under it, with its parent; a question names the scope its asker sits on |
+| The Human's view of a team three levels deep, its scopes opened out of the tree's order | Every scope, the root first and each before what is under it, with its parent and whether it is work, a reading or a watch; a question names the scope its asker sits on |
+| The Human's view of a project whose checks the Human set                                | Each check with its name and the program and arguments it runs; none before any is set |
 
 ## Delivery
 
@@ -254,6 +255,7 @@ screens themselves are type-checked and no more, until seen on a live Paseo.
 | One lane end to end, read as the surface reads a project before anything is taken in and after the lane has landed | None landed; then two, the task and the lane, though only the root is left in the state |
 | A scan that finds a copy holding a draft, a branch not merged and the attached project itself | Sorted as kept, to check first, and left out; the project is never among what is picked for the Human, whatever the surface knows of what is attached |
 | Setting up with no template installed                                                     | Matching agents is not done, whatever else is                        |
+| A check's command typed on one line, an argument in quotes; any arguments shown as a line and typed back | The program and its arguments, the quoted one whole; the same arguments |
 
 ## Reflex
 

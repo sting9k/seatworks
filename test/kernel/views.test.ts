@@ -72,6 +72,17 @@ test("the Human's view lists every scope as a tree, the root first, and says whi
   );
 });
 
+test("the Human's view carries each of the project's checks with what it runs, so the Human may change one", () => {
+  const { ledger } = team();
+  assert.deepEqual(humanView(ledger.state).checks, []);
+  const checks = [
+    { name: "tests", run: ["npm", "test"] },
+    { name: "lint", run: ["sh", "-c", "npm run lint && npm run format"] },
+  ];
+  ledger.must(ledger.human("set_checks", { checks }));
+  assert.deepEqual(humanView(ledger.state).checks, checks);
+});
+
 test("a finding's chain of change and the signals are read from the log", () => {
   const { ledger, lead, peer, task } = team();
   const line = ledger.state.scopes.get(task)!.brief!.constraints[0]!.id;

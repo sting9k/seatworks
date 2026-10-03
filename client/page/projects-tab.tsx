@@ -14,6 +14,7 @@ import { useProjectView } from "../state/project-view.ts";
 import { useSeatAgents } from "../state/seat-agents.ts";
 import { countsOf, seatsOf, waitingOf } from "../state/team.ts";
 import { nameOf } from "../state/words.ts";
+import { ChecksEditor } from "./checks-editor.tsx";
 
 type Theme = PluginSurfaceProps["theme"];
 type Navigation = PluginSurfaceProps["navigation"];
@@ -37,12 +38,14 @@ function Attached({ project, repo, theme, navigation, onChanged }: AttachedProps
   const { view, reload } = useProjectView(project);
   const agents = useSeatAgents(project);
   const sync = useRpc(RPC.syncTemplate);
+  const command = useRpc(RPC.human);
   const list = useRpc(RPC.leftovers);
   const clean = useRpc(RPC.clean);
   const toast = useToast();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [whole, setWhole] = useState<Leftover | null>(null);
+  const [checking, setChecking] = useState(false);
   const human = view?.human ?? null;
   const template = view?.template ?? null;
   const waiting = human ? waitingOf(human) : 0;
@@ -146,11 +149,45 @@ function Attached({ project, repo, theme, navigation, onChanged }: AttachedProps
           ) : null}
           <Row
             kind="Checks"
-            title={human && human.checks.length > 0 ? human.checks.join(" · ") : "None set"}
+            title={human && human.checks.length > 0 ? human.checks.map((check) => check.name).join(" · ") : "None set"}
             dimmed={!human || human.checks.length === 0}
             theme={theme}
             indent
-          />
+          >
+            {human && !checking ? (
+              <Button
+                label="Edit"
+                tone="quiet"
+                theme={theme}
+                disabled={busy}
+                onPress={() => {
+                  setChecking(true);
+                }}
+              />
+            ) : null}
+          </Row>
+          {human && checking ? (
+            <ChecksEditor
+              checks={human.checks}
+              theme={theme}
+              busy={busy}
+              onCancel={() => {
+                setChecking(false);
+              }}
+              onSave={(checks) => {
+                act(
+                  async () => {
+                    const said = await command({ project, type: "set_checks", args: { checks } });
+                    return said.ok ? { ok: true, text: "The checks are set." } : said;
+                  },
+                  () => {
+                    setChecking(false);
+                    void reload();
+                  },
+                );
+              }}
+            />
+          ) : null}
           <Row kind="Remove" title="Its agents, copies and branches" dimmed theme={theme} indent>
             {whole ? null : <Button label="Remove" tone="quiet" theme={theme} disabled={busy} onPress={askToRemove} />}
           </Row>
