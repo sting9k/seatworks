@@ -35,7 +35,7 @@ roles:
     speaksTo: [parent]
     prompt: roles/peer.md
     skills: [test-first, diagnosing-bugs, domain-docs, security-check, proof-audit, spike, measuring, tidy-first]
-    models: [slp-peer, slp-peer-alt]
+    models: [slp-peer]
     tools: [status, record, diff, raise_finding, withdraw_finding, reopen_finding, hand_back, run_checks, send_message,
             answer, hold_machine]
 
@@ -44,7 +44,7 @@ roles:
     speaksTo: [parent]
     prompt: roles/reviewer.md
     skills: [security-check, proof-audit]
-    models: [slp-reviewer, slp-peer]
+    models: [slp-reviewer]
     tools: [status, record, diff, record_verdict, raise_finding, withdraw_finding, reopen_finding, send_message, answer,
             hold_machine]
 

@@ -98,18 +98,7 @@ Open Seatworks in the sidebar. A strip at the top of its page shows the four ste
    project; a project can run a name its own way from its own page.
 3. **Set a key for the template's classifier**, if you have one, on the Classifier tab, or switch it off there.
 
-SLP names these:
-
-| Profile                    | Used by                                     |
-| -------------------------- | ------------------------------------------- |
-| `slp-supervisor`           | the Supervisor                              |
-| `slp-lead`                 | Leads                                       |
-| `slp-peer`, `slp-peer-alt` | Peers; the second lets blind designs differ |
-| `slp-reviewer`             | Reviewers (they may also use `slp-peer`)    |
-| `slp-watcher`              | the Watcher                                 |
-
-Different models for `slp-peer` and `slp-peer-alt` are the point: one model asked one hard question twice tends to
-give one answer.
+SLP names one for each role: `slp-supervisor`, `slp-lead`, `slp-peer`, `slp-reviewer` and `slp-watcher`.
 
 ## Using it
 

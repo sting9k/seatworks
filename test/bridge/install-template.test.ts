@@ -21,7 +21,8 @@ async function started() {
   const root = mkdtempSync(join(tmpdir(), "sw-root-"));
   const plugin = new Plugin(root);
   plugins.push(plugin);
-  const paseo = fakePaseo(pluginDir);
+  // Paseo holds SLP's agent profiles but one: the watcher's is what a template would have made.
+  const paseo = fakePaseo(pluginDir, "claude", ["slp-supervisor", "slp-lead", "slp-peer", "slp-reviewer"]);
   plugin.saw(paseo.api);
   await plugin.whenReady();
   return { plugin, root, paseo };
@@ -52,7 +53,7 @@ test("a shared template is read before it is installed: what it would bring is l
   assert.deepEqual([...read.offer.roles].sort(), ["lead", "peer", "reviewer", "supervisor", "watcher"]);
   assert.deepEqual(
     read.offer.agentProfiles.filter((profile) => !profile.there).map((profile) => profile.name),
-    ["slp-peer-alt"],
+    ["slp-watcher"],
   );
   assert.ok(read.offer.agentProfiles.some((profile) => profile.name === "slp-lead" && profile.there));
   assert.deepEqual(read.offer.servers, []);

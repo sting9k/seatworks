@@ -19,8 +19,11 @@ after(async () => {
   for (const p of plugins) await p.dispose();
 });
 
+/** SLP's agent profiles but one: a name its template gives that Paseo has no profile for. */
+const BUT_ONE = ["slp-supervisor", "slp-lead", "slp-peer", "slp-reviewer"];
+
 /** A plugin beside a Paseo that holds SLP's agent profiles but one, or the ones named. */
-async function started(profiles?: readonly string[]) {
+async function started(profiles: readonly string[] = BUT_ONE) {
   const root = stateRoot();
   const plugin = new Plugin(root);
   plugins.push(plugin);
@@ -65,10 +68,10 @@ const keptIn = (root: string, profile: string, text: string) => {
 test("an agent profile a profile's roles name is matched to one the Human has, SLP's too: its agent is made from that one", async () => {
   const { plugin, paseo } = await started();
   const before = await shown(plugin, "slp");
-  assert.deepEqual(before.of("slp-peer-alt"), {
-    name: "slp-peer-alt",
-    roles: ["peer"],
-    runsOn: "slp-peer-alt",
+  assert.deepEqual(before.of("slp-watcher"), {
+    name: "slp-watcher",
+    roles: ["watcher"],
+    runsOn: "slp-watcher",
     there: false,
     provider: null,
     model: null,
@@ -87,10 +90,9 @@ test("an agent profile a profile's roles name is matched to one the Human has, S
     },
     "with what the profile it runs on is: its provider, its model, its effort",
   );
-  assert.deepEqual(before.of("slp-peer")?.roles, ["peer", "reviewer"], "and every role that names it");
   assert.ok(before.available.includes("slp-lead"));
 
-  const matching = { "slp-supervisor": "slp-lead", "slp-peer-alt": "slp-peer" };
+  const matching = { "slp-supervisor": "slp-lead", "slp-watcher": "slp-peer" };
   const matched = await plugin.agents({ profile: "slp", matching });
   assert.ok(matched.ok, matched.ok ? "" : matched.says);
   const opened = await plugin.openProject(repository(), "main");
@@ -100,7 +102,7 @@ test("an agent profile a profile's roles name is matched to one the Human has, S
   assert.deepEqual((await plugin.view(opened.project))?.stuck, []);
   const after = await shown(plugin, "slp");
   assert.deepEqual(
-    [after.of("slp-peer-alt")?.runsOn, after.of("slp-peer-alt")?.there, after.of("slp-peer-alt")?.model],
+    [after.of("slp-watcher")?.runsOn, after.of("slp-watcher")?.there, after.of("slp-watcher")?.model],
     ["slp-peer", true, "slp-peer"],
   );
   assert.equal(after.problem, null);
@@ -169,16 +171,16 @@ test("the names a template gives that Paseo has no profile for are made in Paseo
   assert.deepEqual(before.providers, ["claude"], "only a provider Paseo finds on this machine is offered");
   assert.deepEqual(
     before.agents.filter((agent) => !agent.there).map((agent) => agent.name),
-    ["slp-peer-alt", "slp-supervisor"],
+    ["slp-supervisor", "slp-watcher"],
   );
   const mine = structuredClone(paseo.held);
 
   const made = await plugin.createAgents("slp", "claude", "sonnet", "high");
   assert.ok(made.ok, made.ok ? "" : made.says);
-  assert.deepEqual(made.made, ["slp-peer-alt"], "a name Paseo holds a profile of is not made again");
+  assert.deepEqual(made.made, ["slp-watcher"], "a name Paseo holds a profile of is not made again");
   assert.deepEqual(paseo.held.slice(0, mine.length), mine, "every profile Paseo held goes back as the Human shaped it");
   assert.deepEqual(paseo.held.slice(mine.length), [
-    { id: "slp-peer-alt", name: "slp-peer-alt", provider: "claude", model: "sonnet", thinkingOptionId: "high" },
+    { id: "slp-watcher", name: "slp-watcher", provider: "claude", model: "sonnet", thinkingOptionId: "high" },
   ]);
   const after = await shown(plugin, "slp");
   assert.deepEqual(
@@ -210,7 +212,7 @@ test("where Paseo holds no agent profile, every name a template gives is made at
   assert.ok(made.ok, made.ok ? "" : made.says);
   assert.deepEqual(
     paseo.held,
-    ["slp-lead", "slp-peer", "slp-peer-alt", "slp-reviewer", "slp-supervisor", "slp-watcher"].map((name) => ({
+    ["slp-lead", "slp-peer", "slp-reviewer", "slp-supervisor", "slp-watcher"].map((name) => ({
       id: name,
       name,
       provider: "claude",
@@ -436,7 +438,7 @@ test("a project's own is refused for a name its template does not give, a profil
 
   for (const [agent, runs, says] of [
     ["night-owl", { effort: "high" }, /night-owl is not an agent profile this project's template names/],
-    ["slp-peer-alt", { effort: "high" }, /Paseo has no agent profile named slp-peer-alt/],
+    ["slp-watcher", { effort: "high" }, /Paseo has no agent profile named slp-watcher/],
     ["slp-lead", { provider: "not-installed", model: "sonnet", effort: null }, /finds no provider named not-installed/],
     ["slp-lead", { model: "gpt-9", effort: null }, /claude has no model named gpt-9/],
     ["slp-lead", { effort: "max" }, /sonnet has no effort named max/],
@@ -521,6 +523,26 @@ test("a Paseo that cannot say which providers it finds: the page still reads wha
   assert.deepEqual([read.of("slp-supervisor")?.runsOn, read.of("slp-supervisor")?.there], ["slp-supervisor", true]);
 });
 
+test("an agent profile two roles name is listed once, with each role that names it", async () => {
+  const { plugin } = await started();
+  const files = new Map(slpFiles());
+  const profile = files.get("profile.yaml")!;
+  assert.ok(profile.includes("    models: [slp-reviewer]\n"));
+  files.set("profile.yaml", profile.replace("    models: [slp-reviewer]\n", "    models: [slp-reviewer, slp-peer]\n"));
+  files.set("template.json", JSON.stringify({ name: "Night Crew", description: "A crew for the night shift." }));
+  const path = join(mkdtempSync(join(tmpdir(), "sw-shared-")), "night-crew.template.json");
+  writeFileSync(path, packed(files));
+  const read = await plugin.template({ path }, null);
+  assert.ok(read.ok, read.ok ? "" : read.says);
+  assert.ok((await plugin.template({ path }, read.offer.hash)).ok);
+
+  const crew = await shown(plugin, "night-crew");
+  assert.deepEqual(
+    crew.agents.filter((agent) => agent.name === "slp-peer").map((agent) => agent.roles),
+    [["peer", "reviewer"]],
+  );
+});
+
 test("a template installed again keeps the matching of its name", async () => {
   const { plugin } = await started();
   const path = join(mkdtempSync(join(tmpdir(), "sw-shared-")), "night-crew.template.json");
@@ -533,8 +555,8 @@ test("a template installed again keeps the matching of its name", async () => {
   };
 
   await install();
-  assert.ok((await plugin.agents({ profile: "night-crew", matching: { "slp-peer-alt": "slp-peer" } })).ok);
+  assert.ok((await plugin.agents({ profile: "night-crew", matching: { "slp-watcher": "slp-peer" } })).ok);
   await install();
 
-  assert.equal((await shown(plugin, "night-crew")).of("slp-peer-alt")?.runsOn, "slp-peer");
+  assert.equal((await shown(plugin, "night-crew")).of("slp-watcher")?.runsOn, "slp-peer");
 });

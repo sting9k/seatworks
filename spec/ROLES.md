@@ -93,7 +93,9 @@ verdict sums up the finding rather than the finding arguing for a verdict alread
 ## Models per role
 
 A role names Paseo agent profiles, the first its default (PASEO.md). The opener of a scope may pick another from the
-list. Different models in blind designs are the point: one model on one question tends to one answer.
+list. SLP names one for each role. Until 3 October 2026 it gave the Peer a second, for blind designs on another
+model, and the Reviewer the Peer's as a second: nobody had asked for either, and the owner had them taken out. A
+team that wants its blind designs on two models adds a name to the Peer's list in its own template.
 
 ## What V1's prompts did that Seatworks' drop
 
