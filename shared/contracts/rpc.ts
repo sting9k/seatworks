@@ -40,6 +40,8 @@ export const HumanViewSchema = z.object({
       parent: z.string().nullable(),
       owner: z.string().nullable(),
       role: z.string(),
+      /** Work lands; a reading and a watch end, and neither is work left to land. */
+      kind: z.enum(["work", "reading", "watch"]),
       goal: z.string().nullable(),
       status: z.string(),
       held: z.boolean(),
@@ -169,6 +171,8 @@ export const RPC = {
       activity: z.array(z.string()),
       /** What looks stuck, as facts (`shared/views/stuck.ts`). */
       stuck: z.array(z.string()),
+      /** How many scopes the record holds as taken in: the state forgets one once nothing open is under it. */
+      landed: z.number(),
       root: z.string(),
       /** How the project's own copy of its template stands beside the one installed. */
       template: ProjectTemplateSchema.nullable(),

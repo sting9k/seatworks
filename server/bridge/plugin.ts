@@ -630,6 +630,7 @@ export class Plugin {
     human: HumanView;
     activity: string[];
     stuck: string[];
+    landed: number;
     root: string;
     template: ProjectTemplate;
   } | null> {
@@ -651,6 +652,7 @@ export class Plugin {
         runtime.store.abandoned(),
         runtime.wiring.bundle.profile,
       ),
+      landed: runtime.store.count("integrated"),
       root: statusText(runtime.project.view, "root", null) ?? "",
       template: templateOf(this.root, dir, kept.profile, kept.hash),
     };

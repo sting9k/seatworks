@@ -45,22 +45,27 @@ export function seatsOf(human: HumanView, running: ReadonlySet<string>): Seat[] 
   });
 }
 
-/** How many seats are working, waiting and landed: the three marks the pill's popover counts. */
-export function countsOf(seats: readonly Seat[]): { working: number; waiting: number; landed: number } {
+/** How many seats are working and how many wait: two of the marks the pill's popover counts. */
+export function countsOf(seats: readonly Seat[]): { working: number; waiting: number } {
   const count = (...tones: Tone[]) => seats.filter((seat) => tones.includes(seat.tone)).length;
-  return { working: count("work"), waiting: count("wait", "you"), landed: count("done") };
+  return { working: count("work"), waiting: count("wait", "you") };
 }
 
-/** What the pill says of a team, the most pressing thing first: stuck, the Human's turn, held, then who works. */
+/** What the pill says of a team, the most pressing first: stuck, the Human's turn, held, who works, all landed. */
 export function pillOf(
   human: HumanView,
   stuck: number,
   seats: readonly Seat[],
+  /** How many scopes the record holds as taken in. */
+  landed: number,
 ): { tone: Tone | "stuck"; label: string } {
   if (stuck > 0) return { tone: "stuck", label: `${stuck} stuck` };
   const waiting = waitingOf(human);
   if (waiting > 0) return { tone: "you", label: `${waiting} need${waiting === 1 ? "s" : ""} you` };
   if (human.scopes.some((scope) => scope.parent === null && scope.held)) return { tone: "wait", label: "Team · held" };
   const { working } = countsOf(seats);
-  return working > 0 ? { tone: "work", label: `Team · ${working} working` } : { tone: "wait", label: "Team · idle" };
+  if (working > 0) return { tone: "work", label: `Team · ${working} working` };
+  const ended = (status: string) => status === "integrated" || status === "dropped";
+  const toLand = human.scopes.some((scope) => scope.parent !== null && scope.kind === "work" && !ended(scope.status));
+  return landed > 0 && !toLand ? { tone: "done", label: "Team · all landed" } : { tone: "wait", label: "Team · idle" };
 }

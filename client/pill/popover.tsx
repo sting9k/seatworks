@@ -77,7 +77,7 @@ export function popoverOf(
           <Text style={{ flex: 1, fontSize: FONT.base, fontWeight: "500", color: foreground }}>{title}</Text>
           {count("work", counts.working)}
           {count("wait", counts.waiting)}
-          {count("done", counts.landed)}
+          {count("done", view.landed)}
         </View>
         {view.stuck.map((fact) => (
           <Banner key={fact} tone="danger" text={fact} theme={theme} />

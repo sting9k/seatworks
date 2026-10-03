@@ -16,6 +16,7 @@ pending(project) -> effects                               // written, with no re
 settle(project, key, result)                              // a fact for an effect; a key settled before is dropped
 read(project, fromSeq) -> events
 about(project, subject) -> events                         // those filed under a subject, in order
+count(project, type) -> number                            // how many events of a type the log holds, off an index
 putSnapshot(project, seq, state); getSnapshot(project) -> (seq, state)?
 ```
 
@@ -157,8 +158,11 @@ upkeep: attach(repository, profile), profiles, presets, templateOffer(from), ins
 
 - It shows only what the kernel's views and the agents said. It writes no summary of its own.
 - What the Human needs lists every scope, the root first and each before what is under it, so the surface draws the
-  team as a tree. A question and a permission each name the scope they came from, and the view carries the names of
-  the project's checks.
+  team as a tree, and says of each whether it is work, a reading or a watch. A question and a permission each name
+  the scope they came from, and the view carries the names of the project's checks.
+- Beside it the surface is told how many scopes the record holds as taken in. The state keeps open work alone and
+  forgets a scope once it has landed (`LEDGER.md` §3), so that a team has finished is read from the log, by a count
+  the store answers from an index.
 - `stuck` reads the state and the outbox: an effect its satellite keeps throwing on, with how many times, or gave up
   on after its last try, with the error; an open scope with nobody seated, with its parent's owner; words queued for
   a seated actor whose agent never started; a seated actor that ended a turn while its agent's tool server never
@@ -201,7 +205,8 @@ upkeep: attach(repository, profile), profiles, presets, templateOffer(from), ins
     workspace belongs to: every seat a line with one word for what it is doing now, what waits on the Human answered
     in place, and the record folded under its headings. What is stuck and a standing alarm come first.
   - **A pill** on the chat of each agent the plugin started says the most pressing thing: what is stuck, then what
-    waits on the Human, then a held team, then who works. Its popover answers what waits, opens the Team tab, holds
+    waits on the Human, then a held team, then who works, then that all has landed: something was taken in and no
+    work is open under the root. Its popover answers what waits, opens the Team tab, holds
     or resumes the team, and sends a word to the root's agent. A button in the workspace's header and three commands
     typed in a chat do the same.
 - What costs nothing to remove comes picked in the clean-up. What takes commits with it, and a project whole, never

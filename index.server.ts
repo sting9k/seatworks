@@ -115,7 +115,7 @@ export default function contribute(server: PluginServerContext) {
   server.handle(RPC.view, async (input, { paseo }) => {
     plugin.saw(paseo);
     const view = await plugin.view(input.project);
-    const none = { human: null, activity: [], stuck: [], root: "No such project.", template: null };
+    const none = { human: null, activity: [], stuck: [], landed: 0, root: "No such project.", template: null };
     return { ...(view ?? none), alarm: plugin.alarmOf(input.project) };
   });
   server.handle(RPC.syncTemplate, async (input, { paseo }) => {

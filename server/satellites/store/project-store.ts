@@ -15,6 +15,7 @@ const SCHEMA = `
     seq INTEGER PRIMARY KEY, command_id TEXT NOT NULL, at TEXT NOT NULL, by TEXT NOT NULL, type TEXT NOT NULL,
     payload TEXT NOT NULL) STRICT;
   CREATE INDEX IF NOT EXISTS events_command ON events (command_id);
+  CREATE INDEX IF NOT EXISTS events_type ON events (type);
   CREATE TABLE IF NOT EXISTS effects (
     key TEXT PRIMARY KEY, event_seq INTEGER NOT NULL, kind TEXT NOT NULL, payload TEXT NOT NULL,
     status TEXT NOT NULL, attempts INTEGER NOT NULL DEFAULT 0, result TEXT, settled_at TEXT) STRICT;
@@ -42,6 +43,7 @@ export class ProjectStore {
   private readonly settleRow: StatementSync;
   private readonly attemptRow: StatementSync;
   private readonly recentRows: StatementSync;
+  private readonly countRows: StatementSync;
 
   constructor(file: string) {
     if (file !== ":memory:") mkdirSync(dirname(file), { recursive: true });
@@ -72,6 +74,7 @@ export class ProjectStore {
     this.recentRows = this.db.prepare(
       "SELECT seq, command_id, at, by, type, payload FROM events ORDER BY seq DESC LIMIT ?",
     );
+    this.countRows = this.db.prepare("SELECT count(*) AS n FROM events WHERE type = ?");
   }
 
   /** Appends one command's events with their effects and filings, atomically; fails if another append came first. */
@@ -128,6 +131,11 @@ export class ProjectStore {
   /** The latest events, newest last, for the Human's view of what happened. */
   recent(limit: number): Event[] {
     return this.recentRows.all(limit).map(toEvent).reverse();
+  }
+
+  /** How many events of a type the log holds, read off the index and never off the events themselves. */
+  count(type: Event["type"]): number {
+    return (this.countRows.get(type) as { n: number }).n;
   }
 
   pending(): PendingEffect[] {

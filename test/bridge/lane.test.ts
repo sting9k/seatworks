@@ -122,6 +122,7 @@ test("one lane end to end: a Supervisor, a Lead and a Peer land a change on main
   const status = await lead.call("status", { scope: "1.1" });
   const evidence = /(e\d+) check on [0-9a-f]+: ok/.exec(status.text)?.[1];
   assert.ok(evidence, status.text);
+  assert.equal((await plugin.view(opened.project))?.landed, 0);
   assert.ok((await lead.call("integrate", { scope: "1.1", evidence: [evidence] })).ok);
   await plugin.idle();
   assert.ok(paseo.archived.includes(peerAgent.host), "the Peer's agent is archived once its work is in");
@@ -138,6 +139,12 @@ test("one lane end to end: a Supervisor, a Lead and a Peer land a change on main
   assert.ok(landing, rootStatus.text);
   assert.ok((await supervisor.call("integrate", { scope: "1", evidence: [landing] })).ok);
   await plugin.idle();
+  const after = await plugin.view(opened.project);
+  assert.deepEqual(
+    [after?.landed, after?.human.scopes.map((scope) => scope.scope)],
+    [2, ["root"]],
+    "the view says how many landed from the record, though the state has forgotten them",
+  );
 
   assert.equal(
     readFileSync(join(repo, "src/net/encode.txt"), "utf8"),

@@ -77,6 +77,7 @@ export function humanView(state: State): HumanView {
       parent: s.parent,
       owner: s.owner,
       role: s.role,
+      kind: s.kind,
       goal: s.brief?.goal.text ?? s.plan?.goal.text ?? null,
       status: s.integrating ? "integrating" : s.claim ? "handed back" : s.status,
       held: s.held,

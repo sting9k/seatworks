@@ -61,6 +61,15 @@ test("the Human's view lists every scope as a tree, the root first, and says whi
     view.questions.map((q) => q.scope),
     ["root"],
   );
+
+  ledger.must(ledger.as(supervisor, "open_scope", { parent: "root", role: "watcher", over: "all" }));
+  assert.deepEqual(
+    humanView(ledger.state)
+      .scopes.map((s) => [s.scope, s.kind])
+      .filter(([, kind]) => kind !== "work"),
+    [["3", "watch"]],
+    "and says of each whether it is work, a reading or a watch",
+  );
 });
 
 test("a finding's chain of change and the signals are read from the log", () => {

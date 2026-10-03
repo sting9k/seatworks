@@ -250,6 +250,8 @@ screens themselves are type-checked and no more, until seen on a live Paseo.
 | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
 | A team three levels deep with one agent in a turn; then a hand-back, a held lane and a question from the root | Each seat says one word for what it is doing now: working or idle by its agent; then handed back, held, and needs you on the scope the question came from |
 | That team with nothing waiting; with two agents in a turn; with the root held; with a question; with two things stuck | The pill says idle, then 2 working, held, 1 needs you, 2 stuck: the most pressing thing wins |
+| A team whose record holds a landing, with a lane still open; with no work open under the root and a watch still seated; the same with nothing landed | The pill says idle, then all landed, then idle |
+| One lane end to end, read as the surface reads a project before anything is taken in and after the lane has landed | None landed; then two, the task and the lane, though only the root is left in the state |
 | A scan that finds a copy holding a draft, a branch not merged and the attached project itself | Sorted as kept, to check first, and left out; the project is never among what is picked for the Human, whatever the surface knows of what is attached |
 | Setting up with no template installed                                                     | Matching agents is not done, whatever else is                        |
 

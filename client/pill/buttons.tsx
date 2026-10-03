@@ -54,7 +54,7 @@ export function addTeamButtons(client: PluginClientContext): () => void {
     );
     const waiting = waitingOf(view.human);
     return {
-      ...pillOf(view.human, view.stuck.length, seatsOf(view.human, running)),
+      ...pillOf(view.human, view.stuck.length, seatsOf(view.human, running), view.landed),
       header: waiting > 0 ? `Team · ${waiting}` : "Team",
     };
   };
