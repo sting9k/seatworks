@@ -4,6 +4,7 @@ import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, test } from "node:test";
+import { oneOn, restOn } from "../../client/state/matching.ts";
 import { packed } from "../../shared/contracts/template.ts";
 import { Plugin } from "../../server/bridge/plugin.ts";
 import { slpFiles } from "../editor/slp.ts";
@@ -124,6 +125,38 @@ test("a name matched to an agent profile the Human has since removed: the page s
   assert.match(
     JSON.stringify(await plugin.view(opened.project)),
     /no Paseo agent profile named long-gone[^"]*\(slp-supervisor is matched to it\)/,
+  );
+});
+
+test("one of the Human's agent profiles picked for every name Paseo has none for: each runs on it, and a name matched to one Paseo has is kept", async () => {
+  const { plugin, root } = await started();
+  keptIn(root, "slp", JSON.stringify({ "slp-supervisor": "long-gone", "slp-lead": "slp-peer" }));
+  const before = await shown(plugin, "slp");
+  assert.deepEqual(
+    before.agents.filter((agent) => !agent.there).map((agent) => agent.name),
+    ["slp-peer-alt", "slp-supervisor"],
+  );
+
+  const picked = restOn(before.agents, "slp-reviewer");
+  assert.deepEqual(picked, {
+    "slp-lead": "slp-peer",
+    "slp-peer-alt": "slp-reviewer",
+    "slp-supervisor": "slp-reviewer",
+  });
+  const kept = await plugin.agents({ profile: "slp", matching: picked });
+  assert.ok(kept.ok, kept.ok ? "" : kept.says);
+  const after = await shown(plugin, "slp");
+  assert.deepEqual(
+    after.agents.filter((agent) => !agent.there),
+    [],
+    "nothing is left to match",
+  );
+
+  const back = oneOn(after.agents, "slp-lead", "slp-lead");
+  assert.deepEqual(
+    back,
+    { "slp-peer-alt": "slp-reviewer", "slp-supervisor": "slp-reviewer" },
+    "one name is then set by itself, back on the profile of its own name here, and the rest stay",
   );
 });
 

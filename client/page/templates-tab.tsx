@@ -17,6 +17,7 @@ import { Field } from "../kit/field.tsx";
 import { Label, Row } from "../kit/row.tsx";
 import { Tag } from "../kit/tag.tsx";
 import { FONT, SPACE } from "../kit/theme.ts";
+import { oneOn, restOn } from "../state/matching.ts";
 import { problemText } from "../state/problem-text.ts";
 
 /** Where templates are made and shared: the gallery's page, which carries the editor. */
@@ -39,12 +40,6 @@ function Installed({ profile, available, theme, busy, onMatch, onRemove }: Insta
   const [open, setOpen] = useState(unmatched > 0);
   const [removing, setRemoving] = useState(false);
   const { foregroundMuted, statusDanger, border } = theme.colors;
-  /** One name run on another of the Human's profiles, or on the profile of its own name again. */
-  const match = (named: string, runsOn: string) => {
-    const kept = profile.agents.filter((agent) => agent.runsOn !== agent.name && agent.name !== named);
-    const matching = Object.fromEntries(kept.map((agent) => [agent.name, agent.runsOn]));
-    onMatch(runsOn === named ? matching : { ...matching, [named]: runsOn });
-  };
   return (
     <View>
       <Row title={profile.title} meta={`${profile.agents.length} agent profiles`} theme={theme}>
@@ -78,6 +73,28 @@ function Installed({ profile, available, theme, busy, onMatch, onRemove }: Insta
           {profile.problem}
         </Text>
       ) : null}
+      {open && unmatched > 0 ? (
+        <View style={{ borderTopWidth: 1, borderTopColor: border }}>
+          {available.length > 0 ? (
+            <SettingsSelect
+              label={unmatched === 1 ? "Run the one not matched on" : `Run all ${unmatched} not matched on`}
+              value=""
+              options={[
+                { label: "Pick one of yours", value: "" },
+                ...available.map((name) => ({ label: name, value: name })),
+              ]}
+              disabled={busy}
+              onValueChange={(runsOn) => {
+                if (runsOn !== "") onMatch(restOn(profile.agents, runsOn));
+              }}
+            />
+          ) : (
+            <Text style={{ fontSize: FONT.small, color: foregroundMuted, padding: SPACE.lg }}>
+              Paseo has no agent profile yet. Make one in its settings, then match these to it.
+            </Text>
+          )}
+        </View>
+      ) : null}
       {open
         ? profile.agents.map((agent) => (
             <View key={agent.name} style={{ borderTopWidth: 1, borderTopColor: border }}>
@@ -91,7 +108,7 @@ function Installed({ profile, available, theme, busy, onMatch, onRemove }: Insta
                 }))}
                 disabled={busy}
                 onValueChange={(runsOn) => {
-                  match(agent.name, runsOn);
+                  onMatch(oneOn(profile.agents, agent.name, runsOn));
                 }}
               />
             </View>
