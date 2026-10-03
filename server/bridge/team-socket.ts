@@ -29,6 +29,8 @@ export type ProjectPort = {
   /** A seated actor's role, when the project's profile no longer has it. */
   roleGone(actor: string): string | null;
   read(actor: string, name: ReadName, args: ReadArgs): Promise<string>;
+  /** What may enter the turn a seated actor is in, as one text; none where nothing may. */
+  mail(actor: string): Promise<string | null>;
 };
 
 /** A line longer than this is a broken client, not a tool call: the connection is closed rather than buffered. */
@@ -127,6 +129,17 @@ export class TeamSocket {
           project.reached(actor);
           const shown = toolsFor(new Set([...tools, ...Object.keys(READS)]), project.report);
           write({ type: "welcome", tools: shown satisfies ToolSpec[] });
+        } else if (message.type === "mail") {
+          // Asked between two steps of a turn: what may enter it, or nothing; a line that never said hello gets none.
+          const id = message.id;
+          const asked = who;
+          void (asked ? asked.project.mail(asked.actor) : Promise.resolve(null)).then(
+            (text) => write({ type: "result", id, ok: asked !== null, text: text ?? "" }),
+            (error: unknown) => {
+              daemonLog.error(`mail for ${asked?.actor ?? "?"} could not be handed into its turn`, error);
+              write({ type: "result", id, ok: false, text: "" });
+            },
+          );
         } else if (message.type === "call" && !who) {
           // A line that was refused, or never said hello, is answered too: a call left waiting looks like a tool that hangs.
           const text = "This line has not said hello as a seated agent: nothing was done.";

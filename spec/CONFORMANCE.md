@@ -118,6 +118,21 @@ on an implementation without the rule before it is trusted.
 | The turn they began fails too                               | A fact to the owner above; nothing sent again  |
 | A turn the plugin's words began is cancelled                | Nothing sent again: a stop is the Human's      |
 
+### Into a turn
+
+A reader inside a turn, in a template that lets mail into one, asked for mail as its hook asks.
+
+| Case                                                        | Expect                                         |
+| ----------------------------------------------------------- | ---------------------------------------------- |
+| A direction from the owner above; then Paseo has the reader between turns before the plugin hears it, and more mail comes | The direction enters at the next pause, once, under words that say it is mail; its hook's file says something waits, then nothing. It is on the record as delivered from then on, and is not sent again with the new mail nor at the turn's end |
+| Two questions from below, a remark that asks nothing and a question from above; then another question, and a direction | Nothing enters before the template's patience is out. Then the two questions enter as one numbered delivery, without the remark or the question from above. The further question waits out the rest after an entry; the direction does not. What stayed out goes as one delivery at the turn's end |
+| Mail entered a turn that then fails                         | It is not sent again: it is in the reader's own history |
+| Mail entered a turn, and the reader's scope ends within that turn | None of it is moved to the owner above as unread |
+| A template that names no entry into a turn                  | Nothing enters; an agent's hook is named no file; its first words say nothing arrives while its turn runs |
+| What waits 119 and 120 seconds of a patience of 120; a direction beside it; an entry 50 and 90 seconds after the last, with a rest of 90 | Out, then in; the direction takes everything that would wake with it, oldest first; out while the reader rests, in after, and a direction at any time |
+| A Claude agent's hook, run as Claude Code runs it from the agent's own environment | Silent, and no answer asked of the plugin, while nothing waits; with mail, the hook's `additionalContext` is the mail; then silent again |
+| A timeline in which mail handed into a turn is listed as the agent's own words | None of it is counted as said by the agent, and the turn that follows starts after it |
+
 ## Recovery
 
 | Case                                                               | Expect                                          |

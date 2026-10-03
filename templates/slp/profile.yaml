@@ -64,6 +64,13 @@ report:
 
 reflex: reflex.yaml
 watch: watch.yaml
+# Mail into a turn its reader is in, at a pause between two of its steps (spec/COMMUNICATION.md, Into a turn). A
+# direction from above, an amended brief and the Human's words go in at the next pause. What would wake an idle
+# reader waits `patience` seconds for a busy one first, then goes in as one delivery; after an entry the reader is
+# left alone for `rest` seconds, so five questions land as one. Taken out, everything waits for the turn's end.
+intoTurn:
+  patience: 120
+  rest: 90
 # The model those two files' questions and moments are asked of, with each place it is served. Whoever runs the team
 # sets a key for one of these hosts in the plugin's settings, and may switch it off there. Taken out of here, no model
 # is asked at all: the watch goes on with what code counts and the Watcher's sweeps. The model is pinned by version,

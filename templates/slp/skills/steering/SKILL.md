@@ -22,8 +22,13 @@ failing course far more often than one with someone above them: that someone is 
 
 ## When
 
-At the Peer's turn boundary: your message waits for its turn to end. A question in the middle of its work costs more
-than the same question a minute later.
+- A question waits for the Peer's turn to end: in the middle of its work it costs more than the same question a
+  minute later, and the Peer's next step may answer it.
+- A direction (`directs`) reaches the Peer at its next step, in the turn it is in. Use it when each further step is
+  spent on the wrong thing: it builds on a stand-in, takes the long way round what it may not change, bends a check
+  to pass, or goes round the same failure again. A change of course that arrives late is taken worse than one that
+  arrives early, and what was built meanwhile is thrown away.
+- A direction says what to stop, what holds, and why, in a line each. It is still about the area, never a fix.
 
 ## How
 

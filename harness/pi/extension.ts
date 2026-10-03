@@ -11,7 +11,14 @@ type PiTool = {
   parameters: Record<string, unknown>;
   execute(toolCallId: string, params: unknown): Promise<Result>;
 };
-type Pi = { registerTool(tool: PiTool): void; on(event: "session_shutdown", handler: () => void): void };
+type Pi = {
+  registerTool(tool: PiTool): void;
+  on(event: "session_shutdown" | "tool_result", handler: () => void | Promise<void>): void;
+  sendMessage(
+    message: { customType: string; content: string; display: boolean },
+    options: { deliverAs: "steer" },
+  ): void;
+};
 
 export default async function seatworks(pi: Pi): Promise<void> {
   const socket = process.env.SEATWORKS_SOCKET;
@@ -31,6 +38,14 @@ export default async function seatworks(pi: Pi): Promise<void> {
         if (!reply.ok) throw new Error(reply.text);
         return { content: [{ type: "text", text: reply.text }], details: undefined };
       },
+    });
+  // Between two steps of a turn: mail the plugin lets into it goes in before the next call to the model. Only where
+  // the team's template lets any in, which the plugin says by naming the seat a file for it.
+  if (process.env.SEATWORKS_MAIL !== undefined)
+    pi.on("tool_result", async () => {
+      const text = await line.mail();
+      if (text !== "")
+        pi.sendMessage({ customType: "seatworks-mail", content: text, display: true }, { deliverAs: "steer" });
     });
   pi.on("session_shutdown", () => {
     line.close();

@@ -25,7 +25,7 @@ const ROLES = {
 };
 
 /** A profile of plain roles, each given every tool, so a refusal is the kernel's own and never a role's list. */
-function profile(): Map<string, string> {
+function profile(more: string): Map<string, string> {
   const tools = [...ROLE_TOOLS].join(", ");
   const roles = Object.entries(ROLES).map(
     ([name, properties]) =>
@@ -33,15 +33,18 @@ function profile(): Map<string, string> {
   );
   return new Map([
     ["template.json", JSON.stringify({ name: "Crew", description: "Plain roles, to call every tool with." })],
-    ["profile.yaml", `roles:\n${roles.join("\n")}\nreport:\n  done: What is done.\n  unsure: What is not sure.\n`],
+    [
+      "profile.yaml",
+      `roles:\n${roles.join("\n")}\nreport:\n  done: What is done.\n  unsure: What is not sure.\n${more}`,
+    ],
     ...Object.keys(ROLES).map((name): [string, string] => [`roles/${name}.md`, `# ${name}\n`]),
   ]);
 }
 
-/** A project attached with that profile, on a repository with one commit, a check to run and a remote to push to. */
-export async function crew() {
+/** A project attached with that profile, and whatever `more` its file says, on a repository with one commit, a check and a remote. */
+export async function crew(more = "") {
   const root = mkdtempSync(join(tmpdir(), "sw-root-"));
-  for (const [path, text] of profile()) {
+  for (const [path, text] of profile(more)) {
     mkdirSync(join(root, "profiles", "crew", path, ".."), { recursive: true });
     writeFileSync(join(root, "profiles", "crew", path), text);
   }

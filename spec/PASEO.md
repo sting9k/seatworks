@@ -258,6 +258,9 @@ one Peer.
 - A Claude agent that calls `ScheduleWakeup` stays in one turn through each sleep: in seventeen minutes one
   `turn_ended` reached the plugin and seven deliveries waited. `paseo stop` ended the turn as `cancelled`, and they
   were delivered. The tool is denied since (`HARNESS.md`).
+- `options.extraArgs` with `plugin-dir` reaches Claude Code for an agent made through a workspace's `agents.create`:
+  the hook of the plugin it names ran between the agent's steps, and its text is in no timeline Paseo keeps. A Pi
+  extension's `sendMessage` with `deliverAs: "steer"` entered a running turn of an agent Paseo made.
 - Not seen: how the app draws any of it, since the app was not opened on that daemon; an agent started while a
   repository's set-up still ran, since the repository had no `paseo.json`.
 

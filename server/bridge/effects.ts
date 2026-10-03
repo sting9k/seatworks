@@ -1,4 +1,5 @@
-import { join } from "node:path";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import type { CommandBody } from "../../shared/contracts/commands.ts";
 import { ACTOR_LABEL, ATTACHED_LABEL, PROJECT_LABEL, ROOT } from "../../shared/contracts/ids.ts";
 import type { Scope } from "../../shared/contracts/ledger.ts";
@@ -9,7 +10,10 @@ import { matchingOf, runsOn } from "../profile/agents.ts";
 import { ownOf } from "../profile/own-runs.ts";
 import { heldFile, laneBranch, laneOf, shares } from "./lane.ts";
 import type { PaseoHost } from "../satellites/agent-host/host.ts";
+import { INTO_TURN } from "../../shared/contracts/delivery.ts";
+import { entering, entryOf } from "../satellites/delivery/into-turn.ts";
 import { type Recorded, renderBatch } from "../satellites/delivery/render.ts";
+import type { PendingEffect } from "../satellites/store/project-store.ts";
 import type { EvidenceRunner } from "../satellites/evidence/runner.ts";
 import type { MachineHolds } from "../satellites/machine/holds.ts";
 import type { Workspace } from "../satellites/workspace/workspace.ts";
@@ -64,7 +68,7 @@ export async function seatDir(
 
 /** What an agent's tools and its git need to know of its seat: who it is, its key, where it works and what it may do there. */
 export function seatEnv(
-  w: Pick<Wiring, "project" | "keys" | "team" | "scratch">,
+  w: Pick<Wiring, "project" | "keys" | "team" | "scratch" | "bundle">,
   state: State,
   seat: {
     readonly actor: string;
@@ -82,11 +86,78 @@ export function seatEnv(
     SEATWORKS_COPY: seat.cwd,
     SEATWORKS_SHIM_DIR: w.team.shimDir,
     SEATWORKS_SOCKET: w.team.socket,
+    // What a hook between two of its steps reads before it asks the plugin for mail: empty while none may enter.
+    ...(w.bundle.intoTurn ? { SEATWORKS_MAIL: mailFile(w.scratch, seat.actor) } : {}),
     // In a folder others work in, its git is held to its own: this file says whose each path there is.
     ...(shared ? { SEATWORKS_HELD: heldFile(w.scratch, seat.actor) } : {}),
     // Whoever owns a lane takes its parent's branch in by hand when the two conflict, whatever else it may write.
     ...(shared && laneOf(state, seat.scope).id === seat.scope.id ? { SEATWORKS_MERGES: "1" } : {}),
   };
+}
+
+/** What one entry into a turn holds: under what Claude Code takes from a hook in one piece, 10,000 characters. */
+const INTO_TURN_CHARS = 9_000;
+/** What mail into a turn says of itself first, so its reader weighs it as mail and goes on with its work. */
+const INTO_TURN_SAYS = `${INTO_TURN} Nothing in it stops what you are doing unless it says so: act on what changes your work, answer what takes a line, and go on.`;
+
+/** Where a seat's hook reads whether anything waits that may enter its turn: a file a seat, empty while nothing does. */
+export const mailFile = (scratch: string, actor: string): string => join(scratch, "mail", actor);
+
+/** A reader's queued deliveries, each with when it was queued and when it may enter. */
+function weighed(queue: readonly PendingEffect[], state: State) {
+  return queue.flatMap((p) =>
+    p.body.kind === "deliver"
+      ? [
+          {
+            key: p.key,
+            item: p.body.item,
+            at: Date.parse(p.at),
+            entry: entryOf(p.body.item, p.body.to, state, p.cause),
+          },
+        ]
+      : [],
+  );
+}
+
+/** Picks what of a reader's queue enters the turn it is in, as one delivery that says so; nothing where the template lets none in. */
+export function intoTurn(w: Pick<Wiring, "bundle" | "recorded">, now: () => number) {
+  return (queue: readonly PendingEffect[], state: State, last: string | null) => {
+    const rule = w.bundle.intoTurn;
+    if (!rule) return null;
+    const queued = weighed(queue, state);
+    const keys = new Set(entering(queued, now(), last === null ? null : Date.parse(last), rule));
+    const picked = queued.filter((q) => keys.has(q.key));
+    const rendered = renderBatch(
+      picked.map((q) => q.item),
+      state,
+      w.recorded,
+      INTO_TURN_CHARS,
+    );
+    if (!rendered) return null;
+    return {
+      keys: picked.slice(0, rendered.taken).map((q) => q.key),
+      text: `${INTO_TURN_SAYS}\n\n${rendered.text}`,
+    };
+  };
+}
+
+/** Keeps each seated agent's file of whether mail waits that may enter its turn, where that has changed. */
+export function keepMail(w: Pick<Wiring, "bundle" | "scratch">, queue: readonly PendingEffect[], state: State): void {
+  if (!w.bundle.intoTurn) return;
+  const waits = new Set(
+    queue.flatMap((p) => {
+      if (p.body.kind !== "deliver") return [];
+      return entryOf(p.body.item, p.body.to, state, p.cause) === "end" ? [] : [p.body.to];
+    }),
+  );
+  for (const actor of state.actors.values()) {
+    if (actor.status !== "seated") continue;
+    const file = mailFile(w.scratch, actor.id);
+    const says = waits.has(actor.id) ? "1\n" : "";
+    if (existsSync(file) ? readFileSync(file, "utf8") === says : says === "") continue;
+    mkdirSync(dirname(file), { recursive: true });
+    writeFileSync(file, says);
+  }
 }
 
 /** Where an agent's `paseo` looks for a daemon: a name that never resolves, and that says why in the error it gives. */
@@ -188,6 +259,7 @@ export function handlersFor(w: Wiring): Handlers {
           actor,
           [...state.actors.values()].some((a) => a.scope === actor.scope && a.id !== actor.id),
           w.bundle.project?.docs ?? [],
+          w.bundle.intoTurn !== null,
         ),
         env: agentEnv(w, env),
         tools: {

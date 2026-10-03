@@ -30,6 +30,8 @@ export type Bundle = {
   readonly asks: { readonly reflex: string | null; readonly watch: string | null };
   /** The model those are asked of, by each route it is served at; none when the profile names none. */
   readonly classifier: Readonly<Record<string, Route>> | null;
+  /** When mail may enter a turn its reader is in, in seconds; none where everything waits for the turn's end. */
+  readonly intoTurn: { readonly patience: number; readonly rest: number } | null;
   /** The note an attached project's instruction file carries, with `{branches}` and `{base}` to fill. */
   readonly project: {
     readonly file: string;
@@ -90,6 +92,7 @@ export function loadBundle(dir: string): Bundle {
     environment,
     asks: { reflex: file.reflex ?? null, watch: file.watch ?? null },
     classifier: file.classifier ?? null,
+    intoTurn: file.intoTurn ?? null,
     project,
   };
 }

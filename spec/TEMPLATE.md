@@ -41,7 +41,8 @@ What a template may do, in four rules:
 <template>/
   template.json      its name, description and tags, and the editor's layout
   NOTICE.md          the outside sources its files draw on, with their licences
-  profile.yaml       roles, their properties, tools, skills and models; outside tool servers; the classifier
+  profile.yaml       roles, their properties, tools, skills and models; outside tool servers; the classifier;
+                     when mail may enter a turn
   flow.md            the team's flow, written by the editor from its steps
   project.md         the note kept in an attached project's instruction file
   roles/<role>.md    a role's prompt
@@ -155,6 +156,14 @@ The model the questions and the moments are asked of is the template's, under `c
 route a place it is served, with its `endpoint`, the `model` as that place names it, its `budget` and what its `body`
 adds to every request (`REFLEX.md`). A template with none asks no model and loses nothing else. The plugin names no
 model and no host of its own.
+
+### Mail into a turn
+
+`intoTurn` in `profile.yaml` lets mail into a turn its reader is in, with two numbers of seconds: `patience`, how long
+what would wake an idle reader waits for a busy one, and `rest`, how long a reader is left alone after an entry
+(`COMMUNICATION.md`, Into a turn). A template without it has everything wait for the turn's end. What enters at once,
+what waits and what never enters are the plugin's, since they follow from what an item is; how long is the
+template's, since it follows from how its team works.
 
 ### What a template never chooses
 

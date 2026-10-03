@@ -124,6 +124,21 @@ export class Line {
     return DROPPED;
   }
 
+  /** What may enter the agent's turn now, as one text; nothing where none may, or where the plugin is not answering. */
+  async mail(): Promise<string> {
+    const reached = await this.open().then(
+      () => true,
+      () => false,
+    );
+    if (!reached || !this.socket) return "";
+    const id = this.next++;
+    const said = await new Promise<Extract<Said, { type: "result" }> | null>((resolve) => {
+      this.waiting.set(id, resolve);
+      this.socket?.write(`${JSON.stringify({ type: "mail", id })}\n`);
+    });
+    return said?.ok ? said.text : "";
+  }
+
   close(): void {
     this.socket?.destroy();
   }

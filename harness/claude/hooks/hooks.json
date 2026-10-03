@@ -1,0 +1,16 @@
+{
+  "description": "Between two steps of a seated agent, asks its team's plugin whether mail may enter the turn.",
+  "hooks": {
+    "PostToolBatch": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$SEATWORKS_SHIM_DIR/seatworks-mail\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

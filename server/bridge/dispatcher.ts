@@ -97,6 +97,55 @@ export class Dispatcher {
     while (this.inFlight.size > 0) await new Promise((resolve) => setImmediate(resolve));
   }
 
+  /** Hands a reader inside a turn what `pick` lets into it, as one text: delivered from then on, as mail sent is. */
+  async handIn(
+    to: string,
+    pick: (
+      queue: readonly PendingEffect[],
+      state: State,
+      last: string | null,
+    ) => { keys: readonly string[]; text: string } | null,
+  ): Promise<string | null> {
+    const channel = `agent:${to}`;
+    if (this.disposed || this.busyChannels.has(channel) || this.paused.has(channel)) return null;
+    const queue = this.store
+      .pending()
+      .filter((p) => p.body.kind === "deliver" && p.body.to === to && !this.inFlight.has(p.key));
+    const picked = pick(queue, this.project.view, this.store.lastEntered(to));
+    const keys = new Set(picked?.keys);
+    const entering = queue.filter((p) => keys.has(p.key));
+    if (!picked || entering.length === 0) return null;
+    this.busyChannels.add(channel);
+    for (const e of entering) this.inFlight.add(e.key);
+    try {
+      const at = this.now().toISOString();
+      const items = entering.map((e) => (e.body as Delivery).item);
+      const body: CommandBody = {
+        type: "record_delivery",
+        to,
+        messages: items.flatMap((i) => (i.kind === "message" ? [i.id] : [])),
+        attentions: items.flatMap((i) => (i.kind === "attention" ? [i.id] : [])),
+      };
+      // The fact before the settle, as for any effect: a crash between them delivers again, and the fact is taken once.
+      const outcome = await this.project.submit({
+        id: `fact:${entering[0]!.key}:entered`,
+        at,
+        caller: { kind: "bridge" },
+        body,
+      });
+      if (!outcome.ok)
+        daemonLog.error(
+          `project ${this.project.id}: the delivery into ${to}'s turn was refused: ${outcome.refused.says}`,
+        );
+      for (const e of entering) this.store.settle(e.key, "done", { entered: at }, at);
+      return picked.text;
+    } finally {
+      for (const e of entering) this.inFlight.delete(e.key);
+      this.busyChannels.delete(channel);
+      this.retry();
+    }
+  }
+
   dispose(): void {
     this.disposed = true;
     for (const t of this.timers) clearTimeout(t);

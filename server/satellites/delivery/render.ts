@@ -18,8 +18,13 @@ const EARLIER = 6;
 /** The events on a scope's record, as the store files them. */
 export type Recorded = (scope: string) => readonly Event[];
 
-/** One delivery: what is queued for a reader, numbered, oldest first, each whole; nothing here ranks, merges or advises. */
-export function renderBatch(items: readonly Item[], state: State, recorded: Recorded): Rendered | null {
+/** One delivery of at most `cap` characters: what is queued for a reader, numbered, oldest first, each whole. */
+export function renderBatch(
+  items: readonly Item[],
+  state: State,
+  recorded: Recorded,
+  cap: number = DELIVERY_CHARS,
+): Rendered | null {
   const parts = items.map((item) => renderItem(item, state, recorded));
   const queued = parts.filter((part) => part !== null);
   if (queued.length === 0) return null;
@@ -29,7 +34,7 @@ export function renderBatch(items: readonly Item[], state: State, recorded: Reco
   for (const part of parts) {
     if (part !== null) {
       // The oldest always goes, however long: a part is never cut.
-      if (held.length > 0 && size + part.text.length + NUMBER_CHARS > DELIVERY_CHARS) break;
+      if (held.length > 0 && size + part.text.length + NUMBER_CHARS > cap) break;
       held.push(part);
       size += part.text.length + NUMBER_CHARS;
     }

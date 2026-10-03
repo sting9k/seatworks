@@ -104,6 +104,11 @@ export const ProfileFileSchema = z
     report: z.record(z.string().regex(/^[a-z][a-z0-9_]*$/), z.string().min(1)).default({}),
     /** The team's flow, a passage every role is given after its own prompt (TEMPLATE.md). */
     flow: z.string().min(1).optional(),
+    /** Mail into a turn its reader is in, in seconds: how long what would wake waits first, and the rest between entries. */
+    intoTurn: z
+      .object({ patience: z.number().int().min(0).max(3600), rest: z.number().int().min(0).max(3600) })
+      .strict()
+      .optional(),
     /** In an attached project's repository: the note in `file`, the `docs` agents keep, the `map` left at removal. */
     project: z
       .object({

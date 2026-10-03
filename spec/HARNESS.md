@@ -128,6 +128,7 @@ Everything through Paseo; no config directory of Seatworks' own, so the Human's 
 | Team tools          | `mcpServers` and `toolPolicy`                                                                 |
 | No prompts          | `modeId: bypassPermissions`; deny rules still win                                             |
 | No sleep in a turn  | `permissions.deny`: `ScheduleWakeup`. Paseo keeps the turn open while the agent sleeps, and mail waits for a turn's end |
+| Mail into a turn    | `providerOptions.extraArgs`: `plugin-dir`, the plugin's own `harness/claude`, a Claude Code plugin whose one hook runs at `PostToolBatch` |
 | Writer              | `providerOptions.sandbox`: `enabled`, `failIfUnavailable`, `allowUnsandboxedCommands: false`   |
 | Context             | Claude reads `AGENTS.md` itself since 2.1.277: V1's CLAUDE.md import goes                     |
 
@@ -190,6 +191,31 @@ The file is for OpenCode 2. Paseo still runs OpenCode 1 when that is what `openc
 the same config with its plugin under a key of version 1: a config of both versions is not one Seatworks has read
 OpenCode 1 take.
 
+## Mail into a turn
+
+Where a team's template lets mail into a turn (`COMMUNICATION.md`, Into a turn), the door is the agent's own hook at
+the pause between two of its steps. It holds no rule: it asks the plugin, over the socket the agent's tools use and
+with the agent's key, what may enter now, and the plugin's answer is the mail or nothing.
+
+| Agent       | The door                                                                                              |
+| ----------- | ----------------------------------------------------------------------------------------------------- |
+| Claude Code | A `PostToolBatch` hook, which fires once a batch of tools has run and before the next model call. It runs `seatworks-mail` from the directory of the git guard, and what that prints is the hook's `additionalContext`, 10,000 characters at most |
+| Pi          | Its extension's `tool_result` handler sends the mail with `deliverAs: "steer"`, which Pi delivers after the turn's tool calls and before the next model call |
+| Codex       | None yet. Its `PostToolUse` hook takes `additionalContext`, but a hook that is not managed must be trusted through `/hooks` first |
+| OpenCode    | None yet                                                                                              |
+
+- **Silent while nothing waits.** The plugin keeps a file for each seat, named to the agent as `SEATWORKS_MAIL`,
+  empty unless something may enter. Claude's launcher tests it in the shell and starts no process otherwise: a hook
+  that spawns one at every step was measured at most of a second a step elsewhere. Pi's extension holds the line
+  open and asks.
+- **Never the Human's config.** Paseo's own "terminal agent hooks" write `~/.claude/settings.json`,
+  `~/.codex/hooks.json` and an OpenCode plugin, for every session on the machine, and only to learn whether an agent
+  in one of its terminals runs or idles. Seatworks' hook is loaded for the agents it seats alone, from its own
+  folder, and nothing of the Human's is written.
+- **What a timeline shows.** Claude's hook text is in no timeline Paseo keeps. Pi's is listed as the agent's own
+  words: the plugin knows it by its first words and counts none of it as said by the agent.
+- No launcher is written on Windows.
+
 ## Role prompts
 
 One prompt per role. An agent gets a note of its own only where its base prompt would lead the role wrong; none
@@ -249,6 +275,14 @@ Paseo made (`PASEO.md`, Seen on a live daemon):
   Lead kept was refused, naming the lane's scope and what it holds; the Lead's `git add` of a file it had handed
   out was refused, naming the Peer's. A Lead on Claude Code works under the writer's sandbox since, and did all
   of it there.
+- **Mail into a turn.** Run the same day with SLP's two numbers, 120 and 90 seconds. A Peer on Claude Code (Haiku
+  4.5), in one turn that made twelve files with a `sleep` between them, was sent a direction by the Human when it had
+  made two: it entered 4.6 seconds later, at the Peer's next pause, and the third file on followed it; the brief its
+  Lead amended over its own copy of the direction entered ten seconds after that. The hook ran for a writer under
+  its sandbox and reached the plugin's socket. A Peer on Pi (`zai/glm-5.3-flash`) was sent one with three files
+  made: it entered six seconds later, after a tool's result, and the fourth file on followed it. Left to itself that
+  Peer ended its turn after every file, since its brief said a message might come, and mail reached it between turns
+  as it always has.
 - **Waiting.** Told only that it would be told of an outcome, an agent stayed in its turn, where nothing reaches it
   (`COMMUNICATION.md`, When a reader is woken). With the first words that say how it waits, a Lead did a lane in
   five calls.

@@ -1,4 +1,5 @@
 import type { AgentTimelineItem } from "@getpaseo/protocol/agent-types";
+import { INTO_TURN } from "../../../shared/contracts/delivery.ts";
 
 /** One piece of an agent's turn, in words that name nothing of Paseo (WATCH.md, The eye). */
 export type TurnItem = {
@@ -46,9 +47,11 @@ function turnItems(timeline: readonly AgentTimelineItem[]): TurnItem[] {
   for (const item of timeline) {
     if (item.type === "reasoning")
       out.push({ kind: "thought", text: item.text, failed: null, signature: null, path: null });
-    else if (item.type === "assistant_message")
+    else if (item.type === "assistant_message") {
+      // Mail handed into the turn is shown by some agents as their own words: it is the team's, and nothing it said.
+      if (item.text.startsWith(INTO_TURN)) continue;
       out.push({ kind: "said", text: item.text, failed: null, signature: null, path: null });
-    else if (item.type === "tool_call") {
+    } else if (item.type === "tool_call") {
       const d = item.detail;
       if (d.type === "edit" || d.type === "write") {
         const text = d.type === "edit" ? (d.unifiedDiff ?? d.newString ?? "") : (d.content ?? "");

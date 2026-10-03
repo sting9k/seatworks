@@ -6,7 +6,13 @@ import type { Event } from "../../../shared/contracts/events.ts";
 
 /** `abandoned`: its satellite threw on every try, so no fact about it reached the record. */
 export type EffectStatus = "pending" | "done" | "dropped" | "failed" | "abandoned";
-export type PendingEffect = Effect & { readonly seq: number; readonly attempts: number };
+/** An effect not yet settled, with the event that asked for it and when. */
+export type PendingEffect = Effect & {
+  readonly seq: number;
+  readonly attempts: number;
+  readonly at: string;
+  readonly cause: Event["type"];
+};
 /** An event filed under a subject, so that what is read of one thing reads its own events and not the whole log. */
 export type Filed = { readonly subject: string; readonly seq: number };
 
@@ -40,6 +46,7 @@ export class ProjectStore {
   private readonly lastSeq: StatementSync;
   private readonly byCommand: StatementSync;
   private readonly pendingRows: StatementSync;
+  private readonly enteredRow: StatementSync;
   private readonly settleRow: StatementSync;
   private readonly attemptRow: StatementSync;
   private readonly recentRows: StatementSync;
@@ -65,7 +72,10 @@ export class ProjectStore {
       "SELECT seq, command_id, at, by, type, payload FROM events WHERE command_id = ? ORDER BY seq",
     );
     this.pendingRows = this.db.prepare(
-      "SELECT key, event_seq, payload, attempts FROM effects WHERE status = 'pending' ORDER BY event_seq, key",
+      "SELECT f.key, f.event_seq, f.payload, f.attempts, e.at, e.type FROM effects f JOIN events e ON e.seq = f.event_seq WHERE f.status = 'pending' ORDER BY f.event_seq, f.key",
+    );
+    this.enteredRow = this.db.prepare(
+      "SELECT max(json_extract(result, '$.entered')) AS at FROM effects WHERE kind = 'deliver' AND json_extract(payload, '$.to') = ? AND json_valid(result)",
     );
     this.settleRow = this.db.prepare(
       "UPDATE effects SET status = ?, result = ?, settled_at = ? WHERE key = ? AND status = 'pending'",
@@ -148,9 +158,28 @@ export class ProjectStore {
 
   pending(): PendingEffect[] {
     return this.pendingRows.all().map((row) => {
-      const r = row as { key: string; event_seq: number; payload: string; attempts: number };
-      return { key: r.key, seq: r.event_seq, attempts: r.attempts, body: JSON.parse(r.payload) as Effect["body"] };
+      const r = row as {
+        key: string;
+        event_seq: number;
+        payload: string;
+        attempts: number;
+        at: string;
+        type: Event["type"];
+      };
+      return {
+        key: r.key,
+        seq: r.event_seq,
+        attempts: r.attempts,
+        body: JSON.parse(r.payload) as Effect["body"],
+        at: r.at,
+        cause: r.type,
+      };
     });
+  }
+
+  /** When anything last entered a turn of this reader's, as its delivery was settled; none if nothing did. */
+  lastEntered(to: string): string | null {
+    return (this.enteredRow.get(to) as { at: string | null } | undefined)?.at ?? null;
   }
 
   /** Effects given up after throwing, with the last error, for as long as their rows are kept. */

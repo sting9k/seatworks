@@ -28,6 +28,11 @@ export async function agentTools(socket: string, env: Record<string, string>) {
       const r = await next();
       return r as unknown as { ok: boolean; text: string };
     },
+    /** What the agent's hook asks between two of its steps: the mail that may enter its turn, or nothing. */
+    mail: async () => {
+      conn.write(`${JSON.stringify({ type: "mail", id: ++id })}\n`);
+      return String((await next()).text);
+    },
     close: () => conn.destroy(),
   };
 }

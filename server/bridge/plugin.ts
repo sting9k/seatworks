@@ -46,14 +46,14 @@ import type { ReflexSettings } from "../../shared/contracts/settings.ts";
 import { humanView } from "../../shared/views/human.ts";
 import { statusText } from "../../shared/views/status.ts";
 import { stuckOf } from "../../shared/views/stuck.ts";
-import { type Home, type Places, layHome } from "../core/home.ts";
+import { type Home, type Places, layHome, withPlaces } from "../core/home.ts";
 import { KeyedQueue } from "../core/keyed-queue.ts";
 import { Keys } from "../core/keys.ts";
 import { daemonLog } from "../core/logger.ts";
 import { sizeOf } from "../core/disk.ts";
 import { archiveDir, projectDir } from "../core/paths.ts";
 import { rulesDir } from "../core/rules.ts";
-import { installShim } from "../core/shim.ts";
+import { installMail, installShim } from "../core/shim.ts";
 import { type Harness, type Model, PaseoHost, type Runs } from "../satellites/agent-host/host.ts";
 import { PaseoLink } from "../satellites/agent-host/paseo-link.ts";
 import { EvidenceRunner } from "../satellites/evidence/runner.ts";
@@ -83,7 +83,7 @@ import { pin, pinnedDir, templateOf } from "../profile/pinned.ts";
 import { listPresets } from "../profile/presets.ts";
 import { listProfiles, type Listed as ListedProfile, removeProfile } from "../profile/profiles.ts";
 import { Dispatcher } from "./dispatcher.ts";
-import { type Wiring, handlersFor, scratchFor, seatDir, seatEnv, agentEnv } from "./effects.ts";
+import { type Wiring, handlersFor, intoTurn, keepMail, scratchFor, seatDir, seatEnv, agentEnv } from "./effects.ts";
 import { branchesOf, keepHeld } from "./lane.ts";
 import { type Kept, leftoverId, leftoversOf, projectLeftover, refOf } from "./leftovers.ts";
 import { Project, type Submitted } from "./project.ts";
@@ -253,6 +253,7 @@ export class Plugin {
     if (!dir) throw new Error(`Paseo's config has no plugins.${PLUGIN_ID} with a path`);
     const host = new PaseoHost(this.link, (provider) => this.harness(provider));
     const shimDir = installShim(this.root, join(dir, "bin", "git-shim.ts"));
+    installMail(shimDir, join(dir, "bin", "mail.ts"));
     const socketPath =
       process.platform === "win32"
         ? `\\\\.\\pipe\\seatworks-${createHash("sha256").update(this.root).digest("hex").slice(0, 16)}`
@@ -1136,6 +1137,7 @@ export class Plugin {
       project.onCommitted((events) => {
         // Before any effect of these events is sent: an agent made of them reads the file from its first command.
         keepHeld(scratch, project.view);
+        keepMail(wiring, store.pending(), project.view);
         runtime.loaded.reflex?.onEvents(id, events, project.view);
         runtime.lastActive = Date.now();
         this.index(id, runtime);
@@ -1256,6 +1258,11 @@ export class Plugin {
         return a?.status === "seated" && !runtime.wiring.bundle.profile.roles.has(a.role) ? a.role : null;
       },
       read: (actor, name, args) => this.read(runtime, actor, name, args),
+      mail: async (actor) => {
+        const text = await runtime.dispatcher.handIn(actor, intoTurn(runtime.wiring, Date.now));
+        if (text !== null) keepMail(runtime.wiring, runtime.store.pending(), runtime.project.view);
+        return text;
+      },
     };
   }
 
@@ -1339,9 +1346,9 @@ function harnessOf(dir: string, root: string, provider: string, places: Places):
   // A variable an agent reads its config from is written in the file as that config, and handed over as its JSON.
   const named = Object.entries(h.env ?? {}).map(([name, v]) => [name, typeof v === "string" ? v : JSON.stringify(v)]);
   return {
-    always: h.always ?? {},
-    writes: h.writes ?? {},
-    reads: h.reads ?? {},
+    always: withPlaces(h.always ?? {}, places) as Harness["always"],
+    writes: withPlaces(h.writes ?? {}, places) as Harness["writes"],
+    reads: withPlaces(h.reads ?? {}, places) as Harness["reads"],
     env: { ...(Object.fromEntries(named) as Record<string, string>), ...home },
     servers: h.servers ?? true,
   };
