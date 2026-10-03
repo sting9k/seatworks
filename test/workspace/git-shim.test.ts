@@ -147,6 +147,37 @@ test("in a worktree others work in, a seat's git takes nothing that is a neighbo
   );
 });
 
+test("a file is the innermost scope's that holds it: an owner that writes keeps off what it handed out, a task keeps off what its owner kept, and each takes its own", () => {
+  const cwd = copy();
+  mkdirSync(join(cwd, "src/a"), { recursive: true });
+  writeFileSync(join(cwd, "src/a/one.txt"), "one\n");
+  writeFileSync(join(cwd, "src/index.txt"), "index\n");
+  // Each seat's file says whose a path is, the first line that holds a file deciding; a line with no scope is its own.
+  const owner = { SEATWORKS_HELD: heldFile("src/a/\t1.1\nsrc/\t\n") };
+  const task = { SEATWORKS_HELD: heldFile("src/a/\t\nsrc/\t1\n") };
+
+  assert.match(
+    gitIn(cwd, true, owner, "add", "-A").err,
+    /src\/a\/one\.txt is scope 1\.1's to write \(it holds src\/a\/\)\. You handed it out: it is that scope's alone until it is taken in or dropped/,
+    "what it handed out is the task's, though its own paths hold it too",
+  );
+  assert.match(
+    gitIn(cwd, true, task, "add", "-A").err,
+    /src\/index\.txt is scope 1's to write \(it holds src\/\)\. Name your own files; for a file another holds, ask the owner above you/,
+    "what its owner kept is the owner's",
+  );
+  assert.equal(gitIn(cwd, true, task, "add", "src/a").code, 0, "the task takes its own");
+  assert.equal(gitIn(cwd, true, task, "commit", "-q", "-m", "the task's").code, 0);
+  assert.equal(gitIn(cwd, true, owner, "add", "src/index.txt").code, 0, "and the owner what it has not handed out");
+  assert.equal(gitIn(cwd, true, owner, "commit", "-q", "-m", "the owner's own").code, 0);
+  assert.equal(
+    execFileSync("git", ["log", "--format=%s", "--name-only", "-2"], { cwd, encoding: "utf8" })
+      .replace(/\n+/g, " ")
+      .trim(),
+    "the owner's own src/index.txt the task's src/a/one.txt",
+  );
+});
+
 test("a lane's owner, which writes nothing, takes a branch in by hand: it merges, settles what conflicts in any file, and concludes the merge; no other commit is its to make", () => {
   const cwd = copy();
   execFileSync("git", ["branch", "base"], { cwd });

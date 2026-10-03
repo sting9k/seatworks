@@ -27,7 +27,7 @@ agent's tools reach it) in a home's files, `{git}` (the repository's git directo
 
 | Property  | Means for the agent                                                                            |
 | --------- | ---------------------------------------------------------------------------------------------- |
-| `writes`  | Works in its lane's worktree and commits there, on the lane's branch.                          |
+| `writes`  | Works in its lane's worktree and commits there, on the lane's branch: what its scope holds and no open scope under it does. |
 | otherwise | Works in that same worktree, or in the repository itself at the root, with its agent's own tools, so a Lead or a Reviewer can run what a decision or a review needs. It cannot commit. |
 | always    | No native subagents. The team's tools. Its role prompt. No push, no branch move, no git outside its copy, or outside the repository for the root's agent. |
 
@@ -48,16 +48,18 @@ agent's tools reach it) in a home's files, `{git}` (the repository's git directo
    agent's environment, so the five per-agent git deny lists of V1 go.
 4. **Its own, in a worktree others work in.** The owner asked that Paseo's worktrees be used strictly, with nothing
    left loose: "quản lý chặt việc sử dụng worktree của paseo nhé không thả lỏng ra". So where a seat shares its
-   worktree, any seat of a lane but a writer that has the lane to itself, the same shim holds its git to what is its
-   own. The plugin keeps a file for each such seat, written again as the record moves, of the paths its neighbours
-   hold: the open scopes of its lane that are neither over it nor under it. To stage, commit or drop the edits of a
-   file a neighbour holds is refused, naming the file, the scope and the path it holds; what git would take is read
-   from git's own dry run, so `add -A` and `commit -a` are held as a named file is. Reset, rebase, clean and
-   amending a commit are refused there outright: each takes away or rewrites more than one's own. A file nobody
-   holds is anyone's to write.
-5. **A lane's owner merges by hand.** It writes nothing, but one thing: when its lane must take its parent's branch
-   in, it runs the merge itself and concludes it, settling any file whoever holds it. The shim lets it merge, and
-   commit only while a merge waits to be concluded.
+   worktree, any seat of a lane but a writer that has the lane to itself and seats nobody, the same shim holds its
+   git to what is its own. A file is the innermost open scope's that holds it (I1, I2). The plugin keeps a file for
+   each such seat, written again as the record moves, that says whose each path of the lane is, the first line
+   that holds a file deciding: first what the scopes under it hold, which it handed out; then its own; then the
+   rest, a neighbour's and what a writer over it kept. An owner over it that does not write is no line: what it
+   holds is written by whoever it seats. To stage, commit or drop the edits of a file that is another's is
+   refused, naming the file, the scope and the path it holds; what git would take is read from git's own dry run,
+   so `add -A` and `commit -a` are held as a named file is. Reset, rebase, clean and amending a commit are refused
+   there outright: each takes away or rewrites more than one's own. A file nobody holds is anyone's to write.
+5. **A lane's owner merges by hand.** When its lane must take its parent's branch in, it runs the merge itself and
+   concludes it, settling any file whoever holds it. One whose role does not write is let merge, and commit only
+   while a merge waits to be concluded; one that writes is held to its own in every other commit.
 
 Rules that match a command's text (Claude's `Bash(git push *)`, Codex's exec policy, OpenCode's `shell` rules)
 are passed by `git -C`, an alias or a full path; Seatworks does not rely on them.
@@ -238,7 +240,15 @@ Paseo made (`PASEO.md`, Seen on a live daemon):
 - **A Lead wrote.** Two Leads of five wrote their lane's files themselves, in the worktree they share with their
   Peer, staged them and tried to commit, which was refused. One left its files there: the Peer seated after found
   them and committed them. So the edit of a role that does not write does reach a commit, through a writer beside
-  it.
+  it. The owner's answer was to let a Lead write what is too small to hand out: SLP's Lead writes since, held by
+  the guard to what it has not handed out. A Reviewer, and a lane's owner of a template that does not write,
+  are held by their prompt still.
+- **A Lead that writes.** Run again the same day with SLP's Lead given `writes`. Two Leads each judged their ticket
+  small, a typo and a function with its test, and did it themselves with nobody seated; both lanes landed. A third,
+  told to split, seated a Peer on two files by name and wrote a third itself. The Peer's `git add` of the file its
+  Lead kept was refused, naming the lane's scope and what it holds; the Lead's `git add` of a file it had handed
+  out was refused, naming the Peer's. A Lead on Claude Code works under the writer's sandbox since, and did all
+  of it there.
 - **Waiting.** Told only that it would be told of an outcome, an agent stayed in its turn, where nothing reaches it
   (`COMMUNICATION.md`, When a reader is woken). With the first words that say how it waits, a Lead did a lane in
   five calls.

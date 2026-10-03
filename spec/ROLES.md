@@ -52,7 +52,11 @@ From CONCEPT-V2 §3.1. The prompt is built to answer them and nothing else.
 
 - **Owns** the lane's shared state (its plan), who writes what, the order, integration, and acceptance.
 - **Is a brain, not a dispatcher.** It reads code, runs what it must to decide, and holds a framing of its own. It
-  writes nothing: a Lead that builds loses the distance it judges from, and I2 keeps it out of what it gave away.
+  builds little: a Lead that builds loses the distance it judges from, and I2 keeps it out of what it gave away.
+- **Makes the smallest changes itself.** One whose brief would cost more than the change, in what it has not
+  handed out: a typo, a line, the step that joins two Peers' parts, or a whole lane that is nothing more. Whether
+  a change is that small is its judgement, as the owner asked. It goes up with the lane's hand-back, so the
+  Supervisor takes it in on the same evidence as the rest.
 - **Keeps its own idea to itself** when it briefs. It asks open questions, and for a hard decision with many sound
   answers it runs two or three blind designs, on different models where it can, then brings them together. It favours
   neither the one that matches its idea nor the one argued hardest, and thinks again where they contradict it. No

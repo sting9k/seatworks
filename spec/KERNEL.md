@@ -53,12 +53,17 @@ The SLP profile, from CONCEPT-V2 §3, is `templates/slp/profile.yaml`. The prope
 | Role       | Properties                                                                                   |
 | ---------- | -------------------------------------------------------------------------------------------- |
 | supervisor | `root`, `delegates`, `humanDoor`; spawns lead, peer, watcher; speaks to the Human, children, descendants |
-| lead       | `delegates`; spawns peer, reviewer; speaks to its parent and children                        |
+| lead       | `delegates`, `writes`; spawns peer, reviewer; speaks to its parent and children              |
 | peer       | `writes`; speaks to its parent                                                               |
 | reviewer   | `reading`; speaks to its parent                                                              |
 | watcher    | `watches`; seated under the root, so its parent is the Supervisor's                          |
 
-A Supervisor that seats a Peer straight under the root is the path for a small change done by one agent (P17).
+A Supervisor that seats a Peer straight under the root is the path for a small change done by one agent (P17). A
+Lead writes too, for the same reason one level down: a change too small to be worth a brief it makes itself, in
+what it has not handed out (`ROLES.md`).
+
+A role that is `reading` or `watches` is nothing else. One that `delegates` may be `writes` too. Until 3 October
+2026 a role took at most one of the four, and no owner of a lane could write.
 
 ## 3. Actors and scopes
 
@@ -77,7 +82,8 @@ A Supervisor that seats a Peer straight under the root is the path for a small c
   - Status moves `open → integrated | dropped`. A scope integrated into its parent stays on the record.
   - A child's `paths` lie within its parent's. A `reading` scope has none.
   - A scope whose actor `watches` names the scopes it is `over`; the root's watcher is over every scope.
-  - A scope whose owner `writes` has itself as writer. A scope whose owner `delegates` has no writer.
+  - A scope whose owner `writes` has itself as writer, and no other scope has one. A writer that hands a part of
+    its paths to a child scope writes what is left: what an open child holds is the child's alone (I2).
 - **Edges.** The five relations of CONCEPT-V2 §2.2, as data, kept and changed by events, never inferred from who
   spawned whom: `spawned` and `owns` follow from scopes, and three are edges from one scope to another, each of which
   does something:
@@ -220,6 +226,13 @@ The kernel MUST refuse a command that would break one of these, and MUST NOT ref
 | I10 | Only a role with `humanDoor` asks the Human; a message is sent only along the sender's `speaksTo`.                   | §3.1, §7.3 |
 | I11 | An obligation closes only when what is owed is done; it moves with its holder.                                       | §4.5       |
 | I12 | An observation changes only the record: it moves no line, finding, scope or hold, opens no obligation but a candidate's on its watcher, answers nothing, and is delivered only as a note that asks nothing, as `judgement` evidence, or as a fact for the actor it concerns. | N1, N6     |
+
+The kernel sees no write, so I2 is held where the writing is done: an owner and the scopes under it work in one
+worktree, and there the git guard keeps each off what is another's (`HARNESS.md`, guard 4). Until 3 October 2026 the
+kernel refused more than I2 says: a scope with a writer could have no open child, so an owner that had handed
+anything out wrote nothing at all. CONCEPT-V2 §4.2 rules out only work done beside a Peer in the scope it was
+given, and the owner asked for the rest: "đôi khi các phần sửa quá bé thì không cần chia peer, cái đấy tự lead cảm
+thấy được".
 
 ## 6. Commands
 

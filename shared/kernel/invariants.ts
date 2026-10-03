@@ -7,7 +7,7 @@ import type { State } from "./state.ts";
 /** The invariants that hold over the whole state, checked after every command and by the property tests (KERNEL.md §5). */
 
 export function checkState(state: State): Refusal | null {
-  return oneWriter(state) ?? delegatorsWriteNothing(state) ?? siblingsOrdered(state) ?? obligationsHeld(state);
+  return oneWriter(state) ?? siblingsOrdered(state) ?? obligationsHeld(state);
 }
 
 /** I1: a scope's writer is its own seated actor, and no actor writes two scopes. */
@@ -23,18 +23,6 @@ function oneWriter(state: State): Refusal | null {
       return { invariant: "I1", says: `${scope.writer} would write both ${other} and ${scope.id}` };
     writing.set(scope.writer, scope.id);
   }
-  return null;
-}
-
-/** I2: a scope that delegates has no writer, so its owner never writes what its children hold. */
-function delegatorsWriteNothing(state: State): Refusal | null {
-  for (const scope of state.scopes.values())
-    if (
-      scope.status === "open" &&
-      scope.writer !== null &&
-      [...state.scopes.values()].some((c) => c.parent === scope.id && c.status === "open")
-    )
-      return { invariant: "I2", says: `scope ${scope.id} has a writer and open children` };
   return null;
 }
 

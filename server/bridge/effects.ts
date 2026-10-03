@@ -66,20 +66,25 @@ export async function seatDir(
 export function seatEnv(
   w: Pick<Wiring, "project" | "keys" | "team" | "scratch">,
   state: State,
-  seat: { readonly actor: string; readonly scope: Scope; readonly cwd: string; readonly writes: boolean },
+  seat: {
+    readonly actor: string;
+    readonly scope: Scope;
+    readonly cwd: string;
+    readonly role: { readonly writes: boolean; readonly delegates: boolean };
+  },
 ): Record<string, string> {
-  const shared = shares(state, seat.scope, seat.writes);
+  const shared = shares(state, seat.scope, seat.role);
   return {
     SEATWORKS_PROJECT: w.project,
     SEATWORKS_ACTOR: seat.actor,
     SEATWORKS_KEY: w.keys.keyOf(w.project, seat.actor),
-    SEATWORKS_WRITES: seat.writes ? "1" : "0",
+    SEATWORKS_WRITES: seat.role.writes ? "1" : "0",
     SEATWORKS_COPY: seat.cwd,
     SEATWORKS_SHIM_DIR: w.team.shimDir,
     SEATWORKS_SOCKET: w.team.socket,
-    // In a folder others work in, its git is held to its own: this file says which paths are a neighbour's.
+    // In a folder others work in, its git is held to its own: this file says whose each path there is.
     ...(shared ? { SEATWORKS_HELD: heldFile(w.scratch, seat.actor) } : {}),
-    // Whoever owns a lane takes its parent's branch in by hand when the two conflict, though it writes nothing else.
+    // Whoever owns a lane takes its parent's branch in by hand when the two conflict, whatever else it may write.
     ...(shared && laneOf(state, seat.scope).id === seat.scope.id ? { SEATWORKS_MERGES: "1" } : {}),
   };
 }
@@ -159,7 +164,7 @@ export function handlersFor(w: Wiring): Handlers {
         const why = `the worktree scope ${actor.scope} works in is gone`;
         return { status: "failed", why, facts: [gone(actor.id, why)] };
       }
-      const env = seatEnv(w, state, { actor: actor.id, scope, cwd, writes: role.writes });
+      const env = seatEnv(w, state, { actor: actor.id, scope, cwd, role });
       const given = filledIn(w.bundle.servers.get(actor.role) ?? [], process.env);
       if (!given.ok) return { status: "failed", why: given.says, facts: [gone(actor.id, given.says)] };
       const kept = matchingOf(w.agents);

@@ -1020,7 +1020,7 @@ export class Plugin {
     if (!actor || !scope || !role) return null;
     const cwd = await seatDir(runtime.wiring, runtime.project.view, scope);
     if (cwd === null) return null;
-    const env = seatEnv(runtime.wiring, runtime.project.view, { actor: actor.id, scope, cwd, writes: role.writes });
+    const env = seatEnv(runtime.wiring, runtime.project.view, { actor: actor.id, scope, cwd, role });
     return { ...agentEnv(runtime.wiring, env), ...this.harness(provider)?.env };
   }
 

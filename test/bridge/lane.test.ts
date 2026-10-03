@@ -237,10 +237,16 @@ test("two Peers of one lane work in its one worktree on its one branch: each is 
     git(laneCopy, "commit", "-q", "-m", dir);
     return git(laneCopy, "rev-parse", "HEAD");
   };
+  const whose = (agent: typeof one) => readFileSync(agent.env.SEATWORKS_HELD!, "utf8");
   assert.equal(
-    readFileSync(one.env.SEATWORKS_HELD!, "utf8"),
-    "src/b/\t1.2\n",
-    "each is told which paths its neighbour holds, for its git to keep off them",
+    whose(one),
+    "src/a/\t\nsrc/b/\t1.2\nsrc/\t1\n",
+    "each is told whose every path of the lane is, its own first: its neighbour's, and what its Lead kept",
+  );
+  assert.equal(
+    whose(paseo.created[1]!),
+    "src/a/\t1.1\nsrc/b/\t1.2\nsrc/\t\n",
+    "and the Lead, which writes too, that what it handed out is no longer its own",
   );
   assert.deepEqual(
     [paseo.created[0]!.env.SEATWORKS_HELD, paseo.created[1]!.env.SEATWORKS_MERGES, one.env.SEATWORKS_MERGES],
@@ -265,8 +271,7 @@ test("two Peers of one lane work in its one worktree on its one branch: each is 
     const taken = await lead.call("integrate", { scope: task, evidence: [await proof(lead, task)] });
     assert.ok(taken.ok, `${task}: ${taken.text}`);
     await plugin.idle();
-    if (task === "1.1")
-      assert.equal(readFileSync(two.env.SEATWORKS_HELD!, "utf8"), "", "a neighbour taken in holds nothing any more");
+    if (task === "1.1") assert.equal(whose(two), "src/b/\t\nsrc/\t1\n", "a neighbour taken in holds nothing any more");
   }
   assert.equal(git(repo, "rev-parse", `sw/${project}/1`), head, "taking them in moved nothing: no merge was made");
   assert.ok(existsSync(laneCopy), "and the worktree is the lane's, not theirs to take away");
@@ -284,6 +289,59 @@ test("two Peers of one lane work in its one worktree on its one branch: each is 
   );
   assert.equal(existsSync(laneCopy), false, "and the lane's worktree went with its landing");
   for (const tools of [supervisor, lead, a, b]) tools.close();
+});
+
+test("a change too small to hand out is made by the lane's owner itself: it commits in the lane's worktree with nobody seated under it, and the lane lands", async () => {
+  const repo = mkdtempSync(join(tmpdir(), "sw-small-"));
+  git(repo, "init", "-q", "-b", "main");
+  writeFileSync(join(repo, "a.txt"), "a\n");
+  git(repo, "add", ".");
+  git(repo, "commit", "-q", "-m", "start");
+  const plugin = new Plugin(stateRoot());
+  plugins.push(plugin);
+  const paseo = fakePaseo(pluginDir);
+  plugin.saw(paseo.api);
+  const { socketPath } = await plugin.whenReady();
+  await plugin.openProject(repo, "main");
+  await plugin.idle();
+  const supervisor = await agentTools(socketPath, paseo.created[0]!.env);
+  assert.ok((await supervisor.call("set_checks", { checks: [{ name: "there", run: ["test", "-f", "a.txt"] }] })).ok);
+  const lane = {
+    parent: "root",
+    role: "lead",
+    paths: ["src/"],
+    brief: { goal: { text: "A typo" }, kind: "verification" },
+  };
+  assert.ok((await supervisor.call("open_scope", lane)).ok);
+  await plugin.idle();
+  const leadAgent = paseo.created[1]!;
+  const lead = await agentTools(socketPath, leadAgent.env);
+  // Its git as its own process runs it: the guard first on its PATH, told what its seat may do.
+  const itsGit = (...args: string[]) =>
+    execFileSync("git", ["-c", "user.name=t", "-c", "user.email=t@t", ...args], {
+      cwd: leadAgent.cwd,
+      env: { ...process.env, ...leadAgent.env },
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    }).trim();
+  mkdirSync(join(leadAgent.cwd, "src"));
+  writeFileSync(join(leadAgent.cwd, "src", "small.txt"), "small\n");
+  itsGit("add", "src/small.txt");
+  itsGit("commit", "-q", "-m", "A small change");
+  const head = itsGit("rev-parse", "HEAD");
+
+  assert.ok((await lead.call("hand_back", { commit: head, text: "the typo" })).ok);
+  await plugin.idle();
+  await plugin.idle();
+  const proof = /(e\d+) check on [0-9a-f]+: ok/.exec((await supervisor.call("status", { scope: "1" })).text)?.[1];
+  assert.ok(proof);
+  const landed = await supervisor.call("integrate", { scope: "1", evidence: [proof] });
+  assert.ok(landed.ok, landed.text);
+  await plugin.idle();
+  assert.equal(readFileSync(join(repo, "src/small.txt"), "utf8"), "small\n", "the base holds its change");
+  assert.equal(existsSync(leadAgent.cwd), false, "and the lane's worktree went with its landing");
+  assert.equal(paseo.created.length, 2, "nobody was seated for it");
+  for (const tools of [supervisor, lead]) tools.close();
 });
 
 test("two lanes that meet in one file: the second's hand-back conflicts, nothing is merged, the root's owner is asked with what the base took in and the lane's owner told it waits; the lane takes the base in by hand and lands", async () => {

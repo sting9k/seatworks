@@ -19,6 +19,7 @@ roles:
 
   lead:
     delegates: true
+    writes: true
     spawns: [peer, reviewer]
     speaksTo: [parent, children]
     prompt: roles/lead.md

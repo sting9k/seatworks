@@ -30,31 +30,43 @@ export function laneOf(state: State, scope: Scope): Scope {
   return at;
 }
 
-/** Whether a scope's agent works in a folder others work in too: any seat of a lane but one that writes it alone. */
-export function shares(state: State, scope: Scope, writes: boolean): boolean {
+/** Whether a scope's agent works in a folder others work in too: any seat of a lane but one that writes it and seats nobody. */
+export function shares(
+  state: State,
+  scope: Scope,
+  role: { readonly writes: boolean; readonly delegates: boolean },
+): boolean {
   if (scope.id === ROOT || scope.kind === "watch") return false;
-  return laneOf(state, scope).id !== scope.id || !writes;
+  return laneOf(state, scope).id !== scope.id || !role.writes || role.delegates;
 }
 
-/** Where a seat reads which paths its neighbours hold: a file a seat, kept as the record moves. */
+/** Where a seat reads whose each path of its lane is: a file a seat, kept as the record moves. */
 export const heldFile = (scratch: string, actor: string): string => join(scratch, "held", actor);
 
-/** The paths other open scopes hold in the worktree a scope works in, a line each with the scope that holds it. */
+/** Whose each path is in the worktree a scope works in, a line each, the first that holds a file deciding: no scope is its own. */
 export function heldBeside(state: State, scope: Scope): string {
   const lane = laneOf(state, scope).id;
   const over = above(state, scope);
-  const lines: string[] = [];
+  const under: Scope[] = [];
+  const beside: Scope[] = [];
   for (const other of state.scopes.values()) {
-    if (other.status !== "open" || other.id === ROOT || other.kind === "watch") continue;
-    // What it works under holds its own paths with it, and what works under it writes for it: neither is a neighbour.
-    if (over.has(other.id) || above(state, other).has(scope.id)) continue;
+    if (other.status !== "open" || other.id === ROOT || other.kind === "watch" || other.id === scope.id) continue;
     if (laneOf(state, other).id !== lane) continue;
-    for (const path of other.paths) lines.push(`${path}\t${other.id}`);
+    // What it handed out is the child's alone; what it works under holds its paths with it, unless that one writes too.
+    if (above(state, other).has(scope.id)) under.push(other);
+    else if (!over.has(other.id) || other.writes) beside.push(other);
   }
+  // The innermost first: a path two of them hold is the one's that was given it last.
+  const inner = (a: Scope, b: Scope) => above(state, b).size - above(state, a).size;
+  const lines = [
+    ...under.sort(inner).flatMap((other) => other.paths.map((path) => `${path}\t${other.id}`)),
+    ...scope.paths.map((path) => `${path}\t`),
+    ...beside.sort(inner).flatMap((other) => other.paths.map((path) => `${path}\t${other.id}`)),
+  ];
   return lines.length > 0 ? `${lines.join("\n")}\n` : "";
 }
 
-/** Writes each seated agent's file of what its neighbours hold, where that has changed since it was written. */
+/** Writes each seated agent's file of whose each path is, where that has changed since it was written. */
 export function keepHeld(scratch: string, state: State): void {
   for (const actor of state.actors.values()) {
     const scope = actor.status === "seated" ? state.scopes.get(actor.scope) : undefined;

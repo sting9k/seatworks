@@ -32,7 +32,7 @@ of its agents needs a look.
 | ---------- | --------------------------------------------------------------------------- | ----------------------------------------- |
 | You        | What the project is for, what must hold, what it may cost                   |                                           |
 | Supervisor | Your intent turned into lanes, what happens where lanes meet, landing       | Writes code or decides a technical result |
-| Lead       | One lane: its plan, who writes what, weighing what comes back, acceptance   | Writes code                               |
+| Lead       | One lane: its plan, who writes what, weighing what comes back, acceptance   | Writes in what it gave a Peer             |
 | Peer       | One task, and the engineering judgement inside it; may argue with its brief | Writes outside its paths                  |
 | Reviewer   | Nothing: its verdict on one commit is evidence the Lead weighs              | Changes the work                          |
 | Watcher    | Nothing: it tells an owner when one of its agents needs a look              | Speaks to the agent it watches            |

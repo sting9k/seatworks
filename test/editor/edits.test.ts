@@ -135,6 +135,23 @@ test("a role's job is changed in one step, the old one's tools going and the new
   assert.match(refused.says, /lead spawns roles/);
 });
 
+test("a role that hands out work may write too, by a switch beside its job; one that reviews may do nothing else", () => {
+  const lead = (template: typeof slp) => template.profile.roles.get("lead")!;
+  const plain = changed(slp, setProperty("lead", "writes", false));
+  assert.deepEqual([lead(plain).delegates, lead(plain).writes], [true, false]);
+  assert.deepEqual([...lead(plain).tools], [...lead(slp).tools], "its tools are those of handing out work either way");
+
+  const both = changed(plain, setProperty("lead", "writes", true));
+  assert.deepEqual([lead(both).delegates, lead(both).writes], [true, true]);
+  const node = role(graphOf(both), "lead");
+  assert.equal(node.job, "delegates", "its job is still to hand out work");
+  assert.ok(node.properties.includes("writes"), "and the graph says it writes too");
+
+  const refused = applied(slp, setProperty("reviewer", "writes", true));
+  assert.ok(!refused.ok);
+  assert.match(refused.says, /reviewer is `reading` or `watches`, and may be nothing else/);
+});
+
 test("a change that would leave a template that does not load is not made, and says why", () => {
   const made = applied(slp, setProperty("lead", "delegates", false));
 

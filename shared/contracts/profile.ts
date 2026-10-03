@@ -181,9 +181,10 @@ export function resolveProfile(file: ProfileFile): { ok: true; profile: Profile 
   if (roots.length !== 1 || !root)
     return { ok: false, says: `exactly one role must be \`root\`, found ${roots.length}` };
   for (const role of resolved.values()) {
-    const kinds = [role.delegates, role.writes, role.reading, role.watches].filter(Boolean).length;
-    if (kinds > 1)
-      return { ok: false, says: `role ${role.name} may be only one of delegates, writes, reading, watches` };
+    // One that hands work out may write what it has not handed out; one that reads or watches does nothing else.
+    const others = [role.delegates, role.writes, role.reading, role.watches].filter(Boolean).length - 1;
+    if ((role.reading || role.watches) && others > 0)
+      return { ok: false, says: `role ${role.name} is \`reading\` or \`watches\`, and may be nothing else` };
     for (const spawned of role.spawns)
       if (!resolved.has(spawned))
         return { ok: false, says: `role ${role.name} spawns ${spawned}, which is not a role` };

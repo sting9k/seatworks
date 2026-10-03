@@ -94,6 +94,12 @@ test("a shared file that would not load, reaches outside its own directory, or c
   const twoRoots = shared((files) => {
     files.set("profile.yaml", files.get("profile.yaml")!.replace("  lead:\n", "  lead:\n    root: true\n"));
   });
+  const readsAndWrites = shared((files) => {
+    files.set(
+      "profile.yaml",
+      files.get("profile.yaml")!.replace("    reading: true\n", "    reading: true\n    writes: true\n"),
+    );
+  });
   const reachingOut = shared((files) => {
     files.set("../outside.md", "x");
   });
@@ -102,6 +108,7 @@ test("a shared file that would not load, reaches outside its own directory, or c
 
   for (const [path, why] of [
     [twoRoots, /it does not load: .*exactly one role must be `root`/],
+    [readsAndWrites, /it does not load: .*role reviewer is `reading` or `watches`, and may be nothing else/],
     [reachingOut, /\.\.\/outside\.md is not a path inside a template/],
     [notATemplate, /not a packed template/],
     [join(root, "no-such-file.json"), /there is no file at/],

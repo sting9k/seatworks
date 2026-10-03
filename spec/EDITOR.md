@@ -138,9 +138,11 @@ away, the template asks no model, and each question and moment that would have b
 ## A role's job
 
 `delegates`, `writes`, `reading` and `watches` are one choice of five in a role's panel: hands out work, writes
-code, reviews, watches, or none of these. `resolveProfile` takes at most one of the four, so four switches could be
-set in ways it refuses; one choice cannot. Choosing a job takes the one the role had in the same change (Decided 9),
-and the tool groups that follow each go and come with it. `root` and `humanDoor` stay switches: whether a role leads
+code, reviews, watches, or none of these. `resolveProfile` takes one that reviews or watches as nothing else, so
+four switches could be set in ways it refuses; one choice cannot. Choosing a job takes the one the role had in the
+same change (Decided 9), and the tool groups that follow each go and come with it. A role that hands out work has
+one switch more under the choice, Writes too: what it has not handed out, it may write and commit itself. Its
+node then says both. `root` and `humanDoor` stay switches: whether a role leads
 the team, and whether it may ask the Human.
 
 ## Wires

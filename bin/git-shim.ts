@@ -107,7 +107,7 @@ const ask = (...asked: string[]) =>
   spawnSync(git, ["-C", cwd, "-c", "core.quotePath=false", ...asked], { encoding: "utf8" });
 /** Whether a merge is being concluded there: whoever merges settles every file it touched. */
 const merging = ask("rev-parse", "-q", "--verify", "MERGE_HEAD").status === 0;
-// A lane's owner takes its parent's branch in by hand when the two conflict, and writes nothing else.
+// A lane's owner takes its parent's branch in by hand when the two conflict, whether or not it writes otherwise.
 const mayMerge = process.env.SEATWORKS_MERGES === "1" && (sub === "merge" || (sub === "commit" && merging));
 if (WRITERS_ONLY.has(sub) && process.env.SEATWORKS_WRITES !== "1" && !mayMerge)
   refuse(`\`git ${sub}\`: you do not write in this scope; your copy is for reading and running`);
@@ -138,20 +138,26 @@ if (heldAt !== undefined) {
   if (shared) refuse(`\`git ${sub}\`: ${shared}`);
   if (sub === "commit" && given.includes("--amend"))
     refuse("`git commit --amend`: the last commit here may be another's, and others build on it; make a new commit");
-  // Each line is a path another scope of the lane holds, and the scope: kept by the plugin as the team's record moves.
+  // Each line is a path a scope of the lane holds, and the scope, none for the seat's own: the first line that holds a
+  // file says whose it is. Kept by the plugin as the team's record moves.
   const held = existsSync(heldAt)
     ? readFileSync(heldAt, "utf8")
         .split("\n")
         .filter((line) => line !== "")
         .map((line) => line.split("\t") as [string, string])
     : [];
+  // Lines before the seat's own are what it handed out; lines after are a neighbour's, or kept by a writer over it.
+  const mine = held.findIndex(([, scope]) => scope === "");
   if (!merging && held.length > 0)
     for (const file of taken()) {
-      const by = held.find(([path]) => holds(path, file));
-      if (by)
-        refuse(
-          `\`git ${sub}\`: ${file} is scope ${by[1]}'s to write (it holds ${by[0]}). Name your own files; what another holds is settled by your lane's owner`,
-        );
+      const at = held.findIndex(([path]) => holds(path, file));
+      const by = held[at];
+      if (!by || by[1] === "") continue;
+      const next =
+        mine !== -1 && at < mine
+          ? "You handed it out: it is that scope's alone until it is taken in or dropped"
+          : "Name your own files; for a file another holds, ask the owner above you";
+      refuse(`\`git ${sub}\`: ${file} is scope ${by[1]}'s to write (it holds ${by[0]}). ${next}`);
     }
 }
 /** A branch option that moves, copies or deletes, alone or among short flags run together such as `-Df`. */

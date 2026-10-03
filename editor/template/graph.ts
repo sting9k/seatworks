@@ -6,7 +6,7 @@ import { type Earned, earnedOf } from "./wording.ts";
 
 const PROPERTIES = ["root", "delegates", "writes", "reading", "watches", "humanDoor"] as const;
 export type Property = (typeof PROPERTIES)[number];
-/** What a role is for: the plugin takes at most one of the four for a role, and takes none. */
+/** What a role is for, the first it has: one that hands work out may write too, and a role may have none. */
 export const JOBS = ["delegates", "writes", "reading", "watches"] as const;
 export type Job = (typeof JOBS)[number];
 

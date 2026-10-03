@@ -257,6 +257,23 @@ function RoleSettings({ node, template, mark }: { node: RoleNode; template: Temp
             </button>
           ))}
         </div>
+        {node.job === "delegates" ? (
+          <button
+            type="button"
+            role="switch"
+            aria-checked={node.properties.includes("writes")}
+            className={node.properties.includes("writes") ? "toggle on" : "toggle"}
+            onClick={() => {
+              change(setProperty(node.name, "writes", !node.properties.includes("writes")));
+            }}
+          >
+            <span>
+              <b>Writes too</b>
+              <small>What it has not handed out, it may write and commit itself.</small>
+            </span>
+            <i />
+          </button>
+        ) : null}
       </Part>
       <Part title="With the Human">
         {(

@@ -27,9 +27,11 @@ test("I1: a handover moves paths to a sibling in one event, so a path is never i
   assert.deepEqual(ledger.state.scopes.get("1.2")?.paths, ["src/io/", "src/net/"]);
 });
 
-test("I2: a Lead's scope has no writer, so the Lead hands back its lane's head and never writes its Peers' paths", () => {
-  const { ledger, lead } = team();
-  assert.equal(ledger.state.scopes.get("1")?.writer, null);
+test("I2: an owner that writes stays its scope's writer when it hands a part out: what it gave away is the child's alone to write", () => {
+  const { ledger, lead, task } = team();
+  const [lane, part] = [ledger.state.scopes.get("1"), ledger.state.scopes.get(task)];
+  assert.deepEqual([lane?.writer, part?.writer], [lead, "a3"], "each scope has its own one writer");
+  assert.deepEqual([lane?.paths, part?.paths], [["src/"], ["src/net/"]], "and the part lies within the whole");
   assert.equal(refusedBy(ledger.as(lead, "hand_back", { commit: SHA(1), text: "done" })), null);
 });
 

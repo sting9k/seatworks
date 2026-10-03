@@ -113,6 +113,7 @@ function Role({ data: { node, folded } }: NodeProps<FlowNode<"role">>) {
   const does = [
     node.properties.includes("root") ? "Leads the team" : null,
     node.job ? JOB_WORDS[node.job] : null,
+    node.job === "delegates" && node.properties.includes("writes") ? JOB_WORDS.writes : null,
     node.properties.includes("humanDoor") || node.speaks.includes("human") ? "Talks to you" : null,
   ].filter((word) => word !== null);
   const held = folded && folded.skills + folded.more > 0 ? folded : null;
