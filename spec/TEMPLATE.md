@@ -307,7 +307,7 @@ server and no accounts. SLP is the only one at first.
   that name, the file it is shared as is `<that name>.template.json`, and so do the state root and a project's
   record. A shared file holds no directory, which is why the name is made from what it does hold.
 - **The page reads the gallery built beside it**, `gallery/index.json` and the files it lists, from wherever the page
-  is served: built, it asks for its own scripts and styles by a relative path too, so it is served from any path. A page with no gallery beside it says so, and still opens a file or a folder of the person's own; a
+  is served: built, it asks for its own scripts, styles and type by a relative path too, so it is served from any path and calls no other host. A page with no gallery beside it says so, and still opens a file or a folder of the person's own; a
   listed template whose file is gone or does not load says why on its own card.
 - **This repository builds a gallery of its own from `templates/`**, which holds SLP, each time the editor is
   served or built (`npm run gallery`). So SLP is in the gallery from the one place it is kept, and never copied.

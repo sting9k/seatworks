@@ -143,8 +143,8 @@ The skills hold the recipes. The rules:
   client and the editor each have a tsconfig of their own. The toolchain: TypeScript 5.9,
   ESLint 10 with typescript-eslint's type-checked rules, Prettier 3, zod 4, the MCP SDK 2
   (`@modelcontextprotocol/server`), and `@getpaseo/plugin` at the release the spec was read against. The editor adds
-  React, React Flow, dagre, markdown-it and Vite as devDependencies: nothing Paseo builds imports them, and a test
-  holds that.
+  React, React Flow, dagre, markdown-it, Vite and fontsource's three Red Hat families as devDependencies: nothing
+  Paseo builds imports them, and a test holds that.
 - **Data is a `type`**, `readonly` all the way down in `shared/`. A union of literals or an `as const` table, never an
   enum. Every `switch` over a union ends in an exhaustive `never` check.
 - **Errors**: a refusal or an expected failure is a returned value (`Result`); a throw is a bug, with `{ cause }` when

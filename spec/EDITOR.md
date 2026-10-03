@@ -40,6 +40,9 @@ template is exported as one file.
    always drawn from files the plugin would load, so there is never a half-made template to draw or to export. Two
    changes could not be made in two steps under this rule, so each is one: switching the root on for a role switches
    it off for the role that had it, and choosing a job for a role takes the job it had (A role's job).
+10. **The type is carried with the page**: Red Hat Display, Text and Mono (OFL-1.1), from fontsource's packages, as
+    files beside the page. A link to a font host would have every reader's browser call it, and the page built asks
+    for nothing that is not beside it (`TEMPLATE.md`, The gallery).
 
 ## Three screens
 
@@ -72,7 +75,7 @@ After ComfyUI's own pages, so a person who knows one finds their way in the othe
 - One dark ground, and one bright colour kept for the one thing to press and for what is switched on. A node is
   neutral; colour is for the dot before its name, its sockets and its wires, one colour to a family: the team,
   equipment, the watch, the flow, the report, the Human. The picked node is outlined in white. The type is Red Hat
-  Display, Text and Mono where a machine has them and its own otherwise: the page asks no other host for a font.
+  Display, Text and Mono (Decided 10).
 - A role is a card: its name, the agent profiles it runs as, its sockets in three lines (seated by and seats; uses
   and talks to you; watched by and does), what it does in plain words (leads the team, hands out work, writes code,
   reviews, watches, talks to you), a chip for what is folded into it, and how many tools it is shown and words it

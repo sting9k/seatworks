@@ -21,13 +21,10 @@
   --human: #ff7a6b;
   --warn: #ffc857;
   --danger: #ff7a6b;
-  --display: "Red Hat Display", system-ui, sans-serif;
-  --mono: "Red Hat Mono", ui-monospace, monospace;
-  font:
-    14px/1.45 "Red Hat Text",
-    system-ui,
-    -apple-system,
-    sans-serif;
+  --display: "Red Hat Display Variable", system-ui, sans-serif;
+  --mono: "Red Hat Mono Variable", ui-monospace, monospace;
+  --body: "Red Hat Text Variable", system-ui, -apple-system, sans-serif;
+  font: 14px/1.45 var(--body);
 }
 
 * {
@@ -439,10 +436,7 @@ hr {
 
 .cover text {
   fill: var(--text);
-  font:
-    600 12px "Red Hat Text",
-    system-ui,
-    sans-serif;
+  font: 600 12px var(--body);
 }
 
 .cover .pill-human rect {
@@ -742,10 +736,7 @@ details[open] > summary.section > .icon:first-child {
   display: flex;
   justify-content: space-between;
   color: var(--muted);
-  font:
-    600 12px "Red Hat Text",
-    system-ui,
-    sans-serif;
+  font: 600 12px var(--body);
 }
 
 .part h3 small {
@@ -983,10 +974,7 @@ details[open] > summary.section > .icon:first-child {
   outline: 0;
   resize: vertical;
   background: var(--ground);
-  font:
-    12px/1.6 "Red Hat Mono",
-    ui-monospace,
-    monospace;
+  font: 12px/1.6 var(--mono);
 }
 
 .file textarea:focus {

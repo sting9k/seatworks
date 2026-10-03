@@ -27,6 +27,9 @@
   "devDependencies": {
     "@dagrejs/dagre": "3.1.1",
     "@eslint/js": "10.0.1",
+    "@fontsource-variable/red-hat-display": "5.3.0",
+    "@fontsource-variable/red-hat-mono": "5.3.0",
+    "@fontsource-variable/red-hat-text": "5.3.0",
     "@getpaseo/plugin": "0.10.1",
     "@types/markdown-it": "14.2.0",
     "@types/node": "22.20.4",

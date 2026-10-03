@@ -134,7 +134,7 @@ test("the build command takes several directories: the templates of each are lis
   assert.deepEqual(readdirSync(out).sort(), ["index.json", "night-crew.template.json"]);
 });
 
-test("the page built asks for its scripts and styles beside itself, so it is served from any path", () => {
+test("the page built asks for its scripts, styles and type beside itself, so it is served from any path and calls no other host", () => {
   const out = mkdtempSync(join(tmpdir(), "sw-page-"));
   const vite = join(repo, "node_modules", "vite", "bin", "vite.js");
   execFileSync(process.execPath, [vite, "build", join(repo, "editor"), "--outDir", out, "--emptyOutDir"], {
@@ -148,5 +148,21 @@ test("the page built asks for its scripts and styles beside itself, so it is ser
   assert.deepEqual(
     asked.filter((path) => !path.startsWith("./")),
     [],
+  );
+
+  const beside = readdirSync(join(out, "assets"));
+  for (const family of ["red-hat-display", "red-hat-text", "red-hat-mono"])
+    assert.ok(
+      beside.some((file) => file.startsWith(family) && file.endsWith(".woff2")),
+      `${family} is carried with the page: ${beside.join(", ")}`,
+    );
+  const styles = beside
+    .filter((file) => file.endsWith(".css"))
+    .map((file) => readFileSync(join(out, "assets", file), "utf8"));
+  const urls = styles.flatMap((style) => [...style.matchAll(/url\(([^)]+)\)/g)].map((found) => found[1]!));
+  assert.deepEqual(
+    urls.filter((url) => !url.startsWith("./") && !url.startsWith("data:")),
+    [],
+    "a style asks for a file beside it, never for one on another host",
   );
 });
