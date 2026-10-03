@@ -53,6 +53,98 @@ export function AskName({
   );
 }
 
+type PickToolsProps = {
+  readonly title: string;
+  /** The tools the template knows of the server. */
+  readonly known: readonly string[];
+  /** Those the role may call now. */
+  readonly given: readonly string[];
+  readonly onTools: (tools: string[]) => void;
+  readonly onClose: () => void;
+};
+
+/** Asks which of an outside server's tools a role may call: those the template knows to tick, and a name to add. */
+export function PickTools({ title, known, given, onTools, onClose }: PickToolsProps) {
+  const [names, setNames] = useState(known);
+  const [ticked, setTicked] = useState<ReadonlySet<string>>(new Set(given));
+  const [adding, setAdding] = useState("");
+  const typed = adding.trim();
+  /** What is ticked, with a name typed and not yet added: a person who typed one means it. */
+  const picked = [
+    ...names.filter((name) => ticked.has(name)),
+    ...(typed === "" || names.includes(typed) ? [] : [typed]),
+  ];
+  const add = () => {
+    if (!names.includes(typed)) setNames([...names, typed]);
+    setTicked(new Set([...ticked, typed]));
+    setAdding("");
+  };
+  return (
+    <div className="veil" onMouseDown={onClose}>
+      <form
+        className="dialog"
+        onMouseDown={(event) => {
+          event.stopPropagation();
+        }}
+        onSubmit={(event) => {
+          event.preventDefault();
+          onTools(picked);
+        }}
+      >
+        <h2>{title}</h2>
+        {names.length > 0 ? (
+          <div className="ticks">
+            {names.map((name) => (
+              <label key={name} className={ticked.has(name) ? "check mono" : "check mono unticked"}>
+                <input
+                  type="checkbox"
+                  checked={ticked.has(name)}
+                  onChange={() => {
+                    const next = new Set(ticked);
+                    if (!next.delete(name)) next.add(name);
+                    setTicked(next);
+                  }}
+                />
+                {name}
+              </label>
+            ))}
+          </div>
+        ) : (
+          <p className="hint">The template names no tool of it yet. Name the first as the server calls it.</p>
+        )}
+        <div className="adding">
+          <input
+            autoFocus
+            value={adding}
+            placeholder="A tool, by the name the server gives it"
+            spellCheck={false}
+            onChange={(event) => {
+              setAdding(event.target.value);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Escape") onClose();
+              if (event.key !== "Enter" || typed === "") return;
+              event.preventDefault();
+              add();
+            }}
+          />
+          <button type="button" disabled={typed === ""} onClick={add}>
+            Add
+          </button>
+        </div>
+        <footer>
+          <button type="button" onClick={onClose}>
+            Cancel
+          </button>
+          <button type="submit" className="primary">
+            {picked.length === 0 ? "Give none" : `Give ${picked.length}`}
+          </button>
+        </footer>
+      </form>
+    </div>
+  );
+}
+
 type Choice = { readonly key: string; readonly label: ReactNode; readonly pick: () => void };
 
 /** What a wire let go over empty canvas may go to: the nodes that take it, found by name, and a new one. */

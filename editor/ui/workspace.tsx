@@ -41,7 +41,7 @@ import {
 import { anchoredOf, besideOf, foldedInto, type Folds, shownOf, STACKS, wiresOf } from "../template/fold.ts";
 import { type Graph, type GraphNode, graphOf, type Wire } from "../template/graph.ts";
 import { readTemplate, type Template } from "../template/read-template.ts";
-import { AskName, PickNode } from "./dialogs.tsx";
+import { AskName, PickNode, PickTools } from "./dialogs.tsx";
 import { type Editing, EditingContext, isMakeable, type Makeable, NotesContext } from "./editing.ts";
 import { download } from "./files.ts";
 import { CLEAR, Menu, ZoomTools } from "./floating.tsx";
@@ -310,6 +310,9 @@ function Opened({
         stack ? { ...was, stacks: toggled(was.stacks, stack.kind) } : { ...was, roles: toggled(was.roles, id) },
       );
       if (!stack && !folds.roles.has(id)) setSought(id);
+    },
+    give: (server, role) => {
+      setAsking({ make: "give", server, role });
     },
   };
   const exportIt = () => {
@@ -595,19 +598,20 @@ function Opened({
         />
       ) : null}
       {asking?.make === "give" ? (
-        <AskName
+        <PickTools
           title={`Which tools of ${asking.server} may ${asking.role} call?`}
-          hint="their names, separated by commas"
+          known={graph.nodes.flatMap((node) =>
+            node.kind === "server" && node.name === asking.server ? node.tools : [],
+          )}
+          given={template.file.roles[asking.role]?.servers?.[asking.server] ?? []}
           onClose={() => {
             setAsking(null);
           }}
-          onName={(names) => {
+          onTools={(tools) => {
             setAsking(null);
-            const tools = names
-              .split(",")
-              .map((tool) => tool.trim())
-              .filter((tool) => tool !== "");
-            change(giveServer(asking.role, asking.server, tools));
+            // A role given none that had none is as it was: there is no wire to take away.
+            if (tools.length > 0 || template.file.roles[asking.role]?.servers?.[asking.server])
+              change(giveServer(asking.role, asking.server, tools));
           }}
         />
       ) : asking?.make === "name" ? (

@@ -2,7 +2,6 @@ import { type ReactNode, useState } from "react";
 import { RELATIONS, type Relation, type Route, type Server } from "../../shared/contracts/profile.ts";
 import {
   addRoute,
-  giveServer,
   putFile,
   removeRoute,
   renameAsked,
@@ -421,7 +420,7 @@ function About({
   template: Template;
   onOpen: (path: string) => void;
 }): ReactNode {
-  const { change } = useEditing();
+  const { change, give } = useEditing();
   switch (node.kind) {
     case "human":
       return <p>Asked and told by the roles wired to it.</p>;
@@ -582,16 +581,27 @@ function About({
             A secret is never written here: name a variable as $NAME and keep the secret on the machine.
             {node.variables.length > 0 ? ` It reads ${node.variables.map((name) => `$${name}`).join(", ")}.` : ""}
           </p>
-          {given.map(({ role, tools }) => (
-            <Line
-              key={role}
-              label={role}
-              value={tools.join(", ")}
-              onSet={(names) => {
-                change(giveServer(role, node.name, listOf(names, ",")));
-              }}
-            />
-          ))}
+          {given.length > 0 ? (
+            <Part title="Given to">
+              {given.map(({ role, tools }) => (
+                <div key={role} className="given">
+                  <i className="dot kind-role" />
+                  <span>
+                    <b>{role}</b>
+                    <small className="mono">{tools.join(" · ")}</small>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      give(node.name, role);
+                    }}
+                  >
+                    Change
+                  </button>
+                </div>
+              ))}
+            </Part>
+          ) : null}
         </>
       );
     }

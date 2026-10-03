@@ -877,6 +877,40 @@ details[open] > summary.section > .icon:first-child {
   color: var(--muted);
 }
 
+/* A role an outside server is given to: its name, the tools it may call, and the way to change them. */
+.given {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--ground);
+}
+
+.given span {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+}
+
+.given small {
+  overflow: hidden;
+  color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.given button {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.given button:hover {
+  color: var(--text);
+}
+
 .group {
   border-radius: 8px;
   background: var(--ground);
@@ -923,7 +957,7 @@ details[open] > summary.section > .icon:first-child {
 
 .line input,
 .line textarea,
-.dialog input {
+.dialog input:not([type="checkbox"]) {
   width: 100%;
   padding: 8px 10px;
   border: 1px solid transparent;
@@ -936,7 +970,7 @@ details[open] > summary.section > .icon:first-child {
 
 .line input:focus,
 .line textarea:focus,
-.dialog input:focus {
+.dialog input:not([type="checkbox"]):focus {
   border-color: var(--line);
 }
 
@@ -1221,6 +1255,36 @@ details[open] > summary.section > .icon:first-child {
 
 .dialog h2 {
   font-size: 18px;
+}
+
+/* The tools of a server to tick, one a line, and under them the place to name another. */
+.ticks {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 240px;
+  padding: 10px 12px;
+  overflow: auto;
+  border-radius: 10px;
+  background: var(--ground);
+}
+
+.adding {
+  display: flex;
+  gap: 8px;
+}
+
+.adding button {
+  flex: none;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: var(--hover);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.adding button:disabled {
+  opacity: 0.5;
 }
 
 .dialog footer {

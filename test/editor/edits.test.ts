@@ -296,6 +296,15 @@ test("an outside server is declared, said how to reach, given to a role with the
   );
   assert.ok(ticked(graphOf(given), "lead").length > 0);
 
+  const shared = graphOf(changed(given, giveServer("peer", "tickets", ["close_issue", "search"])));
+  const known = shared.nodes.find((candidate) => candidate.id === "server:tickets");
+  assert.ok(known?.kind === "server");
+  assert.deepEqual(
+    known.tools,
+    ["search", "create_issue", "close_issue"],
+    "the tools the template knows of it are every name a role is given, each once: what a third role is offered",
+  );
+
   const fewer = changed(given, giveServer("lead", "tickets", ["search"]));
   assert.deepEqual(linesChanged(given, fewer, "profile.yaml"), ["      tickets: [search]"]);
 

@@ -89,6 +89,8 @@ export type GraphNode =
       /** The command it runs, or the address it calls. */
       readonly runs: string;
       readonly variables: readonly string[];
+      /** The tools of it the template knows: every name some role is given, each once. */
+      readonly tools: readonly string[];
       readonly file: string;
     };
 
@@ -147,18 +149,19 @@ export function graphOf(template: Template): Graph {
 
   for (const [name, server] of Object.entries(template.file.servers)) {
     const id = `server:${name}`;
+    const given = Object.entries(template.file.roles).flatMap(([role, spec]) =>
+      spec.servers?.[name] ? [{ role, tools: spec.servers[name] }] : [],
+    );
     nodes.push({
       kind: "server",
       id,
       name,
       runs: server.type === "stdio" ? [server.command, ...server.args].join(" ") : server.url,
       variables: variablesNamed([server]),
+      tools: [...new Set(given.flatMap(({ tools }) => tools))],
       file: "profile.yaml",
     });
-    for (const [role, spec] of Object.entries(template.file.roles)) {
-      const tools = spec.servers?.[name];
-      if (tools) wires.push({ kind: "server", from: id, to: roleId(role), tools });
-    }
+    for (const { role, tools } of given) wires.push({ kind: "server", from: id, to: roleId(role), tools });
   }
 
   for (const step of template.steps) {

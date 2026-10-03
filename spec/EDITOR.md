@@ -158,6 +158,8 @@ one place for what it is given.
   may not speak to the Human does not ask them either.
 - **A server's wire carries tools.** Paseo approves an outside tool by its name, so a wire with no tool named gives
   nothing: drawing one asks for the names, the wire shows them, and the server's panel changes them role by role.
+  They are ticked from the tools the template knows of the server, every name some role is given, and one it does
+  not know yet is typed: a page cannot ask a server what it has.
 - **Nor is whom a question tells.** `tells` names a relation (`root`, `parent`, `evidence`, `answerer`, `self`), never
   a role, so it is a field in the question's node and no wire leaves it.
 - **`then` is soft.** It makes words an agent reads, and nothing the kernel refuses (`TEMPLATE.md`, rule 1). A hard

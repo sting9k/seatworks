@@ -13,6 +13,8 @@ export type Editing = {
   readonly showAbout: (node: GraphNode) => void;
   /** Opens what is folded into a role or a stack, or folds it again. */
   readonly fold: (id: string) => void;
+  /** Asks which tools of an outside server a role may call. */
+  readonly give: (server: string, role: string) => void;
 };
 
 export const EditingContext = createContext<Editing | null>(null);
