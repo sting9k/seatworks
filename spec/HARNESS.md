@@ -7,8 +7,8 @@ and Codex 0.154's own list of features; OpenCode on 3 October 2026 against Paseo
 Codex 0.154 and OpenCode 2.0.16 as installed.
 
 Built: a harness file for each of the four. Every test runs against a stand-in for Paseo that refuses what Paseo's
-source refuses. Claude Code and Pi were seen on live agents on 2 October 2026 (Seen on a live Paseo, below); Codex and
-OpenCode have not been, and what only a live one can show is under To check. Oh My Pi had a harness file until
+source refuses. Claude Code and Pi were seen on live agents on 2 October 2026, Codex and OpenCode on 4 October (Seen on a live
+Paseo, below), each of those two as a Peer only; what only a live one can still show is under To check. Oh My Pi had a harness file until
 3 October 2026: Paseo registers its own tools with an Oh My Pi session itself, where nothing of Seatworks' can switch
 them off, so the file was removed on the owner's word and OpenCode's written.
 
@@ -25,8 +25,8 @@ A role's properties (`KERNEL.md` §2) and its skills are all the harness reads. 
 is given (Rooms, below), and an `env` of variables its process is given: a string as it is, anything else as its
 JSON, for an agent that reads its config from a variable. A string in it may name a place on the machine in braces:
 `{plugin}`, `{node}` (what runs the plugin), `{socket}` (where an agent's tools reach it), `{home}` (the Human's home
-directory) and `{room}` (the home being laid) in a home's files, `{git}` (the repository's git directory) in the
-settings.
+directory) and `{room}` (the home being laid) in a home's files, `{git}` (the repository's git directory) and `{gitdir}`
+(the git directory of the folder the agent works in, a worktree's own) in the settings.
 
 | Property  | Means for the agent                                                                            |
 | --------- | ---------------------------------------------------------------------------------------------- |
@@ -75,12 +75,18 @@ hand: a launcher set as a provider's `command` lays a runtime home for a role an
 | ----------- | --------------------- | --------------- | --------------------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------- |
 | Claude Code | `CLAUDE_CONFIG_DIR`   | `settings.json` | On macOS a keychain entry named after the config folder: `CLAUDE_SECURESTORAGE_CONFIG_DIR`, set empty, keeps the Human's own. Elsewhere `.credentials.json`, linked | None: it reads no home but its room. `syncClaudeAiSkills` and `syncClaudeAiPlugins` off and `disableClaudeAiConnectors` on, or it fetches its account's into the room | `disableBundledSkills`, and `DISABLE_DOCTOR_COMMAND` for the one that leaves; its own tools denied by name |
 | Pi          | `PI_CODING_AGENT_DIR` | `settings.json` | `auth.json` and `models.json`, linked               | `~/.agents/skills`, left out by `skills: ["!{home}/.agents/skills/**"]`: a pattern is matched against a skill's full path | Nothing: its tools read, write, edit and run its shell |
-| Codex       | `CODEX_HOME`          | `config.toml`   | `auth.json`, linked                                 | `~/.agents/skills`, and `skills/.system` where it puts those it brings: no switch for either, so each is written off by its path (`leaves`) | Its `[features]` beside its hands, switched off |
-| OpenCode    | `OPENCODE_CONFIG_DIR`, a folder read beside its own config | None of Seatworks' | Left where it is, in its data folder | Not left out (To check)                              | A subagent and a question, denied               |
+| Codex       | `CODEX_HOME`          | `config.toml`   | `auth.json`, linked; and what their own `config.toml` says of the provider their model is reached through, kept in the room's (`keeps`) | `~/.agents/skills`: no switch, so each is written off by its path (`leaves`) | Its `[features]` beside its hands, and the skills it brings (`[skills.bundled]`), switched off |
+| OpenCode    | `OPENCODE_CONFIG_DIR`, a folder read beside its own config | None of Seatworks' | Left where it is: their config and their data folder are read as they are | The Human's, in three folders of their home: every skill is denied and each of the room's allowed by name (`{skill}`) | A subagent and a question, denied               |
 
 - **`leaves`** is for an agent that has no switch for the skills it finds outside its home. It names the folders
   they are under and a file of the room, and that file is given `each`, with `{path}` the real path of the skill's
   file, for every `SKILL.md` found there.
+- **`keeps`** is for an agent whose way to its model is written in its config file. It names that file, keys of
+  its top and tables, and the lines of the Human's own file that set those stand in the room's: the keys first,
+  before any table, the tables after Seatworks' own. A key of theirs may be among those lines, so every file a room
+  is given is its owner's alone to read.
+- **`{skill}`** as a key in a harness file's settings is set once for each skill the room holds, to the value
+  written for it: for an agent that takes a rule a skill at a time.
 - **A repository's own skills** are left to each agent's own way. Claude Code reads `.claude/skills` in the
   worktree, with the `project` source Paseo sets; Codex reads `.agents/skills`; Pi reads none, since no project is
   trusted (below).
@@ -207,18 +213,25 @@ app's panel, where no owner reads them.
 | Role prompt         | `systemPrompt`, sent as `developerInstructions`                                               |
 | Team tools          | `mcpServers` and `toolPolicy`: Paseo enables only the tools named and approves each           |
 | No prompts          | `modeId: auto` with the option `approval_policy: never`: its sandbox holds, and nothing asks  |
-| Writer              | `sandbox_workspace_write.writable_roots` gains the repository's git directory (`{git}`), which Codex keeps read-only inside a worktree otherwise, so a commit can be made |
+| Writer              | `sandbox_workspace_write.writable_roots` gains the repository's git directory (`{git}`) and the git directory of the worktree itself (`{gitdir}`). Codex keeps both read-only otherwise, and a commit writes its objects and its branch in the first and its index in the second: with the first alone `git add` is refused the index's lock |
 | Not writing         | The same, in the worktree it shares, without the git directory among its writable roots        |
 | No subagents        | `features.multi_agent_v2: false` through Paseo. `features.multi_agent`, which Codex 0.154 has on, is not among the options Paseo takes, so it is switched off in the room's `config.toml` |
 | None of its own     | `[features]` in the room's `config.toml`, each `false`: `apps`, `plugins`, `tool_suggest`, `sleep_tool`, `goals`, `browser_use`, `browser_use_external`, `computer_use`, `image_generation`. `codex features list` under a laid room reads each back as off |
-| Its role's skills   | The room's `skills/`, which Codex 0.154 reads as its user's own. Every skill under `~/.agents/skills`, and under `skills/.system` where Codex puts those it brings once it has started in a home, is written off in `config.toml` with `[[skills.config]]`, its path and `enabled = false` |
+| Its role's skills   | The room's `skills/`, which Codex 0.154 reads as its user's own and lists by name and description; its agent reads a skill's file with its shell. Every skill under `~/.agents/skills` is written off in `config.toml` with `[[skills.config]]`, its path and `enabled = false`. `[skills.bundled] enabled = false` keeps the six skills Codex brings out of the room: with it they are never put there |
+| Its way to a model  | `keeps`: of the Human's own `config.toml`, the keys `model_provider`, `model_catalog_json`, `openai_base_url`, `chatgpt_base_url`, `forced_login_method`, `cli_auth_credentials_store` and every `[model_providers.*]` table. One who reaches a model through a provider of their own, with no login, has it nowhere else |
 
 The room holds that `config.toml`, the rule that forbids Paseo's command line and a link to the Human's `auth.json`.
-The Human's own `config.toml` is not read there: a model provider or a server they set up in it does not reach a
-team's agent. Codex has no switch for a folder of skills: `skills.config` names one skill, and its feature
-`skip_host_skill_discovery`, set, left the Human's on. Asked through its own server with no model
-(`skills/list`), a Peer's room gave: on its first start the room's eleven on, the Human's 51 off and the six Codex
-brings on; once the room was laid again, the room's eleven and no other.
+Of the Human's own `config.toml` it keeps what reaches a model and no more: a server, a feature, a model or an
+effort they set there does not reach a team's agent, whose model and effort are its agent profile's. Codex has no
+switch for a folder of skills: `skills.config` names one skill, and its feature `skip_host_skill_discovery`, set,
+left the Human's on.
+
+Run with no Paseo, under a room laid for a Peer: Codex's own server (`skills/list`) gave, on its first start there,
+the room's skills on, the Human's 51 off and none of Codex's own; one turn ran through the Human's provider, kept
+from their config; and asked for its tools the agent named `exec_command`, `write_stdin`, `apply_patch`,
+`view_image`, `web_search` and `request_user_input`, where in the Human's own home it named its five tools for
+agents, three for goals and every tool of their server besides. `request_user_input` has no switch; Codex refuses
+it outside its plan mode.
 
 ### Pi
 
@@ -254,8 +267,10 @@ whose last rule denies every resource is left out of what the model is shown (`h
 | No subagents        | `options.permission.task: deny`, which Paseo writes as OpenCode's `subagent`                  |
 | No question to a screen | `options.permission.question: deny`: a question goes through the team's tools             |
 | Paseo's own tools   | `env.OPENCODE_CONFIG_CONTENT`, the config OpenCode reads last: Paseo's schema for its options is strict and has no place for a tool by name, and it adds its own plugin to that config |
+| No snapshot         | `snapshot: false` in that config. OpenCode records a snapshot of the folder before a turn by running git with a git directory of its own; the guard first on its `PATH` refuses that, and the turn never began |
 | The Human's login and config | As they are: `OPENCODE_CONFIG_DIR` adds a folder to those OpenCode reads and replaces none. Their providers, models, servers and plugins reach a team's agent |
-| Its role's skills   | `skills/` in its room, which `OPENCODE_CONFIG_DIR` names. Not seen to reach an agent (To check) |
+| Its role's skills   | `skills/` in its room, which `OPENCODE_CONFIG_DIR` names: OpenCode reads it beside the Human's three folders (`~/.config/opencode/skills`, `~/.claude/skills`, `~/.agents/skills`) and lists every skill in its `skill` tool. `options.permission.skill` denies `*` and then allows each skill of the room by name: the last rule that matches decides, a denied skill is left out of what the model is shown, and of two skills of one name the room's is the one loaded |
+| None of its own     | Its `build` agent's tools are `read`, `edit`, `write`, `glob`, `grep`, `shell`, `execute`, `webfetch`, `websearch`, `skill`, and the `subagent` and `question` denied above |
 | Writer              | Its worktree and the git shim; nothing native confines it                                     |
 
 OpenCode reads a copy's own `opencode.json` and `.opencode/`, and a rule there for the agent comes after the
@@ -406,17 +421,42 @@ task, took it in and landed it.
 - **A note written into a skill's folder.** Told the folder a skill lies in, an agent on Haiku wrote its research
   note there. In a room the folder is a copy, and SLP's skills now say the note is a file in the repository.
 
+The same day, for Codex and OpenCode, which had not been run before: two projects on SLP, each Supervisor on Claude
+Code (Sonnet 5), one Peer on Codex 0.154 (`glm-5.3`, through a provider the Human set in their own Codex config,
+with no login) and one on OpenCode 2.0.16 (`nvidia/z-ai/glm-5.3-flash`, by a key in the environment). Three small
+tasks, each handed back on a commit, checked, taken in and landed.
+
+- **Codex needs the Human's way to its model.** Their `config.toml` is where their provider and its key are, and a
+  room that read none of it had no model to reach. With the provider's lines kept (`keeps`) a Peer ran from its
+  room, where a turn started on 2,200 tokens against 23,000 in the Human's own home.
+- **A Codex writer could not commit.** `git add` was refused the lock of the index: Codex keeps the git directory
+  of the worktree it works in read-only though the repository's is among its writable roots. The Peer made its
+  commit all the same, out of a temporary index, `commit-tree` and the branch's ref, and its hand-back was taken
+  in. Run again on Codex's own server with no model (`command/exec`, the sandbox Paseo asks for): the worktree's own
+  git directory among the roots, and `git add` and `git commit` pass. The next Peer, seated after, committed the
+  ordinary way.
+- **OpenCode never began its turn.** It takes a snapshot before a turn by running git with a git directory of its
+  own; the guard first on its `PATH` refused it, a warning was logged and nothing followed. With `snapshot: false`
+  the turn ran. The team's server was connected before it, the guard was on the `PATH` of its shell, its `git
+  commit` passed, and nothing was asked.
+- **Each Peer loaded its skill unasked**, first thing: Codex read `test-first` from its room with its shell, twice
+  of twice; OpenCode called its `skill` tool for `test-first`, twice of twice, and its session held the rule that
+  denies every skill followed by one that allows each of its room's eleven. Each then wrote its test before its
+  code.
+- **Not seen.** A role that does not write on either; a permission asked; OpenCode on any model but that one.
+
 ## To check before building on it
 
 - A role that does not write, held from writing in the worktree it shares: which of each provider's own settings
   does it (a read-only sandbox, denied edit tools) without stopping what a Lead or a Reviewer runs to decide, such
   as a build or a test that writes its own output, and without stopping the lane's owner from settling a merge by
   hand. Until then its prompt is all that holds it, and on a live run it did not (Seen on a live Paseo).
-- On a live Codex: that a writer commits with the repository's git directory among its writable roots, and that
-  `features.multi_agent = false` leaves it no tool to start an agent with.
-- On a live OpenCode: that the team's server is connected before the first turn, that the shim is first on the
-  `PATH` of its shell, that a writer commits in its worktree, and that nothing asks. Whether a plugin or a server a
-  copy's own `.opencode/` names is loaded for the next agent that works in that worktree.
+- On a live OpenCode: whether a plugin or a server a copy's own `.opencode/` names is loaded for the next agent
+  that works in that worktree. An OpenCode agent's sessions are kept in the Human's own data folder, where the room
+  holds none of them.
+- A role that does not write, on Codex and on OpenCode: neither was seated live. A Supervisor or a Lead on either
+  has the team's tools from Paseo as a Peer does, and that is all that was seen of it.
+- Mail into a turn has no door on Codex or OpenCode (Mail into a turn, above).
 - A repository's own `.claude/` reaches a Claude agent, since `project` and `local` are among the sources Paseo
   sets: its skills, and the hooks or servers its settings name, as its `AGENTS.md` does. A second
   `--setting-sources` through `extraArgs` comes after Paseo's and wins (run on 2.1.280), and would cut all of it,
@@ -424,11 +464,9 @@ task, took it in and landed it.
 - Claude Code's login from a room on Linux and on Windows. On macOS the keychain entry is kept by a variable that
   is in its binary and not in its documentation; where the login is a file, the link is all that was built, and
   neither was run there. Lost, an agent says it is not logged in and does nothing.
-- On a live Codex: the first agent of a role in a project starts with the six skills Codex brings on, since their
-  folder is there only once Codex has started in the room; they are written off from the next time it is laid.
-- On a live OpenCode: that an agent finds the skills in its room at all. OpenCode 2.0.16's own server, asked with
-  no session (`GET /api/skill`), listed no skill, neither the Human's nor a room's; and nothing leaves the Human's
-  own skills out for it yet, where its `permission.skill` could by name.
+- A Codex whose way to its model is written otherwise than `keeps` reads it: as dotted keys or an inline table
+  where a `[model_providers.*]` table is expected, or under a key not among those kept. Its agent then finds no
+  provider and says so. One logged in to ChatGPT was not run: the Human here has no such login.
 - A model that leaves a skill unloaded (Seen on a live Paseo, 4 October). What a template can do about it is in its
   own words: a skill's description, a role's prompt.
 - Claude Code's own memory is on, and in a room it is one role's in one project: what an agent writes there the

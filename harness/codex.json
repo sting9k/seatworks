@@ -11,7 +11,7 @@
   "writes": {
     "options": {
       "sandbox_workspace_write": {
-        "writable_roots": ["{git}"]
+        "writable_roots": ["{git}", "{gitdir}"]
       }
     }
   },
@@ -21,13 +21,25 @@
     "from": "~/.codex",
     "link": ["auth.json"],
     "skills": "skills",
+    "keeps": {
+      "file": "config.toml",
+      "keys": [
+        "model_provider",
+        "model_catalog_json",
+        "openai_base_url",
+        "chatgpt_base_url",
+        "forced_login_method",
+        "cli_auth_credentials_store"
+      ],
+      "tables": ["model_providers"]
+    },
     "leaves": {
-      "under": ["{home}/.agents/skills", "{room}/skills/.system"],
+      "under": ["{home}/.agents/skills"],
       "file": "config.toml",
       "each": "\n[[skills.config]]\npath = {path}\nenabled = false\n"
     },
     "files": {
-      "config.toml": "[features]\nmulti_agent = false\nmulti_agent_v2 = false\napps = false\nplugins = false\ntool_suggest = false\nsleep_tool = false\ngoals = false\nbrowser_use = false\nbrowser_use_external = false\ncomputer_use = false\nimage_generation = false\n\n[mcp_servers.paseo]\nurl = \"http://not-for-a-teams-agent.invalid/\"\nenabled = false\n",
+      "config.toml": "[features]\nmulti_agent = false\nmulti_agent_v2 = false\napps = false\nplugins = false\ntool_suggest = false\nsleep_tool = false\ngoals = false\nbrowser_use = false\nbrowser_use_external = false\ncomputer_use = false\nimage_generation = false\n\n[skills.bundled]\nenabled = false\n\n[mcp_servers.paseo]\nurl = \"http://not-for-a-teams-agent.invalid/\"\nenabled = false\n",
       "rules/seatworks.rules": "prefix_rule(\n    pattern = [\"paseo\"],\n    decision = \"forbidden\",\n    justification = \"Paseo's command line is not for a team's agents: use the team's tools.\",\n)\n"
     }
   }

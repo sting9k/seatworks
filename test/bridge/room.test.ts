@@ -8,6 +8,7 @@ import {
   readdirSync,
   readFileSync,
   realpathSync,
+  statSync,
   writeFileSync,
 } from "node:fs";
 import { homedir, tmpdir } from "node:os";
@@ -201,30 +202,74 @@ test("a Pi agent's room leaves out the skills the Human keeps for every agent, b
   assert.deepEqual(settings.skills, [`!${homedir()}/.agents/skills/**`]);
 });
 
-test("a Codex agent's room switches off what Codex brings beside its hands, and writes off each skill it would find outside the room", async () => {
+test("a Codex agent's room keeps the Human's own way to its model and nothing else of their config, switches off what Codex brings beside its hands, and writes off each skill the Human keeps for every agent", async () => {
   const theirs = join(homedir(), ".agents", "skills", "the-humans-own");
   mkdirSync(theirs, { recursive: true });
   writeFileSync(join(theirs, "SKILL.md"), "---\nname: the-humans-own\ndescription: Theirs.\n---\n");
-  const { plugin, paseo } = await openedOn("codex");
-  const made = paseo.created[0]!;
-  const room = made.env.CODEX_HOME!;
-  const config = () => text(room, "config.toml");
-  for (const off of [
-    ...["multi_agent", "multi_agent_v2"],
-    ...["apps", "plugins", "tool_suggest"],
-    ...["sleep_tool", "goals"],
-    ...["browser_use", "computer_use", "image_generation"],
-  ])
-    assert.match(config(), new RegExp(`^${off} = false$`, "m"));
-  const written = (file: string) =>
-    `\n[[skills.config]]\npath = ${JSON.stringify(realpathSync(file))}\nenabled = false\n`;
-  assert.ok(config().includes(written(join(theirs, "SKILL.md"))), config());
-  assert.equal(config().split("[[skills.config]]").length - 1, 1, "and none of its room's own");
+  const human = mkdtempSync(join(tmpdir(), "sw-codex-human-"));
+  const provider = [
+    "[model_providers.theirs]",
+    'name = "Theirs"',
+    'base_url = "https://models.example/v1"',
+    'experimental_bearer_token = "a-fake-token-of-this-test"',
+  ].join("\n");
+  writeFileSync(
+    join(human, "config.toml"),
+    [
+      'model_provider = "theirs"',
+      'model = "their-own-pick"',
+      'model_catalog_json = "/their/catalog.json"',
+      "",
+      "[mcp_servers.their-server]",
+      'url = "http://127.0.0.1:1/mcp"',
+      "",
+      provider,
+      "",
+      "[features]",
+      "apps = true",
+      "",
+    ].join("\n"),
+  );
+  process.env.CODEX_HOME = human;
+  try {
+    const { paseo } = await openedOn("codex");
+    const room = paseo.created[0]!.env.CODEX_HOME!;
+    const config = text(room, "config.toml");
+    assert.ok(config.startsWith('model_provider = "theirs"\nmodel_catalog_json = "/their/catalog.json"\n'), config);
+    assert.ok(config.includes(`\n${provider}\n`), "the provider they reach their model through, its key with it");
+    assert.doesNotMatch(config, /their-own-pick|their-server|apps = true/, "and nothing else of their config");
+    assert.equal(
+      statSync(join(room, "config.toml")).mode & 0o777,
+      0o600,
+      "a file that may hold their key is theirs to read alone",
+    );
+    for (const off of [
+      ...["multi_agent", "multi_agent_v2"],
+      ...["apps", "plugins", "tool_suggest"],
+      ...["sleep_tool", "goals"],
+      ...["browser_use", "computer_use", "image_generation"],
+    ])
+      assert.match(config, new RegExp(`^${off} = false$`, "m"));
+    assert.match(
+      config,
+      /^\[skills\.bundled\]\nenabled = false$/m,
+      "the skills Codex brings are never put in its room",
+    );
+    const written = `\n[[skills.config]]\npath = ${JSON.stringify(realpathSync(join(theirs, "SKILL.md")))}\nenabled = false\n`;
+    assert.ok(config.includes(written), config);
+    assert.equal(config.split("[[skills.config]]").length - 1, 1, "and none of its room's own");
+  } finally {
+    delete process.env.CODEX_HOME;
+  }
+});
 
-  // Codex puts the skills it brings into its home once it has started there.
-  const brought = join(room, "skills", ".system", "skill-installer");
-  mkdirSync(brought, { recursive: true });
-  writeFileSync(join(brought, "SKILL.md"), "---\nname: skill-installer\ndescription: Codex's.\n---\n");
-  await plugin.envFor(made.host, "codex");
-  assert.ok(config().includes(written(join(brought, "SKILL.md"))), config());
+test("an OpenCode agent is denied every skill but those of its room, each allowed by name", async () => {
+  const { paseo } = await openedOn("opencode");
+  const options = paseo.created[0]!.config.options as { permission: { skill: Record<string, string> } };
+  const [all, ...named] = Object.entries(options.permission.skill);
+  assert.deepEqual(all, ["*", "deny"], "the rule for every skill comes first: the last that matches decides");
+  assert.deepEqual(
+    named.sort(),
+    skillsOf(slp, "supervisor").map((skill) => [skill, "allow"]),
+  );
 });

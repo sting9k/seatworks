@@ -23,6 +23,12 @@ export class Workspace {
     return found.code === 0 ? found.stdout.trim() : join(this.repo, ".git");
   }
 
+  /** The git directory of one folder of the repository: a worktree has its own, where its index and head are kept. */
+  async gitDirOf(dir: string): Promise<string> {
+    const found = await git(dir, ["rev-parse", "--path-format=absolute", "--git-dir"]);
+    return found.code === 0 ? found.stdout.trim() : this.gitDir();
+  }
+
   /** The commit a branch or a ref of the repository is at; none where it has no such ref. */
   headOf(ref: string): Promise<string | null> {
     return sha(this.repo, ref);

@@ -46,7 +46,7 @@ import type { ReflexSettings } from "../../shared/contracts/settings.ts";
 import { humanView } from "../../shared/views/human.ts";
 import { statusText } from "../../shared/views/status.ts";
 import { stuckOf } from "../../shared/views/stuck.ts";
-import { type Home, type Places, layHome, withPlaces } from "../core/home.ts";
+import { type Home, type Places, layHome, withPlaces, withSkills } from "../core/home.ts";
 import { KeyedQueue } from "../core/keyed-queue.ts";
 import { Keys } from "../core/keys.ts";
 import { daemonLog } from "../core/logger.ts";
@@ -1363,10 +1363,16 @@ function harnessOf(h: HarnessFile, room: Room, provider: string, places: Places)
   const home = layHome(join(room.dir, provider), h.home, places, room.skills);
   // A variable an agent reads its config from is written in the file as that config, and handed over as its JSON.
   const named = Object.entries(h.env ?? {}).map(([name, v]) => [name, typeof v === "string" ? v : JSON.stringify(v)]);
+  // A setting an agent takes a skill at a time is written once in the file, for a skill, and set for each the room has.
+  const set = (settings: unknown) =>
+    withSkills(
+      withPlaces(settings ?? {}, places),
+      room.skills.map((s) => basename(s)),
+    );
   return {
-    always: withPlaces(h.always ?? {}, places) as Harness["always"],
-    writes: withPlaces(h.writes ?? {}, places) as Harness["writes"],
-    reads: withPlaces(h.reads ?? {}, places) as Harness["reads"],
+    always: set(h.always) as Harness["always"],
+    writes: set(h.writes) as Harness["writes"],
+    reads: set(h.reads) as Harness["reads"],
     env: { ...(Object.fromEntries(named) as Record<string, string>), ...home },
     servers: h.servers ?? true,
   };

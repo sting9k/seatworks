@@ -103,9 +103,10 @@ editor/           the template editor, a web page of its own that Paseo does not
   The owner's own daemon and projects are never used for it: there the evidence is the tests, your reading, Paseo's
   source and `~/.paseo/daemon.log`.
 - **Never print or cat a file that can hold a key:** the plugin's settings under Paseo's plugin settings directory,
-  any `settings.json` of a project, `~/.paseo/config.json`, and any older `settings.json` under `~/.local/share/seatworks*`.
-  A fake key in a test never starts with OpenRouter's real key prefix, so a scan for it before a push finds only a
-  real one.
+  any `settings.json` of a project, `~/.paseo/config.json`, any older `settings.json` under `~/.local/share/seatworks*`,
+  the Human's own `~/.codex/config.toml`, and the `config.toml` of a Codex agent's room, which keeps their provider's
+  lines. A fake key in a test never starts with OpenRouter's real key prefix, so a scan for it before a push finds
+  only a real one.
 - **Don't click settings in the owner's live Paseo.** It writes their config.
 - **No CI here.** `npm run check` before every commit is the whole net. It runs, in this order: `tsc --noEmit` for the
   plugin, the client and the editor, ESLint with type-checked rules, Prettier's check at 120 columns, and `node --test`
@@ -207,6 +208,6 @@ check a fact against the installed `@getpaseo/*` types or Paseo's source, not me
   servers and pre-approved tools for Claude, Codex and OpenCode only, and refuses a create that hands them to another.
 - **The stand-in for Paseo in the tests refuses what Paseo refuses** (`test/bridge/fake-paseo.ts`). When Paseo
   changes what it takes, change the stand-in first and let the tests show what breaks.
-- **Claude Code and Pi were seen on live agents on 2 October 2026; Codex and OpenCode have not been.** What the live
-  runs showed is in `spec/HARNESS.md` and `spec/PASEO.md`, Seen on a live Paseo; what only a live one can still show
-  is in their To check.
+- **Claude Code and Pi were seen on live agents on 2 October 2026; Codex and OpenCode, each as a Peer, on
+  4 October.** What the live runs showed is in `spec/HARNESS.md` and `spec/PASEO.md`, Seen on a live Paseo; what only
+  a live one can still show is in their To check.

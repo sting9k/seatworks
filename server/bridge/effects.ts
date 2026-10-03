@@ -279,6 +279,7 @@ export function handlersFor(w: Wiring): Handlers {
         },
         writes: role.writes,
         gitDir: await w.workspace.gitDir(),
+        ownGitDir: await w.workspace.gitDirOf(cwd),
         servers: given.grants,
         room: roomOf(w, actor.role),
       });

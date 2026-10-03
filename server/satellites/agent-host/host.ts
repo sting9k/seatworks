@@ -39,6 +39,8 @@ export type AgentSpec = {
   readonly writes: boolean;
   /** The repository's git directory, which a harness file names `{git}`: a writer's sandbox must let it be written. */
   readonly gitDir: string;
+  /** The git directory of the folder the agent works in, named `{gitdir}`: a commit there writes its index in it. */
+  readonly ownGitDir: string;
   /** MCP servers beside the team's own, each with the tools of it the agent may call without being asked. */
   readonly servers: readonly {
     readonly name: string;
@@ -48,7 +50,7 @@ export type AgentSpec = {
   readonly room: Room;
 };
 
-/** Where an agent's own home is laid, a folder under it for each provider, and the skill folders it is to find there. */
+/** Where an agent's own home is laid, a folder under it for each provider, and the skill folders it finds there. */
 export type Room = { readonly dir: string; readonly skills: readonly string[] };
 
 export type Harness = {
@@ -127,7 +129,7 @@ export class PaseoHost {
       ...(kept?.featureValues ? { featureValues: kept.featureValues } : {}),
     };
     const added = mergeAll(harness?.always ?? {}, (spec.writes ? harness?.writes : harness?.reads) ?? {});
-    const shaped = mergeAll(base, withPlaces(added, { git: spec.gitDir }) as Json);
+    const shaped = mergeAll(base, withPlaces(added, { git: spec.gitDir, gitdir: spec.ownGitDir }) as Json);
     // What a harness file adds is read as it is written; everything Seatworks sets itself is held to Paseo's types.
     const own = { ...(shaped as Pick<PaseoAgentConfig, "provider">), systemPrompt: spec.systemPrompt };
     // Paseo refuses a create that hands either to a provider it cannot hand them to: its home has the team's tools.

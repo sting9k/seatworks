@@ -18,7 +18,7 @@ the team is arranged and what each role is told (its prompt, its skills, the que
 and what they say, are the plugin's. **SLP** is the template that comes with it.
 
 > **Status: in testing.** Nothing has shipped. The tests run against a stand-in for Paseo; Claude Code and Pi have
-> been run as real agents, Codex and OpenCode have settings shipped and have not. Read
+> been run as real agents in every role, Codex and OpenCode as a Peer only. Read
 > [What to expect](#what-to-expect).
 
 ## SLP, the template that comes with it
@@ -217,15 +217,16 @@ every agent, `<role>.md` for one role. Each agent made from then on reads them a
 A team's agent works from a room of its own under the plugin's state directory, not from your home. It has your
 login and its role's skills, which it loads itself when one fits its task. It has none of your own skills, plugins,
 servers or settings for that agent, and none of the skills and extra tools the agent ships with. What your Claude
-Code, Codex or Pi needs in order to run at all, a key or a provider's address, goes on that provider in Paseo's own
-settings, whose `env` every agent of it is given.
+Code or Pi needs in order to run at all, a key or a provider's address, goes on that provider in Paseo's own
+settings, whose `env` every agent of it is given. Codex is the exception: a provider you set in its own
+`config.toml` is carried into its room, its key with it, and nothing else of that file.
 
 ## What to expect
 
 - Agents are real and cost real money. Watch the first lanes, and set an appetite with the Supervisor.
-- **Agents.** Claude Code and Pi have been run in a team. Codex and OpenCode (version 2) have their settings and
-  have not been run. Nothing is shipped for any other, Oh My Pi among them: Paseo refuses to make an agent of any
-  other kind with the team's tools.
+- **Agents.** Claude Code and Pi have been run in a team. Codex and OpenCode (version 2) have been run as a Peer
+  and in no other role. Nothing is shipped for any other, Oh My Pi among them: Paseo refuses to make an agent of
+  any other kind with the team's tools.
 - **Mail waits for a pause.** What is sent to an agent in the middle of a turn is delivered when the turn ends,
   everything waiting as one message. A template may let some of it in sooner, and SLP does: on Claude Code and Pi,
   what cannot wait (a direction, anything you say, an answer the agent asked for) enters between two of its steps,

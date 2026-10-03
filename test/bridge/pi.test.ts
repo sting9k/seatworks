@@ -100,7 +100,7 @@ test("a Codex agent asks nobody and starts no agent of its own, and only as a wr
       config.includes('\n[mcp_servers.paseo]\nurl = "http://not-for-a-teams-agent.invalid/"\nenabled = false\n'),
       "and so is the server Paseo may add for its tools, in a config of Seatworks' own",
     );
-    assert.doesNotMatch(config, /the-humans-own/, "which holds nothing of the Human's config");
+    assert.doesNotMatch(config, /the-humans-own/, "which holds nothing of the Human's config but their way to a model");
     assert.match(
       readFileSync(join(home, "rules", "seatworks.rules"), "utf8"),
       /prefix_rule\(\s*pattern = \["paseo"\],\s*decision = "forbidden"/,
@@ -119,9 +119,12 @@ test("a Codex agent asks nobody and starts no agent of its own, and only as a wr
     tools.close();
     const writer = paseo.created[1]!;
     const roots = (writer.config.options?.sandbox_workspace_write as { writable_roots: string[] }).writable_roots;
+    const own = execFileSync("git", ["rev-parse", "--absolute-git-dir"], { cwd: writer.cwd, encoding: "utf8" }).trim();
+    assert.notEqual(realpathSync(own), realpathSync(join(repo, ".git")), "it works in a worktree, which has its own");
     assert.deepEqual(
       roots.map((root) => realpathSync(root)),
-      [realpathSync(join(repo, ".git"))],
+      [realpathSync(join(repo, ".git")), realpathSync(own)],
+      "a commit writes its objects and its branch in the repository's git directory, and its index in the worktree's",
     );
     assert.equal(writer.config.options?.approval_policy, "never");
   } finally {
@@ -134,22 +137,16 @@ test("an OpenCode agent asks nobody, starts no agent of its own and is shown non
   const made = paseo.created[0]!;
   assert.ok(made.servers.team && made.approved.includes("team.status"), "OpenCode takes the team's server from Paseo");
   assert.equal(made.config.modeId, "build", "the agent OpenCode ships for building, whatever the profile names");
+  const { skill: _skills, ...permission } = (made.config.options as { permission: Record<string, unknown> }).permission;
   assert.deepEqual(
-    made.config.options,
-    {
-      permission: {
-        read: "allow",
-        external_directory: "allow",
-        bash: { "paseo *": "deny" },
-        task: "deny",
-        question: "deny",
-      },
-    },
+    permission,
+    { read: "allow", external_directory: "allow", bash: { "paseo *": "deny" }, task: "deny", question: "deny" },
     "nothing asks, and no subagent, question to the Human or Paseo's command line is left it",
   );
   // Paseo's schema for OpenCode's options has no place for a tool by name: the rule is in the config its server reads.
   const off = { action: "paseo_*", resource: "*", effect: "deny" };
-  const inline = { permissions: [off], agents: { build: { permissions: [off] } } };
+  // A snapshot OpenCode takes of its own is a git run with a git directory elsewhere, which the guard on its PATH refuses.
+  const inline = { permissions: [off], agents: { build: { permissions: [off] } }, snapshot: false };
   assert.deepEqual(JSON.parse(made.env.OPENCODE_CONFIG_CONTENT!), inline);
 
   await plugin.dispose();

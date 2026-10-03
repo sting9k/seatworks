@@ -1,4 +1,5 @@
 import {
+  chmodSync,
   cpSync,
   existsSync,
   lstatSync,
@@ -28,12 +29,14 @@ export type Home = {
   readonly skills: string;
   /** For an agent that has no switch for skills elsewhere: the folders they are under, and what a file says of each. */
   readonly leaves?: { readonly under: readonly string[]; readonly file: string; readonly each: string };
+  /** What of the Human's own file of that name is kept in the home's: these keys of its top, each table so named. */
+  readonly keeps?: { readonly file: string; readonly keys: readonly string[]; readonly tables: readonly string[] };
 };
 
 /** Where things are on this machine, by the name a harness file writes in braces: `{plugin}`, `{node}`, `{socket}`. */
 export type Places = Readonly<Record<string, string>>;
 
-/** Lays the home out in `dir` with the skills given and returns the variable naming it; the Human's own is not written. */
+/** Lays the home out in `dir` with the skills given and returns the variable naming it; the Human's own stays as is. */
 export function layHome(dir: string, home: Home, places: Places, skills: readonly string[]): Record<string, string> {
   mkdirSync(dir, { recursive: true });
   const given = process.env[home.env];
@@ -46,20 +49,44 @@ export function layHome(dir: string, home: Home, places: Places, skills: readonl
   }
   const here = { ...places, home: homedir(), room: dir };
   const left = home.leaves ? leftOut(home.leaves, here) : "";
+  const kept = home.keeps ? keptOf(join(from, home.keeps.file), home.keeps) : { top: "", tables: "" };
   for (const [name, content] of Object.entries(home.files)) {
     const placed = withPlaces(content, here);
     const said = typeof placed === "string" ? placed : `${JSON.stringify(placed, null, 2)}\n`;
-    put(join(dir, name), name === home.leaves?.file ? said + left : said);
+    // Keys of a file's top come before its first table, so the Human's stand first and their tables after.
+    const whole = name === home.keeps?.file ? kept.top + said + kept.tables : said;
+    put(join(dir, name), name === home.leaves?.file ? whole + left : whole);
   }
   placeSkills(join(dir, home.skills), skills);
   return { [home.env]: dir };
 }
 
-/** Writes a file unless it already says so: an agent at work in the home may be reading it. */
+/** Writes a file, for its owner alone to read, unless it says so already: an agent in the home may be reading it. */
 function put(file: string, said: string): void {
   if (existsSync(file) && readFileSync(file, "utf8") === said) return;
   mkdirSync(dirname(file), { recursive: true });
-  writeFileSync(file, said);
+  writeFileSync(file, said, { mode: 0o600 });
+  chmodSync(file, 0o600);
+}
+
+/** The lines of a TOML file that set the keys named at its top, and those of each table named or under one named. */
+function keptOf(file: string, keeps: NonNullable<Home["keeps"]>): { top: string; tables: string } {
+  if (!existsSync(file)) return { top: "", tables: "" };
+  const lines = readFileSync(file, "utf8").split("\n");
+  const header = (line: string) => /^\s*\[\[?\s*([^\]]+?)\s*\]\]?\s*$/.exec(line)?.[1];
+  const first = lines.findIndex((line) => header(line) !== undefined);
+  const top = lines
+    .slice(0, first < 0 ? lines.length : first)
+    .filter((line) => keeps.keys.includes(/^([A-Za-z0-9_-]+)\s*=/.exec(line)?.[1] ?? ""));
+  const tables: string[] = [];
+  let within = false;
+  for (const line of first < 0 ? [] : lines.slice(first)) {
+    const named = header(line);
+    if (named !== undefined) within = keeps.tables.some((table) => named === table || named.startsWith(`${table}.`));
+    if (within) tables.push(line);
+  }
+  const said = (some: string[]) => (some.length > 0 ? `${some.join("\n").trimEnd()}\n` : "");
+  return { top: top.length > 0 ? `${said(top)}\n` : "", tables: tables.length > 0 ? `\n${said(tables)}` : "" };
 }
 
 /** What a file is given for each skill found under the folders named, by the path the skill's file really has. */
@@ -117,6 +144,17 @@ function isLink(path: string): boolean {
     // Nothing there.
     return false;
   }
+}
+
+/** A value from a harness file with a key written `{skill}` set once for each skill named, to the value it has. */
+export function withSkills(value: unknown, skills: readonly string[]): unknown {
+  if (Array.isArray(value)) return value.map((v) => withSkills(v, skills));
+  if (value === null || typeof value !== "object") return value;
+  return Object.fromEntries(
+    Object.entries(value).flatMap(([k, v]): [string, unknown][] =>
+      k === "{skill}" ? skills.map((skill) => [skill, v]) : [[k, withSkills(v, skills)]],
+    ),
+  );
 }
 
 /** A value from a harness file with each `{name}` in its strings put in place; a name that is no place stays. */

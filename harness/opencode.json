@@ -9,7 +9,11 @@
           "paseo *": "deny"
         },
         "task": "deny",
-        "question": "deny"
+        "question": "deny",
+        "skill": {
+          "*": "deny",
+          "{skill}": "allow"
+        }
       }
     }
   },
@@ -32,7 +36,8 @@
             }
           ]
         }
-      }
+      },
+      "snapshot": false
     }
   },
   "home": {
