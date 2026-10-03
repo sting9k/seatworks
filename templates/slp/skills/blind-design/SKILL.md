@@ -1,6 +1,6 @@
 ---
 name: blind-design
-description: "Designs a hard decision two or three times, blind, then brings the designs together. Use when several answers are sound and none is standard; not when the answer is settled, small, or only one design is plausible."
+description: "Use this skill before you settle a hard decision where several answers are sound and none is standard. It holds how to design it two or three times, blind, and bring the designs together. Not when the answer is settled, small, or only one design is plausible."
 ---
 
 # Blind design

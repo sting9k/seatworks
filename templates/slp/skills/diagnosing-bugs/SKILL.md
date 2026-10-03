@@ -1,6 +1,6 @@
 ---
 name: diagnosing-bugs
-description: "Goes from a symptom to its cause and proves the fix with a command that fails before and passes after. Use when the cause of a failure is unknown; not when the brief already names a settled fix."
+description: "Use this skill before you look into a bug report, a failure or wrong behaviour whose cause is not known yet: something is lost, crashes, is slow, fails now and then. It holds how to go from the symptom to its cause and prove the fix with a command that fails before and passes after. Not when the brief already names a settled fix."
 ---
 
 # Diagnosing bugs

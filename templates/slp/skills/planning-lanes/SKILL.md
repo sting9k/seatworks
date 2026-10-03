@@ -1,6 +1,6 @@
 ---
 name: planning-lanes
-description: "Plans a high-risk lane before any Peer starts: the final contract first, splits only for a reason you can name, and a way back out. Use when the lane changes auth, secrets, data, money, an external effect that cannot run twice, a contract others call, or concurrency and lifecycle. Its section on where scopes meet serves any lane whose scopes share a notion; otherwise not for a normal lane, whose directive is its plan."
+description: "Use this skill before any Peer starts on a lane that changes auth, secrets, data, money, an external effect that cannot run twice, a contract others call, or concurrency and lifecycle. It holds how to plan such a lane: the final contract first, splits only for a reason you can name, and a way back out. Its section on where scopes meet serves any lane whose scopes share a notion; otherwise not for a normal lane, whose directive is its plan."
 ---
 
 # Planning a high-risk lane

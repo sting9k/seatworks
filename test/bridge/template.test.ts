@@ -96,8 +96,10 @@ test("a profile with a flow and docs of its own: every agent reads the flow afte
   const first = paseo.created[0]!;
   assert.match(
     first.systemPrompt,
-    /# Supervisor[\s\S]*# The team's flow\n\n1\. \*\*Plan\*\* \(lead\)\. Then: Work\.\n\n## Skills\n\nEach is a file, not a tool\. Before you start a task, read the ones whose description fits it: they hold how this team does that kind of work\.\n\n- /,
+    /# Supervisor[\s\S]*# The team's flow\n\n1\. \*\*Plan\*\* \(lead\)\. Then: Work\.\n$/,
+    "the flow ends them: its skills are in its room, and none is listed",
   );
+  assert.equal(first.prompt.includes("skill"), false, "nor do its first words name one");
   assert.match(
     first.prompt,
     /The project's docs in your copy: `GLOSSARY\.md`, `docs\/adr`, `docs\/research`\. One that is not there holds nothing yet\.\n\n/,

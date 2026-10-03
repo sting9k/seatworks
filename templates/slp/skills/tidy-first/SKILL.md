@@ -1,6 +1,6 @@
 ---
 name: tidy-first
-description: "Makes a change easy before making it: small structural steps committed apart from the behaviour change, each keeping the tests green. Use when the change is hard to make in the code as it stands, or the brief asks for a refactor; not for cleanup the task does not need."
+description: "Use this skill when the change is hard to make in the code as it stands, and when the brief asks for a refactor. It holds how to make the change easy first: small structural steps committed apart from the behaviour change, each keeping the tests green. Not for cleanup the task does not need."
 ---
 
 # Tidy first

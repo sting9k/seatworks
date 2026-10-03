@@ -1,6 +1,6 @@
 ---
 name: appetite
-description: "Sets and holds what work may cost, and what is cut first when it runs short. Use when new work is settled with the Human, and when a lane passes its appetite; not for a Lead's estimate of a task."
+description: "Use this skill when new work is settled with the Human, and when a lane passes what it was given. It holds how to set and hold what work may cost, and what is cut first when it runs short. Not for a Lead's estimate of a task."
 ---
 
 # Appetite

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, test } from "node:test";
@@ -70,7 +70,8 @@ test("a template with no role of SLP runs a task end to end: its root seats a wr
   await plugin.idle();
 
   const driverAgent = paseo.created[1]!;
-  assert.match(driverAgent.systemPrompt, /^# Driver[\s\S]*- `proof-first`: Writes what will prove a behaviour/);
+  assert.match(driverAgent.systemPrompt, /^# Driver\n/);
+  assert.deepEqual(readdirSync(join(driverAgent.env.CLAUDE_CONFIG_DIR!, "skills")), ["proof-first"], "its one skill");
   mkdirSync(join(driverAgent.cwd, "src"), { recursive: true });
   writeFileSync(join(driverAgent.cwd, "src/encode.txt"), "int16\n");
   git(driverAgent.cwd, "add", ".");

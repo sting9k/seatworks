@@ -166,7 +166,7 @@ template never needs a change to the plugin.
   template.json            its name, description and tags
   profile.yaml             the roles: what each is, may call and runs on; a report's sections; outside tool servers
   roles/<role>.md          a role's prompt, read every turn
-  skills/<skill>/SKILL.md  a skill, read when it applies; its description is read every turn
+  skills/<skill>/SKILL.md  a skill, loaded when its description fits; the description is read every turn
   flow.md                  the team's flow, read every turn
   project.md               the note kept in an attached project's instruction file
   reflex.yaml              questions asked of the record's events
@@ -213,6 +213,12 @@ projects that run it go on.
 Rules of your own that should hold whatever the template says, such as how you want code written, go in
 `rules/<template>/` under the plugin's state directory (`~/.local/share/seatworks/rules/slp/` for SLP): `all.md` for
 every agent, `<role>.md` for one role. Each agent made from then on reads them after its role's prompt.
+
+A team's agent works from a room of its own under the plugin's state directory, not from your home. It has your
+login and its role's skills, which it loads itself when one fits its task. It has none of your own skills, plugins,
+servers or settings for that agent, and none of the skills and extra tools the agent ships with. What your Claude
+Code, Codex or Pi needs in order to run at all, a key or a provider's address, goes on that provider in Paseo's own
+settings, whose `env` every agent of it is given.
 
 ## What to expect
 

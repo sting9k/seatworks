@@ -1,6 +1,6 @@
 ---
 name: measuring
-description: "Measures performance so a number can be trusted: a fixed workload, a baseline with its spread, one change per measurement. Use when the goal names latency, throughput, memory or size, or before you claim something is faster; not for correctness, which is proven apart (`test-first`)."
+description: "Use this skill when the goal names latency, throughput, memory or size, and before you claim that something is faster or smaller. It holds how to measure so the number can be trusted: a fixed workload, a baseline with its spread, one change per measurement. Not for correctness, which is proven apart (`test-first`)."
 ---
 
 # Measuring

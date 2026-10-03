@@ -1,6 +1,6 @@
 ---
 name: architecture-premise-audit
-description: "Judges whether a whole project is built around the right kind of system, and returns one verdict with ranked findings. Use when the Human asks, or evidence across lanes points there: fixes that keep failing in one place, cost that follows the wrong variable, lanes that keep bending code around one foundation. Not for reviewing a change, for one design question (a Lead's `blind-design`), or for finding bugs."
+description: "Use this skill when the Human asks whether the project is built on the right foundation, or evidence across lanes points there: fixes that keep failing in one place, cost that follows the wrong variable, lanes that keep bending code around one part. It holds how to judge the whole project's premise and return one verdict with ranked findings. Not for reviewing a change, for one design question (a Lead's `blind-design`), or for finding bugs."
 ---
 
 # Architecture premise audit

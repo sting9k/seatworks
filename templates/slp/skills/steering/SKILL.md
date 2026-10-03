@@ -1,6 +1,6 @@
 ---
 name: steering
-description: "What a Lead does with an attention about one of its Peers: whether to step in, when, and how to ask without framing the Peer. Use when an ATTENTION about a Peer arrives."
+description: "Use this skill when an ATTENTION about one of your Peers arrives. It holds what a Lead does with it: whether to step in, when, and how to ask without framing the Peer."
 ---
 
 # Steering

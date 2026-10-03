@@ -1,6 +1,6 @@
 ---
 name: repo-refresh
-description: "Realigns a repository's docs, plans, tests, scripts and generated files with what the code does now, so one truth has one owner. Use when the lane's brief asks for a refresh, or when drift between docs, tests and code keeps misleading the team; not for housekeeping inside one change, nor for redesigning working architecture."
+description: "Use this skill when the lane's brief asks for a refresh, and when drift between docs, tests and code keeps misleading the team. It holds how to bring a repository's docs, plans, tests, scripts and generated files back in line with what the code does now, so one truth has one owner. Not for housekeeping inside one change, nor for redesigning working architecture."
 ---
 
 # Repository refresh

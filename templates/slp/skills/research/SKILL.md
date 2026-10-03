@@ -1,6 +1,6 @@
 ---
 name: research
-description: "Answers a question the repository cannot: how a library, a service or a protocol behaves, what prior work did, which of several tools fits. Use on a brief whose goal is a question, or when your work rests on such a fact. Not for a question the code answers (read it) or one a run answers (`spike`)."
+description: "Use this skill on a brief whose goal is a question the repository cannot answer, and when your work rests on such a fact: how a library, a service or a protocol behaves, what prior work did, which of several tools fits. It holds how to answer it from what can be checked, and what the note says. Not for a question the code answers (read it) or one a run answers (`spike`)."
 ---
 
 # Research
@@ -25,7 +25,8 @@ a claim with its source and how you checked it can be weighed by whoever decides
 
 ## The note
 
-One file where your brief says, or `docs/research/<topic>.md` when it names none and your paths hold it:
+One file in the repository: where your brief says, or `docs/research/<topic>.md` when it names none and your paths
+hold it:
 
 - **Answer**, in a paragraph, first.
 - **What stands behind it**: each claim, its source with version and date, and how it stands.

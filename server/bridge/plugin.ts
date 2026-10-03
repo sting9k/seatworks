@@ -54,7 +54,7 @@ import { sizeOf } from "../core/disk.ts";
 import { archiveDir, projectDir } from "../core/paths.ts";
 import { rulesDir } from "../core/rules.ts";
 import { installMail, installShim } from "../core/shim.ts";
-import { type Harness, type Model, PaseoHost, type Runs } from "../satellites/agent-host/host.ts";
+import { type Harness, type Model, PaseoHost, type Room, type Runs } from "../satellites/agent-host/host.ts";
 import { PaseoLink } from "../satellites/agent-host/paseo-link.ts";
 import { EvidenceRunner } from "../satellites/evidence/runner.ts";
 import { MachineHolds } from "../satellites/machine/holds.ts";
@@ -83,7 +83,17 @@ import { pin, pinnedDir, templateOf } from "../profile/pinned.ts";
 import { listPresets } from "../profile/presets.ts";
 import { listProfiles, type Listed as ListedProfile, removeProfile } from "../profile/profiles.ts";
 import { Dispatcher } from "./dispatcher.ts";
-import { type Wiring, handlersFor, intoTurn, keepMail, scratchFor, seatDir, seatEnv, agentEnv } from "./effects.ts";
+import {
+  type Wiring,
+  handlersFor,
+  intoTurn,
+  keepMail,
+  roomOf,
+  scratchFor,
+  seatDir,
+  seatEnv,
+  agentEnv,
+} from "./effects.ts";
 import { branchesOf, keepHeld } from "./lane.ts";
 import { type Kept, leftoverId, leftoversOf, projectLeftover, refOf } from "./leftovers.ts";
 import { Project, type Submitted } from "./project.ts";
@@ -155,7 +165,7 @@ export class Plugin {
   readonly link = new PaseoLink();
   private readonly root: string;
   private readonly keys: Keys;
-  private readonly harnesses = new Map<string, Harness | null>();
+  private readonly harnesses = new Map<string, HarnessFile | null>();
   private readonly holds: MachineHolds;
   private readonly runtimes = new Map<string, Runtime>();
   private readonly byHost = new Map<string, { project: string; actor: string }>();
@@ -251,7 +261,7 @@ export class Plugin {
     const plugins = (await api.config.get()).config.plugins ?? {};
     const dir = plugins[PLUGIN_ID]?.path;
     if (!dir) throw new Error(`Paseo's config has no plugins.${PLUGIN_ID} with a path`);
-    const host = new PaseoHost(this.link, (provider) => this.harness(provider));
+    const host = new PaseoHost(this.link, (provider, room) => this.harness(provider, room));
     const shimDir = installShim(this.root, join(dir, "bin", "git-shim.ts"));
     installMail(shimDir, join(dir, "bin", "mail.ts"));
     const socketPath =
@@ -994,14 +1004,16 @@ export class Plugin {
     for (const runtime of this.runtimes.values()) runtime.dispatcher.kick();
   }
 
-  /** A provider's harness, laid out once per plugin process: a few providers at most. */
-  private harness(provider: string): Harness | null {
+  /** A provider's harness for one room, its home laid there anew: its file is read once per plugin process. */
+  private harness(provider: string, room: Room): Harness | null {
     const ready = this.readyNow;
     if (!ready) return null;
+    if (!this.harnesses.has(provider)) this.harnesses.set(provider, harnessFile(ready.dir, provider));
+    const file = this.harnesses.get(provider);
+    if (!file) return null;
     // What an agent's home names of this machine: the plugin, the Node that runs it, and the socket its tools reach.
     const places = { plugin: ready.dir, node: process.execPath, socket: ready.socketPath };
-    if (!this.harnesses.has(provider)) this.harnesses.set(provider, harnessOf(ready.dir, this.root, provider, places));
-    return this.harnesses.get(provider) ?? null;
+    return harnessOf(file, room, provider, places);
   }
 
   /** The environment a reopened agent session gets back whole, since Paseo keeps none of what it started with. */
@@ -1022,7 +1034,7 @@ export class Plugin {
     const cwd = await seatDir(runtime.wiring, runtime.project.view, scope);
     if (cwd === null) return null;
     const env = seatEnv(runtime.wiring, runtime.project.view, { actor: actor.id, scope, cwd, role });
-    return { ...agentEnv(runtime.wiring, env), ...this.harness(provider)?.env };
+    return { ...agentEnv(runtime.wiring, env), ...this.harness(provider, roomOf(runtime.wiring, actor.role))?.env };
   }
 
   /** Resolves once no project has an effect in flight; for tests and a clean unload. */
@@ -1112,6 +1124,7 @@ export class Plugin {
         shimDir: ready.shimDir,
       },
       scratch,
+      rooms: join(dir, "rooms"),
       rules: rulesDir(this.root, profile),
       agents: matchingFile(this.root, profile),
       own: ownFile(dir),
@@ -1334,15 +1347,20 @@ async function currentBranch(repo: string): Promise<string> {
   return run.code === 0 && run.stdout.trim() ? run.stdout.trim() : "main";
 }
 
-/** A provider's harness file (HARNESS.md), with the home it describes laid out under the plugin's state root. */
-function harnessOf(dir: string, root: string, provider: string, places: Places): Harness | null {
+/** A provider's harness as its file states it (HARNESS.md): what each property adds, its process's variables, its home. */
+type HarnessFile = Partial<Pick<Harness, "always" | "writes" | "reads" | "servers">> & {
+  readonly home: Home;
+  readonly env?: Readonly<Record<string, unknown>>;
+};
+
+function harnessFile(dir: string, provider: string): HarnessFile | null {
   const file = join(dir, "harness", `${provider}.json`);
-  if (!existsSync(file)) return null;
-  const h = JSON.parse(readFileSync(file, "utf8")) as Partial<Omit<Harness, "env">> & {
-    home?: Home;
-    env?: Record<string, unknown>;
-  };
-  const home = h.home ? layHome(join(root, "homes", provider), h.home, places) : {};
+  return existsSync(file) ? (JSON.parse(readFileSync(file, "utf8")) as HarnessFile) : null;
+}
+
+/** A harness for one room: its home laid there, in a folder of the provider's own, and named to the agent's process. */
+function harnessOf(h: HarnessFile, room: Room, provider: string, places: Places): Harness {
+  const home = layHome(join(room.dir, provider), h.home, places, room.skills);
   // A variable an agent reads its config from is written in the file as that config, and handed over as its JSON.
   const named = Object.entries(h.env ?? {}).map(([name, v]) => [name, typeof v === "string" ? v : JSON.stringify(v)]);
   return {

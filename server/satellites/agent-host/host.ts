@@ -45,13 +45,17 @@ export type AgentSpec = {
     readonly tools: readonly string[];
     readonly server: Server;
   }[];
+  readonly room: Room;
 };
+
+/** Where an agent's own home is laid, a folder under it for each provider, and the skill folders it is to find there. */
+export type Room = { readonly dir: string; readonly skills: readonly string[] };
 
 export type Harness = {
   always: Partial<PaseoAgentConfig>;
   writes: Partial<PaseoAgentConfig>;
   reads: Partial<PaseoAgentConfig>;
-  /** What the agent's process is given beside the seat's own environment, such as the home Seatworks lays out for it. */
+  /** What the agent's process is given beside the seat's own environment, the home Seatworks lays out for it among it. */
   env: Readonly<Record<string, string>>;
   /** Whether Paseo takes MCP servers and pre-approved tools for this provider; if not, its home gives it the team's. */
   servers: boolean;
@@ -88,9 +92,9 @@ const UNAVAILABLE: Unavailable = { unavailable: true };
 /** The agent host on Paseo: the one place, with the bridge, that imports `@getpaseo/*` (PASEO.md rule 1). */
 export class PaseoHost {
   private readonly link: PaseoLink;
-  private readonly harness: (provider: string) => Harness | null;
+  private readonly harness: (provider: string, room: Room) => Harness | null;
 
-  constructor(link: PaseoLink, harness: (provider: string) => Harness | null) {
+  constructor(link: PaseoLink, harness: (provider: string, room: Room) => Harness | null) {
     this.link = link;
     this.harness = harness;
   }
@@ -110,7 +114,7 @@ export class PaseoHost {
     if (!model)
       return { failed: `the Paseo agent profile ${profile.name} names no model: give it one on Seatworks' page` };
     const effort = spec.runs.effort === undefined ? profile.thinkingOptionId : spec.runs.effort;
-    const harness = this.harness(provider);
+    const harness = this.harness(provider, spec.room);
     const outside = spec.servers.map((given) => given.name);
     if (outside.length > 0 && harness?.servers === false)
       return { failed: `an agent of ${provider} cannot be given the outside server ${outside.join(", ")}` };

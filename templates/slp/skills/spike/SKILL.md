@@ -1,6 +1,6 @@
 ---
 name: spike
-description: "Answers one question of fact with throwaway code. Use on a discovery brief, or when your work rests on a fact only running something can give; not for code that will be kept, which is built with `test-first`."
+description: "Use this skill on a discovery brief, and when your work rests on a fact only running something can give. It holds how to answer one question of fact with throwaway code. Not for code that will be kept, which is built with `test-first`."
 ---
 
 # Spike

@@ -1,6 +1,6 @@
 ---
 name: security-check
-description: "Checks a change for harm untrusted input or a careless caller could cause, with a failing test per abuse case. Use when a task or a change touches input, auth, secrets, file paths, data exposure or outbound calls. Not for infrastructure or dependency audits nobody asked for."
+description: "Use this skill when a task or a change touches input from outside, auth, secrets, file paths, data exposure or outbound calls. It holds how to check for the harm untrusted input or a careless caller could cause, with a failing test per abuse case. Not for infrastructure or dependency audits nobody asked for."
 ---
 
 # Security check

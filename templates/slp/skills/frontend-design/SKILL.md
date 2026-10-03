@@ -1,6 +1,6 @@
 ---
 name: frontend-design
-description: "Builds or changes what a person sees and uses, so that it is right to use and not only right to compile: every state, the order of things, the words, the keyboard. Use when a task changes a screen, a page or a component. Not for the logic behind it."
+description: "Use this skill before you build or change anything a person sees and uses: a screen, a page, a form, a dialog, a component, its HTML or CSS. It holds how to make it right to use and not only right to compile: every state, the order of things, the words, the keyboard. Not for the logic behind it."
 ---
 
 # Frontend design

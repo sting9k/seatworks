@@ -54,6 +54,21 @@ function refusedOption(options: Record<string, unknown>): string | undefined {
   return Object.keys(permission).find((key) => !OPENCODE_PERMISSIONS.has(key));
 }
 
+/** The options Paseo's schema for Claude names at 0.10.3, and the settings among them: both strict. */
+const CLAUDE_OPTIONS = new Set(
+  "allowedTools disallowedTools additionalDirectories extraArgs sandbox settings".split(" "),
+);
+const CLAUDE_SETTINGS = new Set(["permissions", "sandbox"]);
+
+/** The first key of a Claude agent's options that Paseo's schema refuses, if one does. */
+function refusedOfClaude(options: Record<string, unknown>): string | undefined {
+  const outside = Object.keys(options).find((key) => !CLAUDE_OPTIONS.has(key));
+  if (outside !== undefined) return outside;
+  const settings = options.settings;
+  if (typeof settings !== "object" || settings === null) return undefined;
+  return Object.keys(settings).find((key) => !CLAUDE_SETTINGS.has(key));
+}
+
 /** An agent profile as Paseo keeps one: a model, a thinking option and a mode where the Human gave them. */
 type Page = { limit: number; cursor?: string };
 /** Paseo hands out 200 of a listing at most: a page asked larger is refused, as its own schema refuses it. */
@@ -278,7 +293,9 @@ export function fakePaseo(
       return Promise.reject(new Error(`Provider '${kind}' cannot preapprove exact MCP tools for unattended execution`));
     if (Object.keys(o.config.mcpServers ?? {}).length > 0 && !TAKES_SERVERS.has(kind))
       return Promise.reject(new Error(`Provider '${kind}' does not support MCP servers`));
-    const refused = kind === "opencode" ? refusedOption(o.config.options ?? {}) : undefined;
+    const options = o.config.options ?? {};
+    const refused =
+      kind === "opencode" ? refusedOption(options) : kind === "claude" ? refusedOfClaude(options) : undefined;
     if (refused !== undefined) return Promise.reject(new Error(`Unrecognized key: "${refused}"`));
     const request = JSON.stringify(o);
     const known = byKey.get(o.idempotencyKey);

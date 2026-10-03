@@ -1,6 +1,6 @@
 ---
 name: grilling
-description: "Settles with the Human what new work should do, and the shape that is costly to change, before any lane opens: rounds of questions, each with a recommended answer, until nothing they care about is assumed. Use when the Human brings new work or a change the plan does not answer; not for a small change, a question the plan settles, or work already settled."
+description: "Use this skill when the Human brings new work, or a change the plan does not answer, before any lane opens. It holds how to settle with them what the work should do and the shape that is costly to change: rounds of questions, each with a recommended answer, until nothing they care about is assumed. Not for a small change, a question the plan settles, or work already settled."
 ---
 
 # Grilling

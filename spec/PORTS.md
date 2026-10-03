@@ -38,7 +38,8 @@ takes from Paseo, and how it survives Paseo's releases, is in `PASEO.md`.
 
 ```text
 create(spec) -> Result<agentId>
-  spec: { name, agent, model, thinking, systemPrompt, tools, servers, cwd, projectRoot, env, labels, sandbox, runs }
+  spec: { name, agent, model, thinking, systemPrompt, tools, servers, cwd, projectRoot, env, labels, sandbox, runs,
+          room }
 send(agentId, text, key) -> Result<sent | duplicate>
 stream(agentId) -> events: turn_started, turn_ended(done | failed(why) | cancelled), said, thought, tool_call,
                           usage(tokens, cost), permission_requested, gone(why)
@@ -68,7 +69,10 @@ shapeProfile(name, { provider, model, effort? }) -> Result  // what that one pro
   out where the profile's stands. The host is told it and asks nobody whose it is (`TEMPLATE.md`, Agent profiles on
   a machine).
 - `sandbox` is built from role properties (`writes`, `reading`), never from a role's name. Each agent's own format
-  lives in `agent-host/harness/<agent>/`.
+  lives in `harness/<provider>.json`.
+- `room` is a folder and the skill folders to be found there. The agent's own home is laid in it, under a folder
+  for the provider the agent turns out to run on, each time the agent is made (`HARNESS.md`, Rooms). The host knows
+  nothing of whose the folder or the skills are.
 - A prompt and a tool set are fixed when an agent is created: a change of either is a new agent.
 - `servers` are MCP servers beside the one `tools` come from, each with the tools of it the agent may call unasked.
   The host knows nothing of what a server is for. It refuses to make an agent whose provider cannot take one, naming

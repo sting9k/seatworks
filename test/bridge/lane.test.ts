@@ -60,14 +60,13 @@ test("one lane end to end: a Supervisor, a Lead and a Peer land a change on main
     /\n\nMail reaches you when your turn ends; what cannot wait reaches you between two of your steps\. To wait for a hand-back, a check's result or an answer, end your turn: what you wait for begins your next one\.\n\nScope root/,
     "and say when mail reaches it, and how it waits for anything: by ending its turn",
   );
-  assert.match(
-    supervisorAgent.prompt,
-    /\n\nBefore you start, read each of your skills that fits this: `grilling`, `attention`, `pre-mortem`, [^\n]*`lane-portfolio`\. Each is a file your standing instructions point at\.$/,
-    "and end by naming its skills, to be read before it starts on what it was just shown",
-  );
 
   const supervisor = await agentTools(socketPath, supervisorAgent.env);
   assert.equal(supervisor.welcome.type, "welcome");
+  assert.ok(
+    supervisorAgent.prompt.endsWith(`\n\n${(await supervisor.call("status", {})).text}`),
+    "and end where it stands on the record, as `status` shows it: its skills are in its room, and none is named",
+  );
   assert.ok((await supervisor.call("set_checks", { checks: [{ name: "encoded", run: ["sh", "check.sh"] }] })).ok);
   const plan = { goal: { text: "Directions travel encoded" }, appetite: { line: { text: "A day" } } };
   assert.ok((await supervisor.call("set_plan", { scope: "root", plan })).ok);

@@ -1,6 +1,6 @@
 ---
 name: pre-mortem
-description: "Finds how a lane fails while changing its directive is still free. Use for a lane that is expensive, touches money, credentials or data that cannot be recovered, leaves this machine, or rests on one untested assumption; not for a routine lane."
+description: "Use this skill before you open a lane that is expensive, touches money, credentials or data that cannot be recovered, leaves this machine, or rests on one untested assumption. It holds how to find the ways the lane fails while changing its directive is still free. Not for a routine lane."
 ---
 
 # Pre-mortem

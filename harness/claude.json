@@ -1,14 +1,6 @@
 {
   "always": {
-    "modeId": "bypassPermissions",
-    "options": {
-      "extraArgs": { "plugin-dir": "{plugin}/harness/claude" },
-      "settings": {
-        "permissions": {
-          "deny": ["Agent", "Workflow", "AskUserQuestion", "ScheduleWakeup", "Skill", "mcp__paseo", "Bash(paseo *)"]
-        }
-      }
-    }
+    "modeId": "bypassPermissions"
   },
   "writes": {
     "options": {
@@ -19,5 +11,63 @@
       }
     }
   },
-  "reads": {}
+  "reads": {},
+  "env": {
+    "CLAUDE_SECURESTORAGE_CONFIG_DIR": "",
+    "DISABLE_DOCTOR_COMMAND": "1"
+  },
+  "home": {
+    "env": "CLAUDE_CONFIG_DIR",
+    "from": "~/.claude",
+    "link": [".credentials.json"],
+    "skills": "skills",
+    "files": {
+      "settings.json": {
+        "disableBundledSkills": true,
+        "syncClaudeAiSkills": false,
+        "syncClaudeAiPlugins": false,
+        "disableClaudeAiConnectors": true,
+        "permissions": {
+          "deny": [
+            "Agent",
+            "Workflow",
+            "SendMessage",
+            "ListAgents",
+            "AskUserQuestion",
+            "ScheduleWakeup",
+            "CronCreate",
+            "CronDelete",
+            "CronList",
+            "RemoteTrigger",
+            "EnterWorktree",
+            "ExitWorktree",
+            "EnterPlanMode",
+            "ExitPlanMode",
+            "Artifact",
+            "SendUserFile",
+            "PushNotification",
+            "ShareOnboardingGuide",
+            "SendFeedback",
+            "DesignSync",
+            "ReportFindings",
+            "mcp__paseo",
+            "Bash(paseo *)"
+          ]
+        },
+        "hooks": {
+          "PostToolBatch": [
+            {
+              "hooks": [
+                {
+                  "type": "command",
+                  "command": "\"$SEATWORKS_SHIM_DIR/seatworks-mail\"",
+                  "timeout": 10
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  }
 }

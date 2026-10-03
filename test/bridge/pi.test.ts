@@ -15,6 +15,11 @@ after(async () => {
   for (const p of plugins) await p.dispose();
 });
 
+/** The tools a Claude agent is denied, as the settings of its own home say. */
+const deniedIn = (home: string): string[] =>
+  (JSON.parse(readFileSync(join(home, "settings.json"), "utf8")) as { permissions: { deny: string[] } }).permissions
+    .deny;
+
 async function openedOn(provider: string) {
   const repo = mkdtempSync(join(tmpdir(), "sw-pi-"));
   const git = (...args: string[]) =>
@@ -89,14 +94,13 @@ test("a Codex agent asks nobody and starts no agent of its own, and only as a wr
     const home = owner.env.CODEX_HOME!;
     assert.notEqual(home, human);
     assert.equal(realpathSync(join(home, "auth.json")), realpathSync(join(human, "auth.json")));
-    assert.equal(
-      readFileSync(join(home, "config.toml"), "utf8"),
-      [
-        "[features]\nmulti_agent = false\nmulti_agent_v2 = false\n",
-        '[mcp_servers.paseo]\nurl = "http://not-for-a-teams-agent.invalid/"\nenabled = false\n',
-      ].join("\n"),
-      "its own sub-agents are off in a config of Seatworks' own, and so is the server Paseo may add for its tools",
+    const config = readFileSync(join(home, "config.toml"), "utf8");
+    assert.match(config, /^\[features\]\nmulti_agent = false\nmulti_agent_v2 = false\n/, "its own sub-agents are off");
+    assert.ok(
+      config.includes('\n[mcp_servers.paseo]\nurl = "http://not-for-a-teams-agent.invalid/"\nenabled = false\n'),
+      "and so is the server Paseo may add for its tools, in a config of Seatworks' own",
     );
+    assert.doesNotMatch(config, /the-humans-own/, "which holds nothing of the Human's config");
     assert.match(
       readFileSync(join(home, "rules", "seatworks.rules"), "utf8"),
       /prefix_rule\(\s*pattern = \["paseo"\],\s*decision = "forbidden"/,
@@ -175,7 +179,7 @@ test("no agent is left Paseo's own tools or its command line: its process is poi
   const made = paseo.created[0]!;
   const nowhere = { PASEO_HOST: "not-for-a-teams-agent.invalid:1", PASEO_HOME: "" };
   assert.deepEqual({ PASEO_HOST: made.env.PASEO_HOST, PASEO_HOME: made.env.PASEO_HOME }, nowhere);
-  const denied = (made.config.options?.settings as { permissions: { deny: string[] } }).permissions.deny;
+  const denied = deniedIn(made.env.CLAUDE_CONFIG_DIR!);
   assert.ok(denied.includes("mcp__paseo"), "every tool of the server Paseo adds for its own tools");
   assert.ok(denied.includes("Bash(paseo *)"), "and its command line, as Claude usually writes it");
 
@@ -189,14 +193,8 @@ test("no agent is left Paseo's own tools or its command line: its process is poi
 
 test("a Claude agent is made without the tool that parks a turn until a time it names: mail waits for a turn's end", async () => {
   const { paseo } = await openedOn("claude");
-  const denied = (paseo.created[0]!.config.options?.settings as { permissions: { deny: string[] } }).permissions.deny;
+  const denied = deniedIn(paseo.created[0]!.env.CLAUDE_CONFIG_DIR!);
   assert.ok(denied.includes("ScheduleWakeup"), denied.join(", "));
-});
-
-test("a Claude agent is made without Claude Code's own skill tool: it knows the Human's skills and none of its template's", async () => {
-  const { paseo } = await openedOn("claude");
-  const denied = (paseo.created[0]!.config.options?.settings as { permissions: { deny: string[] } }).permissions.deny;
-  assert.ok(denied.includes("Skill"), denied.join(", "));
 });
 
 test("a permission asked while the plugin was down is on the record once it starts, and once only", async () => {

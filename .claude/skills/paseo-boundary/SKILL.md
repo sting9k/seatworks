@@ -39,7 +39,13 @@ Read from Paseo 0.10.1 unless marked as V1's finding.
 - **`before('agent.session_open')` changes env only**, and a resumed session gets no other: Paseo keeps nothing of
   the create's env. The hook returns the seat's whole env again, the shim's `PATH` among it.
 - **Pi gets `mcpServers` only if `pi-mcp-adapter` is installed**, and Paseo passes it only its own `--extension`:
-  Seatworks' tools reach Pi through the extension its home's `settings.json` names (`PI_CODING_AGENT_DIR`).
+  Seatworks' tools reach Pi through the extension its room's `settings.json` names (`PI_CODING_AGENT_DIR`).
+- **An agent's env is laid over its provider's and the daemon's** (0.10.3), and a variable set empty stays. That one
+  variable is how an agent is given a home of its own, its room; Paseo finds a Claude agent's transcript under the
+  `CLAUDE_CONFIG_DIR` of the agent's own env.
+- **Claude's `providerOptions` are strict** (0.10.3): `allowedTools`, `disallowedTools`, `additionalDirectories`,
+  `extraArgs`, `sandbox`, and `settings` with `permissions` and `sandbox` alone. Anything else Claude Code can be
+  told goes in the `settings.json` of its room.
 - **History comes back projected**: a tool call is one entry in its latest state, a run of text chunks one message.
   An entry's `seqEnd` can run past the entries after it, and an `after` page returns whole entries, restating rows
   before its cursor.

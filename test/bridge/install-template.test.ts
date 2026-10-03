@@ -101,6 +101,9 @@ test("a shared file that would not load, reaches outside its own directory, or c
       files.get("profile.yaml")!.replace("    reading: true\n", "    reading: true\n    writes: true\n"),
     );
   });
+  const lacksASkill = shared((files) => {
+    files.delete("skills/spike/SKILL.md");
+  });
   const reachingOut = shared((files) => {
     files.set("../outside.md", "x");
   });
@@ -110,6 +113,7 @@ test("a shared file that would not load, reaches outside its own directory, or c
   for (const [path, why] of [
     [twoRoots, /it does not load: .*exactly one role must be `root`/],
     [readsAndWrites, /it does not load: .*role reviewer is `reading` or `watches`, and may be nothing else/],
+    [lacksASkill, /it does not load: .*gives a role the skill spike, which it does not carry/],
     [reachingOut, /\.\.\/outside\.md is not a path inside a template/],
     [notATemplate, /not a packed template/],
     [join(root, "no-such-file.json"), /there is no file at/],

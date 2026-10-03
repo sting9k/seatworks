@@ -9,7 +9,7 @@ import { humanRules } from "../core/rules.ts";
 import { matchingOf, runsOn } from "../profile/agents.ts";
 import { ownOf } from "../profile/own-runs.ts";
 import { heldFile, laneBranch, laneOf, shares } from "./lane.ts";
-import type { PaseoHost } from "../satellites/agent-host/host.ts";
+import type { PaseoHost, Room } from "../satellites/agent-host/host.ts";
 import { INTO_TURN } from "../../shared/contracts/delivery.ts";
 import { entering, entryOf } from "../satellites/delivery/into-turn.ts";
 import { type Recorded, renderBatch } from "../satellites/delivery/render.ts";
@@ -42,6 +42,8 @@ export type Wiring = {
     readonly shimDir: string;
   };
   readonly scratch: string;
+  /** Where the project's rooms are, a folder a role. */
+  readonly rooms: string;
   /** Where the Human keeps their own rules by role. */
   readonly rules: string;
   /** The file of the Human's matching: which of their agent profiles each name the profile gives runs on. */
@@ -260,7 +262,6 @@ export function handlersFor(w: Wiring): Handlers {
           [...state.actors.values()].some((a) => a.scope === actor.scope && a.id !== actor.id),
           w.bundle.project?.docs ?? [],
           w.bundle.intoTurn !== null,
-          (w.bundle.skills.get(actor.role) ?? []).map((skill) => skill.name),
         ),
         env: agentEnv(w, env),
         tools: {
@@ -279,6 +280,7 @@ export function handlersFor(w: Wiring): Handlers {
         writes: role.writes,
         gitDir: await w.workspace.gitDir(),
         servers: given.grants,
+        room: roomOf(w, actor.role),
       });
       if ("unavailable" in created) return WAIT;
       if ("failed" in created) {
@@ -402,4 +404,9 @@ export function handlersFor(w: Wiring): Handlers {
 
 export function scratchFor(root: string, project: string): string {
   return join(root, "projects", project, "scratch");
+}
+
+/** The room a role's agents work from in a project: a home of their own, holding the role's skills and no other's. */
+export function roomOf(w: Pick<Wiring, "rooms" | "bundle">, role: string): Room {
+  return { dir: join(w.rooms, role), skills: w.bundle.skills.get(role) ?? [] };
 }

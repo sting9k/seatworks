@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parse } from "yaml";
 import {
@@ -8,7 +8,6 @@ import {
   resolveProfile,
   type Route,
   type Server,
-  skillDescription,
 } from "../../shared/contracts/profile.ts";
 
 /** An outside server given to a role: the tools of it the role may call, and how the server is reached. */
@@ -22,7 +21,8 @@ export type Bundle = {
   readonly prompts: ReadonlyMap<string, string>;
   /** The team's flow, given to every role after its prompt; none when the profile names none. */
   readonly flow: string | null;
-  readonly skills: ReadonlyMap<string, readonly { name: string; description: string; path: string }[]>;
+  /** The folder of each skill a role has, which its agent is to find where it looks for skills. */
+  readonly skills: ReadonlyMap<string, readonly string[]>;
   /** The outside servers each role is given; a role given none has no entry. */
   readonly servers: ReadonlyMap<string, readonly Grant[]>;
   readonly environment: readonly string[];
@@ -49,14 +49,16 @@ export function loadBundle(dir: string): Bundle {
   const resolved = resolveProfile(file);
   if (!resolved.ok) throw new Error(`the profile in ${dir} is wrong: ${resolved.says}`);
   const prompts = new Map<string, string>();
-  const skills = new Map<string, { name: string; description: string; path: string }[]>();
+  const skills = new Map<string, string[]>();
   for (const [name, role] of Object.entries(file.roles)) {
     if (role.prompt) prompts.set(name, readFileSync(join(dir, role.prompt), "utf8"));
     skills.set(
       name,
       (role.skills ?? []).map((skill) => {
-        const path = join(dir, "skills", skill, "SKILL.md");
-        return { name: skill, description: skillDescription(readFileSync(path, "utf8")), path };
+        const folder = join(dir, "skills", skill);
+        if (!existsSync(join(folder, "SKILL.md")))
+          throw new Error(`the profile in ${dir} gives a role the skill ${skill}, which it does not carry`);
+        return folder;
       }),
     );
   }

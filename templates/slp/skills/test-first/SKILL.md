@@ -1,6 +1,6 @@
 ---
 name: test-first
-description: "Settles the contract, sees a test fail at the seam, then writes the code. Use when the brief settles the interface you build to and a failing check can come first; not when the interface is still undecided, which is a question for your Lead."
+description: "Use this skill before you write code to an interface your brief settles, where a failing check can come first: a function, an endpoint, a fix, a behaviour to add. It holds how to settle the contract, see a test fail at the seam, then write the code. Not when the interface is still undecided, which is a question for your Lead."
 ---
 
 # Test-first

@@ -4,10 +4,12 @@
     "env": "PI_CODING_AGENT_DIR",
     "from": "~/.pi/agent",
     "link": ["auth.json", "models.json"],
+    "skills": "skills",
     "files": {
       "settings.json": {
         "extensions": ["{plugin}/harness/pi/extension.ts"],
-        "defaultProjectTrust": "never"
+        "defaultProjectTrust": "never",
+        "skills": ["!{home}/.agents/skills/**"]
       }
     }
   }

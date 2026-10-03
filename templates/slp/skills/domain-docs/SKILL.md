@@ -1,6 +1,6 @@
 ---
 name: domain-docs
-description: "Reads and keeps the project's glossary and its records of decisions. Use before you plan or build in an area, when your work settles a word the glossary lacks, or when you make a decision that is hard to reverse, surprising without its reason, and a real trade-off; not for how a lane is built, which its code and record already say."
+description: "Use this skill before you plan or build in an area of the project, when your work settles a word the glossary lacks, and when you make a decision that is hard to reverse, surprising without its reason, and a real trade-off. It holds how to read and keep the project's glossary and its records of decisions. Not for how a lane is built, which its code and record already say."
 ---
 
 # Domain docs

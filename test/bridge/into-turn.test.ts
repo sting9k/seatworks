@@ -94,11 +94,10 @@ test("a direction from the owner above enters its reader's turn at its next step
 test("a Claude agent's hook, run between two of its steps as Claude Code runs it, hands the mail over as context for the next step and says nothing while none waits", async () => {
   const { c, keeper, maker } = await team("{ patience: 0, rest: 0 }");
   const made = c.paseo.created[2]!;
-  const plugin = String((made.config.options?.extraArgs as Record<string, string>)["plugin-dir"]);
-  const hooks = JSON.parse(readFileSync(join(plugin, "hooks", "hooks.json"), "utf8")) as {
+  const settings = JSON.parse(readFileSync(join(made.env.CLAUDE_CONFIG_DIR!, "settings.json"), "utf8")) as {
     hooks: { PostToolBatch: { hooks: { command: string }[] }[] };
   };
-  const command = hooks.hooks.PostToolBatch[0]!.hooks[0]!.command;
+  const command = settings.hooks.PostToolBatch[0]!.hooks[0]!.command;
   // Never blocking: the plugin that answers the hook runs in this very process.
   const hook = async () =>
     (await promisify(execFile)("/bin/sh", ["-c", command], { env: { ...process.env, ...made.env } })).stdout;

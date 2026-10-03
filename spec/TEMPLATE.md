@@ -76,8 +76,9 @@ when they are read.
 | On an event     | `reflex.yaml`, `watch.yaml`                                                                   | The reflex and the Watcher  | Never read by the agents they concern |
 | Never           | `template.json`, `NOTICE.md`                                                                  | The editor, the installer, people | No effect on what agents do     |
 
-A skill's description is read every turn, not when the skill is: the standing instructions list every skill of the
-role by name and description. A role with eight skills pays for eight descriptions on each turn.
+A skill's description is read every turn, not when the skill is: an agent lists every skill it finds in its room
+by name and description (`HARNESS.md`, Rooms), and the plugin lists none. A role with eight skills pays for eight
+descriptions on each turn.
 
 ## The record or a file
 
@@ -110,12 +111,18 @@ kernel holds, and nothing that names the watch.
 
 ### A skill
 
-- `name` is the folder's name. `description` says what the skill does, when to use it and when not.
+- `name` is the folder's name. `description` says when to use the skill, what it holds and when not to use it, in
+  that order: an agent decides from the description alone whether to load the skill, and nothing else tells it to.
+  Two of SLP's that opened with what the skill does went unloaded in six runs of six on a small model; opening
+  with "Use this skill before you" and the things a brief would name, they were loaded in five of six
+  (`HARNESS.md`, Seen on a live Paseo).
 - The body is the craft: why it is worth doing, the procedure with its reasons, one worked example or table.
-- It ends in something the record knows: a hand-back, a finding, or a file in a commit.
+- It ends in something the record knows: a hand-back, a finding, or a file in a commit. A file it has an agent
+  write is said to be in the repository: an agent is told the folder its skill lies in, and takes a bare path for
+  one there.
 - A short document form is written in the skill itself, as `skills/domain-docs` writes an ADR's. A long form, a
-  lookup table or a JSON file sits beside `SKILL.md`, which names it by a relative path. The agent is already given
-  the skill's path, so the plugin does nothing for these files.
+  lookup table or a JSON file sits beside `SKILL.md`, which names it by a relative path. The whole folder is
+  copied into the room, and the agent is told where it lies when it loads the skill.
 
 ### The project's note and its docs
 
@@ -476,8 +483,8 @@ Its cases are in `CONFORMANCE.md`: Editor, Templates and Gallery.
 
 ## To check before building on it
 
-- Whether an agent under its sandbox can read a file of the profile outside its own copy. This holds for `SKILL.md`
-  today and is part of the test on a real Paseo.
+- Whether a model loads a skill it has. On a live run two small ones did not, with a skill for exactly their task
+  listed (`HARNESS.md`, Seen on a live Paseo, 4 October 2026).
 - Whether Paseo keeps an agent's server settings on disk once it is made. The team's own server is handed over the
   same way, with the agent's key in its environment, so an outside server's filled-in variable is kept wherever that
   key is.

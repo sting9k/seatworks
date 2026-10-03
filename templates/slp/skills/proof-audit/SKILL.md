@@ -1,6 +1,6 @@
 ---
 name: proof-audit
-description: "Judges whether a proof proves its claim and whether a test earns its place: would it fail with the behaviour gone. Use on the tests you are about to hand back, on a claim a brief names, or when reading a change or a lane's proofs. Not for finding bugs in the code itself, nor for writing a test (`test-first`)."
+description: "Use this skill on the tests you are about to hand back, on a claim a brief names, and when you read the proofs of a change or a lane. It holds how to judge whether a proof proves its claim and whether a test earns its place: would it fail with the behaviour gone. Not for finding bugs in the code itself, nor for writing a test (`test-first`)."
 ---
 
 # Proof audit

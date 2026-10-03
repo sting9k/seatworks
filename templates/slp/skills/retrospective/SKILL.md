@@ -1,6 +1,6 @@
 ---
 name: retrospective
-description: "Looks back over a run or a week from the record, and ends in at most one change, made by taking something away where possible, and in the upkeep of the watch. Use when the first lane lands, then after a run, each week, or after an episode that cost a rework."
+description: "Use this skill when the first lane lands, then after a run, each week, and after an episode that cost a rework. It holds how to look back over the run from the record and end in at most one change, made by taking something away where possible, and in the upkeep of the watch."
 ---
 
 # Retrospective

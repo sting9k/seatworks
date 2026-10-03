@@ -183,10 +183,16 @@ OpenCode, at 0.10.3:
   `requireExternalMcpSupport`): Oh My Pi never does, Pi only with the Human's `pi-mcp-adapter`.
 - **Provider options** are parsed by a strict schema per provider, and refused whole for a provider that has none.
   Claude's and Codex's are in `providers/claude/options.ts` and `providers/codex/options.ts`; Pi and Oh My Pi take
-  none. OpenCode's (`providers/opencode/options.ts`) is `permission` alone, over the permissions it lists by name:
+  none. Claude's names `allowedTools`, `disallowedTools`, `additionalDirectories`, `extraArgs`, `sandbox`, and
+  `settings` with `permissions` and `sandbox` alone (0.10.3). Paseo sets Claude's `settingSources` itself, `user`,
+  `project` and `local`, and the SDK it ships puts `extraArgs` last on Claude's command line. OpenCode's (`providers/opencode/options.ts`) is `permission` alone, over the permissions it lists by name:
   no tool of a server or a plugin can be named in it.
-- **An agent's environment** given at its create reaches the provider's own process (`CODEX_HOME`,
-  `PI_CODING_AGENT_DIR`), which is how a home of Seatworks' is named to it. For OpenCode Paseo starts a server for
+- **An agent's environment** given at its create reaches the provider's own process (`CLAUDE_CONFIG_DIR`,
+  `CODEX_HOME`, `PI_CODING_AGENT_DIR`), which is how an agent's room is named to it (`HARNESS.md`, Rooms). At 0.10.3
+  it is laid over the daemon's own and over the `env` of the provider's entry in Paseo's config, in that order, and
+  a variable set empty stays: only one left undefined is dropped (`paseo-env.ts`). For Claude Code Paseo looks for
+  an agent's transcript under the `CLAUDE_CONFIG_DIR` of that environment (`providers/claude/project-dir.ts`,
+  `resolveHistoryPath`), so a Claude agent may have a config folder of its own. For OpenCode Paseo starts a server for
   the agent alone when its environment holds a variable beyond the two Paseo sets or it has a server of its own
   (`providers/opencode/v2/configuration.ts`, `requiresDedicatedV2Server`), adds its own plugin to that
   environment's `OPENCODE_CONFIG_CONTENT`, and sets the environment as the session's shell's each time it connects.

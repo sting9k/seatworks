@@ -1,6 +1,6 @@
 ---
 name: design-note
-description: "Designs a part before it is built: its boundaries, the data it owns and the contracts others will call, with the options weighed. Use on a brief that asks for a design, or before you build something other work will rest on. Not for a choice inside one function, and not for building: the design goes back to be weighed first."
+description: "Use this skill on a brief that asks for a design, and before you build a part other work will rest on. It holds how to design a part before it is built: its boundaries, the data it owns and the contracts others will call, with the options weighed. Not for a choice inside one function, and not for building: the design goes back to be weighed first."
 ---
 
 # Design note
@@ -23,7 +23,8 @@ rival is a preference.
 
 ## The note
 
-One file where your brief says, or `docs/design/<topic>.md` when it names none and your paths hold it. A page:
+One file in the repository: where your brief says, or `docs/design/<topic>.md` when it names none and your paths
+hold it. A page:
 
 - **Context**: the forces, in a few lines.
 - **Decision**: the shape, and the contracts as code.

@@ -1,6 +1,6 @@
 ---
 name: open-code-review
-description: "Reviews a change file by file against the review rules that apply to each file: Open Code Review's `ocr` picks the files and the rules, and you do the reading. Use when your brief asks for a review of a commit or of a lane's head. Not for a brief that asks one open question."
+description: "Use this skill when your brief asks for a review of a commit or of a lane's head. It holds how to review a change file by file against the rules that apply to each file: Open Code Review's `ocr` picks the files and the rules, and you do the reading. Not for a brief that asks one open question."
 ---
 
 # Review by rule, with Open Code Review
