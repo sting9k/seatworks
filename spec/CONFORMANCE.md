@@ -340,6 +340,7 @@ A template's files in, what a person sees out (`EDITOR.md`).
 | SLP opened with nothing unfolded                            | On the canvas: its roles, the Human, the classifier and a report's sections; each role says how many skills, and how many tool groups and servers, are folded into it |
 | A role opened; a role picked; a stack opened                | What is wired into the opened role is shown, a skill two roles have among it; picking opens nothing; the stack's family is shown |
 | A skill no role has; a node that carries a note; a node picked from a list | Each shown, whatever is folded                        |
+| A skill two roles have, one of them open; the same skill picked with both folded | Wired into the open role alone; wired into both, and the team's own wires drawn either way |
 | What of a template is laid out                              | Not what sits beside a role, of which the role says how many there are; a stack for each family that folds; only the wires that place a node are followed |
 | Two roles one role seats, each with more beside it than it is tall | Laid out far enough apart for each to open all of it          |
 | A role's opened skills, tool groups and servers             | In a column at its left, clear of the role and of what is one rank before it, about the role's middle |

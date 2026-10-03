@@ -91,14 +91,16 @@ asked for. What is open is the viewer's: no file of the template keeps it.
 - **A skill, a tool group and an outside server wired into a role fold into that role.** The role's chip says how
   many (`7 skills`, `8 skills +2`). Pressed, it opens them in a column at the role's left, each wired into the
   role's `uses` socket, and the view moves to hold the role and the column; pressed again, it folds them. One that
-  several roles have sits beside the first of them that is open.
+  several roles have sits beside the first of them that is open, and is wired only into those that are: a wire into
+  a folded role would cross the canvas to say what the role's chip already counts.
 - **What sits beside a role keeps no place of its own.** It is put there each time, goes where the role goes, and
   nothing of it is in `template.json`. A layout leaves it room: a role is set as far from the next as the column it
   may open is tall.
 - **The reflex questions fold into one node, the watch moments into another**, each saying how many it holds, in
   the watch's frame beside the classifier. Pressed, its family is drawn in a frame of its own.
 - **Never folded:** a skill, a group or a server no role has, which could not otherwise be found to wire; a node
-  that carries a note; and a node picked from a list, which the view moves to.
+  that carries a note; and a node picked from a list, which the view moves to. A skill, a group or a server shown for
+  itself, picked or noted, draws every wire it has: that is how it says who has it.
 - **Picking a role opens nothing.** The chip is the one thing that does, so it always says what it will do.
 - **Fold all and Show all are commands, not a mode.** Each sets what is open; the chips work the same after either.
 

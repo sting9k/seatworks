@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { addSkill, applied } from "../../editor/template/edits.ts";
-import { anchoredOf, foldedInto, shownOf, STACKS } from "../../editor/template/fold.ts";
+import { anchoredOf, foldedInto, shownOf, STACKS, wiresOf } from "../../editor/template/fold.ts";
 import { type Graph, graphOf } from "../../editor/template/graph.ts";
 import { readTemplate } from "../../editor/template/read-template.ts";
 import { slpFiles } from "./slp.ts";
@@ -48,6 +48,22 @@ test("never folded: a skill no role has, a node that carries a note, and a node 
   assert.deepEqual(skillsOf(graph, shownOf(graph, NONE, null, new Set())), ["skill:release-notes"]);
   assert.ok(shownOf(graph, NONE, null, new Set(["question:claim-gap"])).has("question:claim-gap"));
   assert.ok(shownOf(graph, NONE, "skill:grilling", new Set()).has("skill:grilling"));
+});
+
+test("a skill is wired only into a role that is open; picked for itself, into every role that has it", () => {
+  const graph = graphOf(slp());
+  const into = (wires: ReturnType<typeof wiresOf>, from: string) =>
+    wires.flatMap((wire) => (wire.from === from ? [wire.to] : [])).sort();
+
+  const opened = wiresOf(graph, { ...NONE, roles: new Set(["role:reviewer"]) }, null, new Set());
+  assert.deepEqual(into(opened, "skill:proof-audit"), ["role:reviewer"], "the peer has it too, and is folded");
+  assert.ok(
+    opened.some((wire) => wire.kind === "spawns"),
+    "the team's own wires are drawn whatever is folded",
+  );
+
+  const picked = wiresOf(graph, NONE, "skill:proof-audit", new Set());
+  assert.deepEqual(into(picked, "skill:proof-audit"), ["role:peer", "role:reviewer"]);
 });
 
 test("the graph that is laid out leaves out what sits beside a role, and holds a stack for each family that folds", () => {

@@ -52,6 +52,23 @@ export function shownOf(
   return new Set(graph.nodes.filter(shown).map((node) => node.id));
 }
 
+/** The wires on the canvas: equipment's only into a role that is open, unless it is shown for itself. */
+export function wiresOf(
+  graph: Graph,
+  folds: Folds,
+  picked: string | null,
+  noted: ReadonlySet<string>,
+): readonly Wire[] {
+  const shown = shownOf(graph, folds, picked, noted);
+  const itself = (id: string) => id === picked || noted.has(id);
+  return graph.wires.filter(
+    (wire) =>
+      shown.has(wire.from) &&
+      shown.has(wire.to) &&
+      (!EQUIPMENT.includes(wire.kind) || folds.roles.has(wire.to) || itself(wire.from)),
+  );
+}
+
 /** The role a shown skill, tool group or server sits beside: the first that is open of those it is wired into. */
 export function besideOf(graph: Graph, folds: Folds): ReadonlyMap<string, string> {
   return new Map(

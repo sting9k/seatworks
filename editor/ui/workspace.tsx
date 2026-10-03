@@ -38,7 +38,7 @@ import {
   together,
   wired,
 } from "../template/edits.ts";
-import { anchoredOf, besideOf, foldedInto, type Folds, shownOf, STACKS } from "../template/fold.ts";
+import { anchoredOf, besideOf, foldedInto, type Folds, shownOf, STACKS, wiresOf } from "../template/fold.ts";
 import { type Graph, type GraphNode, graphOf, type Wire } from "../template/graph.ts";
 import { readTemplate, type Template } from "../template/read-template.ts";
 import { AskName, PickNode } from "./dialogs.tsx";
@@ -66,6 +66,7 @@ type Asking =
 type View = {
   readonly folds: Folds;
   readonly shown: ReadonlySet<string>;
+  readonly wires: readonly Wire[];
   readonly beside: ReadonlyMap<string, string>;
 };
 
@@ -185,7 +186,12 @@ function Opened({
   const picked = graph.nodes.find((node) => node.id === pickedId) ?? null;
   const view = useMemo<View>(() => {
     const noted = new Set(notes.map((note) => note.node));
-    return { folds, shown: shownOf(graph, folds, pickedId, noted), beside: besideOf(graph, folds) };
+    return {
+      folds,
+      shown: shownOf(graph, folds, pickedId, noted),
+      wires: wiresOf(graph, folds, pickedId, noted),
+      beside: besideOf(graph, folds),
+    };
   }, [graph, folds, pickedId, notes]);
 
   // What is drawn follows the files and what is folded: a node stays where it is, a new one takes the place kept for it.
@@ -193,7 +199,7 @@ function Opened({
     setNodes((drawn) => synced(graph, view, drawn, kept));
     setEdges((drawn) => {
       const selected = new Set(drawn.filter((edge) => edge.selected).map((edge) => edge.id));
-      return edgesOf(graph, view.shown).map((edge) => ({ ...edge, selected: selected.has(edge.id) }));
+      return edgesOf(graph, view.wires).map((edge) => ({ ...edge, selected: selected.has(edge.id) }));
     });
   }, [graph, view, kept, setNodes, setEdges]);
 
@@ -852,25 +858,23 @@ function arranged(graph: Graph, view: View, placed: ReadonlyMap<string, Point>, 
   return [...frames.values(), ...kept, ...beside];
 }
 
-/** The wires between what is shown; one that gives a role part of a group, or a server's tools, says so. */
-function edgesOf(graph: Graph, shown: ReadonlySet<string>): WireEdge[] {
+/** The wires as they are drawn; one that gives a role part of a group, or a server's tools, says so. */
+function edgesOf(graph: Graph, wires: readonly Wire[]): WireEdge[] {
   const groupSize = new Map(
     graph.nodes.flatMap((node) => (node.kind === "tools" ? [[node.id, node.tools.length]] : [])),
   );
-  return graph.wires
-    .filter((wire) => shown.has(wire.from) && shown.has(wire.to))
-    .map((wire) => ({
-      id: `${wire.kind}:${wire.from}>${wire.to}`,
-      source: wire.from,
-      target: wire.to,
-      sourceHandle: `${wire.kind}-out`,
-      targetHandle: `${EQUIPMENT.includes(wire.kind) ? USES : wire.kind}-in`,
-      className: `wire-${wire.kind}`,
-      data: { kind: wire.kind },
-      ...(wire.kind === "tools" && wire.tools.length < groupSize.get(wire.from)!
-        ? { label: `${wire.tools.length} of ${groupSize.get(wire.from)!}` }
-        : wire.kind === "server"
-          ? { label: wire.tools.join(", ") }
-          : {}),
-    }));
+  return wires.map((wire) => ({
+    id: `${wire.kind}:${wire.from}>${wire.to}`,
+    source: wire.from,
+    target: wire.to,
+    sourceHandle: `${wire.kind}-out`,
+    targetHandle: `${EQUIPMENT.includes(wire.kind) ? USES : wire.kind}-in`,
+    className: `wire-${wire.kind}`,
+    data: { kind: wire.kind },
+    ...(wire.kind === "tools" && wire.tools.length < groupSize.get(wire.from)!
+      ? { label: `${wire.tools.length} of ${groupSize.get(wire.from)!}` }
+      : wire.kind === "server"
+        ? { label: wire.tools.join(", ") }
+        : {}),
+  }));
 }
