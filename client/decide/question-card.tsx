@@ -1,67 +1,29 @@
-import { TextInput } from "@getpaseo/plugin/client/react-native";
 import type { PluginTheme } from "@getpaseo/plugin";
 import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import type { HumanView } from "../../shared/contracts/rpc.ts";
 import { Button } from "../kit/button.tsx";
-import { Card } from "../kit/card.tsx";
-import { Dot } from "../kit/mark.tsx";
-import { FONT, RADIUS, SPACE, useStyles } from "../kit/theme.ts";
+import { Field } from "../kit/field.tsx";
+import { FONT, RADIUS, SPACE } from "../kit/theme.ts";
+import { Decision, Words } from "./frame.tsx";
 import { useHumanCommand } from "./send.ts";
 
-type Question = HumanView["questions"][number];
+type Props = {
+  readonly project: string;
+  readonly question: HumanView["questions"][number];
+  readonly theme: PluginTheme;
+  readonly onAnswered: () => void;
+};
 
 /** A question put to the Human, drawn as Paseo draws an agent's own question: options, the one recommended, a note. */
-export function QuestionCard({
-  project,
-  question,
-  theme,
-  onAnswered,
-}: {
-  project: string;
-  question: Question;
-  theme: PluginTheme;
-  onAnswered: () => void;
-}) {
+export function QuestionCard({ project, question, theme, onAnswered }: Props) {
   const { options, recommend } = question;
   const offered = recommend !== null && options.includes(recommend);
   // Only a recommended option starts picked, in sight: anything else would answer for the Human in one press.
   const [choice, setChoice] = useState(offered ? recommend : "");
   const [note, setNote] = useState("");
   const { busy, said, send } = useHumanCommand(project);
-  const styles = useStyles(theme, (colors) => ({
-    body: { padding: SPACE.md, gap: SPACE.md },
-    meta: { flexDirection: "row" as const, alignItems: "center" as const, gap: 6 },
-    small: { fontSize: FONT.small, color: colors.foregroundMuted },
-    question: { fontSize: FONT.base, lineHeight: 22, color: colors.foreground },
-    option: {
-      flexDirection: "row" as const,
-      alignItems: "center" as const,
-      gap: SPACE.sm,
-      paddingHorizontal: SPACE.sm,
-      paddingVertical: 6,
-      borderRadius: RADIUS.control,
-    },
-    chosen: { backgroundColor: colors.surface2 },
-    radio: {
-      width: 16,
-      height: 16,
-      borderRadius: 8,
-      borderWidth: 1,
-      alignItems: "center" as const,
-      justifyContent: "center" as const,
-    },
-    radioDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.accent },
-    input: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: RADIUS.control,
-      padding: SPACE.sm,
-      color: colors.foreground,
-      fontSize: FONT.base,
-    },
-    actions: { flexDirection: "row" as const, gap: SPACE.sm },
-  }));
+  const { accent, surface2, foreground, foregroundMuted } = theme.colors;
   const answer = () => {
     const text = [choice, note.trim()].filter(Boolean).join(": ");
     void send("answer_question", { question: question.id, text }).then((ok) => {
@@ -69,67 +31,79 @@ export function QuestionCard({
     });
   };
   return (
-    <Card theme={theme}>
-      <View style={styles.body}>
-        <View style={styles.meta}>
-          <Dot tone="you" theme={theme} size={6} />
-          <Text style={styles.small}>{question.from} asks</Text>
-        </View>
-        <Text style={styles.question}>{question.text}</Text>
-        {recommend !== null && !offered ? <Text style={styles.small}>Recommended: {recommend}</Text> : null}
-        {options.length > 0 ? (
-          <View accessibilityRole="radiogroup" accessibilityLabel={question.text}>
-            {options.map((option) => {
-              const on = option === choice;
-              return (
-                <Pressable
-                  key={option}
-                  accessibilityRole="radio"
-                  accessibilityState={{ checked: on, disabled: busy }}
-                  disabled={busy}
-                  onPress={() => {
-                    setChoice(option);
-                  }}
-                  style={[styles.option, on ? styles.chosen : null]}
-                >
-                  <View
-                    style={[styles.radio, { borderColor: on ? theme.colors.accent : theme.colors.foregroundMuted }]}
-                  >
-                    {on ? <View style={styles.radioDot} /> : null}
-                  </View>
-                  <Text
-                    style={{ fontSize: FONT.base, color: on ? theme.colors.foreground : theme.colors.foregroundMuted }}
-                  >
-                    {option === recommend ? `${option} (Recommended)` : option}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        ) : null}
-        <TextInput
-          style={styles.input}
-          value={note}
-          onChangeText={setNote}
-          editable={!busy}
-          placeholder={options.length > 0 ? "A note with your answer (optional)" : "Your answer"}
-          placeholderTextColor={theme.colors.foregroundMuted}
-          multiline
+    <Decision
+      kind="Question"
+      from={question.from}
+      theme={theme}
+      refused={said && !said.ok ? said.text : null}
+      actions={
+        <Button
+          label="Answer"
+          icon="Check"
+          tone="accent"
+          theme={theme}
+          disabled={busy || (choice === "" && note.trim() === "")}
+          onPress={answer}
         />
-        <View style={styles.actions}>
-          <Button
-            label="Answer"
-            icon="Check"
-            tone="accent"
-            theme={theme}
-            disabled={busy || (choice === "" && note.trim() === "")}
-            onPress={answer}
-          />
+      }
+    >
+      <Words text={question.text} theme={theme} />
+      {recommend !== null && !offered ? (
+        <Text style={{ fontSize: FONT.small, color: foregroundMuted }}>Recommended: {recommend}</Text>
+      ) : null}
+      {options.length > 0 ? (
+        <View accessibilityRole="radiogroup" accessibilityLabel={question.text} style={{ gap: 2 }}>
+          {options.map((option) => {
+            const on = option === choice;
+            return (
+              <Pressable
+                key={option}
+                accessibilityRole="radio"
+                accessibilityState={{ checked: on, disabled: busy }}
+                disabled={busy}
+                onPress={() => {
+                  setChoice(option);
+                }}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: SPACE.sm,
+                  minHeight: 32,
+                  paddingHorizontal: SPACE.sm,
+                  borderRadius: RADIUS.control,
+                  backgroundColor: on ? surface2 : "transparent",
+                }}
+              >
+                <View
+                  style={{
+                    width: 16,
+                    height: 16,
+                    borderRadius: 8,
+                    borderWidth: 1.5,
+                    borderColor: on ? accent : foregroundMuted,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  {on ? <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: accent }} /> : null}
+                </View>
+                <Text style={{ flex: 1, fontSize: FONT.base, color: on ? foreground : foregroundMuted }}>{option}</Text>
+                {option === recommend ? (
+                  <Text style={{ fontSize: FONT.small, color: foregroundMuted }}>Recommended</Text>
+                ) : null}
+              </Pressable>
+            );
+          })}
         </View>
-        {said && !said.ok ? (
-          <Text style={[styles.small, { color: theme.colors.statusWarning }]}>{said.text}</Text>
-        ) : null}
-      </View>
-    </Card>
+      ) : null}
+      <Field
+        value={note}
+        onChange={setNote}
+        disabled={busy}
+        placeholder={options.length > 0 ? "A note with your answer (optional)" : "Your answer"}
+        theme={theme}
+        multiline
+      />
+    </Decision>
   );
 }

@@ -173,7 +173,7 @@ upkeep: attach(repository, profile), profiles, presets, templateOffer(from), ins
   editing is never written over: the note waits for them to commit and attach again.
 - Leftovers are what no open scope uses any more: a copy, a branch made for a scope, an agent Paseo keeps whose seat
   ended, and each project as a whole. Each says whether commits on no other branch would go with it, so the surface
-  never picks such a one for the Human. The Human picks and confirms, and the plugin removes only that, checked again
+  never picks such a one for the Human, nor a project whole. The Human picks and confirms, and the plugin removes only that, checked again
   against what is left over at that moment. A copy holding uncommitted work on its branch is listed and never
   removed, and a project with one is not removed at all. Removing a project archives its agents and deletes its
   copies and branches; its record is set aside, since a look back reads the log after the team is gone (P14), and is
@@ -193,9 +193,19 @@ upkeep: attach(repository, profile), profiles, presets, templateOffer(from), ins
 - The docs a team keeps by hand, such as a glossary and the ADRs in `docs/adr/`, are written by the agent whose
   commit they explain; the plugin only points every agent at them. The paths are the profile's: `map`, and the list
   `docs`.
-- It sits in Paseo's own places: a page in the sidebar (the projects, each project's tabs, the plugin), a Team tab beside
-  Files and Changes for the project a workspace belongs to, and a pill on the chat of each agent the plugin started,
-  counting what waits on the Human in its project and answering it in place.
+- It sits in Paseo's own places, each with one job.
+  - **A page in the sidebar** is set-up and upkeep, a job a tab: the projects, the templates and the agent profiles
+    their roles run on, the classifier's switch and key, what teams left behind, and whether a newer release is
+    out. A team is not followed there.
+  - **A Team tab**, beside Files and Changes and as a tab of the workspace, is the whole team of the project a
+    workspace belongs to: every seat a line with one word for what it is doing now, what waits on the Human answered
+    in place, and the record folded under its headings. What is stuck and a standing alarm come first.
+  - **A pill** on the chat of each agent the plugin started says the most pressing thing: what is stuck, then what
+    waits on the Human, then a held team, then who works. Its popover answers what waits, opens the Team tab, holds
+    or resumes the team, and sends a word to the root's agent. A button in the workspace's header and three commands
+    typed in a chat do the same.
+- What costs nothing to remove comes picked in the clean-up. What takes commits with it, and a project whole, never
+  does: the Human picks those, and a whole project is removed from its own row.
 
 ## Record
 

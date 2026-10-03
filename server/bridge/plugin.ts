@@ -327,7 +327,7 @@ export class Plugin {
       ok: false,
       says:
         installed.length === 0
-          ? "no template is installed: install one on Seatworks' Plugin page, under Templates"
+          ? "no template is installed: install one on Seatworks' page, under Templates"
           : "more than one template is installed: attach from Seatworks' page, which asks which",
     };
   }

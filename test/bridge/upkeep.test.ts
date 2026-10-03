@@ -6,6 +6,7 @@ import { readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, test } from "node:test";
+import { sortLeftovers } from "../../client/state/leftovers.ts";
 import { Plugin } from "../../server/bridge/plugin.ts";
 import { parseBody } from "../../shared/contracts/commands.ts";
 import { agentTools } from "./agent-tools.ts";
@@ -109,6 +110,17 @@ test("the Human attaches a Paseo project, clears what a dropped task left, and r
   assert.equal(copy.takesCommits, false);
   const whole = left.find((l) => l.kind === "project");
   assert.equal(whole?.label, repo);
+  const sorted = sortLeftovers(left, new Set([project]));
+  assert.deepEqual(
+    [sorted.safe, sorted.check, sorted.kept, sorted.records].map((group) => group.map((l) => l.kind)),
+    [[], ["branch"], ["copy"], []],
+    "sorted for the Human by what removing costs, the attached project itself not among them",
+  );
+  assert.deepEqual(
+    sortLeftovers(left, new Set()).safe,
+    [],
+    "a project whole is never among what is picked for the Human, whatever the surface knows of what is attached",
+  );
 
   const refused = await plugin.clean([whole.id]);
   assert.equal(refused[0]?.ok, false);
@@ -151,6 +163,7 @@ test("the Human attaches a Paseo project, clears what a dropped task left, and r
   const [record, ...more] = await plugin.leftovers();
   assert.deepEqual(more, [], "only the record is left");
   assert.equal(record?.kind, "record", "the record is kept aside for a look back");
+  assert.deepEqual(sortLeftovers([record], new Set()).records, [record], "and sorted apart from what a team left");
   assert.equal(record.label, repo);
   const shelved = join(root, "archive", record.project, "ledger.db");
   assert.ok(existsSync(shelved), "with its log");

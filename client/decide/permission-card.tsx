@@ -2,33 +2,20 @@ import type { PluginTheme } from "@getpaseo/plugin";
 import { Text, View } from "react-native";
 import type { HumanView } from "../../shared/contracts/rpc.ts";
 import { Button } from "../kit/button.tsx";
-import { Card } from "../kit/card.tsx";
-import { Dot } from "../kit/mark.tsx";
-import { FONT, SPACE, useStyles } from "../kit/theme.ts";
+import { FONT, RADIUS, SPACE } from "../kit/theme.ts";
+import { Decision } from "./frame.tsx";
 import { useHumanCommand } from "./send.ts";
 
-type Permission = HumanView["permissions"][number];
+type Props = {
+  readonly project: string;
+  readonly permission: HumanView["permissions"][number];
+  readonly theme: PluginTheme;
+  readonly onAnswered: () => void;
+};
 
 /** An agent asking leave for what its sandbox would not let it do: allowed or refused, and the record says by whom. */
-export function PermissionCard({
-  project,
-  permission,
-  theme,
-  onAnswered,
-}: {
-  project: string;
-  permission: Permission;
-  theme: PluginTheme;
-  onAnswered: () => void;
-}) {
+export function PermissionCard({ project, permission, theme, onAnswered }: Props) {
   const { busy, said, send } = useHumanCommand(project);
-  const styles = useStyles(theme, (colors) => ({
-    body: { padding: SPACE.md, gap: SPACE.md },
-    meta: { flexDirection: "row" as const, alignItems: "center" as const, gap: 6 },
-    small: { fontSize: FONT.small, color: colors.foregroundMuted },
-    text: { fontSize: FONT.base, lineHeight: 20, color: colors.foreground },
-    actions: { flexDirection: "row" as const, gap: SPACE.sm },
-  }));
   const answer = (allow: boolean) => {
     const reason = allow ? "allowed by the Human" : "refused by the Human";
     void send("answer_permission", { permission: permission.id, allow, reason }).then((ok) => {
@@ -36,16 +23,13 @@ export function PermissionCard({
     });
   };
   return (
-    <Card theme={theme}>
-      <View style={styles.body}>
-        <View style={styles.meta}>
-          <Dot tone="you" theme={theme} size={6} />
-          <Text style={styles.small}>{permission.actor} asks your leave</Text>
-        </View>
-        <Text style={styles.text} selectable>
-          {permission.text}
-        </Text>
-        <View style={styles.actions}>
+    <Decision
+      kind="Asks permission"
+      from={permission.actor}
+      theme={theme}
+      refused={said && !said.ok ? said.text : null}
+      actions={
+        <>
           <Button
             label="Allow"
             icon="Check"
@@ -58,18 +42,20 @@ export function PermissionCard({
           />
           <Button
             label="Refuse"
-            icon="X"
             theme={theme}
             disabled={busy}
             onPress={() => {
               answer(false);
             }}
           />
-        </View>
-        {said && !said.ok ? (
-          <Text style={[styles.small, { color: theme.colors.statusWarning }]}>{said.text}</Text>
-        ) : null}
+        </>
+      }
+    >
+      <View style={{ padding: SPACE.sm, borderRadius: RADIUS.control, backgroundColor: theme.colors.surface2 }}>
+        <Text style={{ fontSize: FONT.small, lineHeight: 18, color: theme.colors.foreground }} selectable>
+          {permission.text}
+        </Text>
       </View>
-    </Card>
+    </Decision>
   );
 }

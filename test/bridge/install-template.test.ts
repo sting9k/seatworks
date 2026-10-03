@@ -180,7 +180,7 @@ test("nothing is installed at first: the template that comes with the plugin is 
   const repo = repository();
   const unattached = plugin.attaching(repo, undefined);
   assert.ok(!unattached.ok);
-  assert.match(unattached.says, /no template is installed: install one on Seatworks' Plugin page/);
+  assert.match(unattached.says, /no template is installed: install one on Seatworks' page/);
   await assert.rejects(plugin.openProject(repo, "main"), /no template is installed/);
 
   const read = await plugin.template({ preset: "slp" }, null);

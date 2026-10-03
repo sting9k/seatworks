@@ -2,58 +2,36 @@ import type { PluginTheme } from "@getpaseo/plugin";
 import { Text, View } from "react-native";
 import type { HumanView } from "../../shared/contracts/rpc.ts";
 import { Button } from "../kit/button.tsx";
-import { Card } from "../kit/card.tsx";
-import { Dot } from "../kit/mark.tsx";
-import { FONT, SPACE, useStyles } from "../kit/theme.ts";
+import { FONT } from "../kit/theme.ts";
+import { Decision, Words } from "./frame.tsx";
 import { useHumanCommand } from "./send.ts";
 
-type Attention = HumanView["attentions"][number];
+type Props = {
+  readonly project: string;
+  readonly attention: HumanView["attentions"][number];
+  readonly theme: PluginTheme;
+  readonly onAnswered: () => void;
+};
 
 /** Something about an agent that climbed past the root and stopped with the Human: seen, or marked noise. */
-export function AttentionCard({
-  project,
-  attention,
-  theme,
-  onAnswered,
-}: {
-  project: string;
-  attention: Attention;
-  theme: PluginTheme;
-  onAnswered: () => void;
-}) {
+export function AttentionCard({ project, attention, theme, onAnswered }: Props) {
   const { busy, said, send } = useHumanCommand(project);
-  const styles = useStyles(theme, (colors) => ({
-    body: { padding: SPACE.md, gap: SPACE.md },
-    meta: { flexDirection: "row" as const, alignItems: "center" as const, gap: 6 },
-    small: { fontSize: FONT.small, color: colors.foregroundMuted },
-    text: { fontSize: FONT.base, lineHeight: 20, color: colors.foreground },
-    actions: { flexDirection: "row" as const, gap: SPACE.sm },
-  }));
   const settle = (type: "acknowledge" | "mark_noise") => {
     void send(type, { attention: attention.id }).then((ok) => {
       if (ok) onAnswered();
     });
   };
   return (
-    <Card theme={theme}>
-      <View style={styles.body}>
-        <View style={styles.meta}>
-          <Dot tone="you" theme={theme} size={6} />
-          <Text style={styles.small}>
-            About {attention.actor} in scope {attention.scope}
-          </Text>
-        </View>
-        <Text style={styles.text}>{attention.why}</Text>
-        {attention.facts.map((f) => (
-          <Text key={f} style={styles.small}>
-            {f}
-          </Text>
-        ))}
-        <View style={styles.actions}>
+    <Decision
+      kind="Heads-up"
+      from={`about ${attention.actor}`}
+      theme={theme}
+      refused={said && !said.ok ? said.text : null}
+      actions={
+        <>
           <Button
             label="Seen"
             icon="Check"
-            tone="accent"
             theme={theme}
             disabled={busy}
             onPress={() => {
@@ -61,19 +39,27 @@ export function AttentionCard({
             }}
           />
           <Button
-            label="Noise"
-            icon="X"
+            label="Not a problem"
+            tone="quiet"
             theme={theme}
             disabled={busy}
             onPress={() => {
               settle("mark_noise");
             }}
           />
+        </>
+      }
+    >
+      <Words text={attention.why} theme={theme} />
+      {attention.facts.length > 0 ? (
+        <View style={{ gap: 4 }}>
+          {attention.facts.map((fact) => (
+            <Text key={fact} style={{ fontSize: FONT.small, color: theme.colors.foregroundMuted }}>
+              {fact}
+            </Text>
+          ))}
         </View>
-        {said && !said.ok ? (
-          <Text style={[styles.small, { color: theme.colors.statusWarning }]}>{said.text}</Text>
-        ) : null}
-      </View>
-    </Card>
+      ) : null}
+    </Decision>
   );
 }

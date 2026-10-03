@@ -250,7 +250,7 @@ is where templates are kept and changed; what a team runs is what its project to
 - **The copy is kept under its hash**, `projects/<id>/profile/<hash>/`, and the files a project runs are read from
   there alone. So what is installed may be changed, installed again or removed, and the plugin started again, with
   no team running other words than it did. A copy is written whole before the project points at it.
-- **Sync takes the installed files anew**, on the project's page, for the agents seated from then on. An agent
+- **Sync takes the installed files anew**, on the project's row of the plugin's page, for the agents seated from then on. An agent
   already seated keeps the prompt it was made with, since Paseo fixes it then, and the files it was pointed at stay
   where they were; its owner or the Human reseats it to give it the new ones. Sync takes only files that load: a
   template no longer installed, or one that does not load, is refused with the reason, and the project runs on as it

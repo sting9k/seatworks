@@ -80,16 +80,18 @@ curl -fsSL https://raw.githubusercontent.com/sting9k/seatworks/open-templates/in
 ```
 
 Paseo does not remember the branch an install came from. Until the merge, `paseo plugin update seatworks` and the
-Plugin page's check both point at `main`, which is older: update with
+Updates tab's check both point at `main`, which is older: update with
 `paseo plugin update seatworks --ref open-templates`.
 
 Then, in Paseo:
 
-1. **Install a template.** Open Seatworks in the sidebar, then Plugin. Under Templates, install SLP. Nothing runs
-   until a template is installed.
-2. **Match its agent profiles.** Under Agent profiles on the same page, match each name the template gives to an
-   agent profile you already have, or create one of that name in Paseo's settings. Give each an explicit model.
-3. **Set a key for the template's classifier**, if you have one, under Settings, Classifier.
+Open Seatworks in the sidebar. A strip at the top of its page shows the four steps and which are done.
+
+1. **Install a template.** On the Templates tab, read SLP and install it. Nothing runs until a template is
+   installed.
+2. **Match its agent profiles.** On the same tab, open the template: match each name it gives to an agent profile
+   you already have, or create one of that name in Paseo's settings. Give each an explicit model.
+3. **Set a key for the template's classifier**, if you have one, on the Classifier tab, or switch it off there.
 
 SLP names these:
 
@@ -108,16 +110,20 @@ give one answer.
 
 - **Attach a project.** On Seatworks' page, attach one of your Paseo projects, or run "Open a Seatworks team here"
   from the command center in a workspace. That seats the template's first agent; talk to it in its chat.
-- **A project's page** has four tabs: **Needs you** (questions and permissions waiting on you), **Scopes** (the
-  state of each piece of work opened under the first agent, SLP's lanes, and what is still owed in it), **Decided**
-  (what agents decided for you) and **Activity**.
-- **The Team panel** beside a workspace shows the same scopes, and a pill in each agent's chat counts what waits on
-  you.
+- **The pill** on every chat of a team says the most pressing thing: what is stuck, what needs you, a held team,
+  or how many agents are working. Its popover answers what waits on you, shows the team, holds or resumes it, and
+  sends a word to the first agent. The same three are typed as `/team`, `/team-hold` and `/team-resume`.
+- **The Team tab**, beside Files and Changes or as a tab of the workspace, has three tabs of its own: **Team** (every
+  seat on a line, with one word for what it is doing now; a press opens its chat), **Needs you** (questions,
+  permissions, heads-ups and work that is ready, answered in place) and **Record** (what agents decided for you, what
+  is still disputed, your words not yet carried in, and what happened lately). A Team button in the workspace's
+  header opens it.
 - **Permissions** an agent asks for reach you on Needs you. Answering one in the agent's own prompt works too.
-- **The Plugin page** installs and removes templates, matches agent profiles, checks for a newer release (updating
-  is Paseo's `paseo plugin update seatworks`) and cleans up: copies and branches no open work uses, agents whose
-  seat ended, whole projects. Only what you pick and confirm is removed, and a copy holding uncommitted work never
-  is.
+- **Seatworks' page** is set-up and upkeep, a job a tab: **Projects** (attach one, sync its template, remove it),
+  **Templates** (install, remove, match agent profiles), **Classifier**, **Clean up** and **Updates** (updating is
+  Paseo's `paseo plugin update seatworks`). Clean up sorts what teams left behind by what removing it costs: what is
+  safe comes picked, a branch whose commits are on no other is yours to pick, and a copy holding uncommitted work
+  is never removed. Only what you pick and confirm goes.
 
 ## What it writes into your repository
 
@@ -180,13 +186,13 @@ To make one:
   npm run template -- pack <dir> <file>    # the same check, then the one file it is shared as
   ```
 
-Either way you get one file, `<name>.template.json`. Under Templates on the Plugin page, give its path: you are
+Either way you get one file, `<name>.template.json`. On the Templates tab of Seatworks' page, give its path: you are
 shown what it brings (its roles, the agent profiles it names, any outside tool server it starts) before it is
 installed. To share one, open a pull request on
 [`sting9k/seatworks-gallery`](https://github.com/sting9k/seatworks-gallery).
 
 A project runs a copy of the template it was attached with, for its whole life. Nothing you install or change later
-reaches a running team until you press **Sync** on that project's page; agents seated from then on are made from the
+reaches a running team until you press **Sync** on that project's row, under Projects on Seatworks' page; agents seated from then on are made from the
 new files, and an agent already seated keeps what it started with. A template can be removed from the machine, and
 projects that run it go on.
 

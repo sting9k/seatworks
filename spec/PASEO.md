@@ -115,6 +115,10 @@ from Paseo 0.10.1: the plugin SDK, `@getpaseo/client`, `@getpaseo/protocol`, the
   none of what `agents.create` gave. The hook gives a reopened agent its whole seat again, the git shim first on
   its `PATH` among it, or a daemon restart would leave every agent unguarded.
 - Pi gets MCP servers only with `pi-mcp-adapter` installed (`HARNESS.md`, Pi).
+- A composer pill and a header button each take one behaviour: an action, a menu or a popover
+  (`@getpaseo/plugin/client`, buttons). A popover's content is handed the theme, its workspace and agent and a way to
+  close, and no navigation, so it cannot open another agent's chat; the client's `openPanel` opens the plugin's own
+  panel from it. An icon is any Lucide name (`plugins/icons.ts`, 0.10.3) or a component of the plugin's.
 
 - A permission is asked inside a turn: the turn stays active while it waits, and a turn that ends denies what is
   still pending (`agent-manager`, 0.10.2). So a delivery, sent only when `activeTurn` is empty, never reaches an agent
@@ -190,3 +194,9 @@ On 2 October 2026, Paseo 0.10.2, a daemon run for it with a home of its own (`HA
 - That the daemon's `PATH` finds Paseo's command line, so the update check runs; when it does not, the surface says
   so and gives the command to run by hand.
 - That `projects.list` lists every project the Human opened in Paseo, each `projectRootPath` the checkout's root.
+- The surface as it was rewritten on 3 October 2026, read in Paseo 0.10.3's types and source and not yet seen on a
+  live Paseo: a header button and three slash commands; `openPanel` called from a button and from a command; the
+  Team panel in the `workspace` location as well as the explorer; `useSettings` on a surface, which is built on the
+  same `useRpc` a surface already uses; and a listed agent's `status` read as whether it is in a turn. A slash
+  command's name is the plugin's to choose and may meet an agent's own: `/team`, `/team-hold` and `/team-resume`
+  were chosen to stay clear of an agent's `/resume`.

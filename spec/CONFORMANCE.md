@@ -241,6 +241,18 @@ A call as an agent's tool server sends it, the answer read back.
 | Paseo's command line is not on the daemon's PATH                                  | Said, with the command to run by hand                               |
 | `install.sh --ref` or `--dir` once Seatworks is installed                         | Says the option was not used, and how to install from elsewhere      |
 
+## The Human's surface
+
+What the surface says of a team, read from the Human's view and from what Paseo says each agent is doing. The
+screens themselves are type-checked and no more, until seen on a live Paseo.
+
+| Case                                                                                      | Expect                                                              |
+| ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| A team three levels deep with one agent in a turn; then a hand-back, a held lane and a question from the root | Each seat says one word for what it is doing now: working or idle by its agent; then handed back, held, and needs you on the scope the question came from |
+| That team with nothing waiting; with two agents in a turn; with the root held; with a question; with two things stuck | The pill says idle, then 2 working, held, 1 needs you, 2 stuck: the most pressing thing wins |
+| A scan that finds a copy holding a draft, a branch not merged and the attached project itself | Sorted as kept, to check first, and left out; the project is never among what is picked for the Human, whatever the surface knows of what is attached |
+| Setting up with no template installed                                                     | Matching agents is not done, whatever else is                        |
+
 ## Reflex
 
 | Case                                                        | Expect                                                     |
@@ -382,7 +394,7 @@ What the plugin reads of a profile that a template adds (`TEMPLATE.md`).
 | The check command on a directory that does not load         | Fails, saying why, and prints nothing else                          |
 | The pack command                                            | The one file a template is shared as, holding the directory's very files; nothing is written for a template that does not load |
 | A profile whose reflex file masks nothing of its own                  | What looks like a secret is still masked: the patterns are the plugin's |
-| A template's classifier, on a machine whose key is for one of its hosts, then for the other, then for neither, then with no key | A brief is asked about at that host alone, with that route's model and body and the Human's key; for neither host or with no key nothing leaves, and the project's page says which hosts the template is served at |
+| A template's classifier, on a machine whose key is for one of its hosts, then for the other, then for neither, then with no key | A brief is asked about at that host alone, with that route's model and body and the Human's key; for neither host or with no key nothing leaves, and the Human's surface says which hosts the template is served at |
 | The same, switched off on the machine; and a template that names no classifier | Nothing leaves and nothing is said, whatever key the machine has |
 | A classifier served over plain http anywhere but the machine itself, at a host not written plainly, or by no route | The profile does not load, saying why |
 | A template read before it is installed                               | Each host its classifier is served at is listed with the model asked there |
