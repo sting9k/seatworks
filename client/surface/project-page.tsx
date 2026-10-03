@@ -3,6 +3,7 @@ import { type PluginSurfaceProps, useRpc } from "@getpaseo/plugin/client";
 import { SettingsAction, SettingsCard, SettingsRow, SettingsSection } from "@getpaseo/plugin/client/ui";
 import { useState } from "react";
 import { Text, View } from "react-native";
+import { ROOT } from "../../shared/contracts/ids.ts";
 import { type HumanView, type ProjectTemplate, RPC } from "../../shared/contracts/rpc.ts";
 import { AttentionCard } from "../decide/attention-card.tsx";
 import { ClaimCard } from "../decide/claim-card.tsx";
@@ -46,6 +47,9 @@ export function scopeState(scope: Under): string {
   return scope.owes > 0 && scope.status !== "dropped" ? `${state} · owes ${scope.owes}` : state;
 }
 
+/** The scopes right under the root, which this page lists. */
+export const underRoot = (human: HumanView) => human.scopes.filter((scope) => scope.parent === ROOT);
+
 /** How many things wait on the Human in a project: what the pill counts and the first tab shows. */
 export const waitingOf = (human: HumanView | null) =>
   human ? human.questions.length + human.permissions.length + human.attentions.length + human.claims.length : 0;
@@ -81,7 +85,7 @@ export function ProjectPage({
   const waiting = waitingOf(human);
   const tabs: Tab<TabId>[] = [
     { id: "needs", label: waiting > 0 ? `Needs you · ${waiting}` : "Needs you" },
-    { id: "scopes", label: human ? `Scopes · ${human.scopes.length}` : "Scopes" },
+    { id: "scopes", label: human ? `Scopes · ${underRoot(human).length}` : "Scopes" },
     { id: "decided", label: "Decided" },
     { id: "activity", label: "Activity" },
   ];
@@ -153,12 +157,12 @@ export function ProjectPage({
         </>
       ) : null}
       {human && tab === "scopes" ? (
-        human.scopes.length > 0 ? (
+        underRoot(human).length > 0 ? (
           <DisclosureList
             theme={theme}
             open={open}
             onOpen={setOpen}
-            items={human.scopes.map((scope) => {
+            items={underRoot(human).map((scope) => {
               const tone = scopeTone(scope);
               const toOwner = openAgent(scope.owner);
               return {

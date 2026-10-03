@@ -10,7 +10,7 @@ import { FONT, SPACE, pressState } from "../kit/theme.ts";
 import { problemText } from "../state/problem-text.ts";
 import { useProjectView } from "../state/project-view.ts";
 import { useSeatAgents } from "../state/seat-agents.ts";
-import { scopeState, scopeTone, waitingOf } from "../surface/project-page.tsx";
+import { scopeState, scopeTone, underRoot, waitingOf } from "../surface/project-page.tsx";
 
 /** Seatworks' tab beside Files and Changes: the team at a glance, a line a scope under the root, each opening to its seat's chat. */
 export function TeamPanel({ workspaceId, theme, layout, navigation }: PluginWorkspacePanelProps) {
@@ -75,13 +75,13 @@ export function TeamPanel({ workspaceId, theme, layout, navigation }: PluginWork
               ${human.spent.usd.toFixed(2)}
             </Text>
           </Pressable>
-          {human.scopes.length > 0 ? (
+          {underRoot(human).length > 0 ? (
             <DisclosureList
               theme={theme}
               compact
               open={open}
               onOpen={setOpen}
-              items={human.scopes.map((scope) => {
+              items={underRoot(human).map((scope) => {
                 const tone = scopeTone(scope);
                 const toOwner = openAgent(scope.owner);
                 return {

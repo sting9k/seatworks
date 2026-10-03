@@ -280,9 +280,9 @@ Every event and its payload is in `LEDGER.md` §6, with the state it folds into 
 
 Read models over the log. Nothing in them is kept apart from it.
 
-- **What the Human needs to know** (CONCEPT-V2 §9.2): the brief each actor works to, which lines are the Human's,
-  which decisions an actor made, which findings and disagreements are open. And for each message the Human sent
-  straight to an agent, whether it was carried in (§9.3).
+- **What the Human needs to know** (CONCEPT-V2 §9.2): every scope under its parent and the goal it works to, which
+  lines are the Human's, which decisions an actor made, which findings and disagreements are open. And for each
+  message the Human sent straight to an agent, whether it was carried in (§9.3).
 - **Chain of change**, per finding (§10.1): what the brief said when the work was given; how long until it was
   classified; what was found; the evidence and any verdict; which owners the change reached; what was integrated
   after it.

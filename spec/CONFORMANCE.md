@@ -93,6 +93,7 @@ on an implementation without the rule before it is trusted.
 | `drop_scope` while the scope's merge is in flight                                       | Refused: the record cannot call it dropped once the integration is physical                |
 | `send_back` while the scope's merge is in flight, and once it is integrated             | Refused both times: its writer would be told it was sent back, and then let go as integrated |
 | A profile where the root's role hands back                                              | Its claim waits on the Human, shown to them; their `send_back` or a `published` settles it |
+| The Human's view of a team three levels deep, its scopes opened out of the tree's order | Every scope, the root first and each before what is under it, with its parent; a question names the scope its asker sits on |
 
 ## Delivery
 
@@ -224,7 +225,7 @@ A call as an agent's tool server sends it, the answer read back.
 | Case                                                                              | Expect                                                              |
 | --------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
 | Paseo lists a git project no team is attached to                                  | Offered to attach; once attached, no longer offered                 |
-| A task is dropped with a commit on its branch and a draft in its copy             | Its copy listed and not removable; its branch listed, not merged     |
+| A task is dropped with a commit on its branch and a draft in its copy             | Its copy listed and not removable; its branch listed as one whose commits would go with it |
 | A project is attached                                                             | `AGENTS.md` on its base carries the note after the project's own rules, in a commit of that file alone; what the Human staged stays staged |
 | The Human removes a project while a copy holds uncommitted work                   | Refused, naming the copy; nothing touched, its agents still at work |
 | The Human removes a project while editing its `AGENTS.md`                         | Refused, naming the file; the edit kept                             |

@@ -156,6 +156,9 @@ upkeep: attach(repository, profile), profiles, presets, templateOffer(from), ins
 ```
 
 - It shows only what the kernel's views and the agents said. It writes no summary of its own.
+- What the Human needs lists every scope, the root first and each before what is under it, so the surface draws the
+  team as a tree. A question and a permission each name the scope they came from, and the view carries the names of
+  the project's checks.
 - `stuck` reads the state and the outbox: an effect its satellite keeps throwing on, with how many times, or gave up
   on after its last try, with the error; an open scope with nobody seated, with its parent's owner; words queued for
   a seated actor whose agent never started; a seated actor that ended a turn while its agent's tool server never
@@ -169,7 +172,8 @@ upkeep: attach(repository, profile), profiles, presets, templateOffer(from), ins
   team is there and which branches are its. Removing the project takes it out the same way. A file the Human is
   editing is never written over: the note waits for them to commit and attach again.
 - Leftovers are what no open scope uses any more: a copy, a branch made for a scope, an agent Paseo keeps whose seat
-  ended, and each project as a whole. The Human picks and confirms, and the plugin removes only that, checked again
+  ended, and each project as a whole. Each says whether commits on no other branch would go with it, so the surface
+  never picks such a one for the Human. The Human picks and confirms, and the plugin removes only that, checked again
   against what is left over at that moment. A copy holding uncommitted work on its branch is listed and never
   removed, and a project with one is not removed at all. Removing a project archives its agents and deletes its
   copies and branches; its record is set aside, since a look back reads the log after the team is gone (P14), and is

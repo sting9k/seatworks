@@ -105,7 +105,8 @@ test("the Human attaches a Paseo project, clears what a dropped task left, and r
   assert.equal(copy.removable, false, "and it is not offered while it does");
   const kept = left.find((l) => l.kind === "branch");
   assert.equal(kept?.label, branch, "its branch is left too, only the dropped task's");
-  assert.match(kept.why, /not merged into main/);
+  assert.equal(kept.takesCommits, true, "its commit is on no other branch, so it is one to look at first");
+  assert.equal(copy.takesCommits, false);
   const whole = left.find((l) => l.kind === "project");
   assert.equal(whole?.label, repo);
 

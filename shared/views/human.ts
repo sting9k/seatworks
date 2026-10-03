@@ -1,12 +1,21 @@
 import { HUMAN, ROOT } from "../contracts/ids.ts";
-import type { Line } from "../contracts/ledger.ts";
+import type { Line, Scope } from "../contracts/ledger.ts";
 import type { State } from "../kernel/state.ts";
 import type { HumanView } from "../contracts/rpc.ts";
+
+/** Every scope, each before what is under it, and those under one parent in the order they were opened. */
+function asTree(state: State): Scope[] {
+  const under = new Map<string | null, Scope[]>();
+  for (const scope of state.scopes.values()) under.set(scope.parent, [...(under.get(scope.parent) ?? []), scope]);
+  const walk = (parent: string | null): Scope[] => (under.get(parent) ?? []).flatMap((s) => [s, ...walk(s.id)]);
+  return walk(null);
+}
 
 /** What the Human needs to know (KERNEL.md §8, CONCEPT-V2 §9.2), from the state: nothing summarised by a model. */
 export function humanView(state: State): HumanView {
   const owed = [...state.obligations.values()].filter((o) => o.owedBy === HUMAN);
   const root = state.scopes.get(ROOT);
+  const seatOf = (actor: string) => state.actors.get(actor)?.scope ?? null;
   const decisions: HumanView["decisions"] = [];
   const agentLines = (scope: string, lines: readonly Line[]) => {
     for (const l of lines) if (l.origin !== HUMAN) decisions.push({ scope, line: l.id, text: l.text, by: l.origin });
@@ -25,6 +34,7 @@ export function humanView(state: State): HumanView {
     questions: [...state.questions.values()].map((q) => ({
       id: q.id,
       from: q.from,
+      scope: seatOf(q.from),
       text: q.text,
       options: [...q.options],
       recommend: q.recommend,
@@ -33,7 +43,7 @@ export function humanView(state: State): HumanView {
       .filter((o) => o.about.kind === "permission")
       .flatMap((o) => {
         const p = state.permissions.get(o.about.id);
-        return p ? [{ id: p.id, actor: p.actor, text: p.text }] : [];
+        return p ? [{ id: p.id, actor: p.actor, scope: seatOf(p.actor), text: p.text }] : [];
       }),
     claims: owed
       .filter((o) => o.about.kind === "claim")
@@ -62,11 +72,12 @@ export function humanView(state: State): HumanView {
         const m = state.messages.get(o.about.id);
         return { message: o.about.id, text: m?.text ?? "", to: m?.to ?? "", owedBy: o.owedBy };
       }),
-    scopes: under.map((s) => ({
+    scopes: asTree(state).map((s) => ({
       scope: s.id,
+      parent: s.parent,
       owner: s.owner,
       role: s.role,
-      goal: s.brief?.goal.text ?? null,
+      goal: s.brief?.goal.text ?? s.plan?.goal.text ?? null,
       status: s.integrating ? "integrating" : s.claim ? "handed back" : s.status,
       held: s.held,
       owes:
@@ -79,5 +90,6 @@ export function humanView(state: State): HumanView {
       appetiteUsd: root?.plan?.appetite.usd ?? null,
     },
     root: root ? { role: root.role, owner: root.owner } : null,
+    checks: (state.project?.checks ?? []).map((check) => check.name),
   };
 }

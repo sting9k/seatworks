@@ -402,7 +402,14 @@ test("the talk tools: a message that asks is owed until answered, a direction fr
   assert.equal(await did(c, chief, "ask_human", question), "Recorded: question asked (q1); obligation opened.");
   const asked = (await c.plugin.view(c.project))!.human.questions;
   assert.deepEqual(asked, [
-    { id: "q1", from: "a1", text: "int8 or int16?", options: ["int8", "int16"], recommend: "int8, it is enough" },
+    {
+      id: "q1",
+      from: "a1",
+      scope: "root",
+      text: "int8 or int16?",
+      options: ["int8", "int16"],
+      recommend: "int8, it is enough",
+    },
   ]);
   await refused(keeper, "ask_human", { text: "?" }, /^Refused \(I10\)/);
   assert.ok((await c.plugin.human(c.project, { type: "answer_question", question: "q1", text: "int8" })).ok);

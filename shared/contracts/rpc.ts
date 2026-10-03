@@ -6,12 +6,14 @@ export const HumanViewSchema = z.object({
     z.object({
       id: z.string(),
       from: z.string(),
+      /** The scope its asker sits on, as each thing that waits on the Human names where it came from. */
+      scope: z.string().nullable(),
       text: z.string(),
       options: z.array(z.string()),
       recommend: z.string().nullable(),
     }),
   ),
-  permissions: z.array(z.object({ id: z.string(), actor: z.string(), text: z.string() })),
+  permissions: z.array(z.object({ id: z.string(), actor: z.string(), scope: z.string().nullable(), text: z.string() })),
   /** A claim handed back to the Human — the root's own — waiting on their publish or send-back. */
   claims: z.array(z.object({ scope: z.string(), by: z.string(), text: z.string(), commit: z.string() })),
   remote: z.string().nullable(),
@@ -31,9 +33,11 @@ export const HumanViewSchema = z.object({
   ),
   decisions: z.array(z.object({ scope: z.string(), line: z.string(), text: z.string(), by: z.string() })),
   directions: z.array(z.object({ message: z.string(), text: z.string(), to: z.string(), owedBy: z.string() })),
+  /** Every scope as a tree: the root first, each before what is under it. */
   scopes: z.array(
     z.object({
       scope: z.string(),
+      parent: z.string().nullable(),
       owner: z.string().nullable(),
       role: z.string(),
       goal: z.string().nullable(),
@@ -46,6 +50,8 @@ export const HumanViewSchema = z.object({
   spent: z.object({ usd: z.number(), tokens: z.number(), appetiteUsd: z.number().nullable() }),
   /** The agent the Human works with: the root's role as the profile names it, and whoever is seated in it. */
   root: z.object({ role: z.string(), owner: z.string().nullable() }).nullable(),
+  /** The project's checks, by name, as they run on a hand-back. */
+  checks: z.array(z.string()),
 });
 export type HumanView = z.infer<typeof HumanViewSchema>;
 
@@ -66,6 +72,8 @@ export const LeftoverSchema = z.object({
   label: z.string(),
   why: z.string(),
   removable: z.boolean(),
+  /** Whether commits on no other branch go with it, so the Human looks before picking it. */
+  takesCommits: z.boolean(),
 });
 export type Leftover = z.infer<typeof LeftoverSchema>;
 

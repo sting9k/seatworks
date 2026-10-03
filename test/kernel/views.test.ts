@@ -37,6 +37,32 @@ test("the Human sees what waits on them, what agents decided for them, and their
   assert.ok(lines.some((l) => l.includes("opened scope 1.1 (peer)")));
 });
 
+test("the Human's view lists every scope as a tree, the root first, and says which scope a question came from", () => {
+  const { ledger, supervisor, lead } = team();
+  ledger.must(
+    ledger.as(supervisor, "open_scope", { parent: "root", role: "lead", paths: ["docs/"], brief: brief("Guide") }),
+  );
+  ledger.must(ledger.as(lead, "open_scope", { parent: "1", role: "peer", paths: ["src/ui/"], brief: brief("Menu") }));
+  ledger.must(ledger.as(supervisor, "ask_human", { text: "Ship Friday?", options: [], recommend: null }));
+
+  const view = humanView(ledger.state);
+  assert.deepEqual(
+    view.scopes.map((s) => [s.scope, s.parent, s.goal]),
+    [
+      ["root", null, null],
+      ["1", "root", "Ship the net layer"],
+      ["1.1", "1", "Encode directions"],
+      ["1.2", "1", "Menu"],
+      ["2", "root", "Guide"],
+    ],
+    "each scope before what is under it, whatever order they were opened in",
+  );
+  assert.deepEqual(
+    view.questions.map((q) => q.scope),
+    ["root"],
+  );
+});
+
 test("a finding's chain of change and the signals are read from the log", () => {
   const { ledger, lead, peer, task } = team();
   const line = ledger.state.scopes.get(task)!.brief!.constraints[0]!.id;

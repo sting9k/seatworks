@@ -44,6 +44,7 @@ export async function leftoversOf(
           ? `no open scope uses it, but ${copy.branch ?? "it"} has uncommitted work there: commit or move it first`
           : "no open scope uses it",
         removable: !copy.unsaved,
+        takesCommits: false,
       });
   for (const b of await workspace.branchesUnder(branchesOf(project), base))
     if (!usedBranches.has(b.branch))
@@ -56,6 +57,7 @@ export async function leftoversOf(
           ? `no open scope uses it, and ${base ?? "the base"} holds its work`
           : `no open scope uses it, and it is not merged into ${base ?? "the base"}: its commits go with it`,
         removable: true,
+        takesCommits: !b.merged,
       });
   for (const a of agents) {
     const actor = view.actors.get(a.labels[ACTOR_LABEL] ?? "");
@@ -69,6 +71,7 @@ export async function leftoversOf(
           ? `its seat was ${actor.status}, but Paseo still keeps the agent`
           : "no seat of the project names it",
         removable: true,
+        takesCommits: false,
       });
   }
   return found;
@@ -84,5 +87,13 @@ export function projectLeftover(project: string, repo: string, view: State | nul
       : seated > 0 || open > 0
         ? `${seated} agents seated and ${open} scopes open: removing archives them, deletes the project's copies and branches, and keeps its record aside`
         : "removing deletes the project's copies and branches, and keeps its record aside for a look back";
-  return { id: leftoverId("project", project, ""), kind: "project", project, label: repo, why, removable: true };
+  return {
+    id: leftoverId("project", project, ""),
+    kind: "project",
+    project,
+    label: repo,
+    why,
+    removable: true,
+    takesCommits: false,
+  };
 }

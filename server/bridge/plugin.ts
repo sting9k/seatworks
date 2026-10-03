@@ -437,6 +437,7 @@ export class Plugin {
           label: join(dir, id),
           why: "a folder with no project in it",
           removable: true,
+          takesCommits: false,
         });
         continue;
       }
@@ -466,6 +467,7 @@ export class Plugin {
         label: repo ?? join(shelf, name),
         why: `the record of a project removed${removedAt ? ` on ${removedAt.slice(0, 10)}` : ""}: removing deletes it for good`,
         removable: true,
+        takesCommits: false,
       });
     }
     return found;
