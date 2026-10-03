@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { OwnRunsSchema } from "./runs.ts";
 
 /** What the Human needs to know of a project (shared/views/human.ts). */
 export const HumanViewSchema = z.object({
@@ -147,18 +148,6 @@ const ProfileAgentsSchema = z.object({
 });
 export type ProfileAgents = z.infer<typeof ProfileAgentsSchema>;
 
-const named = z.string().min(1);
-/** With none for an effort, the model's own. */
-const effort = named.nullable();
-
-/** What a project runs in place of a profile of the Human's: an effort, a model with its effort, or a provider with both. */
-export const OwnRunsSchema = z.union([
-  z.object({ provider: named, model: named, effort }).strict(),
-  z.object({ model: named, effort }).strict(),
-  z.object({ effort }).strict(),
-]);
-export type OwnRuns = z.infer<typeof OwnRunsSchema>;
-
 /** A name of a project's template as the project runs it: the Human's profile, and the project's own over it. */
 const ProjectAgentSchema = AgentSchema.extend({ own: OwnRunsSchema.nullable() });
 export type ProjectAgent = z.infer<typeof ProjectAgentSchema>;
@@ -182,6 +171,15 @@ const FolderSchema = z.object({
   within: z.string().nullable(),
 });
 export type Folder = z.infer<typeof FolderSchema>;
+
+/** A project a team is attached to: its repository, whether it is open in memory, and the template it took. */
+const AttachedSchema = z.object({
+  id: z.string(),
+  repo: z.string(),
+  open: z.boolean(),
+  profile: z.string().nullable(),
+});
+export type Attached = z.infer<typeof AttachedSchema>;
 
 /** The Human's surface calls these (PORTS.md, Human surface); shaped as Paseo's plugin RPC contracts. */
 export const RPC = {
@@ -208,10 +206,7 @@ export const RPC = {
     name: "seatworks.projects",
     input: z.object({}),
     output: z.object({
-      /** Each attached project, with the name of the template it took when it was attached. */
-      projects: z.array(
-        z.object({ id: z.string(), repo: z.string(), open: z.boolean(), profile: z.string().nullable() }),
-      ),
+      projects: z.array(AttachedSchema),
       unattached: z.array(FolderSchema),
       /** The profiles a project may be attached with: each the Human installed. */
       profiles: z.array(z.object({ name: z.string(), title: z.string(), description: z.string() })),

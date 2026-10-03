@@ -12,7 +12,7 @@ export type Sorted = {
   readonly records: readonly Leftover[];
 };
 
-/** Sorts a scan; an attached project as a whole is left out, since it is removed from its own row. */
+/** Sorts a scan; an attached project as a whole is left out, since it is removed from its own page. */
 export function sortLeftovers(found: readonly Leftover[], attached: ReadonlySet<string>): Sorted {
   const rest = found.filter((left) => !(left.kind === "project" && attached.has(left.project)));
   const things = rest.filter((left) => left.kind !== "record");
@@ -35,4 +35,22 @@ export function tagOf(
   return left.unmerged > 0
     ? { label: `${left.unmerged} commit${left.unmerged === 1 ? "" : "s"} not merged`, tone: "warning" }
     : { label: "merged", tone: "success" };
+}
+
+const KINDS = [
+  ["copy", "copy", "copies"],
+  ["branch", "branch", "branches"],
+  ["agent", "agent", "agents"],
+] as const;
+
+/** What one project's team left behind, counted by kind for a line, with what it takes on disk. */
+export function leftBy(found: readonly Leftover[], project: string): { says: string | null; bytes: number } {
+  const counted = KINDS.flatMap(([kind, one, many]) => {
+    const left = found.filter((thing) => thing.project === project && thing.kind === kind);
+    return left.length === 0 ? [] : [{ says: `${left.length} ${left.length === 1 ? one : many}`, left }];
+  });
+  return {
+    says: counted.length > 0 ? counted.map((kind) => kind.says).join(", ") : null,
+    bytes: counted.flatMap((kind) => kind.left).reduce((sum, thing) => sum + (thing.bytes ?? 0), 0),
+  };
 }

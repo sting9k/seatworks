@@ -32,7 +32,6 @@ import type {
   Folder,
   HumanView,
   Leftover,
-  OwnRuns,
   Preset,
   ProfileAgents,
   ProjectAgent,
@@ -74,7 +73,8 @@ import {
   matchingFile,
   matchingOf,
 } from "../profile/agents.ts";
-import { keepOwn, laidOver, ownFile, ownOf } from "../profile/own-runs.ts";
+import { keepOwn, ownFile, ownOf } from "../profile/own-runs.ts";
+import { laidOver, type OwnRuns } from "../../shared/contracts/runs.ts";
 import { type Bundle, loadBundle } from "../profile/bundle.ts";
 import { install, offerOf } from "../profile/install.ts";
 import { pin, pinnedDir, templateOf } from "../profile/pinned.ts";

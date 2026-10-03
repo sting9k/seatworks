@@ -200,13 +200,14 @@ upkeep: attach(repository, profile), folderAt(dir), gitOffer(dir), setUpGit(dir)
   said Paseo had none.
 - A project takes the remote its repository has as where it is published: `origin` where there is one, else its
   only remote; with two and no `origin` the Human names one when they publish. A project with no remote is put on
-  GitHub from its row, private or public, in two presses, the second after it is said which account, which name and
+  GitHub from its own page, private or public, in two presses, the second after it is said which account, which name and
   which visibility: GitHub's own command line makes the repository under the account the Human signed it in as,
   never one of the plugin's, and the base is pushed there by an ordinary `publish`, so the record holds the remote
-  from then on. Where that command line is not signed in the row says so and offers nothing.
-- An attached project's row says in words what is stuck, each fact a line, and gives the way on: a root with nobody
-  seated is seated again by the Human's `reseat`, and the row opens the Team tab of the project's workspace where
-  Paseo has one.
+  from then on. Where that command line is not signed in the page says so and offers nothing.
+- An attached project is a line under Projects, with its template and where its team stands, and opens a page of
+  its own. That page says in words what is stuck, each fact a line, and gives the way on: a root with nobody seated
+  says why its last agent went and is seated again by the Human's `reseat`. It opens the root's chat and the Team
+  tab of the project's workspace where Paseo has one, and holds or resumes the team.
 - Attaching also commits the profile's `project.md` into the project's `AGENTS.md` on its base, between the plugin's
   markers, as a commit of that file alone, so every agent in the repository, the team's or the Human's own, knows the
   team is there and which branches are its. Removing the project takes it out the same way. A file the Human is
@@ -220,7 +221,7 @@ upkeep: attach(repository, profile), folderAt(dir), gitOffer(dir), setUpGit(dir)
   listed as a leftover of its own until the Human deletes it. Attached again, the project starts from nothing. What is
   a folder says what it takes on disk, the bytes of its files with no link followed, and a record says when its
   project was removed: what the Human weighs a removal by. A branch and an agent take nothing to say, and a project
-  still attached is not measured: it is removed from its own row, and the copies its team works in are no leftover.
+  still attached is not measured: it is removed from its own page, and the copies its team works in are no leftover.
 - A template is installed from a file on the Human's machine: read first for what it would bring, then installed
   once they agree, the same file by its hash (`TEMPLATE.md`, Installing).
 - The update check reads Paseo's own and installs nothing.
@@ -239,8 +240,17 @@ upkeep: attach(repository, profile), folderAt(dir), gitOffer(dir), setUpGit(dir)
 - It sits in Paseo's own places, each with one job.
   - **A page in the sidebar** is set-up and upkeep, a job a tab: the projects, the templates and the agent profiles
     their roles run on, the classifier's switch and key, what teams left behind, and whether a newer release is
-    out. A team is not followed there. A project's checks are changed on its row: each a name and its command on one
-    line, sent as the program and its arguments, since a check runs with no shell; quotes keep an argument whole.
+    out. A project opens a page of its own there, in three tabs. Overview is the project at a glance: what is stuck,
+    what waits on the Human, answered in place, the team as a tree with how many sit, work, wait and have landed,
+    what it spent, and the last things that happened; the whole record is the Team tab's. Agents is what each name
+    of its template runs in this project, the Human's profile as the default and the project's own picked in place
+    (`TEMPLATE.md`, Agent profiles on a machine). Settings is its template and Sync, its base, where it is
+    published, its checks, what its team left behind, and removing it. A project's checks are changed there: each
+    a name and its command on one line, sent as the program and its arguments, since a check runs with no shell;
+    quotes keep an argument whole.
+  - **A choice on a line is a pick**: a chip as wide as its word, which opens the host's own modal with what there
+    is to choose. The host has no small menu of its own to give a plugin, and a row of settings for each choice
+    made a template's six agent profiles a screen and a half long.
   - **A Team tab**, beside Files and Changes and as a tab of the workspace, is the whole team of the project a
     workspace belongs to: every seat a line with one word for what it is doing now, what waits on the Human answered
     in place, and the record folded under its headings. What is stuck and a standing alarm come first. Where it is
@@ -254,7 +264,7 @@ upkeep: attach(repository, profile), folderAt(dir), gitOffer(dir), setUpGit(dir)
     or resumes the team, and sends a word to the root's agent. A button in the workspace's header and three commands
     typed in a chat do the same.
 - What costs nothing to remove comes picked in the clean-up. What takes commits with it, and a project whole, never
-  does: the Human picks those, and a whole project is removed from its own row.
+  does: the Human picks those, and a whole project is removed from its own page.
 
 ## Record
 

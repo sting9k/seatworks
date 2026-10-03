@@ -11,6 +11,7 @@ import { problemText } from "../state/problem-text.ts";
 import { type Step, setupOf } from "../state/setup.ts";
 import { ClassifierTab } from "./classifier-tab.tsx";
 import { CleanUpTab } from "./clean-up-tab.tsx";
+import { ProjectPage } from "./project-page.tsx";
 import { type Listed, ProjectsTab } from "./projects-tab.tsx";
 import { SetupStrip } from "./setup-strip.tsx";
 import { type Matching, TemplatesTab } from "./templates-tab.tsx";
@@ -33,6 +34,8 @@ export function pageOf(client: Pick<PluginClientContext, "openPanel">) {
     const askAgents = useRpc(RPC.agents);
     const settings = useSettings(reflexSettings);
     const [picked, setPicked] = useState<TabId | null>(null);
+    /** The project whose own page is shown in place of the tabs. */
+    const [opened, setOpened] = useState<string | null>(null);
     const [listed, setListed] = useState<Listed | null>(null);
     const [matching, setMatching] = useState<Matching | null>(null);
     const [leftBehind, setLeftBehind] = useState(0);
@@ -66,6 +69,7 @@ export function pageOf(client: Pick<PluginClientContext, "openPanel">) {
         : [];
     const todo = steps.find((step) => !step.done);
     const tab = picked ?? (todo ? TAB_OF[todo.id] : "projects");
+    const project = listed?.projects.find((one) => one.id === opened) ?? null;
     const tabs: Tab<TabId>[] = [
       { id: "projects", label: "Projects" },
       { id: "templates", label: "Templates" },
@@ -80,45 +84,78 @@ export function pageOf(client: Pick<PluginClientContext, "openPanel">) {
         contentContainerStyle={{ padding: layout.compact ? SPACE.md : SPACE.xl, alignItems: "center" }}
       >
         <View style={{ width: "100%", maxWidth: 720, gap: 20 }}>
-          <View style={{ gap: SPACE.lg }}>
-            <Text style={{ fontSize: FONT.title, fontWeight: "600", color: theme.colors.foreground }}>Seatworks</Text>
-            {todo ? (
-              <SetupStrip
-                steps={steps}
-                theme={theme}
-                onPick={(step) => {
-                  setPicked(TAB_OF[step]);
-                }}
-              />
-            ) : null}
-            <Tabs tabs={tabs} active={tab} theme={theme} onPick={setPicked} />
-          </View>
-          {problem ? (
-            <Banner tone="danger" text={`Seatworks did not answer: ${problem}`} theme={theme} onPress={changed} />
-          ) : null}
-          {tab === "projects" ? (
-            <ProjectsTab
-              listed={listed}
+          {project ? (
+            <ProjectPage
+              key={project.id}
+              project={project}
+              template={listed?.profiles.find((profile) => profile.name === project.profile)?.title ?? project.profile}
+              compact={layout.compact}
               theme={theme}
               navigation={navigation}
+              onBack={() => {
+                setOpened(null);
+                setPicked("projects");
+              }}
               onTeam={(workspaceId) => {
                 client.openPanel("team", { workspaceId, location: "workspace" });
                 navigation?.openWorkspace({ workspaceId });
               }}
-              onChanged={changed}
-              onTemplates={() => {
-                setPicked("templates");
+              onCleanUp={() => {
+                setOpened(null);
+                setPicked("cleanup");
+              }}
+              onRemoved={() => {
+                setOpened(null);
+                changed();
               }}
             />
-          ) : null}
-          {tab === "templates" ? (
-            <TemplatesTab matching={matching} projects={listed?.projects ?? []} theme={theme} onChanged={changed} />
-          ) : null}
-          {tab === "classifier" ? <ClassifierTab settings={settings} theme={theme} /> : null}
-          {tab === "cleanup" && listed ? (
-            <CleanUpTab projects={listed.projects} theme={theme} onCounted={setLeftBehind} onChanged={changed} />
-          ) : null}
-          {tab === "updates" ? <UpdatesTab theme={theme} /> : null}
+          ) : (
+            <>
+              <View style={{ gap: SPACE.lg }}>
+                <Text style={{ fontSize: FONT.title, fontWeight: "600", color: theme.colors.foreground }}>
+                  Seatworks
+                </Text>
+                {todo ? (
+                  <SetupStrip
+                    steps={steps}
+                    theme={theme}
+                    onPick={(step) => {
+                      setPicked(TAB_OF[step]);
+                    }}
+                  />
+                ) : null}
+                <Tabs tabs={tabs} active={tab} theme={theme} onPick={setPicked} />
+              </View>
+              {problem ? (
+                <Banner tone="danger" text={`Seatworks did not answer: ${problem}`} theme={theme} onPress={changed} />
+              ) : null}
+              {tab === "projects" ? (
+                <ProjectsTab
+                  listed={listed}
+                  theme={theme}
+                  onOpen={setOpened}
+                  onChanged={changed}
+                  onTemplates={() => {
+                    setPicked("templates");
+                  }}
+                />
+              ) : null}
+              {tab === "templates" ? (
+                <TemplatesTab
+                  matching={matching}
+                  projects={listed?.projects ?? []}
+                  compact={layout.compact}
+                  theme={theme}
+                  onChanged={changed}
+                />
+              ) : null}
+              {tab === "classifier" ? <ClassifierTab settings={settings} theme={theme} /> : null}
+              {tab === "cleanup" && listed ? (
+                <CleanUpTab projects={listed.projects} theme={theme} onCounted={setLeftBehind} onChanged={changed} />
+              ) : null}
+              {tab === "updates" ? <UpdatesTab theme={theme} /> : null}
+            </>
+          )}
         </View>
       </ScrollView>
     );

@@ -87,21 +87,32 @@ export function countsOf(seats: readonly Seat[]): { working: number; waiting: nu
   return { working: count("work"), waiting: count("wait", "you") };
 }
 
-/** What the pill says of a team, the most pressing first: stuck, the Human's turn, held, who works, all landed. */
-export function pillOf(
+/** Where a team stands in a word or two, the most pressing first: stuck, the Human's turn, held, who works, all landed. */
+export function standingOf(
   human: HumanView,
   stuck: number,
   seats: readonly Seat[],
   /** How many scopes the record holds as taken in. */
   landed: number,
-): { tone: Tone | "stuck"; label: string } {
-  if (stuck > 0) return { tone: "stuck", label: `${stuck} stuck` };
+): { tone: Tone | "stuck"; says: string } {
+  if (stuck > 0) return { tone: "stuck", says: `${stuck} stuck` };
   const waiting = waitingOf(human);
-  if (waiting > 0) return { tone: "you", label: `${waiting} need${waiting === 1 ? "s" : ""} you` };
-  if (human.scopes.some((scope) => scope.parent === null && scope.held)) return { tone: "wait", label: "Team · held" };
+  if (waiting > 0) return { tone: "you", says: `${waiting} need${waiting === 1 ? "s" : ""} you` };
+  if (human.scopes.some((scope) => scope.parent === null && scope.held)) return { tone: "wait", says: "held" };
   const { working } = countsOf(seats);
-  if (working > 0) return { tone: "work", label: `Team · ${working} working` };
+  if (working > 0) return { tone: "work", says: `${working} working` };
   const ended = (status: string) => status === "integrated" || status === "dropped";
   const toLand = human.scopes.some((scope) => scope.parent !== null && scope.kind === "work" && !ended(scope.status));
-  return landed > 0 && !toLand ? { tone: "done", label: "Team · all landed" } : { tone: "wait", label: "Team · idle" };
+  return landed > 0 && !toLand ? { tone: "done", says: "all landed" } : { tone: "wait", says: "idle" };
+}
+
+/** What the pill says of a team: where it stands, under the team's name unless it is stuck or the Human's turn. */
+export function pillOf(
+  human: HumanView,
+  stuck: number,
+  seats: readonly Seat[],
+  landed: number,
+): { tone: Tone | "stuck"; label: string } {
+  const { tone, says } = standingOf(human, stuck, seats, landed);
+  return { tone, label: tone === "stuck" || tone === "you" ? says : `Team · ${says}` };
 }

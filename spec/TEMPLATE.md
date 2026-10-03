@@ -250,7 +250,7 @@ is where templates are kept and changed; what a team runs is what its project to
 - **The copy is kept under its hash**, `projects/<id>/profile/<hash>/`, and the files a project runs are read from
   there alone. So what is installed may be changed, installed again or removed, and the plugin started again, with
   no team running other words than it did. A copy is written whole before the project points at it.
-- **Sync takes the installed files anew**, on the project's row of the plugin's page, for the agents seated from then on. An agent
+- **Sync takes the installed files anew**, on the project's own page under the plugin's, for the agents seated from then on. An agent
   already seated keeps the prompt it was made with, since Paseo fixes it then, and the files it was pointed at stay
   where they were; its owner or the Human reseats it to give it the new ones. Sync takes only files that load: a
   template no longer installed, or one that does not load, is refused with the reason, and the project runs on as it
@@ -386,9 +386,10 @@ agent profile the Human already has, for every profile installed.
   has, or where the template is not installed.
 - **What each name runs is said on its line, and set there.** The roles that name it, its provider, its model and
   its effort, or that Paseo has no such profile, or that the profile names no model and so can seat no agent.
-  Opened, the line sets the profile it runs on, and the provider, the model and the effort of that profile: one of
-  the Human's own in Paseo, changed in that one place and nowhere else, to a provider Paseo finds on the machine
-  and a model and an effort that provider has. A mode and feature values are one provider's own, so they go from a
+  The line sets the provider, the model and the effort of the profile it runs on, each picked in place, and from
+  its end the profile itself: one of the Human's own in Paseo, changed in that one place and nowhere else, to a
+  provider Paseo finds on the machine and a model and an effort that provider has. A new provider brings its own
+  model at the effort that model starts on, and a new model keeps the effort where it has it. A mode and feature values are one provider's own, so they go from a
   profile whose provider changes and stay on one whose provider does not. A different provider or model for two of
   a template's names is often the point. These two, making a profile and shaping one, are all the plugin writes in
   Paseo's config (`PASEO.md`).
@@ -410,7 +411,10 @@ agent profile the Human already has, for every profile installed.
   feature values name nothing and are left out. It is refused, and nothing kept, for a name the project's template
   does not give, a profile Paseo lacks, a provider Paseo does not find, a model the provider lacks or an effort the
   model lacks. A file of it that does not read seats no agent and says so on the seat and the page, as a matching
-  does; picked again, it is written anew.
+  does; picked again, it is written anew. On the project's page each name is a line as on the Templates tab: what
+  is the Human's profile's is drawn as an outline, what is the project's own is filled and marked, with the way
+  back to the default beside it. The page keeps the least that runs what was picked: nothing where the profile
+  already does, and picking the profile's own provider again takes the whole line back to it.
 - **What goes wrong later is said, and stops one seat only.** A name matched to an agent profile the Human has since
   removed, or a matching whose file no longer reads, leaves that agent not seated with the reason on its seat, as a
   missing agent profile always did; the page says the same. Matched again, the seat is taken by a reseat. Nothing

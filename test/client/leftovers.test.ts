@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { tagOf } from "../../client/state/leftovers.ts";
+import { leftBy, tagOf } from "../../client/state/leftovers.ts";
 import type { Leftover } from "../../shared/contracts/rpc.ts";
 
 // A row of spec/CONFORMANCE.md, The Human's surface: what a leftover's line says of it.
@@ -38,4 +38,18 @@ test("a leftover's line says in a word or two what a sentence said: merged or ho
     [null, null],
     "a clean copy and a record say their size and their day, and no more",
   );
+});
+
+test("what one project's team left behind is counted by kind on a line, with what it takes on disk: not the project itself, nor another's", () => {
+  const found = [
+    left("copy", { bytes: 300 }),
+    left("copy", { bytes: 92 }),
+    left("branch"),
+    left("project", { bytes: 5000 }),
+    left("copy", { project: "q", bytes: 7000 }),
+    left("record", { bytes: 40 }),
+  ];
+  assert.deepEqual(leftBy(found, "p"), { says: "2 copies, 1 branch", bytes: 392 });
+  assert.deepEqual(leftBy([left("agent"), left("agent")], "p"), { says: "2 agents", bytes: 0 });
+  assert.deepEqual(leftBy(found, "nobody"), { says: null, bytes: 0 });
 });

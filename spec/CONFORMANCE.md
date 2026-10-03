@@ -270,6 +270,9 @@ screens themselves are type-checked and no more, until seen on a live Paseo.
 | A check's command typed on one line, an argument in quotes; any arguments shown as a line and typed back | The program and its arguments, the quoted one whole; the same arguments |
 | A branch merged, one three commits past the base, a copy holding a draft, an agent; a clean copy and a record | Each line says it in a word or two: merged, 3 commits not merged, uncommitted work, seat ended; the last two say their size and day and no more |
 | A thing done under a minute ago, some minutes ago, an hour and more ago                   | Just now; to the minute; to the hour                                |
+| How long since a thing happened, for a column of its own: under a minute, minutes, hours, more than a day | Now; to the minute; to the hour; to the day |
+| A pick on a project's page for a name whose profile runs one provider, model and effort: the same again, another effort, the model's own effort, another model, another provider; and a model for a profile that names none | Nothing is kept of its own; the effort alone; that too; the model with its effort; the provider with both; the model with its effort. Laid over the profile, what is kept runs what was picked |
+| What a scan found for two projects: two copies, a branch, the project itself, another project's copy, a record; two agents; a project with nothing | 2 copies, 1 branch and what the two copies take on disk; 2 agents; nothing to say |
 | Sizes from nothing to past a GB, and a day of this year and of last                       | A whole number of the unit that keeps it short, a tenth more past a GB; the day's number and month, with its year when that is not this one |
 
 ## Reflex

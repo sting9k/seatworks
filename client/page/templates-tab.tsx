@@ -6,6 +6,7 @@ import { Pressable, Text, View } from "react-native";
 import {
   type Preset,
   type ProfileAgents,
+  type ProviderModel,
   RPC,
   type TemplateOffer,
   type TemplateSource,
@@ -18,8 +19,11 @@ import { Tag } from "../kit/tag.tsx";
 import { FONT, SPACE } from "../kit/theme.ts";
 import { oneOn } from "../state/matching.ts";
 import { problemText } from "../state/problem-text.ts";
+import { useModelsOf } from "../state/provider-models.ts";
+import type { Wanted } from "../state/runs.ts";
 import { nameOf } from "../state/words.ts";
-import { AgentRow } from "./agent-row.tsx";
+import { AgentHead, AgentLine, DOTS_WIDE, RunsOn } from "./agent-line.tsx";
+import { AgentPicks, type Columns } from "./agent-picks.tsx";
 import { CreateAgents } from "./create-agents.tsx";
 
 /** Where templates are made and shared: the gallery's page, which carries the editor. */
@@ -32,30 +36,40 @@ export type Matching = {
   readonly providers: readonly string[];
 };
 
+/** How wide a pick's cell is on a line of the table, where there is room and where there is little. */
+const COLUMNS: Columns = { provider: 100, model: 150, effort: 96 };
+const NARROW: Columns = { provider: 76, model: 96, effort: 72 };
+
 type InstalledProps = {
   readonly profile: ProfileAgents;
   /** The projects that run it, each by the name of its folder. */
   readonly usedBy: readonly string[];
   readonly available: readonly string[];
   readonly providers: readonly string[];
+  /** The models of each provider a line runs on, as far as they are read. */
+  readonly models: Readonly<Record<string, readonly ProviderModel[]>>;
+  readonly read: (provider: string) => Promise<readonly ProviderModel[] | null>;
+  readonly compact: boolean;
   readonly theme: PluginTheme;
   readonly busy: boolean;
   readonly onMatch: (matching: Record<string, string>) => void;
   /** Makes in Paseo an agent profile for each name it has none for, running a model at an effort. */
-  readonly onCreate: (provider: string, model: string, effort: string | null) => void;
+  readonly onCreate: (wanted: Wanted) => void;
   /** Gives one of the Human's agent profiles another provider, model and effort. */
-  readonly onShape: (agent: string, provider: string, model: string, effort: string | null) => void;
+  readonly onShape: (agent: string, wanted: Wanted) => void;
   readonly onRemove: () => void;
 };
 
-/** One installed template on a line; opened, each agent profile its roles name and what it runs. */
+/** One installed template on a line; opened, each agent profile its roles name on a line, with what it runs picked in place. */
 function Installed(props: InstalledProps) {
-  const { profile, usedBy, available, providers, theme, busy, onMatch, onCreate, onShape, onRemove } = props;
+  const { profile, usedBy, available, providers, models, read, compact, theme, busy } = props;
+  const { onMatch, onCreate, onShape, onRemove } = props;
   const missing = profile.agents.filter((agent) => !agent.there).length;
   const bare = profile.agents.filter((agent) => agent.there && agent.model === null).length;
-  const [open, setOpen] = useState(missing + bare > 0);
+  const [open, setOpen] = useState(true);
   const [removing, setRemoving] = useState(false);
-  const { foregroundMuted, statusDanger, border } = theme.colors;
+  const { foregroundMuted, statusDanger } = theme.colors;
+  const columns = compact ? NARROW : COLUMNS;
   return (
     <View>
       <Row
@@ -64,6 +78,7 @@ function Installed(props: InstalledProps) {
           `${profile.agents.length} agent profiles`,
           ...(usedBy.length > 0 ? [`runs ${usedBy.join(", ")}`] : []),
         ].join(" · ")}
+        height={52}
         theme={theme}
       >
         {missing > 0 ? <Tag label={`${missing} to create`} tone="warning" theme={theme} /> : null}
@@ -98,25 +113,48 @@ function Installed(props: InstalledProps) {
         </Text>
       ) : null}
       {open && missing > 0 ? (
-        <View style={{ borderTopWidth: 1, borderTopColor: border }}>
-          <CreateAgents missing={missing} providers={providers} theme={theme} busy={busy} onCreate={onCreate} />
-        </View>
+        <CreateAgents missing={missing} providers={providers} theme={theme} busy={busy} onCreate={onCreate} />
+      ) : null}
+      {open && missing < profile.agents.length ? (
+        <AgentHead text="Defaults for every project" columns={columns} tail={DOTS_WIDE} theme={theme} />
       ) : null}
       {open
         ? profile.agents.map((agent) => (
-            <AgentRow
+            <AgentLine
               key={`${agent.name}:${agent.runsOn}`}
               agent={agent}
-              available={available}
+              compact={compact}
               theme={theme}
-              busy={busy}
-              onMatch={(runsOn) => {
-                onMatch(oneOn(profile.agents, agent.name, runsOn));
-              }}
-              onShape={(model, effort) => {
-                if (agent.provider !== null) onShape(agent.runsOn, agent.provider, model, effort);
-              }}
-            />
+              tail={
+                <RunsOn
+                  agent={agent}
+                  available={available}
+                  theme={theme}
+                  busy={busy}
+                  onMatch={(runsOn) => {
+                    onMatch(oneOn(profile.agents, agent.name, runsOn));
+                  }}
+                />
+              }
+            >
+              {agent.there ? (
+                <AgentPicks
+                  name={agent.name}
+                  runs={agent}
+                  providers={providers}
+                  models={agent.provider === null ? null : (models[agent.provider] ?? null)}
+                  read={read}
+                  columns={columns}
+                  theme={theme}
+                  busy={busy}
+                  onWant={(wanted) => {
+                    onShape(agent.runsOn, wanted);
+                  }}
+                />
+              ) : (
+                <Tag label="not in Paseo" tone="warning" theme={theme} />
+              )}
+            </AgentLine>
           ))
         : null}
     </View>
@@ -164,12 +202,14 @@ type Props = {
   readonly matching: Matching | null;
   /** The projects attached, each with the template it runs: a template says which run it. */
   readonly projects: readonly { readonly repo: string; readonly profile: string | null }[];
+  /** Whether the page has little room across. */
+  readonly compact: boolean;
   readonly theme: PluginTheme;
   readonly onChanged: () => void;
 };
 
 /** The templates on this machine, the projects that run each, what their roles run as, and the way to bring in another. */
-export function TemplatesTab({ matching, projects, theme, onChanged }: Props) {
+export function TemplatesTab({ matching, projects, compact, theme, onChanged }: Props) {
   const listPresets = useRpc(RPC.presets);
   const read = useRpc(RPC.templateOffer);
   const install = useRpc(RPC.installTemplate);
@@ -184,6 +224,10 @@ export function TemplatesTab({ matching, projects, theme, onChanged }: Props) {
   const [said, setSaid] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const muted = { fontSize: FONT.small, color: theme.colors.foregroundMuted, paddingHorizontal: SPACE.xs };
+  const running = (matching?.profiles ?? []).flatMap((profile) =>
+    profile.agents.flatMap((agent) => (agent.provider === null ? [] : [agent.provider])),
+  );
+  const { models, problem, read: readModels } = useModelsOf(running);
 
   const loadPresets = useCallback(async () => {
     try {
@@ -222,7 +266,7 @@ export function TemplatesTab({ matching, projects, theme, onChanged }: Props) {
 
   return (
     <>
-      {said ? <Text style={[muted, { color: theme.colors.statusDanger }]}>{said}</Text> : null}
+      {(said ?? problem) ? <Text style={[muted, { color: theme.colors.statusDanger }]}>{said ?? problem}</Text> : null}
       {matching && matching.profiles.length > 0 ? (
         <View style={{ gap: SPACE.sm }}>
           <Label text="Installed" theme={theme} />
@@ -236,12 +280,15 @@ export function TemplatesTab({ matching, projects, theme, onChanged }: Props) {
                   .map((project) => nameOf(project.repo))}
                 available={matching.available}
                 providers={matching.providers}
+                models={models}
+                read={readModels}
+                compact={compact}
                 theme={theme}
                 busy={busy}
                 onMatch={(match) => {
                   act(() => ask({ match: { profile: profile.name, matching: match } }), onChanged);
                 }}
-                onCreate={(provider, model, effort) => {
+                onCreate={({ provider, model, effort }) => {
                   act(async () => {
                     const made = await create({
                       profile: profile.name,
@@ -253,7 +300,7 @@ export function TemplatesTab({ matching, projects, theme, onChanged }: Props) {
                     return made;
                   }, onChanged);
                 }}
-                onShape={(agent, provider, model, effort) => {
+                onShape={(agent, { provider, model, effort }) => {
                   act(() => shape({ agent, provider, model, ...(effort ? { effort } : {}) }), onChanged);
                 }}
                 onRemove={() => {

@@ -17,13 +17,12 @@ type Props = {
   readonly onAnswered: () => void;
 };
 
-type Waits = { readonly id: string; readonly kind: string; readonly says: string; readonly card: ReactNode };
+export type Waits = { readonly id: string; readonly kind: string; readonly says: string; readonly card: ReactNode };
 
-/** What waits on the Human: one thing open to answer, the rest a line each, any of them opened by a press. */
-export function Waiting({ project, human, theme, onAnswered }: Props) {
-  const [picked, setPicked] = useState<string | null>(null);
+/** Each thing that waits on the Human: what kind it is, a line of it, and the card it is answered in. */
+export function waitsOf({ project, human, theme, onAnswered }: Props): Waits[] {
   const shared = { project, theme, onAnswered };
-  const all: Waits[] = [
+  return [
     ...human.questions.map((q) => ({
       id: `question:${q.id}`,
       kind: "Question",
@@ -49,6 +48,13 @@ export function Waiting({ project, human, theme, onAnswered }: Props) {
       card: <ClaimCard key={c.commit} claim={c} remote={human.remote} {...shared} />,
     })),
   ];
+}
+
+/** What waits on the Human: one thing open to answer, the rest a line each, any of them opened by a press. */
+export function Waiting(props: Props) {
+  const { theme } = props;
+  const [picked, setPicked] = useState<string | null>(null);
+  const all = waitsOf(props);
   const open = all.find((waits) => waits.id === picked) ?? all[0];
   const { border, foreground, foregroundMuted } = theme.colors;
   return (

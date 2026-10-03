@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { agoOf, bytesOf, dayOf } from "../../client/state/words.ts";
+import { agoOf, bytesOf, dayOf, sinceOf } from "../../client/state/words.ts";
 
 // Rows of spec/CONFORMANCE.md, The Human's surface.
 
@@ -26,5 +26,16 @@ test("how long ago a thing was done is said to the minute, then to the hour", ()
     "59 min ago",
     "1 h ago",
     "5 h ago",
+  ]);
+});
+
+test("how long since a thing happened is said short, for a column of its own: to the minute, the hour, then the day", () => {
+  assert.deepEqual([0, 2 * 60_000, 59 * 60_000, 3 * 3_600_000, 23 * 3_600_000, 50 * 3_600_000].map(sinceOf), [
+    "now",
+    "2 min",
+    "59 min",
+    "3 h",
+    "23 h",
+    "2 d",
   ]);
 });

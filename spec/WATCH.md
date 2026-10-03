@@ -81,7 +81,7 @@ agent host stream ─► eye (code): items and facts
     │                           ▼
     ├─ sweep, scopes with new work ──────────────────────► Watcher ─ attend ──► owner
     │                                                          └──── pass (recorded)
-    └─ an alarm (the classifier cannot be asked: no key, a key refused, a question it cannot take) ─► the Human, in the Team tab and on the project's row
+    └─ an alarm (the classifier cannot be asked: no key, a key refused, a question it cannot take) ─► the Human, in the Team tab and on the project's page
 ```
 
 A refused destructive command, two measurements at once and a flaky test were named as alarms here and never built:
@@ -239,7 +239,7 @@ aloud is a matter for the surface.
 | Present                    | The watch                                                              |
 | -------------------------- | ---------------------------------------------------------------------- |
 | All                        | As above                                                               |
-| The classifier's host unreachable, or its key missing or for another host | Facts and sweeps go to the Watcher, and a standing alarm in the Team tab and on the project's row tells the Human |
+| The classifier's host unreachable, or its key missing or for another host | Facts and sweeps go to the Watcher, and a standing alarm in the Team tab and on the project's page tells the Human |
 | No classifier in the template, or switched off by the Human | The same, and nothing is said: it is a choice |
 | No Watcher role            | Only the reflex's `tell` answers and the facts that need no judging reach the owners |
 

@@ -91,8 +91,9 @@ Open Seatworks in the sidebar. A strip at the top of its page shows the four ste
    installed.
 2. **Give it agent profiles.** On the same tab, open the template. One press creates in Paseo an agent profile
    for each name it gives that you do not have yet, on the provider, model and effort you pick; nothing you already
-   have is touched. Each name is a line that says what it runs: open one to give it another model or effort, or to
-   run it on an agent profile of yours instead.
+   have is touched. Each name is a line that says what it runs: pick another provider, model or effort on it, or
+   from the dots at its end run it on an agent profile of yours instead. What is set here is the default for every
+   project; a project can run a name its own way from its own page.
 3. **Set a key for the template's classifier**, if you have one, on the Classifier tab, or switch it off there.
 
 SLP names these:
@@ -113,9 +114,14 @@ give one answer.
 - **Attach a project.** On Seatworks' page, the Projects tab lists every project you have in Paseo and takes any
   folder by its path. One with no git yet is set up there: it says what a first commit would hold, then makes it.
   Attach with the template the button names, or run "Open a Seatworks team here" from the command center in a
-  workspace. That seats the template's first agent; talk to it in its chat. A project's row says what is stuck, in
-  words, and seats its first agent again when it could not be made. A project with no remote can be put on GitHub
-  from its row, private or public, through GitHub's `gh` under the account you signed it in as.
+  workspace. That seats the template's first agent; talk to it in its chat.
+- **A project's own page** opens from its line under Projects. **Overview** says what is stuck, in words, seats
+  the first agent again when it could not be made and says why, answers what waits on you, and shows the team, what
+  it spent and what happened lately. **Agents** is what each agent profile runs in this project: the Templates tab
+  sets the default, and here one project runs a name at its own effort, model or provider, for agents seated from
+  then on. **Settings** holds its template and Sync, its checks, and where it is published: a project with no
+  remote can be put on GitHub there, private or public, through GitHub's `gh` under the account you signed it in
+  as.
 - **The pill** on every chat of a team says the most pressing thing: what is stuck, what needs you, a held team,
   or how many agents are working. Its popover answers what waits on you, shows the team, holds or resumes it, and
   sends a word to the first agent. The same three are typed as `/team`, `/team-hold` and `/team-resume`.
@@ -199,7 +205,7 @@ installed. To share one, open a pull request on
 [`sting9k/seatworks-gallery`](https://github.com/sting9k/seatworks-gallery).
 
 A project runs a copy of the template it was attached with, for its whole life. Nothing you install or change later
-reaches a running team until you press **Sync** on that project's row, under Projects on Seatworks' page; agents seated from then on are made from the
+reaches a running team until you press **Sync** on that project's own page, under its Settings; agents seated from then on are made from the
 new files, and an agent already seated keeps what it started with. A template can be removed from the machine, and
 projects that run it go on.
 

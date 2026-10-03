@@ -1,11 +1,12 @@
 import type { PluginTheme } from "@getpaseo/plugin";
 import { Icon } from "@getpaseo/plugin/client/react-native";
 import { useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, View } from "react-native";
 import type { HumanView } from "../../shared/contracts/rpc.ts";
 import { Button } from "../kit/button.tsx";
 import { Field } from "../kit/field.tsx";
-import { FONT, SPACE } from "../kit/theme.ts";
+import { UNDER_KIND } from "../kit/row.tsx";
+import { SPACE } from "../kit/theme.ts";
 import { argvOf, lineOf } from "../state/checks.ts";
 
 type Check = HumanView["checks"][number];
@@ -33,7 +34,7 @@ export function ChecksEditor({ checks, theme, busy, onCancel, onSave }: Props) {
   const whole = written.every((check) => check.name !== "" && check.run.length > 0);
   const { foregroundMuted } = theme.colors;
   return (
-    <View style={{ gap: SPACE.sm, paddingVertical: SPACE.md, paddingRight: SPACE.lg, paddingLeft: SPACE.lg * 2 }}>
+    <View style={{ gap: SPACE.sm, paddingBottom: SPACE.md, paddingRight: SPACE.lg, paddingLeft: UNDER_KIND }}>
       {drafts.map((draft) => (
         <View key={draft.key} style={{ flexDirection: "row", alignItems: "center", gap: SPACE.sm }}>
           <View style={{ width: 140, flexDirection: "row" }}>
@@ -49,7 +50,7 @@ export function ChecksEditor({ checks, theme, busy, onCancel, onSave }: Props) {
           </View>
           <Field
             value={draft.line}
-            placeholder="The command it runs"
+            placeholder="The command it runs, with no shell"
             theme={theme}
             disabled={busy}
             onChange={(line) => {
@@ -69,9 +70,6 @@ export function ChecksEditor({ checks, theme, busy, onCancel, onSave }: Props) {
           </Pressable>
         </View>
       ))}
-      <Text style={{ fontSize: FONT.small, color: foregroundMuted }}>
-        Each runs with no shell, in a fresh copy of the commit it checks.
-      </Text>
       <View style={{ flexDirection: "row", alignItems: "center", gap: SPACE.sm }}>
         <Button
           label="Add a check"

@@ -48,7 +48,7 @@ export function FolderRow({ folder, templates, theme, busy, onAttach, onSetUp }:
   const locked = busy || working;
   return (
     <View>
-      <Row title={folder.name} meta={folder.root} theme={theme}>
+      <Row title={folder.name} meta={folder.root} height={52} theme={theme}>
         {folder.within !== null ? <Tag label={`part of ${nameOf(folder.within)}`} theme={theme} /> : null}
         {folder.git === "none" ? <Tag label="no git yet" tone="warning" theme={theme} /> : null}
         {folder.git === "none" && first === null ? (
@@ -81,38 +81,44 @@ export function FolderRow({ folder, templates, theme, busy, onAttach, onSetUp }:
           : null}
       </Row>
       {folder.git === "none" && first !== null ? (
-        <View style={{ gap: SPACE.sm, paddingBottom: SPACE.md, paddingHorizontal: SPACE.lg }}>
-          <Text style={{ fontSize: FONT.small, color: foregroundMuted }}>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: SPACE.sm,
+            paddingBottom: SPACE.md,
+            paddingHorizontal: SPACE.lg,
+          }}
+        >
+          <Text style={{ flex: 1, fontSize: FONT.small, color: foregroundMuted }}>
             A first commit would hold {first.files} file{first.files === 1 ? "" : "s"}
             {first.ignores ? "." : ", everything in the folder: it has no .gitignore."}
           </Text>
-          <View style={{ flexDirection: "row", justifyContent: "flex-end", gap: SPACE.sm }}>
-            <Button
-              label="Cancel"
-              tone="quiet"
-              theme={theme}
-              disabled={locked}
-              onPress={() => {
-                setFirst(null);
-              }}
-            />
-            <Button
-              label={`Commit ${first.files} file${first.files === 1 ? "" : "s"}`}
-              tone="accent"
-              theme={theme}
-              disabled={locked}
-              onPress={() => {
-                act(
-                  () => setUp({ dir: folder.root }),
-                  (made) => {
-                    toast.show(made.text, { variant: "success" });
-                    setFirst(null);
-                    onSetUp();
-                  },
-                );
-              }}
-            />
-          </View>
+          <Button
+            label="Cancel"
+            tone="quiet"
+            theme={theme}
+            disabled={locked}
+            onPress={() => {
+              setFirst(null);
+            }}
+          />
+          <Button
+            label={`Commit ${first.files} file${first.files === 1 ? "" : "s"}`}
+            tone="accent"
+            theme={theme}
+            disabled={locked}
+            onPress={() => {
+              act(
+                () => setUp({ dir: folder.root }),
+                (made) => {
+                  toast.show(made.text, { variant: "success" });
+                  setFirst(null);
+                  onSetUp();
+                },
+              );
+            }}
+          />
         </View>
       ) : null}
     </View>

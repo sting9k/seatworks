@@ -2,309 +2,73 @@ import { type PluginSurfaceProps, useRpc } from "@getpaseo/plugin/client";
 import { Icon, useToast } from "@getpaseo/plugin/client/react-native";
 import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
-import { ROOT } from "../../shared/contracts/ids.ts";
-import { type Folder, type Leftover, RPC } from "../../shared/contracts/rpc.ts";
+import { type Attached, type Folder, RPC } from "../../shared/contracts/rpc.ts";
 import { Banner } from "../kit/banner.tsx";
 import { Button } from "../kit/button.tsx";
 import { Card } from "../kit/card.tsx";
 import { Field } from "../kit/field.tsx";
 import { Label, Row } from "../kit/row.tsx";
 import { Tag } from "../kit/tag.tsx";
-import { FONT, SPACE } from "../kit/theme.ts";
+import { FONT, SPACE, pressState } from "../kit/theme.ts";
 import { problemText } from "../state/problem-text.ts";
 import { useProjectView } from "../state/project-view.ts";
-import { useRepoWorkspace } from "../state/repo-workspace.ts";
 import { useSeatAgents } from "../state/seat-agents.ts";
-import { countsOf, seatsOf, waitingOf } from "../state/team.ts";
-import { nameOf, titled } from "../state/words.ts";
-import { ChecksEditor } from "./checks-editor.tsx";
+import { seatsOf } from "../state/team.ts";
+import { nameOf } from "../state/words.ts";
 import { FolderRow } from "./folder-row.tsx";
-import { RemoteRow } from "./remote-row.tsx";
+import { StandingTag } from "./standing-tag.tsx";
 
 type Theme = PluginSurfaceProps["theme"];
-type Navigation = PluginSurfaceProps["navigation"];
 
 export type Listed = {
-  readonly projects: readonly { readonly id: string; readonly repo: string; readonly profile: string | null }[];
+  readonly projects: readonly Attached[];
   readonly unattached: readonly Folder[];
   readonly profiles: readonly { readonly name: string; readonly title: string }[];
 };
 
-type AttachedProps = {
-  readonly project: string;
-  readonly repo: string;
+type LineProps = {
+  readonly project: Attached;
+  /** The template it runs, by its title where it is still installed. */
+  readonly template: string | null;
   readonly theme: Theme;
-  readonly navigation: Navigation;
-  /** Opens the Team tab of a workspace. */
-  readonly onTeam: (workspaceId: string) => void;
-  readonly onChanged: () => void;
+  readonly onOpen: () => void;
 };
 
-/** One attached project on a line: its template, where its team stands, the way into its chat; opened, its settings. */
-function Attached({ project, repo, theme, navigation, onTeam, onChanged }: AttachedProps) {
-  const { view, reload } = useProjectView(project);
-  const agents = useSeatAgents(project);
-  const workspace = useRepoWorkspace(repo);
-  const sync = useRpc(RPC.syncTemplate);
-  const command = useRpc(RPC.human);
-  const list = useRpc(RPC.leftovers);
-  const clean = useRpc(RPC.clean);
-  const toast = useToast();
-  const [open, setOpen] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [whole, setWhole] = useState<Leftover | null>(null);
-  const [checking, setChecking] = useState(false);
+/** One attached project on a line: its folder, its template, where its team stands. A press opens its own page. */
+function ProjectLine({ project, template, theme, onOpen }: LineProps) {
+  const { view } = useProjectView(project.id);
+  const agents = useSeatAgents(project.id);
   const human = view?.human ?? null;
-  const template = view?.template ?? null;
-  const waiting = human ? waitingOf(human) : 0;
-  const working = human ? countsOf(seatsOf(human, agents.running)).working : 0;
-  const stuck = view?.stuck ?? [];
-  const chat = human?.root?.owner ? agents.ids[human.root.owner] : undefined;
-  const seats = human ? seatsOf(human, agents.running) : [];
-  const { foregroundMuted, surface0, border, statusDanger } = theme.colors;
-
-  /** Runs one press to its end, saying what came of it and reading the project again. */
-  const act = (work: () => Promise<{ ok: boolean; text: string }>, then: () => void) => {
-    setBusy(true);
-    void work()
-      .then((said) => {
-        if (said.text) toast.show(said.text, { variant: said.ok ? "success" : "warning" });
-        if (said.ok) then();
-      })
-      .catch((failed: unknown) => {
-        toast.error(problemText(failed));
-      })
-      .finally(() => {
-        setBusy(false);
-      });
-  };
-  const askToRemove = () => {
-    setBusy(true);
-    void list({})
-      .then(({ leftovers }) => {
-        const found = leftovers.find((left) => left.kind === "project" && left.project === project);
-        if (found) setWhole(found);
-        else toast.error("Seatworks no longer keeps this project.");
-      })
-      .catch((failed: unknown) => {
-        toast.error(problemText(failed));
-      })
-      .finally(() => {
-        setBusy(false);
-      });
-  };
-
   return (
-    <View>
-      <Row title={nameOf(repo)} meta={repo} theme={theme}>
-        {template ? <Tag label={template.name} theme={theme} /> : null}
-        {stuck.length > 0 ? <Tag label={`${stuck.length} stuck`} tone="danger" theme={theme} /> : null}
-        {waiting > 0 ? (
-          <Tag label={`${waiting} need${waiting === 1 ? "s" : ""} you`} tone="warning" theme={theme} />
-        ) : working > 0 ? (
-          <Tag label={`${working} working`} theme={theme} />
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`Open ${nameOf(project.repo)}`}
+      onPress={onOpen}
+      style={({ pressed }) => pressState(false, pressed)}
+    >
+      <Row title={nameOf(project.repo)} meta={project.repo} height={52} theme={theme}>
+        {template ? <Tag label={template} theme={theme} /> : null}
+        {view && human ? (
+          <StandingTag view={view} human={human} seats={seatsOf(human, agents.running)} theme={theme} />
         ) : null}
-        {chat && navigation ? (
-          <Button
-            label="Open"
-            theme={theme}
-            onPress={() => {
-              navigation.openAgent({ agentId: chat });
-            }}
-          />
-        ) : null}
-        <Pressable
-          accessibilityRole="button"
-          accessibilityState={{ expanded: open }}
-          accessibilityLabel={`Settings of ${nameOf(repo)}`}
-          hitSlop={8}
-          onPress={() => {
-            setOpen(!open);
-          }}
-        >
-          <Icon name={open ? "ChevronDown" : "ChevronRight"} size={14} color={foregroundMuted} />
-        </Pressable>
+        <Icon name="ChevronRight" size={14} color={theme.colors.foregroundMuted} />
       </Row>
-      {view?.alarm ? (
-        <View style={{ paddingHorizontal: SPACE.lg, paddingBottom: SPACE.md }}>
-          <Banner tone="danger" text={view.alarm} theme={theme} />
-        </View>
-      ) : null}
-      {open ? (
-        <View style={{ backgroundColor: surface0, borderTopWidth: 1, borderTopColor: border }}>
-          {stuck.length > 0 ? (
-            <View
-              style={{ gap: SPACE.xs, paddingVertical: SPACE.md, paddingRight: SPACE.lg, paddingLeft: SPACE.lg * 2 }}
-            >
-              {stuck.map((fact) => (
-                <Text key={fact} style={{ fontSize: FONT.small, color: statusDanger }}>
-                  {fact}
-                </Text>
-              ))}
-            </View>
-          ) : null}
-          {human?.root ? (
-            <Row
-              kind="Team"
-              title={
-                human.root.owner === null
-                  ? `Nobody is seated as ${titled(human.root.role)}`
-                  : `${seats.length} seat${seats.length === 1 ? "" : "s"}`
-              }
-              dimmed={human.root.owner === null}
-              theme={theme}
-              indent
-            >
-              {human.root.owner === null ? (
-                <Button
-                  label="Seat it again"
-                  tone="accent"
-                  theme={theme}
-                  disabled={busy}
-                  onPress={() => {
-                    act(
-                      async () => {
-                        const said = await command({
-                          project,
-                          type: "reseat",
-                          args: { scope: ROOT, reason: "seated again by the Human" },
-                        });
-                        return said.ok ? { ok: true, text: `${titled(human.root!.role)} is seated again.` } : said;
-                      },
-                      () => void reload(),
-                    );
-                  }}
-                />
-              ) : null}
-              {workspace ? (
-                <Button
-                  label="Show the team"
-                  theme={theme}
-                  onPress={() => {
-                    onTeam(workspace);
-                  }}
-                />
-              ) : null}
-            </Row>
-          ) : null}
-          {template ? (
-            <Row kind="Template" title={template.name} theme={theme} indent>
-              {template.state === "uninstalled" ? <Tag label="not installed" tone="warning" theme={theme} /> : null}
-              {template.state === "behind" || template.edited ? (
-                <>
-                  <Tag label={template.edited ? "changed by hand" : "changed"} tone="warning" theme={theme} />
-                  {template.state === "uninstalled" ? null : (
-                    <Button
-                      label="Sync"
-                      theme={theme}
-                      disabled={busy}
-                      onPress={() => {
-                        act(
-                          () => sync({ project }),
-                          () => void reload(),
-                        );
-                      }}
-                    />
-                  )}
-                </>
-              ) : null}
-            </Row>
-          ) : null}
-          <Row
-            kind="Checks"
-            title={human && human.checks.length > 0 ? human.checks.map((check) => check.name).join(" · ") : "None set"}
-            dimmed={!human || human.checks.length === 0}
-            theme={theme}
-            indent
-          >
-            {human && !checking ? (
-              <Button
-                label="Edit"
-                tone="quiet"
-                theme={theme}
-                disabled={busy}
-                onPress={() => {
-                  setChecking(true);
-                }}
-              />
-            ) : null}
-          </Row>
-          {human && checking ? (
-            <ChecksEditor
-              checks={human.checks}
-              theme={theme}
-              busy={busy}
-              onCancel={() => {
-                setChecking(false);
-              }}
-              onSave={(checks) => {
-                act(
-                  async () => {
-                    const said = await command({ project, type: "set_checks", args: { checks } });
-                    return said.ok ? { ok: true, text: "The checks are set." } : said;
-                  },
-                  () => {
-                    setChecking(false);
-                    void reload();
-                  },
-                );
-              }}
-            />
-          ) : null}
-          <RemoteRow project={project} theme={theme} onChanged={() => void reload()} />
-          <Row kind="Remove" title="Its agents, copies and branches" dimmed theme={theme} indent>
-            {whole ? null : <Button label="Remove" tone="quiet" theme={theme} disabled={busy} onPress={askToRemove} />}
-          </Row>
-          {whole ? (
-            <View
-              style={{ gap: SPACE.sm, paddingVertical: SPACE.md, paddingRight: SPACE.lg, paddingLeft: SPACE.lg * 2 }}
-            >
-              <Text style={{ fontSize: FONT.small, color: foregroundMuted }}>{whole.why}</Text>
-              <View style={{ flexDirection: "row", justifyContent: "flex-end", gap: SPACE.sm }}>
-                <Button
-                  label="Cancel"
-                  tone="quiet"
-                  theme={theme}
-                  disabled={busy}
-                  onPress={() => {
-                    setWhole(null);
-                  }}
-                />
-                <Button
-                  label="Remove for good"
-                  tone="danger"
-                  theme={theme}
-                  disabled={busy}
-                  onPress={() => {
-                    act(
-                      async () =>
-                        (await clean({ ids: [whole.id] })).results[0] ?? { ok: false, text: "Nothing was removed." },
-                      onChanged,
-                    );
-                  }}
-                />
-              </View>
-            </View>
-          ) : null}
-        </View>
-      ) : null}
-    </View>
+    </Pressable>
   );
 }
 
 type Props = {
   readonly listed: Listed | null;
   readonly theme: Theme;
-  readonly navigation: Navigation;
-  /** Opens the Team tab of a workspace. */
-  readonly onTeam: (workspaceId: string) => void;
+  /** Opens a project's own page. */
+  readonly onOpen: (project: string) => void;
   readonly onChanged: () => void;
   /** Leads to where a template is installed, which attaching needs. */
   readonly onTemplates: () => void;
 };
 
-/** The projects a team works in, and the folders one can be attached to: Paseo's projects, and any given by its path. */
-export function ProjectsTab({ listed, theme, navigation, onTeam, onChanged, onTemplates }: Props) {
+/** The projects a team works in, a line each, and the folders one can be attached to: Paseo's projects, and any given by its path. */
+export function ProjectsTab({ listed, theme, onOpen, onChanged, onTemplates }: Props) {
   const attach = useRpc(RPC.openProject);
   const find = useRpc(RPC.folderAt);
   const toast = useToast();
@@ -352,14 +116,14 @@ export function ProjectsTab({ listed, theme, navigation, onTeam, onChanged, onTe
       {projects.length > 0 ? (
         <Card theme={theme}>
           {projects.map((project) => (
-            <Attached
+            <ProjectLine
               key={project.id}
-              project={project.id}
-              repo={project.repo}
+              project={project}
+              template={profiles.find((profile) => profile.name === project.profile)?.title ?? project.profile}
               theme={theme}
-              navigation={navigation}
-              onTeam={onTeam}
-              onChanged={onChanged}
+              onOpen={() => {
+                onOpen(project.id);
+              }}
             />
           ))}
         </Card>

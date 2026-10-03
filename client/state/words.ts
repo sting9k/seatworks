@@ -29,9 +29,13 @@ export function dayOf(iso: string, thisYear: number): string {
   return at.getFullYear() === thisYear ? day : `${day} ${at.getFullYear()}`;
 }
 
-/** How long ago a thing was done, as the surface says it: to the minute, then to the hour. */
-export function agoOf(ms: number): string {
+/** How long since a thing was done, in a column of its own: to the minute, then the hour, then the day. */
+export function sinceOf(ms: number): string {
   const minutes = Math.floor(ms / 60_000);
-  if (minutes < 1) return "just now";
-  return minutes < 60 ? `${minutes} min ago` : `${Math.floor(minutes / 60)} h ago`;
+  if (minutes < 1) return "now";
+  if (minutes < 60) return `${minutes} min`;
+  return minutes < 60 * 24 ? `${Math.floor(minutes / 60)} h` : `${Math.floor(minutes / (60 * 24))} d`;
 }
+
+/** How long ago a thing was done, said in a sentence. */
+export const agoOf = (ms: number): string => (ms < 60_000 ? "just now" : `${sinceOf(ms)} ago`);

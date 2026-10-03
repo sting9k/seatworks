@@ -1,11 +1,12 @@
 import type { PluginTheme } from "@getpaseo/plugin";
-import { SettingsSelect } from "@getpaseo/plugin/client/ui";
 import { useState } from "react";
 import { Text, View } from "react-native";
 import { Button } from "../kit/button.tsx";
 import { FONT, SPACE } from "../kit/theme.ts";
-import { effortOn, startOf } from "../state/models.ts";
-import { useModels } from "../state/provider-models.ts";
+import { startOf } from "../state/models.ts";
+import { useModelsOf } from "../state/provider-models.ts";
+import type { Wanted } from "../state/runs.ts";
+import { AgentPicks } from "./agent-picks.tsx";
 
 type Props = {
   /** How many names the template gives that Paseo has no agent profile for. */
@@ -14,77 +15,65 @@ type Props = {
   readonly providers: readonly string[];
   readonly theme: PluginTheme;
   readonly busy: boolean;
-  readonly onCreate: (provider: string, model: string, effort: string | null) => void;
+  readonly onCreate: (wanted: Wanted) => void;
 };
 
-/** Makes in Paseo the agent profiles a template names that it lacks: on a provider, a model of it and an effort. */
+/** Makes in Paseo the agent profiles a template names that it lacks, on one line: a provider, a model, an effort. */
 export function CreateAgents({ missing, providers, theme, busy, onCreate }: Props) {
-  const [picked, setPicked] = useState<{ provider?: string; model?: string; effort?: string | null }>({});
-  const provider =
-    picked.provider !== undefined && providers.includes(picked.provider) ? picked.provider : providers[0];
-  const { models, problem } = useModels(provider ?? null);
-  const { foregroundMuted, statusDanger } = theme.colors;
-  const note = { fontSize: FONT.small, padding: SPACE.lg };
-  if (provider === undefined)
-    return <Text style={[note, { color: foregroundMuted }]}>Paseo finds no provider here to run an agent on.</Text>;
-  if (problem) return <Text style={[note, { color: statusDanger }]}>{problem}</Text>;
-  const start = models ? startOf(models) : null;
-  if (!models || !start)
-    return <Text style={[note, { color: foregroundMuted }]}>Reading the models of {provider}.</Text>;
-  const model = models.find((one) => one.id === picked.model) ?? models.find((one) => one.id === start.model)!;
-  const effort = picked.effort !== undefined ? effortOn(models, model.id, picked.effort) : model.defaultEffort;
+  const [picked, setPicked] = useState<Wanted | null>(null);
+  const first = providers[0];
+  const { models, problem, read } = useModelsOf(first === undefined ? [] : [picked?.provider ?? first]);
+  const { foregroundMuted, statusDanger, surface0, border } = theme.colors;
+  const provider = picked?.provider ?? first;
+  const listed = provider === undefined ? undefined : models[provider];
+  const start = listed ? startOf(listed) : null;
+  const wanted = picked ?? (provider !== undefined && start ? { provider, ...start } : null);
+  const says =
+    provider === undefined
+      ? "Paseo finds no provider here to run an agent on."
+      : (problem ?? (wanted ? null : `Reading the models of ${provider}.`));
   return (
-    <View>
-      <SettingsSelect
-        label={missing === 1 ? "Create the one missing in Paseo, on" : `Create the ${missing} missing in Paseo, on`}
-        value={provider}
-        options={providers.map((name) => ({ label: name, value: name }))}
-        disabled={busy}
-        onValueChange={(next) => {
-          setPicked({ provider: next });
-        }}
-      />
-      <SettingsSelect
-        label="Model"
-        value={model.id}
-        options={models.map((one) => ({ label: one.label, value: one.id }))}
-        disabled={busy}
-        onValueChange={(next) => {
-          setPicked({ provider, model: next });
-        }}
-      />
-      {model.efforts.length > 0 ? (
-        <SettingsSelect
-          label="Effort"
-          value={effort ?? ""}
-          options={[
-            { label: "The model's own", value: "" },
-            ...model.efforts.map((one) => ({ label: one.label, value: one.id })),
-          ]}
-          disabled={busy}
-          onValueChange={(next) => {
-            setPicked({ provider, model: model.id, effort: next === "" ? null : next });
-          }}
-        />
-      ) : null}
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "flex-end",
-          paddingHorizontal: SPACE.lg,
-          paddingBottom: SPACE.md,
-        }}
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 10,
+        minHeight: 52,
+        paddingHorizontal: SPACE.lg,
+        backgroundColor: surface0,
+        borderTopWidth: 1,
+        borderTopColor: border,
+      }}
+    >
+      <Text
+        style={{ flex: 1, minWidth: 0, fontSize: FONT.small, color: problem ? statusDanger : foregroundMuted }}
+        numberOfLines={2}
       >
-        <Button
-          label={`Create ${missing}`}
-          tone="accent"
-          theme={theme}
-          disabled={busy}
-          onPress={() => {
-            onCreate(provider, model.id, effort);
-          }}
-        />
-      </View>
+        {says ?? (missing === 1 ? "Create the one in Paseo on" : `Create the ${missing} in Paseo on`)}
+      </Text>
+      {wanted && listed ? (
+        <>
+          <AgentPicks
+            name="the new profiles"
+            runs={wanted}
+            providers={providers}
+            models={listed}
+            read={read}
+            theme={theme}
+            busy={busy}
+            onWant={setPicked}
+          />
+          <Button
+            label={`Create ${missing}`}
+            tone="accent"
+            theme={theme}
+            disabled={busy}
+            onPress={() => {
+              onCreate(wanted);
+            }}
+          />
+        </>
+      ) : null}
     </View>
   );
 }

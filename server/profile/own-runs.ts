@@ -1,12 +1,10 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { z } from "zod";
-import { type OwnRuns, OwnRunsSchema } from "../../shared/contracts/rpc.ts";
+import { type OwnRuns, OwnRunsSchema } from "../../shared/contracts/runs.ts";
 
 /** What a project runs in place of the Human's agent profiles, by the name its template gives each. */
 export type Own = Readonly<Record<string, OwnRuns>>;
-
-type Runs = { readonly provider: string | null; readonly model: string | null; readonly effort: string | null };
 
 const OwnSchema = z.record(z.string().min(1), OwnRunsSchema);
 
@@ -28,13 +26,4 @@ export function keepOwn(file: string, agent: string, runs: OwnRuns | null): void
   const kept = ownOf(file);
   const { [agent]: _was, ...rest } = kept.ok ? kept.own : {};
   writeFileSync(file, `${JSON.stringify(runs === null ? rest : { ...rest, [agent]: runs }, null, 2)}\n`);
-}
-
-/** What a name runs once a project's own is laid over the Human's profile: what the own leaves out is the profile's. */
-export function laidOver(profile: Runs, own: Partial<Runs>): Runs {
-  return {
-    provider: own.provider ?? profile.provider,
-    model: own.model ?? profile.model,
-    effort: own.effort === undefined ? profile.effort : own.effort,
-  };
 }

@@ -72,7 +72,7 @@ editor/           the template editor, a web page of its own that Paseo does not
 - **Only `server/satellites/agent-host/` and `server/bridge/` import `@getpaseo/*`** (`spec/PASEO.md`).
 - **The core has no profile of its own.** A template is installed by the Human into the state root; a project takes
   its own copy when it is attached and runs that alone, one template for its life; only Sync, pressed on the
-  project's row of Seatworks' page, changes what a team reads. Nothing runs from `templates/`, so a release never writes over what a
+  project's own page, changes what a team reads. Nothing runs from `templates/`, so a release never writes over what a
   team runs. Hashes say what changed: the template that comes against the installed one, the installed one against
   a project's copy, and the copy against the record (`spec/TEMPLATE.md`).
 
