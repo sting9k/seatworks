@@ -3,7 +3,7 @@ import type { Edit } from "../template/edits.ts";
 import type { Note } from "../template/checks.ts";
 import type { GraphNode } from "../template/graph.ts";
 
-/** What a node on the canvas may ask of the template it is drawn from. */
+/** What a node on the canvas may ask of the template it is drawn from, and of the canvas it is drawn on. */
 export type Editing = {
   /** Makes a change, or says why it was not made. */
   readonly change: (edit: Edit) => void;
@@ -11,6 +11,8 @@ export type Editing = {
   readonly remove: (node: GraphNode) => void;
   readonly duplicate: (node: GraphNode) => void;
   readonly showAbout: (node: GraphNode) => void;
+  /** Opens what is folded into a role or a stack, or folds it again. */
+  readonly fold: (id: string) => void;
 };
 
 export const EditingContext = createContext<Editing | null>(null);
@@ -26,6 +28,6 @@ export const NotesContext = createContext<readonly Note[]>([]);
 export const useNotes = (node: string) => useContext(NotesContext).filter((note) => note.node === node);
 
 /** The kinds of node a person adds and takes away; the others are fixed parts of every template. */
-export const MAKEABLE = ["role", "skill", "server", "step", "classifier", "question", "moment", "section"] as const;
+const MAKEABLE = ["role", "skill", "server", "step", "classifier", "question", "moment", "section"] as const;
 export type Makeable = (typeof MAKEABLE)[number];
 export const isMakeable = (kind: string): kind is Makeable => (MAKEABLE as readonly string[]).includes(kind);

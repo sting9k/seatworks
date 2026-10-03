@@ -38,36 +38,51 @@ import {
   together,
   wired,
 } from "../template/edits.ts";
+import { anchoredOf, besideOf, foldedInto, type Folds, shownOf, STACKS } from "../template/fold.ts";
 import { type Graph, type GraphNode, graphOf, type Wire } from "../template/graph.ts";
 import { readTemplate, type Template } from "../template/read-template.ts";
 import { AskName, PickNode } from "./dialogs.tsx";
 import { type Editing, EditingContext, isMakeable, type Makeable, NotesContext } from "./editing.ts";
 import { download } from "./files.ts";
-import { Menu, ZoomTools } from "./floating.tsx";
+import { CLEAR, Menu, ZoomTools } from "./floating.tsx";
 import { Icon } from "./icons.tsx";
-import { laidOut } from "./layout.ts";
-import { type FlowNode, type FrameNode, NODE_TYPES } from "./nodes.tsx";
-import { type Mark, Properties } from "./properties.tsx";
+import { Inspector, type Mark } from "./inspector.tsx";
+import { BETWEEN_ROLES, FAN, fanned, laidOut } from "./layout.ts";
+import { type FlowNode, type FrameNode, NODE_TYPES, type StackNode, USES } from "./nodes.tsx";
 import { DRAGGED, FilesPanel, nameOf, NodesPanel, NotesPanel } from "./sidebar.tsx";
 
-type Drawn = FlowNode | FrameNode;
+type Drawn = FlowNode | FrameNode | StackNode;
 type Size = { readonly width: number; readonly height: number };
 type WireEdge = Edge<{ readonly kind: Wire["kind"] }>;
-/** A socket a wire was pulled from: its kind, its node, and which end of the wire the node is. */
-type Pulled = { readonly kind: Wire["kind"]; readonly node: string; readonly end: "in" | "out" };
+type Socket = Wire["kind"] | typeof USES;
+/** A socket a wire was pulled from: what it takes, its node, and which end of the wire the node is. */
+type Pulled = { readonly socket: Socket; readonly node: string; readonly end: "in" | "out" };
 type Asking =
   | { readonly make: Makeable; readonly at: Point; readonly wire?: Pulled }
   | { readonly make: "name" }
   /** A server being given to a role, which is done with the tools of it the role may call. */
   | { readonly make: "give"; readonly server: string; readonly role: string };
+/** What of the graph is on the canvas now, and the role each opened skill, tool group or server sits beside. */
+type View = {
+  readonly folds: Folds;
+  readonly shown: ReadonlySet<string>;
+  readonly beside: ReadonlyMap<string, string>;
+};
 
 /** The families no wire places, each in a titled frame that carries its nodes when it is moved. */
 const FRAMES = [
-  { id: "frame:questions", kind: "question", title: "Reflex questions" },
-  { id: "frame:sections", kind: "section", title: "Report sections" },
+  { id: "frame:watch", family: "watch", title: "The watch" },
+  { id: "frame:sections", family: "section", title: "A report's sections" },
+  { id: "frame:questions", family: "question", title: "Reflex questions" },
+  { id: "frame:moments", family: "moment", title: "Watch moments" },
 ] as const;
-const FRAME = { pad: 14, title: 34 };
-const UNMEASURED: Size = { width: 180, height: 32 };
+const FRAME = { pad: 16, title: 36 };
+/** What a node measures before it has been drawn: a compact node's size, and a role's height. */
+const UNMEASURED: Size = { width: FAN.width, height: 40 };
+const ROLE_HEIGHT = 300;
+const NO_FOLDS: Folds = { roles: new Set(), stacks: new Set() };
+/** The kinds of wire a role's `uses` socket takes. */
+const EQUIPMENT: readonly string[] = ["skill", "tools", "server"];
 /** The kind of node at each end of a kind of wire (EDITOR.md, Wires). */
 const ENDS: Readonly<Record<Wire["kind"], { readonly out: GraphNode["kind"]; readonly in: GraphNode["kind"] }>> = {
   spawns: { out: "role", in: "role" },
@@ -94,7 +109,14 @@ const ASKS: Readonly<Record<Makeable, { readonly title: string; readonly hint: s
 };
 
 const fileOf = (node: GraphNode) => ("file" in node ? node.file : null);
-const kindOfSocket = (id: string | null | undefined) => (id ?? "").split("-")[0] as Wire["kind"];
+const socketOf = (id: string | null | undefined) => (id ?? "").split("-")[0] as Socket;
+/** Whether a socket takes a kind of wire: its own, and for a role's `uses` any equipment. */
+const takes = (socket: Socket, kind: Socket) => socket === kind || (socket === USES && EQUIPMENT.includes(kind));
+const toggled = <T,>(set: ReadonlySet<T>, item: T): ReadonlySet<T> => {
+  const next = new Set(set);
+  if (!next.delete(item)) next.add(item);
+  return next;
+};
 
 type Props = {
   readonly template: Template;
@@ -145,8 +167,11 @@ function Opened({
   const flow = useReactFlow<Drawn, WireEdge>();
   const [nodes, setNodes, onNodesChange] = useNodesState<Drawn>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<WireEdge>([]);
-  const [arranged, setArranged] = useState(false);
+  const [arrangedOnce, setArrangedOnce] = useState(false);
   const [pickedId, setPickedId] = useState<string | null>(null);
+  const [folds, setFolds] = useState<Folds>(NO_FOLDS);
+  /** A node to bring into view with what sits beside it, once that is drawn. */
+  const [sought, setSought] = useState<string | null>(null);
   const [file, setFile] = useState<string | null>(null);
   const [side, setSide] = useState<"nodes" | "files" | "notes" | null>("nodes");
   const [about, setAbout] = useState(true);
@@ -158,40 +183,53 @@ function Opened({
   const copied = useRef<string | null>(null);
   const measured = useNodesInitialized();
   const picked = graph.nodes.find((node) => node.id === pickedId) ?? null;
+  const view = useMemo<View>(() => {
+    const noted = new Set(notes.map((note) => note.node));
+    return { folds, shown: shownOf(graph, folds, pickedId, noted), beside: besideOf(graph, folds) };
+  }, [graph, folds, pickedId, notes]);
 
-  // What is drawn follows the files: a node stays where it is, a new one takes the place kept for it.
+  // What is drawn follows the files and what is folded: a node stays where it is, a new one takes the place kept for it.
   useEffect(() => {
-    setNodes((drawn) => synced(graph, drawn, kept));
+    setNodes((drawn) => synced(graph, view, drawn, kept));
     setEdges((drawn) => {
       const selected = new Set(drawn.filter((edge) => edge.selected).map((edge) => edge.id));
-      return edgesOf(graph).map((edge) => ({ ...edge, selected: selected.has(edge.id) }));
+      return edgesOf(graph, view.shown).map((edge) => ({ ...edge, selected: selected.has(edge.id) }));
     });
-  }, [graph, kept, setNodes, setEdges]);
+  }, [graph, view, kept, setNodes, setEdges]);
 
   // A node's size is known only once it is drawn, so the first drawing is hidden and measured, then laid out.
   useEffect(() => {
-    if (!measured || arranged) return;
-    const sizes = sizesOf(flow.getNodes());
-    const places = graph.nodes.every((node) => kept.has(node.id)) ? kept : laidOut(graph, sizes);
-    setNodes((drawn) => framed(drawn, places, sizes));
-    setArranged(true);
-  }, [measured, arranged, flow, graph, kept, setNodes]);
-  useEffect(() => {
-    if (arranged) void flow.fitView({ padding: 0.06 });
-  }, [arranged, flow]);
-
-  /** Where every node is now, a framed one counted from the canvas and not from its frame. */
-  const places = () => {
+    if (!measured || arrangedOnce) return;
     const drawn = flow.getNodes();
-    const frames = new Map(drawn.flatMap((node) => (node.type === "frame" ? [[node.id, node.position]] : [])));
-    return new Map(
-      drawn.flatMap((node): [string, Point][] => {
-        if (node.type === "frame") return [];
-        const frame = node.parentId === undefined ? { x: 0, y: 0 } : frames.get(node.parentId)!;
-        return [[node.id, { x: frame.x + node.position.x, y: frame.y + node.position.y }]];
-      }),
-    );
-  };
+    const anchored = anchoredOf(graph);
+    const sizes = sizesOf(drawn);
+    const places = anchored.nodes.every((node) => kept.has(node.id))
+      ? kept
+      : laidOut(anchored, new Map(anchored.nodes.map(({ id }) => [id, sizes.get(id) ?? UNMEASURED])), BETWEEN_ROLES);
+    setNodes(arranged(graph, view, places, drawn));
+    setArrangedOnce(true);
+  }, [measured, arrangedOnce, flow, graph, view, kept, setNodes]);
+  // Fitted on the frame after the layout is drawn: before it, every node is still where it was measured.
+  useEffect(() => {
+    if (!arrangedOnce) return;
+    const frame = requestAnimationFrame(() => void flow.fitView({ padding: CLEAR }));
+    return () => {
+      cancelAnimationFrame(frame);
+    };
+  }, [arrangedOnce, flow]);
+  // What a fold opens is drawn a moment after it: the view moves once the node and what sits beside it are measured.
+  useEffect(() => {
+    if (sought === null) return;
+    const beside = [...view.beside].flatMap(([id, role]) => (role === sought && view.shown.has(id) ? [id] : []));
+    const wanted = [sought, ...beside];
+    const sized = new Set(nodes.flatMap((node) => (node.measured?.width ? [node.id] : [])));
+    if (!wanted.every((id) => sized.has(id))) return;
+    void flow.fitView({ nodes: wanted.map((id) => ({ id })), duration: 300, maxZoom: 1, padding: CLEAR });
+    setSought(null);
+  }, [sought, view, nodes, flow]);
+
+  /** Where every node that keeps a place is now; what sits beside a role keeps none. */
+  const places = () => absoluteOf(flow.getNodes());
   const middle = () => {
     const box = canvas.current!.getBoundingClientRect();
     return flow.screenToFlowPosition({ x: box.x + box.width / 2, y: box.y + box.height / 2 });
@@ -206,7 +244,7 @@ function Opened({
     }
     setRefused(null);
     const before = places();
-    const after = graphOf(made.template).nodes.map((node) => node.id);
+    const after = anchoredOf(graphOf(made.template)).nodes.map((node) => node.id);
     const gone = [...before.keys()].filter((id) => !after.includes(id));
     const fresh = after.filter((id) => !before.has(id) && !placing.has(id));
     const fallback = gone.length === 1 && fresh.length === 1 ? before.get(gone[0]!)! : middle();
@@ -221,10 +259,11 @@ function Opened({
     const edit = removal(node);
     if (edit) change(edit);
   };
+  /** Picks a node from a list and brings it into view: it may be off the canvas, or drawn only now. */
   const show = (node: GraphNode) => {
     pick(node);
+    setSought(node.id);
     setNodes((drawn) => drawn.map((other) => ({ ...other, selected: other.id === node.id })));
-    void flow.fitView({ nodes: [{ id: node.id }], duration: 300, maxZoom: 1, padding: 1.2 });
   };
   const duplicate = (node: GraphNode) => {
     if (node.kind !== "role") return;
@@ -238,9 +277,10 @@ function Opened({
       kind === "step" ? `step:${stepIdFor(template.steps, name)}` : kind === "classifier" ? kind : `${kind}:${name}`;
     const add = adding(kind, name);
     // A server's wire is drawn afterwards, with the tools it gives: there is none to name before the server is.
+    const as = wire?.socket === USES ? kind : wire?.socket;
     const joined =
-      wire && wire.kind !== "server"
-        ? wired(wire.kind, wire.end === "out" ? wire.node : id, wire.end === "out" ? id : wire.node, true)
+      wire && as !== undefined && as !== "server" && as in ENDS
+        ? wired(as as Wire["kind"], wire.end === "out" ? wire.node : id, wire.end === "out" ? id : wire.node, true)
         : null;
     change(joined ? together(add, joined) : add, new Map([[id, at]]));
   };
@@ -258,6 +298,17 @@ function Opened({
       pick(node);
       setAbout(true);
     },
+    fold: (id) => {
+      const stack = STACKS.find((candidate) => candidate.id === id);
+      setFolds((was) =>
+        stack ? { ...was, stacks: toggled(was.stacks, stack.kind) } : { ...was, roles: toggled(was.roles, id) },
+      );
+      if (!stack && !folds.roles.has(id)) setSought(id);
+    },
+  };
+  const exportIt = () => {
+    download(template.about.name, template.files);
+    onExported();
   };
 
   // Copy and paste make a second role of the picked one; in a field they are left to the field.
@@ -280,37 +331,26 @@ function Opened({
       <NotesContext.Provider value={notes}>
         <div className="workspace">
           <nav className="rail">
-            <button
-              type="button"
-              className={side === "nodes" ? "on" : ""}
-              title="Nodes"
-              onClick={() => {
-                setSide(side === "nodes" ? null : "nodes");
-              }}
-            >
-              <Icon name="nodes" />
-            </button>
-            <button
-              type="button"
-              className={side === "files" ? "on" : ""}
-              title="Files"
-              onClick={() => {
-                setSide(side === "files" ? null : "files");
-              }}
-            >
-              <Icon name="folder" />
-            </button>
-            <button
-              type="button"
-              className={side === "notes" ? "on" : ""}
-              title="Notes"
-              onClick={() => {
-                setSide(side === "notes" ? null : "notes");
-              }}
-            >
-              <Icon name="info" />
-              {notes.length > 0 ? <b>{notes.length}</b> : null}
-            </button>
+            {(
+              [
+                ["nodes", "team", "Nodes"],
+                ["files", "folder", "Files"],
+                ["notes", "alert", "Notes"],
+              ] as const
+            ).map(([id, icon, title]) => (
+              <button
+                key={id}
+                type="button"
+                className={side === id ? "on" : ""}
+                title={title}
+                onClick={() => {
+                  setSide(side === id ? null : id);
+                }}
+              >
+                <Icon name={icon} />
+                {id === "notes" && notes.length > 0 ? <b>{notes.length}</b> : null}
+              </button>
+            ))}
           </nav>
           {side === "nodes" ? (
             <NodesPanel
@@ -326,7 +366,7 @@ function Opened({
           {side === "notes" ? <NotesPanel graph={graph} notes={notes} onPick={show} /> : null}
           <div
             ref={canvas}
-            className={arranged ? "canvas" : "canvas arranging"}
+            className={arrangedOnce ? "canvas" : "canvas arranging"}
             onDragOver={(event) => {
               if (!event.dataTransfer.types.includes(DRAGGED)) return;
               event.preventDefault();
@@ -346,7 +386,7 @@ function Opened({
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}
               onNodeClick={(_, node) => {
-                if (node.type !== "frame") pick(node.data.node);
+                if (node.type !== "frame" && node.type !== "stack") pick(node.data.node);
               }}
               onPaneClick={() => {
                 setPickedId(null);
@@ -354,24 +394,24 @@ function Opened({
               onNodeDragStop={() => {
                 onChange(positioned(template.files, places()));
               }}
-              isValidConnection={(wire) =>
-                wire.source !== wire.target &&
-                kindOfSocket(wire.sourceHandle) === kindOfSocket(wire.targetHandle) &&
-                !edges.some(
-                  (edge) =>
-                    edge.source === wire.source &&
-                    edge.target === wire.target &&
-                    edge.data?.kind === kindOfSocket(wire.sourceHandle),
-                )
-              }
+              isValidConnection={(wire) => {
+                const kind = socketOf(wire.sourceHandle);
+                return (
+                  wire.source !== wire.target &&
+                  takes(socketOf(wire.targetHandle), kind) &&
+                  !edges.some(
+                    (edge) => edge.source === wire.source && edge.target === wire.target && edge.data?.kind === kind,
+                  )
+                );
+              }}
               onConnect={(wire) => {
-                join(kindOfSocket(wire.sourceHandle), wire.source, wire.target);
+                join(socketOf(wire.sourceHandle) as Wire["kind"], wire.source, wire.target);
               }}
               onConnectEnd={(event, ended) => {
                 if (ended.isValid || ended.toNode || !ended.fromHandle) return;
                 const at = "changedTouches" in event ? event.changedTouches[0]! : event;
                 setPulled({
-                  kind: kindOfSocket(ended.fromHandle.id),
+                  socket: socketOf(ended.fromHandle.id),
                   node: ended.fromNode.id,
                   end: ended.fromHandle.type === "source" ? "out" : "in",
                   at: { x: at.clientX, y: at.clientY },
@@ -379,7 +419,9 @@ function Opened({
               }}
               onBeforeDelete={({ nodes: goneNodes, edges: goneEdges }) => {
                 const gone = goneNodes.flatMap((node) =>
-                  node.type !== "frame" && isMakeable(node.data.node.kind) ? [node.data.node] : [],
+                  node.type !== "frame" && node.type !== "stack" && isMakeable(node.data.node.kind)
+                    ? [node.data.node]
+                    : [],
                 );
                 const ids = new Set(gone.map((node) => node.id));
                 const cut = goneEdges.filter((edge) => edge.selected && !ids.has(edge.source) && !ids.has(edge.target));
@@ -398,7 +440,7 @@ function Opened({
               colorMode="dark"
               proOptions={{ hideAttribution: true }}
             >
-              <Background variant={BackgroundVariant.Dots} gap={22} size={1} />
+              <Background variant={BackgroundVariant.Dots} gap={24} size={1} />
               <Wiring canvas={canvas} />
               {map ? <MiniMap pannable zoomable nodeClassName={(node) => `mini-${node.type ?? ""}`} /> : null}
             </ReactFlow>
@@ -406,7 +448,7 @@ function Opened({
             <div className="bar float top left">
               <button
                 type="button"
-                className="tool"
+                className={side === null ? "tool" : "tool on"}
                 title="The side panel"
                 onClick={() => {
                   setSide(side === null ? "nodes" : null);
@@ -414,14 +456,7 @@ function Opened({
               >
                 <Icon name="panelLeft" />
               </button>
-              <Menu
-                label={
-                  <>
-                    <Icon name="graph" />
-                    Graph
-                  </>
-                }
-              >
+              <Menu label={template.about.name}>
                 <button
                   type="button"
                   onClick={() => {
@@ -434,20 +469,17 @@ function Opened({
                 <button
                   type="button"
                   onClick={() => {
-                    onChange(positioned(template.files, laidOut(graph, sizesOf(flow.getNodes()))));
+                    const anchored = anchoredOf(graph);
+                    const sizes = sizesOf(flow.getNodes());
+                    const all = new Map(anchored.nodes.map(({ id }) => [id, sizes.get(id) ?? UNMEASURED]));
+                    onChange(positioned(template.files, laidOut(anchored, all, BETWEEN_ROLES)));
                   }}
                 >
                   <Icon name="tidy" />
                   Tidy up
                 </button>
                 <hr />
-                <button
-                  type="button"
-                  onClick={() => {
-                    download(template.about.name, template.files);
-                    onExported();
-                  }}
-                >
+                <button type="button" onClick={exportIt}>
                   <Icon name="download" />
                   Export
                 </button>
@@ -467,15 +499,7 @@ function Opened({
                 <Icon name="redo" />
               </button>
               <span className={changed ? "state changed" : "state"}>{changed ? "Not exported" : "Exported"}</span>
-              <button
-                type="button"
-                className="tool primary"
-                onClick={() => {
-                  download(template.about.name, template.files);
-                  onExported();
-                }}
-              >
-                <Icon name="download" />
+              <button type="button" className="signal" onClick={exportIt}>
                 Export
               </button>
               <button
@@ -490,6 +514,32 @@ function Opened({
               </button>
             </div>
 
+            <div className="bar float bottom left">
+              <button
+                type="button"
+                className="tool wide"
+                disabled={folds.roles.size === 0 && folds.stacks.size === 0}
+                onClick={() => {
+                  setFolds(NO_FOLDS);
+                }}
+              >
+                Fold all
+              </button>
+              <i className="rule" />
+              <button
+                type="button"
+                className="tool wide"
+                onClick={() => {
+                  setFolds({
+                    roles: new Set(graph.nodes.flatMap((node) => (node.kind === "role" ? [node.id] : []))),
+                    stacks: new Set(STACKS.map((stack) => stack.kind)),
+                  });
+                }}
+              >
+                Show all
+              </button>
+            </div>
+
             <ZoomTools
               map={map}
               onMap={() => {
@@ -499,6 +549,7 @@ function Opened({
 
             {refused === null ? null : (
               <div className="toast" role="alert">
+                <Icon name="alert" />
                 Not done: {refused}
                 <button
                   type="button"
@@ -512,7 +563,9 @@ function Opened({
               </div>
             )}
           </div>
-          {about ? <Properties template={template} mark={mark} picked={picked} open={file} onOpen={setFile} /> : null}
+          {about && (picked || file !== null) ? (
+            <Inspector template={template} mark={mark} picked={picked} open={file} onOpen={setFile} />
+          ) : null}
         </div>
       </NotesContext.Provider>
 
@@ -523,10 +576,10 @@ function Opened({
             setPulled(null);
           }}
           choices={choicesFor(graph, pulled, {
-            join: (other) => {
+            join: (kind, other) => {
               setPulled(null);
               const [from, to] = pulled.end === "out" ? [pulled.node, other] : [other, pulled.node];
-              join(pulled.kind, from, to);
+              join(kind, from, to);
             },
             make: (kind) => {
               setPulled(null);
@@ -629,7 +682,7 @@ function removal(node: GraphNode): Edit | null {
 /** Marks the canvas with the wire being pulled; a part of its own, since a pulled wire redraws it on every move. */
 function Wiring({ canvas }: { canvas: RefObject<HTMLDivElement | null> }) {
   const connection = useConnection();
-  const kind = connection.inProgress ? kindOfSocket(connection.fromHandle.id) : null;
+  const kind = connection.inProgress ? socketOf(connection.fromHandle.id) : null;
   useEffect(() => {
     const marked = canvas.current;
     if (!marked || kind === null) return;
@@ -645,48 +698,53 @@ function Wiring({ canvas }: { canvas: RefObject<HTMLDivElement | null> }) {
 function choicesFor(
   graph: Graph,
   pulled: Pulled,
-  act: { readonly join: (other: string) => void; readonly make: (kind: Makeable) => void },
+  act: { readonly join: (kind: Wire["kind"], other: string) => void; readonly make: (kind: Makeable) => void },
 ) {
-  const other = ENDS[pulled.kind][pulled.end === "out" ? "in" : "out"];
+  const far = pulled.end === "out" ? "in" : "out";
+  /** The kinds of wire the pulled socket takes, each with the kind of node at its far end. */
+  const kinds = (Object.keys(ENDS) as Wire["kind"][]).filter((kind) => takes(pulled.socket, kind));
   const joined = new Set(
     graph.wires.flatMap((wire) => {
-      if (wire.kind !== pulled.kind) return [];
+      if (!kinds.includes(wire.kind)) return [];
       if (pulled.end === "out") return wire.from === pulled.node ? [wire.to] : [];
       return wire.to === pulled.node ? [wire.from] : [];
     }),
   );
-  const there = graph.nodes
-    .filter((node) => node.kind === other && node.id !== pulled.node && !joined.has(node.id))
-    .map((node) => ({
-      key: node.id,
-      name: nameOf(node),
-      label: (
-        <>
-          <i className={`dot kind-${node.kind}`} />
-          {nameOf(node)}
-        </>
-      ),
-      pick: () => {
-        act.join(node.id);
+  return kinds.flatMap((kind) => {
+    const other = ENDS[kind][far];
+    const there = graph.nodes
+      .filter((node) => node.kind === other && node.id !== pulled.node && !joined.has(node.id))
+      .map((node) => ({
+        key: node.id,
+        name: nameOf(node),
+        label: (
+          <>
+            <i className={`dot kind-${node.kind}`} />
+            {nameOf(node)}
+          </>
+        ),
+        pick: () => {
+          act.join(kind, node.id);
+        },
+      }));
+    if (!isMakeable(other)) return there;
+    return [
+      ...there,
+      {
+        key: `new ${other}`,
+        name: `new ${other}`,
+        label: (
+          <>
+            <Icon name="plus" />
+            New {other}…
+          </>
+        ),
+        pick: () => {
+          act.make(other);
+        },
       },
-    }));
-  if (!isMakeable(other)) return there;
-  return [
-    ...there,
-    {
-      key: "new",
-      name: `new ${other}`,
-      label: (
-        <>
-          <Icon name="plus" />
-          New {other}…
-        </>
-      ),
-      pick: () => {
-        act.make(other);
-      },
-    },
-  ];
+    ];
+  });
 }
 
 const sizesOf = (drawn: readonly Drawn[]) =>
@@ -698,42 +756,50 @@ const sizesOf = (drawn: readonly Drawn[]) =>
     ),
   );
 
-/** The graph's nodes as they are drawn: one already there keeps its place and what was measured of it. */
-function synced(graph: Graph, drawn: readonly Drawn[], kept: ReadonlyMap<string, Point>): Drawn[] {
+/** Where each drawn node that keeps a place is, a framed one counted from the canvas and not from its frame. */
+function absoluteOf(drawn: readonly Drawn[]): Map<string, Point> {
   const frames = new Map(drawn.flatMap((node) => (node.type === "frame" ? [[node.id, node.position]] : [])));
-  const before = new Map(drawn.flatMap((node) => (node.type === "frame" ? [] : [[node.id, node]])));
-  const places = new Map<string, Point>();
-  const next = graph.nodes.map((node) => {
-    const was = before.get(node.id);
-    const frame = was?.parentId === undefined ? { x: 0, y: 0 } : frames.get(was.parentId)!;
-    const here = was ? { x: frame.x + was.position.x, y: frame.y + was.position.y } : { x: 0, y: 0 };
-    places.set(node.id, kept.get(node.id) ?? here);
-    return { ...was, id: node.id, type: node.kind, position: here, data: { node } } as FlowNode;
-  });
-  return framed(next, places, sizesOf(drawn));
+  return new Map(
+    drawn.flatMap((node): [string, Point][] => {
+      if (node.type === "frame") return [];
+      if (node.parentId === undefined) return [[node.id, node.position]];
+      const frame = frames.get(node.parentId);
+      // What hangs on a role sits beside it wherever the role goes: it keeps no place of its own.
+      return frame ? [[node.id, { x: frame.x + node.position.x, y: frame.y + node.position.y }]] : [];
+    }),
+  );
 }
 
-/** The nodes at their places, each family no wire places in a frame that carries it, since nothing else joins it. */
-function framed(
-  drawn: readonly Drawn[],
-  placed: ReadonlyMap<string, Point>,
-  sizes: ReadonlyMap<string, Size>,
-): Drawn[] {
-  const at = drawn.flatMap((node) => {
-    if (node.type === "frame") return [];
-    const { parentId: _, ...loose } = node;
-    return [{ ...loose, position: placed.get(node.id)! }];
-  });
+/** The graph's nodes as they are drawn: one already there keeps its place and what was measured of it. */
+function synced(graph: Graph, view: View, drawn: readonly Drawn[], kept: ReadonlyMap<string, Point>): Drawn[] {
+  const here = absoluteOf(drawn);
+  const places = new Map(anchoredOf(graph).nodes.map(({ id }) => [id, kept.get(id) ?? here.get(id) ?? { x: 0, y: 0 }]));
+  return arranged(graph, view, places, drawn);
+}
+
+/** Every node at its place: an unwired family in a frame that carries it, what a role has opened beside the role. */
+function arranged(graph: Graph, view: View, placed: ReadonlyMap<string, Point>, before: readonly Drawn[]): Drawn[] {
+  const anchored = anchoredOf(graph).nodes;
+  const byId = new Map(graph.nodes.map((node) => [node.id, node]));
+  const sizes = sizesOf(before);
   const size = (id: string) => sizes.get(id) ?? UNMEASURED;
+  const hidden = (id: string) => byId.has(id) && !view.shown.has(id);
+  /** What React Flow keeps of a node already drawn, less what is set anew here. */
+  const was = (id: string) => {
+    const { parentId: _p, hidden: _h, draggable: _d, ...rest } = before.find((node) => node.id === id) ?? {};
+    return rest;
+  };
+
   const frames = new Map<string, FrameNode>();
-  for (const { id, kind, title } of FRAMES) {
-    const inside = at.filter((node) => node.type === kind);
+  for (const { id, family, title } of FRAMES) {
+    const inside = anchored.filter((node) => node.family === family && !hidden(node.id));
     if (inside.length === 0) continue;
-    const left = Math.min(...inside.map((node) => node.position.x)) - FRAME.pad;
-    const top = Math.min(...inside.map((node) => node.position.y)) - FRAME.pad - FRAME.title;
-    const right = Math.max(...inside.map((node) => node.position.x + size(node.id).width)) + FRAME.pad;
-    const bottom = Math.max(...inside.map((node) => node.position.y + size(node.id).height)) + FRAME.pad;
-    frames.set(kind, {
+    const at = inside.map((node) => ({ ...placed.get(node.id)!, ...size(node.id) }));
+    const left = Math.min(...at.map((box) => box.x)) - FRAME.pad;
+    const top = Math.min(...at.map((box) => box.y)) - FRAME.pad - FRAME.title;
+    const right = Math.max(...at.map((box) => box.x + box.width)) + FRAME.pad;
+    const bottom = Math.max(...at.map((box) => box.y + box.height)) + FRAME.pad;
+    frames.set(family, {
       id,
       type: "frame",
       position: { x: left, y: top },
@@ -742,38 +808,69 @@ function framed(
       selectable: false,
     });
   }
-  return [
-    ...frames.values(),
-    ...at.map((node) => {
-      const frame = frames.get(node.type);
-      return frame
-        ? {
-            ...node,
-            parentId: frame.id,
-            position: { x: node.position.x - frame.position.x, y: node.position.y - frame.position.y },
-          }
-        : node;
+
+  const kept = anchored.map(({ id, family }): Drawn => {
+    const frame = frames.get(family);
+    const at = placed.get(id)!;
+    const where = {
+      position: frame ? { x: at.x - frame.position.x, y: at.y - frame.position.y } : at,
+      ...(frame ? { parentId: frame.id } : {}),
+    };
+    const stack = STACKS.find((candidate) => candidate.id === id);
+    if (stack) {
+      const count = graph.nodes.filter((node) => node.kind === stack.kind).length;
+      return {
+        ...was(id),
+        id,
+        type: "stack",
+        ...where,
+        data: { stack, count, open: view.folds.stacks.has(stack.kind) },
+      };
+    }
+    const node = byId.get(id)!;
+    const folded = node.kind === "role" ? { ...foldedInto(graph, id), open: view.folds.roles.has(id) } : undefined;
+    return { ...was(id), id, type: node.kind, ...where, hidden: hidden(id), data: { node, folded } } as FlowNode;
+  });
+
+  const fans = new Map<string, string[]>();
+  for (const [id, role] of view.beside) if (view.shown.has(id)) fans.set(role, [...(fans.get(role) ?? []), id]);
+  const beside = [...fans].flatMap(([role, ids]) =>
+    ids.map((id, index): Drawn => {
+      const node = byId.get(id)!;
+      const position = fanned(sizes.get(role)?.height ?? ROLE_HEIGHT, index, ids.length);
+      return {
+        ...was(id),
+        id,
+        type: node.kind,
+        parentId: role,
+        position,
+        draggable: false,
+        data: { node },
+      } as FlowNode;
     }),
-  ];
+  );
+  return [...frames.values(), ...kept, ...beside];
 }
 
-/** A wire that gives a role part of a group, or a server's tools, says so: nothing else on the graph does. */
-function edgesOf(graph: Graph): WireEdge[] {
+/** The wires between what is shown; one that gives a role part of a group, or a server's tools, says so. */
+function edgesOf(graph: Graph, shown: ReadonlySet<string>): WireEdge[] {
   const groupSize = new Map(
     graph.nodes.flatMap((node) => (node.kind === "tools" ? [[node.id, node.tools.length]] : [])),
   );
-  return graph.wires.map((wire) => ({
-    id: `${wire.kind}:${wire.from}>${wire.to}`,
-    source: wire.from,
-    target: wire.to,
-    sourceHandle: `${wire.kind}-out`,
-    targetHandle: `${wire.kind}-in`,
-    className: `wire-${wire.kind}`,
-    data: { kind: wire.kind },
-    ...(wire.kind === "tools" && wire.tools.length < groupSize.get(wire.from)!
-      ? { label: `${wire.tools.length} of ${groupSize.get(wire.from)!}` }
-      : wire.kind === "server"
-        ? { label: wire.tools.join(", ") }
-        : {}),
-  }));
+  return graph.wires
+    .filter((wire) => shown.has(wire.from) && shown.has(wire.to))
+    .map((wire) => ({
+      id: `${wire.kind}:${wire.from}>${wire.to}`,
+      source: wire.from,
+      target: wire.to,
+      sourceHandle: `${wire.kind}-out`,
+      targetHandle: `${EQUIPMENT.includes(wire.kind) ? USES : wire.kind}-in`,
+      className: `wire-${wire.kind}`,
+      data: { kind: wire.kind },
+      ...(wire.kind === "tools" && wire.tools.length < groupSize.get(wire.from)!
+        ? { label: `${wire.tools.length} of ${groupSize.get(wire.from)!}` }
+        : wire.kind === "server"
+          ? { label: wire.tools.join(", ") }
+          : {}),
+    }));
 }

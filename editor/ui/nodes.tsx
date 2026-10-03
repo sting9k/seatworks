@@ -1,20 +1,39 @@
 import { Handle, type Node, type NodeProps, NodeToolbar, type NodeTypes, Position } from "@xyflow/react";
-import { RELATIONS } from "../../shared/contracts/profile.ts";
-import { setProperty, setSpeaks, setTool } from "../template/edits.ts";
-import { type GraphNode, PROPERTIES, type Wire } from "../template/graph.ts";
+import type { STACKS } from "../template/fold.ts";
+import type { GraphNode, Job, Wire } from "../template/graph.ts";
 import { isMakeable, useEditing, useNotes } from "./editing.ts";
 import { Icon } from "./icons.tsx";
+import { plural } from "./words.ts";
 
 type Of<Kind extends GraphNode["kind"]> = Extract<GraphNode, { kind: Kind }>;
-/** A node of the template on the canvas, of the kind its drawing is picked by. */
+/** How much is folded into a role, and whether it is open. */
+type Folded = { readonly skills: number; readonly more: number; readonly open: boolean };
+/** A node of the template on the canvas, drawn by its kind; a role carries what is folded into it. */
 export type FlowNode<Kind extends GraphNode["kind"] = GraphNode["kind"]> = {
-  [K in Kind]: Node<{ readonly node: Of<K> }, K>;
+  [K in Kind]: Node<{ readonly node: Of<K>; readonly folded?: Folded }, K>;
 }[Kind];
 /** A titled box behind the nodes of a family that no wire places. */
 export type FrameNode = Node<{ readonly title: string }, "frame">;
+/** A family that folds, held as one node until it is opened. */
+export type StackNode = Node<
+  { readonly stack: (typeof STACKS)[number]; readonly count: number; readonly open: boolean },
+  "stack"
+>;
 
-/** A socket takes only its own kind of wire (EDITOR.md, Wires); the kind is its colour and its handle's id. */
-function Plug({ kind, end }: { kind: Wire["kind"]; end: "in" | "out" }) {
+/** What a role is for, as a person says it. */
+export const JOB_WORDS: Readonly<Record<Job, string>> = {
+  delegates: "Hands out work",
+  writes: "Writes code",
+  reading: "Reviews",
+  watches: "Watches",
+};
+
+/** The socket of a role every skill, tool group and server is wired into. */
+export const USES = "uses";
+type Socket = Wire["kind"] | typeof USES;
+
+/** A socket takes its own kind of wire, and `uses` any equipment; the kind is its colour and its handle's id. */
+function Plug({ kind, end }: { kind: Socket; end: "in" | "out" }) {
   return (
     <Handle
       id={`${kind}-${end}`}
@@ -25,21 +44,24 @@ function Plug({ kind, end }: { kind: Wire["kind"]; end: "in" | "out" }) {
   );
 }
 
-/** What comes in is named on the left; what goes out is named by its kind on the right, as ComfyUI names a type. */
-function Socket({ kind, end, label }: { kind: Wire["kind"]; end: "in" | "out"; label: string }) {
+/** One line of a role's sockets: what comes in named at its left, what goes out at its right. */
+function Ports({ taking, into, giving, out }: { taking: Socket; into: string; giving: Socket; out: string }) {
   return (
-    <div className={`socket socket-${end}`}>
-      <Plug kind={kind} end={end} />
-      {label}
+    <div className="ports">
+      <Plug kind={taking} end="in" />
+      <span>{into}</span>
+      <span>{out}</span>
+      <Plug kind={giving} end="out" />
     </div>
   );
 }
 
-/** How many notes are about a node, by its name; what they say is in the side panel. */
+/** How many notes are about a node; what they say is in the panel on the right. */
 function Noted({ id }: { id: string }) {
   const notes = useNotes(id);
   return notes.length === 0 ? null : (
     <span className="noted-mark" title={notes.map((note) => note.says).join("\n")}>
+      <Icon name="alert" />
       {notes.length}
     </span>
   );
@@ -49,7 +71,7 @@ function Noted({ id }: { id: string }) {
 function Actions({ node }: { node: GraphNode }) {
   const editing = useEditing();
   return (
-    <NodeToolbar className="actions" offset={8}>
+    <NodeToolbar className="actions" offset={10}>
       {isMakeable(node.kind) ? (
         <button
           type="button"
@@ -85,107 +107,59 @@ function Actions({ node }: { node: GraphNode }) {
   );
 }
 
-function Role({ data: { node } }: NodeProps<FlowNode<"role">>) {
-  const { change } = useEditing();
+/** A seat in the team: its name, what it runs as, what it does in plain words, and what is folded into it. */
+function Role({ data: { node, folded } }: NodeProps<FlowNode<"role">>) {
+  const { fold } = useEditing();
+  const does = [
+    node.properties.includes("root") ? "Leads the team" : null,
+    node.job ? JOB_WORDS[node.job] : null,
+    node.properties.includes("humanDoor") || node.speaks.includes("human") ? "Talks to you" : null,
+  ].filter((word) => word !== null);
+  const held = folded && folded.skills + folded.more > 0 ? folded : null;
   return (
     <div className="node node-role">
       <Actions node={node} />
       <header>
         <i className="dot kind-role" />
-        {node.name}
+        <span className="kind">Role</span>
         <Noted id={node.id} />
       </header>
-      <div className="sockets">
-        <div>
-          <Socket kind="spawns" end="in" label="seated by" />
-          <Socket kind="skill" end="in" label="skills" />
-          <Socket kind="tools" end="in" label="more tools" />
-          <Socket kind="server" end="in" label="servers" />
-          <Socket kind="watches" end="in" label="moments" />
+      <h3>{node.name}</h3>
+      <p className="runs mono">
+        {node.models.length > 0 ? `Runs as ${node.models.join(", then ")}` : "No agent profile yet"}
+      </p>
+      <Ports taking="spawns" into="seated by" giving="spawns" out="seats" />
+      <Ports taking={USES} into="uses" giving="human" out="talks to you" />
+      <Ports taking="watches" into="watched by" giving="does" out="does" />
+      {does.length > 0 ? (
+        <div className="does">
+          {does.map((word) => (
+            <span key={word}>{word}</span>
+          ))}
         </div>
-        <div>
-          <Socket kind="spawns" end="out" label="SEATS" />
-          <Socket kind="human" end="out" label="HUMAN" />
-          <Socket kind="does" end="out" label="DOES" />
-        </div>
-      </div>
-      <div className="switches nodrag">
-        {PROPERTIES.map((property) => {
-          const on = node.properties.includes(property);
-          return (
-            <button
-              key={property}
-              type="button"
-              className={on ? "switch on" : "switch"}
-              aria-pressed={on}
-              onClick={() => {
-                change(setProperty(node.name, property, !on));
-              }}
-            >
-              {property}
-            </button>
-          );
-        })}
-      </div>
-      <div className="field nodrag">
-        <span>speaks to</span>
-        <span className="switches">
-          {RELATIONS.filter((relation) => relation !== "human").map((relation) => {
-            const on = node.speaks.includes(relation);
-            return (
-              <button
-                key={relation}
-                type="button"
-                className={on ? "switch on" : "switch"}
-                aria-pressed={on}
-                onClick={() => {
-                  change(setSpeaks(node.name, relation, !on));
-                }}
-              >
-                {relation}
-              </button>
-            );
-          })}
+      ) : null}
+      <footer className="nodrag">
+        {held ? (
+          <button
+            type="button"
+            className={held.open ? "fold open" : "fold"}
+            aria-expanded={held.open}
+            title={held.open ? "Fold these into the role" : "Show what it uses"}
+            onClick={(event) => {
+              event.stopPropagation();
+              fold(node.id);
+            }}
+          >
+            <Icon name={held.open ? "chevronDown" : "chevronRight"} />
+            {held.skills > 0 ? plural(held.skills, "skill") : `${held.more} more`}
+            {held.skills > 0 && held.more > 0 ? ` +${held.more}` : ""}
+          </button>
+        ) : null}
+        <span>
+          {held ? "" : "No skills · "}
+          {plural(node.shown, "tool")} · {node.alwaysOn.toLocaleString("en")} words a turn
         </span>
-      </div>
-      <div className="field">
-        <span>models</span>
-        <span className="value">{node.models.length > 0 ? node.models.join(", ") : "none named"}</span>
-      </div>
-      <div className="field">
-        <span>prompt</span>
-        <span className="value">{node.file ?? "none"}</span>
-      </div>
-      <div className="field" title="Its prompt, the description of each of its skills and the team's flow">
-        <span>read every turn</span>
-        <span className="value">{node.alwaysOn.toLocaleString("en")} words</span>
-      </div>
-      {node.groups.map((group) => (
-        <details key={group.id} className="group nodrag">
-          <summary className="field">
-            <span>{group.name}</span>
-            <span className="value">
-              {group.tools.filter((tool) => tool.ticked).length} / {group.tools.length}
-            </span>
-          </summary>
-          <ul>
-            {group.tools.map((tool) => (
-              <li key={tool.name}>
-                <label className={tool.ticked ? "" : "unticked"}>
-                  <input
-                    type="checkbox"
-                    checked={tool.ticked}
-                    onChange={() => {
-                      change(setTool(node.name, tool.name, !tool.ticked));
-                    }}
-                  />
-                  {tool.name}
-                </label>
-              </li>
-            ))}
-          </ul>
-        </details>
-      ))}
+      </footer>
     </div>
   );
 }
@@ -196,69 +170,86 @@ function Step({ data: { node } }: NodeProps<FlowNode<"step">>) {
       <Actions node={node} />
       <header>
         <i className="dot kind-step" />
-        {node.name}
+        <span className="kind">Step</span>
       </header>
-      <div className="sockets">
-        <div>
-          <Socket kind="does" end="in" label="done by" />
-          <Socket kind="then" end="in" label="after" />
-        </div>
-        <div>
-          <Socket kind="then" end="out" label="THEN" />
-        </div>
+      <h3>{node.name}</h3>
+      <Ports taking="does" into="done by" giving="then" out="then" />
+      <div className="ports">
+        <Plug kind="then" end="in" />
+        <span>after</span>
       </div>
       {node.text === "" ? null : <p className="clamped">{node.text}</p>}
     </div>
   );
 }
 
-/** A node with one socket and no settings is its title alone, as a collapsed node is; the side panel says the rest. */
-function Compact({
-  node,
-  title,
-  plug,
-  quiet,
-}: {
-  node: GraphNode;
-  title: string;
-  plug?: Wire["kind"];
-  quiet?: string;
-}) {
+type CompactProps = {
+  readonly node: GraphNode;
+  readonly title: string;
+  /** What kind of node it is, in a word at its right. */
+  readonly says: string;
+  readonly plug?: Wire["kind"];
+  readonly quiet?: boolean;
+};
+
+/** A node that is one thing with one name: its family's dot, its name, its kind in a word, and at most one socket. */
+function Compact({ node, title, says, plug, quiet }: CompactProps) {
   return (
     <div className={`node compact${quiet ? " inactive" : ""}`}>
       <Actions node={node} />
-      {plug ? <Plug kind={plug} end={node.kind === "human" ? "in" : "out"} /> : null}
-      <header>
-        <i className={`dot kind-${node.kind}`} />
-        {title}
-        {quiet ? <span className="quiet">{quiet}</span> : null}
-        <Noted id={node.id} />
-      </header>
+      {plug ? <Plug kind={plug} end="out" /> : null}
+      <i className={`dot kind-${node.kind}`} />
+      <b>{title}</b>
+      <Noted id={node.id} />
+      <span className="kind">{says}</span>
     </div>
   );
 }
 
 const Human = ({ data: { node } }: NodeProps<FlowNode<"human">>) => (
-  <Compact node={node} title="The Human" plug="human" />
+  <div className="node node-human">
+    <Actions node={node} />
+    <Plug kind="human" end="in" />
+    <Icon name="user" />
+    <b>You</b>
+    <span className="kind">the Human</span>
+  </div>
 );
 const Skill = ({ data: { node } }: NodeProps<FlowNode<"skill">>) => (
-  <Compact node={node} title={node.name} plug="skill" />
+  <Compact node={node} title={node.name} says="skill" plug="skill" />
 );
 const Tools = ({ data: { node } }: NodeProps<FlowNode<"tools">>) => (
-  <Compact node={node} title={`${node.name} · ${node.tools.length}`} plug="tools" />
+  <Compact node={node} title={node.name} says={`${node.tools.length} tools`} plug="tools" />
 );
 const Server = ({ data: { node } }: NodeProps<FlowNode<"server">>) => (
-  <Compact node={node} title={node.name} plug="server" />
+  <Compact node={node} title={node.name} says="outside server" plug="server" />
 );
 const Question = ({ data: { node } }: NodeProps<FlowNode<"question">>) => (
-  <Compact node={node} title={node.name} {...(node.active ? {} : { quiet: "not asked" })} />
+  <Compact node={node} title={node.name} says={node.active ? "question" : "not asked"} quiet={!node.active} />
 );
 const Moment = ({ data: { node } }: NodeProps<FlowNode<"moment">>) => (
-  <Compact node={node} title={node.name} plug="watches" {...(node.active ? {} : { quiet: "not watched" })} />
+  <Compact
+    node={node}
+    title={node.name}
+    says={node.active ? "moment" : "not watched"}
+    plug="watches"
+    quiet={!node.active}
+  />
 );
-const Section = ({ data: { node } }: NodeProps<FlowNode<"section">>) => <Compact node={node} title={node.name} />;
+const Section = ({ data: { node } }: NodeProps<FlowNode<"section">>) => (
+  <Compact node={node} title={node.name} says="section" />
+);
 const Classifier = ({ data: { node } }: NodeProps<FlowNode<"classifier">>) => (
-  <Compact node={node} title={`${node.name} · ${node.routes.map((route) => route.model).join(", ")}`} />
+  <div className="node node-classifier">
+    <Actions node={node} />
+    <header>
+      <i className="dot kind-classifier" />
+      <b>{node.name}</b>
+      <Noted id={node.id} />
+      <span className="kind">{plural(node.routes.length, "route")}</span>
+    </header>
+    <p className="mono">{node.routes[0]?.model ?? ""}</p>
+  </div>
 );
 
 const Frame = ({ data }: NodeProps<FrameNode>) => (
@@ -266,6 +257,26 @@ const Frame = ({ data }: NodeProps<FrameNode>) => (
     <header>{data.title}</header>
   </div>
 );
+
+/** Many nodes of one kind held as one, so a wall of questions is one line until someone opens it. */
+function Stack({ data: { stack, count, open } }: NodeProps<StackNode>) {
+  const { fold } = useEditing();
+  return (
+    <button
+      type="button"
+      className={open ? "node stack open" : "node stack"}
+      aria-expanded={open}
+      onClick={() => {
+        fold(stack.id);
+      }}
+    >
+      <i className={`dot kind-${stack.kind}`} />
+      <b>{stack.title}</b>
+      <span className="count">{count}</span>
+      <Icon name={open ? "chevronDown" : "chevronRight"} />
+    </button>
+  );
+}
 
 export const NODE_TYPES = {
   role: Role,
@@ -279,4 +290,5 @@ export const NODE_TYPES = {
   section: Section,
   classifier: Classifier,
   frame: Frame,
+  stack: Stack,
 } satisfies NodeTypes;

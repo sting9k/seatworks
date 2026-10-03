@@ -1,5 +1,5 @@
 import { type ReactNode, useState } from "react";
-import type { Route, Server } from "../../shared/contracts/profile.ts";
+import { RELATIONS, type Relation, type Route, type Server } from "../../shared/contracts/profile.ts";
 import {
   addRoute,
   giveServer,
@@ -10,17 +10,25 @@ import {
   renameSection,
   renameSkill,
   setAsked,
+  setJob,
   setModels,
+  setProperty,
   setRoute,
   setSection,
   setServer,
+  setSpeaks,
   setStep,
+  setTool,
+  wired,
 } from "../template/edits.ts";
-import type { GraphNode } from "../template/graph.ts";
+import { type GraphNode, type Job, JOBS } from "../template/graph.ts";
 import type { Template } from "../template/read-template.ts";
 import { useEditing, useNotes } from "./editing.ts";
 import { FileEditor } from "./file-editor.tsx";
+import { JOB_WORDS } from "./nodes.tsx";
 import { nameOf } from "./sidebar.tsx";
+
+type RoleNode = Extract<GraphNode, { kind: "role" }>;
 
 const KIND: Readonly<Record<GraphNode["kind"], string>> = {
   role: "Role",
@@ -41,49 +49,71 @@ const EARNED = {
   "not yet": "not yet earned: its answer goes no further than a candidate",
 } as const;
 
+/** What each job is, said to someone who has not read the kernel's spec. */
+const JOB_SAYS: Readonly<Record<Job, string>> = {
+  delegates: "Seats other roles and takes their work in.",
+  writes: "Works in a copy of the project and hands back commits.",
+  reading: "Reads a commit and says what it finds.",
+  watches: "Looks at the others and tells an owner when to look.",
+};
+/** Whom a role may message, as a person says each relation. */
+const SPEAKS: Readonly<Record<Relation, string>> = {
+  children: "Those it seats",
+  descendants: "Everyone under it",
+  human: "You",
+  parent: "Whoever seated it",
+};
+
 /** The fewest and the most words a role of SLP reads every turn: the mark another's are set beside. */
 export type Mark = { readonly name: string; readonly least: number; readonly most: number };
 
-/** What the picked node says of itself and lets be set, above the file that is open. */
-export function Properties({
-  template,
-  mark,
-  picked,
-  open,
-  onOpen,
-}: {
-  template: Template;
-  mark: Mark | null;
-  picked: GraphNode | null;
-  open: string | null;
-  onOpen: (path: string) => void;
-}) {
+type Props = {
+  readonly template: Template;
+  readonly mark: Mark | null;
+  readonly picked: GraphNode | null;
+  readonly open: string | null;
+  readonly onOpen: (path: string) => void;
+};
+
+/** The panel on the right: what the picked node is, what of it is set off the canvas, and the file it is kept in. */
+export function Inspector({ template, mark, picked, open, onOpen }: Props) {
   const { change } = useEditing();
   const text = open === null ? undefined : template.files.get(open);
+  const file =
+    open === null || text === undefined ? null : (
+      <FileEditor
+        key={open}
+        path={open}
+        text={text}
+        onSet={(written) => {
+          change(putFile(open, written));
+        }}
+      />
+    );
+  if (!picked)
+    return (
+      <aside className="panel inspector">
+        <p className="empty">Pick a node to read what it is and set the rest of it.</p>
+        {file}
+      </aside>
+    );
   return (
-    <aside className="panel properties">
-      {picked ? (
-        <section>
-          <p className="section">{KIND[picked.kind]}</p>
-          <h2>{nameOf(picked)}</h2>
-          <About key={picked.id} node={picked} template={template} mark={mark} onOpen={onOpen} />
-          <Notes id={picked.id} />
-        </section>
+    <aside className="panel inspector">
+      <header>
+        <i className={`dot kind-${picked.kind}`} />
+        <span className="kind">{KIND[picked.kind]}</span>
+      </header>
+      <h2>{nameOf(picked)}</h2>
+      {picked.kind === "role" ? (
+        <RolePanel key={picked.id} node={picked} template={template} mark={mark} file={file} />
       ) : (
-        <section>
-          <p className="section">Nothing picked</p>
-          <p className="hint">Pick a node on the graph or in the list to read what it is and the file it is kept in.</p>
-        </section>
-      )}
-      {open === null || text === undefined ? null : (
-        <FileEditor
-          key={open}
-          path={open}
-          text={text}
-          onSet={(written) => {
-            change(putFile(open, written));
-          }}
-        />
+        <>
+          <section className="about">
+            <About key={picked.id} node={picked} template={template} onOpen={onOpen} />
+            <Notes id={picked.id} />
+          </section>
+          {file}
+        </>
       )}
     </aside>
   );
@@ -122,61 +152,277 @@ function Line({ label, value, onSet }: { label: string; value: string; onSet: (v
   );
 }
 
+/** A part of a node's settings under its name, with a few words at its right. */
+function Part({ title, says, children }: { title: string; says?: string; children: ReactNode }) {
+  return (
+    <section className="part">
+      <h3>
+        {title}
+        {says ? <small>{says}</small> : null}
+      </h3>
+      {children}
+    </section>
+  );
+}
+
+/** A name on a pill, taken away by its cross. */
+function Chip({ label, onRemove }: { label: string; onRemove: () => void }) {
+  return (
+    <span className="chip">
+      {label}
+      <button type="button" title={`Take ${label} away`} onClick={onRemove}>
+        ×
+      </button>
+    </span>
+  );
+}
+
+type RolePanelProps = {
+  readonly node: RoleNode;
+  readonly template: Template;
+  readonly mark: Mark | null;
+  readonly file: ReactNode;
+};
+
+/** A role's panel: what is set of it, its prompt, and what a machine noted about it, a tab each. */
+function RolePanel({ node, template, mark, file }: RolePanelProps) {
+  const notes = useNotes(node.id);
+  const [tab, setTab] = useState<"settings" | "prompt" | "notes">("settings");
+  const tabs = [
+    ["settings", "Settings"],
+    ["prompt", "Prompt"],
+    ["notes", notes.length > 0 ? `Notes · ${notes.length}` : "Notes"],
+  ] as const;
+  return (
+    <>
+      <div className="segments" role="tablist">
+        {tabs.map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            role="tab"
+            aria-selected={tab === id}
+            className={tab === id ? "on" : ""}
+            onClick={() => {
+              setTab(id);
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      {tab === "settings" ? <RoleSettings node={node} template={template} mark={mark} /> : null}
+      {tab === "prompt" ? (file ?? <p className="empty">This role has no prompt.</p>) : null}
+      {tab === "notes" ? (
+        notes.length > 0 ? (
+          <Notes id={node.id} />
+        ) : (
+          <p className="empty">Nothing to look at.</p>
+        )
+      ) : null}
+    </>
+  );
+}
+
+function RoleSettings({ node, template, mark }: { node: RoleNode; template: Template; mark: Mark | null }) {
+  const { change } = useEditing();
+  const [adding, setAdding] = useState("");
+  const others = [...template.profile.roles.keys()].filter((name) => name !== node.name && !node.seats.includes(name));
+  return (
+    <div className="settings">
+      <Line
+        label="Name"
+        value={node.name}
+        onSet={(name) => {
+          change(renameRole(node.name, name));
+        }}
+      />
+      <Part title="Its job" says="At most one">
+        <div role="radiogroup" className="choices">
+          {[...JOBS, null].map((job) => (
+            <button
+              key={job ?? "none"}
+              type="button"
+              role="radio"
+              aria-checked={node.job === job}
+              className={node.job === job ? "choice on" : "choice"}
+              onClick={() => {
+                if (node.job !== job) change(setJob(node.name, job));
+              }}
+            >
+              <i />
+              <span>
+                <b>{job ? JOB_WORDS[job] : "None of these"}</b>
+                <small>{job ? JOB_SAYS[job] : "Only talks and reports. It seats nobody and writes nothing."}</small>
+              </span>
+            </button>
+          ))}
+        </div>
+      </Part>
+      <Part title="With the Human">
+        {(
+          [
+            ["root", "Leads the team", "The one role the Human works with. A template has one."],
+            ["humanDoor", "May ask you", "Its questions reach the Human."],
+          ] as const
+        ).map(([property, label, says]) => {
+          const on = node.properties.includes(property);
+          return (
+            <button
+              key={property}
+              type="button"
+              role="switch"
+              aria-checked={on}
+              className={on ? "toggle on" : "toggle"}
+              onClick={() => {
+                change(setProperty(node.name, property, !on));
+              }}
+            >
+              <span>
+                <b>{label}</b>
+                <small>{says}</small>
+              </span>
+              <i />
+            </button>
+          );
+        })}
+      </Part>
+      <Part title="Runs as">
+        <div className="chips">
+          {node.models.map((model) => (
+            <Chip
+              key={model}
+              label={model}
+              onRemove={() => {
+                change(
+                  setModels(
+                    node.name,
+                    node.models.filter((other) => other !== model),
+                  ),
+                );
+              }}
+            />
+          ))}
+          <input
+            className="add"
+            value={adding}
+            placeholder="+ Add"
+            onChange={(event) => {
+              setAdding(event.target.value);
+            }}
+            onKeyDown={(event) => {
+              if (event.key !== "Enter" || adding.trim() === "") return;
+              change(setModels(node.name, [...node.models, adding.trim()]));
+              setAdding("");
+            }}
+          />
+        </div>
+        <p className="hint">An agent profile of yours in Paseo. The first is tried first.</p>
+      </Part>
+      <Part title="May seat">
+        <div className="chips">
+          {node.seats.map((seated) => (
+            <Chip
+              key={seated}
+              label={seated}
+              onRemove={() => {
+                change(wired("spawns", node.id, `role:${seated}`, false));
+              }}
+            />
+          ))}
+          {others.length > 0 ? (
+            <select
+              className="add"
+              value=""
+              onChange={(event) => {
+                change(wired("spawns", node.id, `role:${event.target.value}`, true));
+              }}
+            >
+              <option value="">+ Add</option>
+              {others.map((name) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+            </select>
+          ) : null}
+        </div>
+      </Part>
+      <Part title="Talks to">
+        <div className="checks">
+          {RELATIONS.map((relation) => {
+            const on = node.speaks.includes(relation);
+            return (
+              <label key={relation} className="check">
+                <input
+                  type="checkbox"
+                  checked={on}
+                  onChange={() => {
+                    change(
+                      relation === "human"
+                        ? wired("human", node.id, "human", !on)
+                        : setSpeaks(node.name, relation, !on),
+                    );
+                  }}
+                />
+                {SPEAKS[relation]}
+              </label>
+            );
+          })}
+        </div>
+      </Part>
+      <Part title="Tools" says={`${node.shown} shown to it`}>
+        {node.groups.map((group) => (
+          <details key={group.id} className="group">
+            <summary>
+              {group.name}
+              <small>
+                {group.tools.filter((tool) => tool.ticked).length} of {group.tools.length}
+              </small>
+            </summary>
+            <div className="checks">
+              {group.tools.map((tool) => (
+                <label key={tool.name} className={tool.ticked ? "check mono" : "check mono unticked"}>
+                  <input
+                    type="checkbox"
+                    checked={tool.ticked}
+                    onChange={() => {
+                      change(setTool(node.name, tool.name, !tool.ticked));
+                    }}
+                  />
+                  {tool.name}
+                </label>
+              ))}
+            </div>
+          </details>
+        ))}
+      </Part>
+      <Part title="Reads every turn">
+        <p>
+          {node.alwaysOn.toLocaleString("en")} words
+          {mark ? (
+            <span className="hint">
+              {" "}
+              · {mark.name}&apos;s roles read {mark.least.toLocaleString("en")} to {mark.most.toLocaleString("en")}
+            </span>
+          ) : null}
+        </p>
+      </Part>
+    </div>
+  );
+}
+
 function About({
   node,
   template,
-  mark,
   onOpen,
 }: {
-  node: GraphNode;
+  node: Exclude<GraphNode, RoleNode>;
   template: Template;
-  mark: Mark | null;
   onOpen: (path: string) => void;
 }): ReactNode {
   const { change } = useEditing();
   switch (node.kind) {
-    case "role":
-      return (
-        <>
-          <Line
-            label="Name"
-            value={node.name}
-            onSet={(name) => {
-              change(renameRole(node.name, name));
-            }}
-          />
-          <Line
-            label="Models"
-            value={node.models.join(", ")}
-            onSet={(models) => {
-              change(
-                setModels(
-                  node.name,
-                  models
-                    .split(",")
-                    .map((model) => model.trim())
-                    .filter((model) => model !== ""),
-                ),
-              );
-            }}
-          />
-          <p className="hint">
-            Each model names an agent profile of the Human&apos;s in Paseo; the first is the default.
-          </p>
-          <dl>
-            <dt>Reads every turn</dt>
-            <dd>
-              {node.alwaysOn.toLocaleString("en")} words
-              {mark ? (
-                <span className="hint">
-                  {" "}
-                  · {mark.name}&apos;s roles read {mark.least.toLocaleString("en")} to {mark.most.toLocaleString("en")}
-                </span>
-              ) : null}
-            </dd>
-          </dl>
-        </>
-      );
     case "human":
       return <p>Asked and told by the roles wired to it.</p>;
     case "skill": {
@@ -419,7 +665,7 @@ function ServerFields({ server, onSet }: { server: Server; onSet: (server: Serve
   const kept = pairsOf(pairs);
   return (
     <>
-      <div className="tabs">
+      <div className="segments">
         {(["stdio", "http", "sse"] as const).map((type) => (
           <button
             key={type}

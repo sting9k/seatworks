@@ -25,7 +25,7 @@ export function FileEditor({ path, text, onSet }: { path: string; text: string; 
       <header>
         <p className="section">{path}</p>
         {isMarkdown ? (
-          <div className="tabs">
+          <div className="segments">
             <button
               type="button"
               className={reading ? "" : "on"}

@@ -1,55 +1,60 @@
 import { useMemo } from "react";
 import type { Graph } from "../template/graph.ts";
 import { laidOut } from "./layout.ts";
+import { nameOf } from "./sidebar.tsx";
 
-const ROLE = { width: 80, height: 60 };
-const SMALL = { width: 64, height: 12 };
+const HEIGHT = 26;
+/** A name's pill is as wide as its letters, so a cover is read and not only looked at. */
+const widthOf = (name: string) => Math.round(name.length * 7.4 + 34);
 
-/** A template's cover in the gallery: its own graph, drawn small. */
+/** A template's cover in the gallery: its own team, each role by name, who seats whom and who talks to the Human. */
 export function Cover({ graph }: { graph: Graph }) {
   const drawn = useMemo(() => {
-    const sizes = new Map(graph.nodes.map((node) => [node.id, node.kind === "role" ? ROLE : SMALL]));
-    const placed = laidOut(graph, sizes);
-    const boxes = graph.nodes.map((node) => ({ node, ...placed.get(node.id)!, ...sizes.get(node.id)! }));
-    const middle = new Map(boxes.map((box) => [box.node.id, { x: box.x + box.width / 2, y: box.y + box.height / 2 }]));
+    const seats = graph.nodes.filter((node) => node.kind === "role" || node.kind === "human");
+    const names = new Map(seats.map((node) => [node.id, node.kind === "human" ? "you" : nameOf(node)]));
+    const wires = graph.wires.filter((wire) => wire.kind === "spawns" || wire.kind === "human");
+    const sizes = new Map(seats.map((node) => [node.id, { width: widthOf(names.get(node.id)!), height: HEIGHT }]));
+    const placed = laidOut({ nodes: seats.map(({ id }) => ({ id, family: "team", beside: 0 })), wires }, sizes, 56);
+    const pills = seats.map((node) => ({
+      node,
+      name: names.get(node.id)!,
+      ...placed.get(node.id)!,
+      ...sizes.get(node.id)!,
+    }));
+    const byId = new Map(pills.map((pill) => [pill.node.id, pill]));
     return {
-      boxes,
-      middle,
-      width: Math.max(...boxes.map((box) => box.x + box.width)),
-      height: Math.max(...boxes.map((box) => box.y + box.height)),
+      pills,
+      wires: wires.map((wire) => ({ wire, from: byId.get(wire.from)!, to: byId.get(wire.to)! })),
+      width: Math.max(...pills.map((pill) => pill.x + pill.width)),
+      height: Math.max(...pills.map((pill) => pill.y + pill.height)),
     };
   }, [graph]);
   return (
     <svg
       className="cover"
-      viewBox={`-20 -20 ${drawn.width + 40} ${drawn.height + 40}`}
+      viewBox={`-24 -24 ${drawn.width + 48} ${drawn.height + 48}`}
       role="img"
-      aria-label="Its graph"
+      aria-label="Its team"
     >
-      {graph.wires.map((wire) => {
-        const from = drawn.middle.get(wire.from)!;
-        const to = drawn.middle.get(wire.to)!;
+      {drawn.wires.map(({ wire, from, to }) => {
+        const [x1, y1, x2, y2] = [from.x + from.width, from.y + HEIGHT / 2, to.x, to.y + HEIGHT / 2];
+        const bend = Math.max(24, (x2 - x1) / 2);
         return (
-          <line
+          <path
             key={`${wire.kind}:${wire.from}>${wire.to}`}
             className={`stroke-${wire.kind}`}
-            x1={from.x}
-            y1={from.y}
-            x2={to.x}
-            y2={to.y}
+            d={`M${x1} ${y1}C${x1 + bend} ${y1} ${x2 - bend} ${y2} ${x2} ${y2}`}
           />
         );
       })}
-      {drawn.boxes.map((box) => (
-        <rect
-          key={box.node.id}
-          className={`fill-${box.node.kind}`}
-          x={box.x}
-          y={box.y}
-          width={box.width}
-          height={box.height}
-          rx={3}
-        />
+      {drawn.pills.map((pill) => (
+        <g key={pill.node.id} className={`pill-${pill.node.kind}`} transform={`translate(${pill.x} ${pill.y})`}>
+          <rect width={pill.width} height={HEIGHT} rx={HEIGHT / 2} />
+          <circle cx={13} cy={HEIGHT / 2} r={3.5} />
+          <text x={23} y={HEIGHT / 2 + 4}>
+            {pill.name}
+          </text>
+        </g>
       ))}
     </svg>
   );

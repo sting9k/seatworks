@@ -4,11 +4,11 @@ Where a template is opened as a graph, changed and saved: a web page, after Comf
 says what a template is; this says how a person makes and changes one. The order it is built in is in `TEMPLATE.md`.
 
 Built: all of this file. A template is picked from the gallery built beside the page (`TEMPLATE.md`, The gallery), or
-opened from a file or a folder of the person's own, and opens in a tab. Its graph is drawn and laid out. Roles,
-skills, steps, questions, moments, the classifier and the sections of a report are added from a skeleton, changed
-and taken away;
-wires are drawn and cut; a file is written in place and read as Markdown; what a machine can see is noted on the node
-it is about; every change can be undone; and the template is exported as one file.
+opened from a file or a folder of the person's own, and opens in a tab. Its graph is drawn and laid out, with what is
+not the team folded until it is asked for. Roles, skills, steps, questions, moments, the classifier and the sections
+of a report are added from a skeleton, changed and taken away; wires are drawn and cut; a file is written in place
+and read as Markdown; what a machine can see is noted on the node it is about; every change can be undone; and the
+template is exported as one file.
 
 ## Decided
 
@@ -17,10 +17,10 @@ it is about; every change can be undone; and the template is exported as one fil
    a running team is followed. A template is made rarely; a team is followed all day.
 2. **In this repository, in a folder of its own**, with its own tsconfig as `client/` has. It imports
    `shared/contracts`, so what it calls a sound profile is what the plugin calls one: the same `resolveProfile`.
-3. **React Flow** (`@xyflow/react` 12, MIT), and `markdown-it` (MIT) to show a Markdown file as it reads. A node here is a form: a role has switches, a list of models, lists of
-   tools to tick. React Flow draws a node as a component, so that is ordinary work. Not taken: LiteGraph, which gives
-   ComfyUI's look but draws on a canvas, so every input in a node is drawn by hand; Rete, whose package was last
-   changed in June 2025.
+3. **React Flow** (`@xyflow/react` 12, MIT), and `markdown-it` (MIT) to show a Markdown file as it reads. A node here
+   is made of what a page already has: a chip to press, a count of notes, a few actions over it. React Flow draws a
+   node as a component, so that is ordinary work. Not taken: LiteGraph, which gives ComfyUI's look but draws on a
+   canvas, so every part of a node is drawn by hand; Rete, whose package was last changed in June 2025.
 4. **dagre lays out a template that has no positions** (MIT). elkjs is not taken: EPL or GPL.
 5. **Files come in and go out by import and export.** A page cannot write into the state root, and opening a
    directory in place works only in some browsers. A template comes in as the one file it is shared as or as a folder
@@ -37,9 +37,9 @@ it is about; every change can be undone; and the template is exported as one fil
 8. **The editor checks what a machine can check, and no more.** Whether a template makes a team work well is known
    only by running it and looking back.
 9. **A change that would leave a template that does not load is not made, and the page says why.** The graph is
-   always drawn from files the plugin would load, so there is never a half-made template to draw or to export. One
-   change could not be made in two steps under this rule, so it is one: switching the root on for a role switches it
-   off for the role that had it.
+   always drawn from files the plugin would load, so there is never a half-made template to draw or to export. Two
+   changes could not be made in two steps under this rule, so each is one: switching the root on for a role switches
+   it off for the role that had it, and choosing a job for a role takes the job it had (A role's job).
 
 ## Three screens
 
@@ -51,34 +51,62 @@ it is about; every change can be undone; and the template is exported as one fil
 
 ## The look
 
-After ComfyUI's own page, so a person who knows one finds their way in the other.
+After ComfyUI's own pages, so a person who knows one finds their way in the other.
 
 - A strip of tabs over everything: the gallery, and a tab for each template open, marked while it holds a change
   that has not been exported.
-- Down the left, a rail of icons that opens one panel beside it: the nodes, or the files. The nodes panel has two
-  tabs, the nodes of this template to find one by, and the kinds of node to add, dragged onto the graph.
-- The canvas takes the rest, with its tools floating over it: at the top left a menu for the template as a whole
-  (rename, tidy up, export, close); at the top right undo, redo, whether it is exported, the export button and the
-  switch for the panel on the right; at the bottom right the zoom and the small map.
+- The gallery is a grid of cards, searched by a template's name, its roles and its tags, and narrowed by a tag. A
+  card is covered by the template's own team, drawn small: its roles and the Human as named pills, wired as one
+  seats another. No picture is kept beside a template, so a cover is never out of step with what it covers.
+- Down the left of a template, a rail of icons that opens one panel beside it: the nodes, the files, or the notes.
+  The nodes panel has two tabs, the nodes of this template to find one by, and the kinds of node to add, dragged
+  onto the graph.
+- The canvas takes the rest, with its tools floating over it: at the top left a menu named by the template (rename,
+  tidy up, export, close); at the top right undo, redo, whether it is exported, the export button and the switch for
+  the panel on the right; at the bottom left Fold all and Show all; at the bottom right the fit, the zoom and the
+  small map. A graph fitted to the canvas stays clear of them.
 - The picked node has its own few actions floating above it: take away, duplicate, about.
-- On the right, a panel says the rest of the picked node, lets what is not on the node be set, and shows the file the
-  node is kept in.
-- One dark ground of neutral greys. Nodes are neutral; colour is kept for the wires, their sockets and the dot before
-  a node's name, one colour to a kind of wire. The picked node is outlined in white.
-- What comes into a node is on its left, named in lower case. What goes out is on its right, named by its kind in
-  capitals, as ComfyUI names a type.
-- A setting is a row: its name on the left, its value on the right.
-- A node with one socket and nothing to set is its title alone, as a collapsed node is.
-- A family no wire places sits in a titled frame that carries its nodes when it is moved: the reflex questions, and
-  the sections of a report. Laid out, each such family has rows of its own, so no frame holds another's node.
-- A card in the gallery is covered by the template's own graph, drawn small, with its name over it. No picture is
-  kept beside a template, so a cover is never out of step with what it covers.
+- On the right, a panel is there only while a node is picked or a file is open. It says the rest of the picked node,
+  lets what is not on the node be set, and shows the file the node is kept in. A role's has three tabs: its
+  settings, its prompt, its notes.
+- One dark ground, and one bright colour kept for the one thing to press and for what is switched on. A node is
+  neutral; colour is for the dot before its name, its sockets and its wires, one colour to a family: the team,
+  equipment, the watch, the flow, the report, the Human. The picked node is outlined in white. The type is Red Hat
+  Display, Text and Mono where a machine has them and its own otherwise: the page asks no other host for a font.
+- A role is a card: its name, the agent profiles it runs as, its sockets in three lines (seated by and seats; uses
+  and talks to you; watched by and does), what it does in plain words (leads the team, hands out work, writes code,
+  reviews, watches, talks to you), a chip for what is folded into it, and how many tools it is shown and words it
+  reads every turn. Every setting of it is in its panel, none on the card.
+- Every other node is one line: the dot of its family, its name, its kind.
+- What comes into a node is on its left, what goes out on its right.
+- A family no wire places sits in a titled frame that carries its nodes when it is moved: the watch, a report's
+  sections, the reflex questions, the watch moments. Laid out, each such family has rows of its own, so no frame
+  holds another's node.
+
+## What is folded
+
+A template holds more nodes than a person reads at once: SLP is 67. So what is not the team is folded until it is
+asked for. What is open is the viewer's: no file of the template keeps it.
+
+- **A skill, a tool group and an outside server wired into a role fold into that role.** The role's chip says how
+  many (`7 skills`, `8 skills +2`). Pressed, it opens them in a column at the role's left, each wired into the
+  role's `uses` socket, and the view moves to hold the role and the column; pressed again, it folds them. One that
+  several roles have sits beside the first of them that is open.
+- **What sits beside a role keeps no place of its own.** It is put there each time, goes where the role goes, and
+  nothing of it is in `template.json`. A layout leaves it room: a role is set as far from the next as the column it
+  may open is tall.
+- **The reflex questions fold into one node, the watch moments into another**, each saying how many it holds, in
+  the watch's frame beside the classifier. Pressed, its family is drawn in a frame of its own.
+- **Never folded:** a skill, a group or a server no role has, which could not otherwise be found to wire; a node
+  that carries a note; and a node picked from a list, which the view moves to.
+- **Picking a role opens nothing.** The chip is the one thing that does, so it always says what it will do.
+- **Fold all and Show all are commands, not a mode.** Each sets what is open; the chips work the same after either.
 
 ## Nodes
 
 | Family    | Node                | Holds                                                                    | Wires                              |
 | --------- | ------------------- | ------------------------------------------------------------------------ | ---------------------------------- |
-| Team      | Role                | Its name, its properties as switches, its tool groups as ticked lists, its prompt, its models | `spawns`, in and out |
+| Team      | Role                | Its name, its job, whether it leads the team and may ask the Human, the agent profiles it runs as, whom it may seat and speak to, its tool groups as ticked lists, its prompt | `spawns`, in and out; every wire of equipment, in at `uses` |
 | Team      | Human               | One, fixed                                                               | From each role that may ask or message the Human |
 | Equipment | Skill               | Its folder: `SKILL.md` and the files beside it. A node once the folder is there, wired or not | To each role that has it |
 | Equipment | Outside server      | Its command or address, the variables it names. Set in its panel         | To a role; drawing the wire asks which of its tools the role may call, and the wire says them |
@@ -97,9 +125,19 @@ asked of the one a template has (`REFLEX.md`). It is `classifier` in `profile.ya
 route, and adding it again names another; its panel sets each route and takes one away, the last never alone. Taken
 away, the template asks no model, and each question and moment that would have been asked says so in a note.
 
+## A role's job
+
+`delegates`, `writes`, `reading` and `watches` are one choice of five in a role's panel: hands out work, writes
+code, reviews, watches, or none of these. `resolveProfile` takes at most one of the four, so four switches could be
+set in ways it refuses; one choice cannot. Choosing a job takes the one the role had in the same change (Decided 9),
+and the tool groups that follow each go and come with it. `root` and `humanDoor` stay switches: whether a role leads
+the team, and whether it may ask the Human.
+
 ## Wires
 
 A wire has a kind, a socket takes only its own kind, and every kind says what it becomes when the template is saved.
+One socket takes three: a role's `uses`, where every skill, tool group and server given to it comes in, so a role has
+one place for what it is given.
 
 | Family    | Wire                       | Becomes                                              | Held by                                      |
 | --------- | -------------------------- | ---------------------------------------------------- | -------------------------------------------- |
@@ -110,8 +148,7 @@ A wire has a kind, a socket takes only its own kind, and every kind says what it
 | Flow      | `then`, and `does` from a role to a step | A line of `flow.md`: the step, who does it, what follows | Nobody: the record shows where it was left |
 
 - **Speaking is not a free wire.** A role speaks to its `parent`, its `children`, its `descendants` or the Human,
-  counted along the tree of scopes. So it is four switches in the role's node, drawn as arrowheads on its `spawns`
-  wires and as a wire to the Human.
+  counted along the tree of scopes. So it is four ticks in the role's panel, and the Human among them is a wire too.
 - **The wire to the Human is `human` in the role's `speaksTo`.** Cutting it also switches `humanDoor` off: a role that
   may not speak to the Human does not ask them either.
 - **A server's wire carries tools.** Paseo approves an outside tool by its name, so a wire with no tool named gives
@@ -127,7 +164,7 @@ A wire has a kind, a socket takes only its own kind, and every kind says what it
 
 The kernel refuses a command from anyone but the caller it names (`KERNEL.md` §6), so most tools mean something only
 to a role with one property. A group follows that property: switching the property on puts the group in the role's
-node, every tool ticked, and the author unticks what the role is not to be shown.
+panel, every tool ticked, and the author unticks what the role is not to be shown.
 
 | Group       | Tools                                                                                                    | Follows                  |
 | ----------- | -------------------------------------------------------------------------------------------------------- | ------------------------ |
@@ -146,11 +183,11 @@ node, every tool ticked, and the author unticks what the role is not to be shown
 | The machine | `hold_machine`                                                                                           | Optional: a node         |
 
 - Every tool an agent may be shown is in one group and only one.
-- A group in a role's node keeps that role's own ticks, which a node shared by several roles could not. Only the
+- A group in a role's panel keeps that role's own ticks, which a node shared by several roles could not. Only the
   optional groups and outside servers are nodes; a wire from one that gives a role only part of the group says how
   much.
-- A group is in a role's node when the role has its property, or is shown any of its tools: what a file holds is
-  never left off the graph.
+- A group is in a role's panel when the role has its property, or is shown any of its tools: what a file holds is
+  never left out.
 - Groups are the editor's. The template saved keeps the flat `tools` list the plugin reads today, and one opened is
   folded back into groups.
 - The SLP profile is these defaults less what it hides: the root's `hand_back` and `report`, the writer's `report`,
@@ -237,8 +274,9 @@ The same notes are printed by `npm run template -- check <dir>` for a template w
 
 ## Easy to use
 
-A template is some five to thirty nodes, so drawing is never slow; what is felt is the handling.
+A template is some tens of nodes and most are folded, so drawing is never slow; what is felt is the handling.
 
+- A node picked from a list is brought into view, drawn there if it was folded.
 - A wire dropped on empty space opens the node search, already narrowed to what that socket takes, with a new node
   of that kind last in it.
 - A kind of node is dragged from the panel onto the graph, or clicked to land in the middle of the view.

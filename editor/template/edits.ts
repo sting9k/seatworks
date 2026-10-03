@@ -1,7 +1,7 @@
 import type { Relation, Role, Route, Server } from "../../shared/contracts/profile.ts";
 import { type Step, withAbout, withEditor } from "./about.ts";
 import { flowText } from "./flow.ts";
-import type { Property, Wire } from "./graph.ts";
+import { type Job, JOBS, type Property, type Wire } from "./graph.ts";
 import { readTemplate, type Template, type TemplateFiles } from "./read-template.ts";
 import {
   momentSkeleton,
@@ -81,6 +81,17 @@ export const setProperty =
       switched(text, template, template.profile.roles.get(name)!, property, on),
     );
   };
+
+/** Gives a role one job in place of the one it had, or none: one change, where two switches would be refused. */
+export const setJob = (name: string, job: Job | null): Edit =>
+  together(
+    ...JOBS.filter((other) => other !== job).map(
+      (other): Edit =>
+        (template) =>
+          template.profile.roles.get(name)![other] ? setProperty(name, other, false)(template) : template.files,
+    ),
+    ...(job === null ? [] : [setProperty(name, job, true)]),
+  );
 
 function switched(text: string, template: Template, before: Role, property: Property, on: boolean): string {
   const after: Role = { ...before, [property]: on };

@@ -22,6 +22,7 @@ import {
   renameRole,
   renameSection,
   renameSkill,
+  setJob,
   setProperty,
   setRoute,
   setSection,
@@ -30,7 +31,7 @@ import {
   together,
   wired,
 } from "../../editor/template/edits.ts";
-import { type Graph, graphOf } from "../../editor/template/graph.ts";
+import { type Graph, graphOf, JOBS } from "../../editor/template/graph.ts";
 import { readTemplate, type Template, type TemplateFiles } from "../../editor/template/read-template.ts";
 import { slpFiles } from "./slp.ts";
 
@@ -114,6 +115,24 @@ test("the root switched on for a second role moves there: a template has one roo
 
   assert.equal(after.profile.root.name, "lead");
   assert.ok(!role(graphOf(after), "supervisor").properties.includes("root"));
+});
+
+test("a role's job is changed in one step, the old one's tools going and the new one's coming; none is a job too", () => {
+  const reviewing = changed(slp, setJob("peer", "reading"));
+  const after = reviewing.profile.roles.get("peer")!;
+  assert.deepEqual([after.writes, after.reading], [false, true]);
+  assert.ok(after.tools.has("record_verdict") && !after.tools.has("hand_back"));
+  assert.equal(role(graphOf(reviewing), "peer").job, "reading");
+
+  const idle = changed(reviewing, setJob("peer", null));
+  assert.deepEqual(
+    JOBS.filter((job) => idle.profile.roles.get("peer")![job]),
+    [],
+  );
+
+  const refused = applied(slp, setJob("lead", "writes"));
+  assert.ok(!refused.ok, "a role that seats others cannot stop handing out work");
+  assert.match(refused.says, /lead spawns roles/);
 });
 
 test("a change that would leave a template that does not load is not made, and says why", () => {

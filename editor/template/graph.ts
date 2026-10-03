@@ -4,18 +4,26 @@ import type { Asked, Template } from "./read-template.ts";
 import { TOOL_GROUPS } from "./tool-groups.ts";
 import { type Earned, earnedOf } from "./wording.ts";
 
-export const PROPERTIES = ["root", "delegates", "writes", "reading", "watches", "humanDoor"] as const;
+const PROPERTIES = ["root", "delegates", "writes", "reading", "watches", "humanDoor"] as const;
 export type Property = (typeof PROPERTIES)[number];
+/** What a role is for: the plugin takes at most one of the four for a role, and takes none. */
+export const JOBS = ["delegates", "writes", "reading", "watches"] as const;
+export type Job = (typeof JOBS)[number];
 
 type RoleNode = {
   readonly kind: "role";
   readonly id: string;
   readonly name: string;
   readonly properties: readonly Property[];
+  readonly job: Job | null;
+  /** The roles it may seat. */
+  readonly seats: readonly string[];
   readonly speaks: readonly Relation[];
   readonly models: readonly string[];
   /** The words it reads on every turn (`checks.ts`). */
   readonly alwaysOn: number;
+  /** How many of the team's tools it is shown. */
+  readonly shown: number;
   /** The groups its properties bring, each tool ticked when the role is shown it. */
   readonly groups: readonly {
     readonly id: string;
@@ -216,9 +224,12 @@ function roleNode(role: Role, prompt: string | null, alwaysOn: number): RoleNode
     id: roleId(role.name),
     name: role.name,
     properties: PROPERTIES.filter((property) => role[property]),
+    job: JOBS.find((job) => role[job]) ?? null,
+    seats: [...role.spawns],
     speaks: [...role.speaksTo],
     models: role.models,
     alwaysOn,
+    shown: role.tools.size,
     groups,
     file: prompt,
   };

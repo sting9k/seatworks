@@ -113,7 +113,7 @@ export function App() {
           }}
         >
           <Icon name="grid" />
-          Templates
+          Gallery
         </button>
         {tabs.map((other) => {
           const about = readTemplate(other.files);
@@ -141,6 +141,9 @@ export function App() {
             </span>
           );
         })}
+        <span className="brand">
+          Seatworks <small>templates</small>
+        </span>
       </nav>
       {tab && read?.ok ? (
         <Workspace

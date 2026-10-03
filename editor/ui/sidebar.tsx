@@ -2,29 +2,33 @@ import { useState } from "react";
 import type { Graph, GraphNode } from "../template/graph.ts";
 import type { TemplateFiles } from "../template/read-template.ts";
 import type { Note } from "../template/checks.ts";
-import { MAKEABLE, type Makeable } from "./editing.ts";
+import type { Makeable } from "./editing.ts";
 import { Icon } from "./icons.tsx";
 
 const FAMILIES: readonly { readonly name: string; readonly kinds: readonly GraphNode["kind"][] }[] = [
   { name: "Team", kinds: ["role", "human"] },
   { name: "Equipment", kinds: ["skill", "tools", "server"] },
-  { name: "Attention", kinds: ["classifier", "moment", "question"] },
+  { name: "The watch", kinds: ["classifier", "moment", "question"] },
   { name: "Flow", kinds: ["step"] },
   { name: "Report", kinds: ["section"] },
 ];
 const MAKES: Readonly<Record<Makeable, { readonly label: string; readonly says: string }>> = {
-  role: { label: "Role", says: "A seat in the team: what it may do and what it reads" },
-  skill: { label: "Skill", says: "A craft a role opens when its moment comes" },
-  server: { label: "Outside server", says: "Tools from an MCP server that is not the team's" },
-  step: { label: "Step", says: "A step of the team's flow, and what comes after it" },
-  classifier: {
-    label: "Classifier",
-    says: "The model the questions and the moments are asked of, by where it is served",
-  },
-  question: { label: "Reflex question", says: "One condition asked of an event of the record" },
-  moment: { label: "Watch moment", says: "One condition asked of what a watched role says and does" },
-  section: { label: "Report section", says: "A heading the team's reports are written and read under" },
+  role: { label: "Role", says: "A seat in the team" },
+  skill: { label: "Skill", says: "A craft a role loads when it is needed" },
+  server: { label: "Outside server", says: "Tools from a server outside the team" },
+  step: { label: "Step", says: "A stage of the work, and who does it" },
+  classifier: { label: "Classifier", says: "The small model the questions are asked of" },
+  question: { label: "Reflex question", says: "Asked on an event; it notes or it tells" },
+  moment: { label: "Watch moment", says: "Looked for in what a role says and does" },
+  section: { label: "Section", says: "What a report says under one heading" },
 };
+/** The kinds of node to add, by the family each belongs to. */
+const ADDS: readonly { readonly name: string; readonly kinds: readonly Makeable[] }[] = [
+  { name: "Team", kinds: ["role"] },
+  { name: "Equipment", kinds: ["skill", "server"] },
+  { name: "The watch", kinds: ["classifier", "question", "moment"] },
+  { name: "Flow and report", kinds: ["step", "section"] },
+];
 /** What a dragged node carries its kind under, for the canvas it is dropped on. */
 export const DRAGGED = "application/x-seatworks-node";
 
@@ -48,7 +52,7 @@ export function NodesPanel({
   return (
     <nav className="panel">
       <h2>Nodes</h2>
-      <div className="tabs">
+      <div className="segments">
         <button
           type="button"
           className={tab === "here" ? "on" : ""}
@@ -70,31 +74,36 @@ export function NodesPanel({
       </div>
       {tab === "add" ? (
         <>
-          <p className="section">Drag onto the graph</p>
-          <ul className="rows">
-            {MAKEABLE.map((kind) => (
-              <li key={kind}>
-                <button
-                  type="button"
-                  draggable
-                  title={MAKES[kind].says}
-                  onDragStart={(event) => {
-                    event.dataTransfer.setData(DRAGGED, kind);
-                    event.dataTransfer.effectAllowed = "copy";
-                  }}
-                  onClick={() => {
-                    onMake(kind);
-                  }}
-                >
-                  <i className={`dot kind-${kind}`} />
-                  <span>
-                    {MAKES[kind].label}
-                    <small>{MAKES[kind].says}</small>
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
+          <p className="hint">Drag one onto the graph, or press it to add it in the middle.</p>
+          {ADDS.map((family) => (
+            <div key={family.name}>
+              <p className="section">{family.name}</p>
+              <ul className="adds">
+                {family.kinds.map((kind) => (
+                  <li key={kind}>
+                    <button
+                      type="button"
+                      draggable
+                      onDragStart={(event) => {
+                        event.dataTransfer.setData(DRAGGED, kind);
+                        event.dataTransfer.effectAllowed = "copy";
+                      }}
+                      onClick={() => {
+                        onMake(kind);
+                      }}
+                    >
+                      <i className={`dot kind-${kind}`} />
+                      <span>
+                        <b>{MAKES[kind].label}</b>
+                        <small>{MAKES[kind].says}</small>
+                      </span>
+                      <Icon name="plus" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </>
       ) : (
         <>
@@ -102,7 +111,7 @@ export function NodesPanel({
             <Icon name="search" />
             <input
               type="search"
-              placeholder="Search…"
+              placeholder="Find a node"
               value={query}
               onChange={(event) => {
                 setQuery(event.target.value);

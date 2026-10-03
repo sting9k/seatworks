@@ -336,7 +336,14 @@ A template's files in, what a person sees out (`EDITOR.md`).
 | The SLP profile opened                                      | Each role's ticked tools are exactly its `tools` in `profile.yaml`, in its node's groups or on a wire to it |
 | Every tool a profile may give a role                        | In one of the editor's groups, and in one only                      |
 | A template that names a skill, or a note for the project, it does not carry | Not opened, saying which                             |
-| A template that keeps no positions opened                   | Every node placed, no two on top of each other; the nodes of a family no wire places share no row with another's, so each frame holds its own |
+| A template that keeps no positions opened                   | Every node placed, no two on top of each other; the nodes of a family no wire places share no row with another's, so each frame holds its own; the classifier and the two stacks on one row |
+| SLP opened with nothing unfolded                            | On the canvas: its roles, the Human, the classifier and a report's sections; each role says how many skills, and how many tool groups and servers, are folded into it |
+| A role opened; a role picked; a stack opened                | What is wired into the opened role is shown, a skill two roles have among it; picking opens nothing; the stack's family is shown |
+| A skill no role has; a node that carries a note; a node picked from a list | Each shown, whatever is folded                        |
+| What of a template is laid out                              | Not what sits beside a role, of which the role says how many there are; a stack for each family that folds; only the wires that place a node are followed |
+| Two roles one role seats, each with more beside it than it is tall | Laid out far enough apart for each to open all of it          |
+| A role's opened skills, tool groups and servers             | In a column at its left, clear of the role and of what is one rank before it, about the role's middle |
+| A role's job changed to another, then to none; a job a role that seats others cannot leave | The old job's tools go and the new one's come, in one change; none leaves it no job; the last is not made, saying why |
 | The SLP profile packed with nothing changed, and opened again | Every file as it was, to the byte                                  |
 | A template whose nodes were put somewhere, then saved       | The places are in `template.json` and in no other file; opened again, each node is where it was put |
 | A file that is not a packed template                        | Not opened, saying so                                               |
