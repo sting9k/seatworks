@@ -13,6 +13,10 @@ export function systemPromptFor(bundle: Bundle, actor: Actor, rules: string | nu
   return `${parts.filter(Boolean).join("\n\n")}\n`;
 }
 
+/** How an agent waits, in its first words: a turn kept open by a sleep keeps out the very word it waits for. */
+const WAITS =
+  "Nothing sent to you arrives while your turn runs. To wait for a hand-back, a check's result or an answer, end your turn: what you wait for begins your next one.";
+
 /** The first words an agent is sent: where it stands on the record, which is also what `status` shows. */
 export function firstPrompt(state: State, actor: Actor, reseated: boolean, docs: readonly string[]): string {
   const status = statusText(state, actor.scope, actor.id) ?? `Scope ${actor.scope}`;
@@ -23,5 +27,5 @@ export function firstPrompt(state: State, actor: Actor, reseated: boolean, docs:
     docs.length > 0
       ? `\n\nThe project's docs in your copy: ${docs.map((d) => `\`${d}\``).join(", ")}. One that is not there holds nothing yet.`
       : "";
-  return `${lead} You are ${actor.id}.${read}\n\n${status}`;
+  return `${lead} You are ${actor.id}.${read}\n\n${WAITS}\n\n${status}`;
 }

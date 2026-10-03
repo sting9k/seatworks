@@ -84,6 +84,12 @@ A turn's end is a fact from the agent host (`PASEO.md`). A delivery sent as a tu
 busy waits for the next turn's end; it is never pushed into the turn. A reader waiting on a permission is inside its
 turn, so nothing reaches it until the permission is answered.
 
+An agent is told how it waits, since one that waits inside its turn waits for what cannot reach it. Its first words
+say that nothing sent to it arrives while its turn runs and that it waits by ending the turn; each reply that
+promises an outcome later says the outcome comes once the turn has ended. On a live Paseo (3 October 2026), agents
+told only that they would be told slept and looked again inside one turn: a Supervisor for seventeen minutes with
+seven deliveries waiting, a Lead until the owner above reseated it.
+
 **When a turn fails.** Words the plugin sent that began a turn the host's error ended (a provider's outage, a crash)
 are sent again once, saying the turn failed and why, so the reader is not left idle with what it was asked. They are
 not sent again as new words: the host keeps them in the reader's history, and a copy beside them would read as a second

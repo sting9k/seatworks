@@ -161,7 +161,7 @@ test("the work tools: checks a writer runs itself, a hand-back sent back and han
 
   assert.equal(
     await did(c, maker, "run_checks", { scope: "1", commit: half }),
-    "Recorded: evidence requested, and you are told its result when it has run.",
+    "Recorded: evidence requested, and you are told its result when it has run and your turn has ended.",
   );
   assert.match(await status(maker), new RegExp(`Evidence:\\n- e1 check by a2 on ${half}: failing · done failed`));
   assert.match(
@@ -228,7 +228,7 @@ test("the work tools: checks a writer runs itself, a hand-back sent back and han
   const taken = { scope: "1", evidence: [passing, verdict], reason: "one word is what was asked" };
   assert.equal(
     await did(c, chief, "integrate", taken),
-    "Recorded: integration started, and you are told when it is made or refused.",
+    "Recorded: integration started, and you are told when it is made or refused, once your turn has ended.",
   );
   assert.equal(git(c.repo, "rev-parse", "main"), head, "the base holds the commit");
   assert.equal(c.told(0).at(-1), `Scope 1 is integrated: main is at ${head}.`, "whoever asked for it is told it is in");
@@ -245,7 +245,7 @@ test("the work tools: checks a writer runs itself, a hand-back sent back and han
 
   assert.equal(
     await did(c, chief, "publish", { remote: "origin" }),
-    "Recorded: publish requested, and you are told when it is pushed or refused.",
+    "Recorded: publish requested, and you are told when it is pushed or refused, once your turn has ended.",
   );
   assert.equal(git(c.remote, "rev-parse", "main"), head);
   assert.equal(c.told(0).at(-1), `Published main to origin at ${head}.`, "and that it is on the remote");

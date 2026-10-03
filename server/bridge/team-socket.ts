@@ -217,9 +217,9 @@ function stillOpen(e: Event, state: State): string {
 
 /** What comes of a command that only starts something, said with its reply: its caller is told the outcome later. */
 const LATER: Partial<Record<Event["type"], string>> = {
-  evidence_requested: ", and you are told its result when it has run",
-  integration_started: ", and you are told when it is made or refused",
-  publish_requested: ", and you are told when it is pushed or refused",
+  evidence_requested: ", and you are told its result when it has run and your turn has ended",
+  integration_started: ", and you are told when it is made or refused, once your turn has ended",
+  publish_requested: ", and you are told when it is pushed or refused, once your turn has ended",
 };
 
 /** The id of what an event made, where its caller names it by that id from then on; a second call would only read it. */

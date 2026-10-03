@@ -55,6 +55,11 @@ test("one lane end to end: a Supervisor, a Lead and a Peer land a change on main
     /You are a1\.\n\nThe project's docs in your copy: `GLOSSARY\.md`, `docs\/adr`\. One that is not there holds nothing yet\.\n\n/,
     "its brief points at the docs",
   );
+  assert.match(
+    supervisorAgent.prompt,
+    /\n\nNothing sent to you arrives while your turn runs\. To wait for a hand-back, a check's result or an answer, end your turn: what you wait for begins your next one\.\n\nScope root/,
+    "and say how it waits for anything: by ending its turn",
+  );
 
   const supervisor = await agentTools(socketPath, supervisorAgent.env);
   assert.equal(supervisor.welcome.type, "welcome");
