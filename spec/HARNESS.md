@@ -29,7 +29,7 @@ agent's tools reach it) in a home's files, `{git}` (the repository's git directo
 | --------- | ---------------------------------------------------------------------------------------------- |
 | `writes`  | Works in its scope's own worktree and commits there.                                           |
 | otherwise | Works in a throwaway copy at the commit it reads, with its agent's own tools, so a Lead or a Reviewer can run what a decision or a review needs; what it changes there reaches nothing. |
-| always    | No native subagents. The team's tools. Its role prompt. No push, no branch move, no git outside its copy. |
+| always    | No native subagents. The team's tools. Its role prompt. No push, no branch move, no git outside its copy, or outside the repository for the root's agent. |
 
 ## Guards that hold on every agent
 

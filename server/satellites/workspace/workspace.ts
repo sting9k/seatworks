@@ -36,6 +36,11 @@ export class Workspace {
     return found.code === 0 ? found.stdout.trim() : join(this.repo, ".git");
   }
 
+  /** The commit a branch or a ref of the repository is at; none where it has no such ref. */
+  headOf(ref: string): Promise<string | null> {
+    return sha(this.repo, ref);
+  }
+
   /** A writer's worktree on a branch of its own, or a reader's detached copy. Asked again, it answers what it made. */
   async create(
     scope: string,

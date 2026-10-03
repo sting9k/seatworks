@@ -1,10 +1,11 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { chmodSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, test } from "node:test";
 import { Plugin } from "../../server/bridge/plugin.ts";
+import { agentTools } from "./agent-tools.ts";
 import { fakePaseo } from "./fake-paseo.ts";
 import { stateRoot } from "./state-root.ts";
 
@@ -24,12 +25,13 @@ after(async () => {
 });
 
 async function started() {
-  const plugin = new Plugin(stateRoot());
+  const root = stateRoot();
+  const plugin = new Plugin(root);
   plugins.push(plugin);
   const paseo = fakePaseo(pluginDir);
   plugin.saw(paseo.api);
   await plugin.whenReady();
-  return { plugin, paseo };
+  return { plugin, paseo, root };
 }
 
 test("every project Paseo has is offered, with how it stands with git: ready with a commit, not yet with none, and a part of another's repository says whose", async () => {
@@ -130,26 +132,41 @@ function repository(name: string): string {
   return repo;
 }
 
-test("every agent of a team is made in a workspace of the project Paseo keeps for the repository the team is attached to: Paseo is given no project for a copy, and a seat made again uses the workspace its copy has", async () => {
+test("the root's agent works in the repository itself and an agent under it in a copy made for its work; Paseo lists both under the repository's project, is given no project for a copy, and a seat taken again keeps its workspace", async () => {
   const { plugin, paseo } = await started();
+  const { socketPath } = await plugin.whenReady();
   const repo = repository("placed");
   paseo.projects.push(repo);
-  const { project } = await plugin.openProject(repo, "main");
+  await plugin.openProject(repo, "main");
   await plugin.idle();
 
-  const first = paseo.created[0];
-  assert.ok(first, "the root's agent is made");
-  assert.notEqual(first.cwd, repo, "it runs in a copy of its own");
-  assert.equal(first.project, repo, "and is filed under the repository's project");
+  const root = paseo.created[0];
+  assert.ok(root, "the root's agent is made");
+  assert.deepEqual([root.cwd, root.project], [repo, repo], "where the Human works, and under their project");
+  assert.deepEqual(
+    git(repo, "worktree", "list", "--porcelain").match(/^worktree /gm)?.length,
+    1,
+    "no copy is made for it",
+  );
+
+  const supervisor = await agentTools(socketPath, root.env);
+  const lane = { parent: "root", role: "lead", paths: ["src/"], brief: { goal: { text: "Lane" }, kind: "discovery" } };
+  assert.ok((await supervisor.call("open_scope", lane)).ok);
+  await plugin.idle();
+  const lead = paseo.created[1];
+  assert.ok(lead, "the lane's agent is made");
+  assert.notEqual(lead.cwd, repo);
+  assert.ok(existsSync(join(lead.cwd, ".git")), "in a copy of its own, made when its work was opened");
+  assert.equal(lead.project, repo, "and filed under the repository's project");
   assert.deepEqual(paseo.projects, [repo], "Paseo is given no project of the copy's folder");
   assert.deepEqual(await plugin.unattached(), [], "so no copy is ever offered to attach a team to");
 
-  const again = await plugin.human(project, { type: "reseat", scope: "root", reason: "anew", model: null });
-  assert.ok(again.ok, again.ok ? "" : again.refused.says);
+  assert.ok((await supervisor.call("reseat", { scope: "1", reason: "anew", model: null })).ok);
   await plugin.idle();
-  assert.equal(paseo.created.length, 2);
-  assert.equal(paseo.created[1]?.workspace, first.workspace, "one workspace a copy, however often its seat is taken");
-  assert.equal(paseo.workspaces.length, 1);
+  assert.equal(paseo.created.length, 3);
+  assert.equal(paseo.created[2]?.workspace, lead.workspace, "one workspace a copy, however often its seat is taken");
+  assert.equal(paseo.workspaces.length, 2);
+  supervisor.close();
 });
 
 test("a repository Paseo keeps no project for is opened in Paseo when its first agent is made, and the team is filed under it", async () => {
@@ -163,21 +180,21 @@ test("a repository Paseo keeps no project for is opened in Paseo when its first 
 });
 
 test("a worktree of a repository, and a folder the plugin keeps for itself, are never offered to attach a team to", async () => {
-  const { plugin, paseo } = await started();
+  const { plugin, paseo, root } = await started();
   const repo = repository("with-worktree");
   const tree = join(folder("trees"), "feature");
   git(repo, "worktree", "add", "-q", "--detach", tree);
-  paseo.projects.push(repo, tree);
   const { project } = await plugin.openProject(repo, "main");
   await plugin.idle();
-  // What a Paseo that was given the copy's folder alone still lists: a project of that folder.
-  const copy = paseo.created[0]!.cwd;
-  paseo.projects.push(copy);
+  // What a Paseo that was once given a copy's folder alone still lists: a project of that folder.
+  const copy = join(realpathSync(root), "projects", project, "copies", "1");
+  mkdirSync(copy, { recursive: true });
+  paseo.projects.push(tree, copy);
 
   assert.deepEqual(
     (await plugin.unattached()).map((found) => [found.root, found.git, found.within]),
     [[tree, "inside", repo]],
-    "the worktree says whose it is, and the plugin's own copy is not listed at all",
+    "the worktree says whose it is, and the plugin's own folder is not listed at all",
   );
   const offered = await plugin.gitOffer(tree);
   assert.ok(!offered.ok, "nor is git set up in a worktree");
@@ -185,7 +202,6 @@ test("a worktree of a repository, and a folder the plugin keeps for itself, are 
   const own = await plugin.folderAt(copy);
   assert.ok(!own.ok, "given by its path, the plugin's own folder is refused");
   assert.match(own.says, /Seatworks keeps/);
-  assert.ok(project);
 });
 
 test("a project takes the remote its repository has as where it is published: origin where there is one, else its only one, else none", async () => {

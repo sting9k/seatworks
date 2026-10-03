@@ -48,6 +48,12 @@ export type Wiring = {
 
 const WAIT: Handled = { status: "wait" };
 
+/** Where a seat's agent works: the root in the repository itself, a watch in the scratch, every other in a copy of its own. */
+function seatDir(w: Pick<Wiring, "workspace" | "scratch">, scope: Scope): string {
+  if (scope.kind === "watch") return w.scratch;
+  return scope.id === ROOT ? w.workspace.repo : w.workspace.pathOf(scope.id);
+}
+
 /** What an agent's tools need to know of its seat: who it is, its key, whether it writes, its copy and the plugin. */
 export function seatEnv(
   w: Pick<Wiring, "project" | "keys" | "team" | "workspace" | "scratch">,
@@ -55,7 +61,7 @@ export function seatEnv(
   scope: Scope,
   writes: boolean,
 ): { cwd: string; env: Record<string, string> } {
-  const cwd = scope.kind === "watch" ? w.scratch : w.workspace.pathOf(scope.id);
+  const cwd = seatDir(w, scope);
   return {
     cwd,
     env: {
@@ -95,16 +101,23 @@ export function handlersFor(w: Wiring): Handlers {
       if (!scope || scope.status !== "open") return { status: "dropped", why: `scope ${e.scope} is gone` };
       const role = w.bundle.profile.roles.get(scope.role);
       const from = parentBranch(state, scope);
+      if (scope.id === ROOT) {
+        // The root is seated where the Human works, in the repository itself: a copy is made for work under it.
+        const base = scope.branch ?? "HEAD";
+        const head = await w.workspace.headOf(base);
+        const why = `the repository has no ${base} to work from`;
+        return head === null
+          ? done({ type: "record_workspace", scope: ROOT, ok: false, branch: null, head: null, why })
+          : done({ type: "record_workspace", scope: ROOT, ok: true, branch: scope.branch, head, why: null });
+      }
       let made;
-      if (scope.id === ROOT)
-        made = await w.workspace.create(scope.id, { kind: "reader", at: scope.branch ?? "HEAD", branch: null });
-      else if (scope.commit !== null)
+      if (scope.commit !== null)
         made = await w.workspace.create(scope.id, { kind: "reader", at: scope.commit, branch: null });
       else if (role?.writes)
         made = await w.workspace.create(scope.id, { kind: "writer", branch: branchOf(scope.id), from: from ?? "HEAD" });
       else
         made = await w.workspace.create(scope.id, { kind: "reader", at: from ?? "HEAD", branch: branchOf(scope.id) });
-      const branch = scope.id === ROOT ? scope.branch : scope.commit !== null ? null : branchOf(scope.id);
+      const branch = scope.commit !== null ? null : branchOf(scope.id);
       return made.ok
         ? done({ type: "record_workspace", scope: scope.id, ok: true, branch, head: made.head, why: null })
         : done({ type: "record_workspace", scope: scope.id, ok: false, branch: null, head: null, why: made.why });

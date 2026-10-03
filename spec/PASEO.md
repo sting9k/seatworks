@@ -202,7 +202,8 @@ On 3 October 2026, Paseo 0.10.3, the owner's own daemon:
   traced to its repository there. Paseo's own shape is a project with workspaces under it, each the project's
   folder or a worktree of it, and `workspace.create` takes the project a directory is filed under. So every agent
   is now made in a workspace of the project of the repository its team is attached to, found by that repository's
-  path, one workspace a copy however often its seat is taken; a repository Paseo keeps no project for is opened
+  path, one workspace a folder however often its seat is taken: the root's in the repository itself, where it now
+  works (`PORTS.md`, Workspace), and each agent's under it in its own copy; a repository Paseo keeps no project for is opened
   there first, as the Human adding it would. A project stays in Paseo until it is removed there, so one made for a
   copy before this is the Human's to remove. Paseo archives a workspace whose folder is gone on its own pass
   (`workspace-reconciliation-service.js`), so a copy removed takes its workspace with it.

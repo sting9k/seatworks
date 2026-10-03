@@ -80,6 +80,7 @@ create(key, base, branch) -> Result<path>                 // runs the project's 
 merge(path, from) -> Result<sha | conflict(paths)>        // a conflict is undone, never left half merged
 advance(branch, fromSha, toSha, how) -> Result<sha>       // how: squash | merge | ff; refuses if branch moved
 state(path) -> { head, branch, uncommitted }
+headOf(ref) -> sha | none                                 // where a branch of the repository is
 remove(key) -> Result<removed | kept(why)>                // keeps a copy holding uncommitted work
 publish(branch, remote, expectedSha) -> Result<sha>       // never forced; refuses if the branch moved, or the remote
 onDisk() -> { key, path, branch, unsaved }[]              // every copy under the root, used or not
@@ -93,7 +94,15 @@ putBlock(branch, file, marker, body | null) -> Result<sha | unchanged | refused(
 
 Invariants, taken from Symphony's workspace safety rules:
 
-- An agent runs only in its own copy, and a copy's path stays inside the workspace root.
+- The root's agent works in the repository itself, where the Human does. It coordinates and hands work out, so no
+  copy is made for it, and it reads the project as the Human has it. The owner's words: "Supervisor ở project gốc,
+  nó điều phối, các lead sinh ra để làm task bọn nó mới work trên worktree mới tại thời điểm đấy." The first build
+  gave the root a copy too, to hold any agent away from the Human's files; a copy with no work in it was a second
+  checkout of the project for nothing, and stood in Paseo as a project of its own.
+- Every agent under the root works only in a copy of its own, made when its scope is opened, and a copy's path stays
+  inside the workspace root. When its scope is taken in, its work is merged into its parent's branch, for a lane the
+  project's base, and its copy and branch are removed with that; dropped, the copy goes and a branch with commits
+  nothing holds stays for the Human to look at.
 - A key is sanitized to `[A-Za-z0-9._-]`, with a stable hash suffix when sanitizing changed it.
 - The git an agent runs refuses what only the workspace does (branch moves, pushes, switching, work outside its own
   copy). It guards against mistakes, not intent.
