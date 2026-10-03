@@ -99,13 +99,13 @@ test("Sync takes the installed files for the agents seated from then on: the one
   const view = (await run.plugin.view(project))!;
   assert.equal(view.template.state, "current");
   assert.notEqual(view.template.hash, before);
-  const taken = () => view.activity.filter((line) => line.includes("took its template's files anew")).length;
+  const taken = () => view.activity.filter((line) => line.text.includes("took its template's files anew")).length;
   assert.equal(taken(), 1);
-  assert.ok(view.activity.some((line) => line.includes(`anew (${view.template.hash})`)));
+  assert.ok(view.activity.some((line) => line.text.includes(`anew (${view.template.hash})`)));
 
   assert.ok((await run.plugin.syncTemplate(project)).ok);
   const after = (await run.plugin.view(project))!;
-  assert.equal(after.activity.filter((line) => line.includes("took its template's files anew")).length, 1);
+  assert.equal(after.activity.filter((line) => line.text.includes("took its template's files anew")).length, 1);
 });
 
 test("Sync is refused when the template is no longer installed, or the installed one does not load, and the project runs on as it was", async () => {
@@ -176,7 +176,7 @@ test("a project's own copy changed by hand is said on its page and on the record
 
   assert.deepEqual([view.template.state, view.template.edited], ["current", true]);
   const lines = (await again.plugin.view(project))!.activity;
-  assert.equal(lines.filter((line) => line.includes("took its template's files anew")).length, 1);
+  assert.equal(lines.filter((line) => line.text.includes("took its template's files anew")).length, 1);
 
   assert.ok((await again.plugin.syncTemplate(project)).ok);
   assert.equal((await again.plugin.view(project))?.template.edited, false);

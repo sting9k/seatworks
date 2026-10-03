@@ -11,11 +11,13 @@ async function topOf(dir: string): Promise<string | null> {
   return top.code === 0 ? realpathSync(top.stdout.trim()) : null;
 }
 
-export async function gitStateOf(dir: string): Promise<GitState> {
+/** How a folder stands with git, and the repository it is a part of where it is one's. */
+export async function gitStateOf(dir: string): Promise<{ git: GitState; within: string | null }> {
   const top = await topOf(dir);
-  if (top === null) return "none";
-  if (top !== realpathSync(dir)) return "inside";
-  return (await git(dir, ["rev-parse", "--verify", "-q", "HEAD"])).code === 0 ? "ready" : "none";
+  if (top === null) return { git: "none", within: null };
+  if (top !== realpathSync(dir)) return { git: "inside", within: top };
+  const committed = (await git(dir, ["rev-parse", "--verify", "-q", "HEAD"])).code === 0;
+  return { git: committed ? "ready" : "none", within: null };
 }
 
 /** Makes a folder a repository where it is none, and says what a first commit of it would hold. */

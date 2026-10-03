@@ -29,6 +29,7 @@ import {
   signalsOf,
 } from "../../shared/views/record.ts";
 import type {
+  Folder,
   HumanView,
   Leftover,
   OwnRuns,
@@ -62,7 +63,7 @@ import { type Asker, Classifier } from "../satellites/reflex/classifier.ts";
 import { loadReflex } from "../satellites/reflex/config.ts";
 import { git } from "../satellites/workspace/git.ts";
 import { createOnGitHub, githubLogin, publishedAt, remotesOf } from "../satellites/workspace/forge.ts";
-import { commitAll, firstCommitOf, type GitState, gitStateOf } from "../satellites/workspace/setup.ts";
+import { commitAll, firstCommitOf, gitStateOf } from "../satellites/workspace/setup.ts";
 import { Workspace } from "../satellites/workspace/workspace.ts";
 import {
   agentsByProfile,
@@ -89,7 +90,6 @@ import { type ProjectPort, TeamSocket } from "./team-socket.ts";
 export const PLUGIN_ID = "seatworks";
 
 /** A folder a team may be attached to: one of Paseo's projects or one given by its path, and how it stands with git. */
-export type Folder = { readonly name: string; readonly root: string; readonly git: GitState };
 /** How long a check may run before it is killed with what it started. */
 const CHECK_TIMEOUT_MS = 30 * 60 * 1000;
 /** How often the plugin lets go of what long use leaves behind: idle projects in memory, settled outbox rows. */
@@ -550,7 +550,7 @@ export class Plugin {
     for (const p of listed.projects) {
       if (!existsSync(p.projectRootPath)) continue;
       const root = realpathSync(p.projectRootPath);
-      if (!attached.has(root)) found.push({ name: p.projectDisplayName, root, git: await gitStateOf(root) });
+      if (!attached.has(root)) found.push({ name: p.projectDisplayName, root, ...(await gitStateOf(root)) });
     }
     return found;
   }
@@ -560,7 +560,7 @@ export class Plugin {
     if (!existsSync(dir) || !statSync(dir).isDirectory()) return { ok: false, says: `there is no folder at ${dir}` };
     const root = realpathSync(dir);
     if (this.projects().some((p) => p.repo === root)) return { ok: false, says: `${root} already has a team` };
-    return { ok: true, folder: { name: basename(root), root, git: await gitStateOf(root) } };
+    return { ok: true, folder: { name: basename(root), root, ...(await gitStateOf(root)) } };
   }
 
   /** What a first commit of a folder would hold, once it is made a repository: read before the Human agrees to one. */
@@ -638,7 +638,10 @@ export class Plugin {
   /** Where a project's repository is published, and the account that could put it on GitHub from here. */
   async remoteOf(
     project: string,
-  ): Promise<{ ok: true; remotes: string[]; github: string | null; name: string } | { ok: false; says: string }> {
+  ): Promise<
+    | { ok: true; remotes: { name: string; at: string }[]; github: string | null; name: string }
+    | { ok: false; says: string }
+  > {
     const kept = this.projects().find((p) => p.id === project);
     if (!kept) return { ok: false, says: `no project ${project} is attached` };
     return { ok: true, remotes: await remotesOf(kept.repo), github: await githubLogin(), name: basename(kept.repo) };
@@ -651,7 +654,8 @@ export class Plugin {
   ): Promise<{ ok: true; url: string } | { ok: false; says: string }> {
     const at = await this.remoteOf(project);
     if (!at.ok) return at;
-    if (at.remotes.length > 0) return { ok: false, says: `it already has a remote, ${at.remotes.join(", ")}` };
+    if (at.remotes.length > 0)
+      return { ok: false, says: `it already has a remote, ${at.remotes.map((remote) => remote.name).join(", ")}` };
     if (at.github === null) return { ok: false, says: "GitHub's command line, gh, is not signed in on this machine" };
     const repo = this.projects().find((p) => p.id === project)!.repo;
     const made = await createOnGitHub(repo, at.name, visibility);
@@ -816,10 +820,12 @@ export class Plugin {
   /** The Human's view of one project: what they need to know, and the last things that happened. */
   async view(project: string): Promise<{
     human: HumanView;
-    activity: string[];
+    activity: { at: string; text: string }[];
     stuck: string[];
     landed: number;
     root: string;
+    base: string | null;
+    rootGone: string | null;
     template: ProjectTemplate;
   } | null> {
     const ready = await this.whenReady();
@@ -827,13 +833,23 @@ export class Plugin {
     if (!existsSync(join(dir, "project.json"))) return null;
     const kept = keptIn(dir, project);
     const runtime = this.runtimes.get(project) ?? this.open(project, ready);
-    const activity = runtime.store
-      .recent(200)
-      .flatMap((e) => activityLine(e) ?? [])
-      .slice(-60);
+    const state = runtime.project.view;
+    const recent = runtime.store.recent(200);
+    const human = humanView(state);
+    // The last agent to leave the root says why nobody sits there now; the state forgets an agent once it is gone.
+    const sat = new Set(recent.flatMap((e) => (e.type === "actor_seated" && e.scope === ROOT ? [e.actor] : [])));
+    const left =
+      human.root?.owner === null ? recent.findLast((e) => e.type === "actor_gone" && sat.has(e.actor)) : undefined;
     return {
-      human: humanView(runtime.project.view),
-      activity,
+      human,
+      activity: recent
+        .flatMap((e) => {
+          const text = activityLine(e);
+          return text === null ? [] : [{ at: e.at, text }];
+        })
+        .slice(-60),
+      base: state.scopes.get(ROOT)?.branch ?? null,
+      rootGone: left?.type === "actor_gone" ? left.why : null,
       stuck: stuckOf(
         runtime.project.view,
         runtime.store.pending(),

@@ -249,7 +249,7 @@ test("the work tools: checks a writer runs itself, a hand-back sent back and han
   );
   assert.equal(git(c.remote, "rev-parse", "main"), head);
   assert.equal(c.told(0).at(-1), `Published main to origin at ${head}.`, "and that it is on the remote");
-  assert.match((await c.plugin.view(c.project))!.activity.at(-1) ?? "", /published main to origin$/);
+  assert.match((await c.plugin.view(c.project))!.activity.at(-1)?.text ?? "", /published main to origin$/);
   for (const t of [chief, maker, reader]) t.close();
 });
 

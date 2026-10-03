@@ -4,6 +4,7 @@ import { type ReactNode, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import type { ViewOutput } from "../../shared/contracts/rpc.ts";
 import { CONTROL, FONT, RADIUS, SPACE } from "../kit/theme.ts";
+import { agoOf } from "../state/words.ts";
 
 type Entry = { readonly key: string; readonly text: string; readonly by?: string };
 
@@ -91,7 +92,11 @@ export function Record({ view, theme }: { view: ViewOutput; theme: PluginTheme }
     {
       label: "Lately",
       counted: false,
-      entries: [...view.activity].reverse().map((line, at) => ({ key: `${at}-${line}`, text: line })),
+      entries: [...view.activity].reverse().map((line, at) => ({
+        key: `${at}-${line.at}`,
+        text: line.text,
+        by: agoOf(Date.now() - Date.parse(line.at)),
+      })),
     },
   ];
   return (

@@ -174,7 +174,13 @@ const ProviderModelSchema = z.object({
 export type ProviderModel = z.infer<typeof ProviderModelSchema>;
 
 /** A folder a team may be attached to, and how it stands with git: ready, none of it yet, or a part of another's. */
-const FolderSchema = z.object({ name: z.string(), root: z.string(), git: z.enum(["ready", "none", "inside"]) });
+const FolderSchema = z.object({
+  name: z.string(),
+  root: z.string(),
+  git: z.enum(["ready", "none", "inside"]),
+  /** The repository it is a part of, by its folder; none where it is one itself or has no git. */
+  within: z.string().nullable(),
+});
 export type Folder = z.infer<typeof FolderSchema>;
 
 /** The Human's surface calls these (PORTS.md, Human surface); shaped as Paseo's plugin RPC contracts. */
@@ -236,7 +242,8 @@ export const RPC = {
     output: z.object({
       ok: z.boolean(),
       text: z.string(),
-      remotes: z.array(z.string()),
+      /** Each remote by its name, with where it points: a host and a path, never the account or secret a URL may carry. */
+      remotes: z.array(z.object({ name: z.string(), at: z.string() })),
       /** The account GitHub's command line is signed in as; none where it is not. */
       github: z.string().nullable(),
       /** The name a new repository would take: the folder's own. */
@@ -254,12 +261,17 @@ export const RPC = {
     input: z.object({ project: z.string().min(1) }),
     output: z.object({
       human: HumanViewSchema.nullable(),
-      activity: z.array(z.string()),
+      /** What happened lately, the oldest first: each with when, for the surface to say how long ago. */
+      activity: z.array(z.object({ at: z.string(), text: z.string() })),
       /** What looks stuck, as facts (`shared/views/stuck.ts`). */
       stuck: z.array(z.string()),
       /** How many scopes the record holds as taken in: the state forgets one once nothing open is under it. */
       landed: z.number(),
       root: z.string(),
+      /** The branch the team lands on; none before the project is opened. */
+      base: z.string().nullable(),
+      /** Why the root has nobody seated, as the record says its last agent went; none where one is seated. */
+      rootGone: z.string().nullable(),
       /** How the project's own copy of its template stands beside the one installed. */
       template: ProjectTemplateSchema.nullable(),
       alarm: z.string().nullable(),

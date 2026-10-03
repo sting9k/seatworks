@@ -17,14 +17,30 @@ function gh(args: readonly string[]): Promise<Ran> {
   });
 }
 
-/** The remotes a repository has, by name. */
-export async function remotesOf(repo: string): Promise<string[]> {
-  return (await git(repo, ["remote"])).stdout.split("\n").filter(Boolean);
+/** Where a remote points as a person reads it: its host and path, with no scheme and none of the account or secret a URL may carry. */
+export function placeOf(url: string): string {
+  const bare = (path: string) => path.replace(/\.git\/?$/, "");
+  const scp = /^[^@/\s]+@([^:/\s]+):(.+)$/.exec(url);
+  if (scp) return `${scp[1]!}/${bare(scp[2]!)}`;
+  if (URL.canParse(url)) {
+    const at = new URL(url);
+    if (at.host) return `${at.host}${bare(at.pathname)}`;
+  }
+  // What does not parse is still never shown with what stands before an @ in it.
+  return url.replace(/^([a-z][a-z0-9+.-]*:\/\/)[^/@]*@/i, "$1");
+}
+
+/** The remotes a repository has, each by its name with where it points. */
+export async function remotesOf(repo: string): Promise<{ name: string; at: string }[]> {
+  const names = (await git(repo, ["remote"])).stdout.split("\n").filter(Boolean);
+  return Promise.all(
+    names.map(async (name) => ({ name, at: placeOf((await git(repo, ["remote", "get-url", name])).stdout.trim()) })),
+  );
 }
 
 /** Where a project is published when its repository says: `origin` where it has one, else its only remote, else none. */
 export async function publishedAt(repo: string): Promise<string | null> {
-  const remotes = await remotesOf(repo);
+  const remotes = (await remotesOf(repo)).map((remote) => remote.name);
   return remotes.includes("origin") ? "origin" : remotes.length === 1 ? remotes[0]! : null;
 }
 

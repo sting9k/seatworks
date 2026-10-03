@@ -9,6 +9,7 @@ import { Row } from "../kit/row.tsx";
 import { Tag } from "../kit/tag.tsx";
 import { FONT, SPACE } from "../kit/theme.ts";
 import { problemText } from "../state/problem-text.ts";
+import { nameOf } from "../state/words.ts";
 
 type Props = {
   readonly folder: Folder;
@@ -48,7 +49,7 @@ export function FolderRow({ folder, templates, theme, busy, onAttach, onSetUp }:
   return (
     <View>
       <Row title={folder.name} meta={folder.root} theme={theme}>
-        {folder.git === "inside" ? <Tag label="part of another repository" theme={theme} /> : null}
+        {folder.within !== null ? <Tag label={`part of ${nameOf(folder.within)}`} theme={theme} /> : null}
         {folder.git === "none" ? <Tag label="no git yet" tone="warning" theme={theme} /> : null}
         {folder.git === "none" && first === null ? (
           <Button

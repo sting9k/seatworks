@@ -47,12 +47,12 @@ test("every project Paseo has is offered, with how it stands with git: ready wit
   paseo.projects.push(ready, plain, begun, part);
 
   assert.deepEqual(
-    (await plugin.unattached()).map((found) => [found.root, found.git]),
+    (await plugin.unattached()).map((found) => [found.root, found.git, found.within]),
     [
-      [ready, "ready"],
-      [plain, "none"],
-      [begun, "none"],
-      [part, "inside"],
+      [ready, "ready", null],
+      [plain, "none", null],
+      [begun, "none", null],
+      [part, "inside", ready],
     ],
   );
 });
@@ -97,7 +97,12 @@ test("a folder given by its path is offered as Paseo's own projects are; what is
   git(repo, "add", ".");
   git(repo, "commit", "-q", "-m", "start");
 
-  assert.deepEqual((await plugin.folderAt(repo)).folder, { name: repo.split("/").pop(), root: repo, git: "ready" });
+  assert.deepEqual((await plugin.folderAt(repo)).folder, {
+    name: repo.split("/").pop(),
+    root: repo,
+    git: "ready",
+    within: null,
+  });
   const missing = await plugin.folderAt(join(repo, "nowhere"));
   assert.ok(!missing.ok);
   assert.match(missing.says, /no folder/);
@@ -145,6 +150,27 @@ test("a project takes the remote its repository has as where it is published: or
     null,
     "two, and neither is origin: the Human names one when they publish",
   );
+});
+
+test("where a project is published is said as a host and a path: never the account or the secret its URL carries", async () => {
+  const { plugin } = await started();
+  const repo = repository("places");
+  const local = folder("bare");
+  git(repo, "remote", "add", "origin", "https://long:s3cret@github.com/you/shop-api.git");
+  git(repo, "remote", "add", "over-ssh", "git@github.com:you/shop-api.git");
+  git(repo, "remote", "add", "odd", "https://long:s3cret@host:not-a-port/x.git");
+  git(repo, "remote", "add", "beside", local);
+  const { project } = await plugin.openProject(repo, "main");
+  await plugin.idle();
+
+  const read = await plugin.remoteOf(project);
+  assert.ok(read.ok, read.ok ? "" : read.says);
+  assert.deepEqual(Object.fromEntries(read.remotes.map((remote) => [remote.name, remote.at])), {
+    origin: "github.com/you/shop-api",
+    "over-ssh": "github.com/you/shop-api",
+    odd: "https://host:not-a-port/x.git",
+    beside: local,
+  });
 });
 
 /** A stand-in for GitHub's command line, first on PATH: it says who is signed in and makes a repository as a bare one beside. */
@@ -201,7 +227,7 @@ test("a project with no remote is put on GitHub from the page, private or public
     );
     assert.deepEqual((await plugin.remoteOf(project)).ok && (await plugin.remoteOf(project)), {
       ok: true,
-      remotes: ["origin"],
+      remotes: [{ name: "origin", at: git(repo, "remote", "get-url", "origin") }],
       github: "long-test",
       name: repo.split("/").pop(),
     });

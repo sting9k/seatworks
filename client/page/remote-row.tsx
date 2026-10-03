@@ -10,7 +10,11 @@ import { FONT, SPACE } from "../kit/theme.ts";
 import { problemText } from "../state/problem-text.ts";
 
 type Visibility = "private" | "public";
-type At = { readonly remotes: readonly string[]; readonly github: string | null; readonly name: string };
+type At = {
+  readonly remotes: readonly { readonly name: string; readonly at: string }[];
+  readonly github: string | null;
+  readonly name: string;
+};
 
 type Props = { readonly project: string; readonly theme: PluginTheme; readonly onChanged: () => void };
 
@@ -34,7 +38,16 @@ export function RemoteRow({ project, theme, onChanged }: Props) {
     void load();
   }, [load]);
   if (!at) return null;
-  if (at.remotes.length > 0) return <Row kind="Remote" title={at.remotes.join(", ")} theme={theme} indent />;
+  if (at.remotes.length > 0)
+    return (
+      <Row
+        kind="Remote"
+        title={at.remotes.map((remote) => remote.name).join(", ")}
+        meta={at.remotes[0]!.at}
+        theme={theme}
+        indent
+      />
+    );
   const { github, name } = at;
   return (
     <View>

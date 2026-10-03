@@ -178,6 +178,12 @@ upkeep: attach(repository, profile), folderAt(dir), gitOffer(dir), setUpGit(dir)
 - Beside it the surface is told how many scopes the record holds as taken in. The state keeps open work alone and
   forgets a scope once it has landed (`LEDGER.md` §3), so that a team has finished is read from the log, by a count
   the store answers from an index.
+- Beside it too: the base the team lands on; what happened lately, each line with when, so the surface says how
+  long ago in the Human's own time; and, where the root has nobody seated, why its last agent went, in the words
+  the record has. The state forgets an agent once it is gone, so that reason is read from the log's last events.
+- A remote is said by its name and where it points: a host and a path. The account and the secret a remote's URL may
+  carry are the Human's, and never reach the surface. A folder that is a part of a repository is said with that
+  repository.
 - `stuck` reads the state and the outbox: an effect its satellite keeps throwing on, with how many times, or gave up
   on after its last try, with the error; an open scope with nobody seated, with its parent's owner; words queued for
   a seated actor whose agent never started; a seated actor that ended a turn while its agent's tool server never

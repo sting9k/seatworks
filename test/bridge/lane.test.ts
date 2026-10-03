@@ -349,7 +349,7 @@ test("a create Paseo refuses is a failed start the record shows, not a seat left
   const { project } = await plugin.openProject(repo, "main");
   await plugin.idle();
   assert.equal(paseo.created.length, 0);
-  const activity = (await plugin.view(project))!.activity.join("\n");
+  const activity = (await plugin.view(project))!.activity.map((line) => line.text).join("\n");
   assert.match(activity, /is gone: Paseo could not make the agent: Expected config\.provider/);
 });
 

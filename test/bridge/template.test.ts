@@ -234,7 +234,7 @@ test("a profile names the sections its reports have: an agent is shown those alo
     (await owner.call("record", { scope: "1" })).text,
     / report:\n {2}landed: Sessions live in the gateway; The old cache is gone\n {2}doubts: No load was measured$/m,
   );
-  assert.match((await plugin.view(project))!.activity.join("\n"), /2 landed, 1 doubts$/m);
+  assert.match((await plugin.view(project))!.activity.map((line) => line.text).join("\n"), /2 landed, 1 doubts$/m);
   for (const t of [owner, lead]) t.close();
 });
 
