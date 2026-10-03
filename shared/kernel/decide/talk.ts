@@ -20,13 +20,31 @@ export function sendMessage(ctx: Of<"send_message">): Refusal | undefined {
   if (body.replyTo !== null && !wasSent(ctx, body.replyTo)) return refuse("unknown", `no message ${body.replyTo}`);
   post(ctx, {
     to: body.to,
-    text: body.text,
+    text: worded(body),
     asks: body.asks,
     directs: body.directs,
     replyTo: body.replyTo,
     queued: true,
   });
   return undefined;
+}
+
+/** A message's words, then what its sender set beside them, each under a label of its own: a reader finds what binds. */
+function worded(said: {
+  readonly text: string;
+  readonly because: string | null;
+  readonly otherwise?: string | null;
+  readonly holds?: string | null;
+  readonly refs: readonly string[];
+}): string {
+  const lines = [
+    said.text,
+    said.because === null ? null : `Why: ${said.because}`,
+    said.otherwise == null ? null : `If unanswered: ${said.otherwise}`,
+    said.holds == null ? null : `Still holds: ${said.holds}`,
+    said.refs.length === 0 ? null : `See: ${said.refs.join("; ")}`,
+  ];
+  return lines.filter((line) => line !== null).join("\n");
 }
 
 /** Whether a message of that id was ever sent: one read and settled is out of memory, and may be followed all the same. */
@@ -53,7 +71,7 @@ export function answer(ctx: Of<"answer">): Refusal | undefined {
   // An answer goes back to whoever asked, whatever the edges: I10 governs who may start a conversation.
   post(ctx, {
     to: askerNow(ctx, asked.from),
-    text: ctx.body.text,
+    text: worded(ctx.body),
     asks: false,
     directs: false,
     replyTo: asked.id,

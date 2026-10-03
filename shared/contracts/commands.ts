@@ -7,6 +7,14 @@ const text = z.string().trim().min(1).max(20_000);
 /** An item of an agent's turn as the watch shows it. */
 const shown = z.string().max(20_000);
 const reason = z.string().trim().min(1).max(4_000);
+/** A line a sender may set beside its words; none where it sets none. */
+const beside = z.string().trim().min(1).max(2_000).nullable().default(null);
+/** What a message points at, each by a name its reader can look up. */
+const pointers = z
+  .array(z.string().trim().min(1).max(200))
+  .max(12)
+  .default([])
+  .describe("What it points at, by name: a commit, a file and its line, a finding, evidence, a message.");
 const path = z
   .string()
   .max(1_000)
@@ -287,14 +295,22 @@ export const COMMANDS = {
     .transform((sections) => ({ sections })),
   send_message: z.object({
     to: id.describe("An actor's id, or `human`."),
-    text: text.describe("What you say."),
+    text: text.describe(
+      "What you say: one question, one direction or one fact. Point at what the reader can read itself rather than copy it.",
+    ),
     asks: z.boolean().default(false).describe("It needs an answer, and is owed one until answered."),
     directs: z.boolean().default(false).describe("It changes what the reader is to do."),
     replyTo: id.nullable().default(null).describe("The message it follows, by its id."),
+    because: beside.describe("Why, in a line: what it rests on, and whose word it is where it is not yours."),
+    otherwise: beside.describe("With a question: what you do if no answer comes."),
+    holds: beside.describe("With a direction: what must still hold once the reader has changed course."),
+    refs: pointers,
   }),
   answer: z.object({
     replyTo: id.describe("The message you answer, by its id."),
     text: text.describe("Your answer."),
+    because: beside.describe("Why, in a line: what it rests on, and whose word it is where it is not yours."),
+    refs: pointers,
   }),
   ask_human: z.object({
     text: text.describe("The question."),

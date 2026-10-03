@@ -443,6 +443,52 @@ test("the talk tools: a message that asks is owed until answered, a direction fr
   for (const t of [chief, keeper, maker]) t.close();
 });
 
+test("what a sender sets beside its words reaches the reader under a label of its own: why, what it does unanswered, what still holds, what it points at", async () => {
+  const c = await started();
+  const chief = await c.tools(0);
+  await did(c, chief, "open_scope", { parent: "root", role: "keeper", paths: ["src/"], brief: brief("Lane") });
+  const keeper = await c.tools(1);
+  await did(c, keeper, "open_scope", { parent: "1", role: "maker", paths: ["src/a/"], brief: brief("A") });
+  const maker = await c.tools(2);
+
+  await did(c, maker, "send_message", {
+    to: "a2",
+    text: "May the decoder drop a frame it cannot read?",
+    asks: true,
+    because: "The brief says nothing of bad frames, and the old code threw.",
+    otherwise: "I throw, as the old code did.",
+    refs: ["src/a/decode.ts:40", "commit 1f3a9c2"],
+  });
+  assert.match(
+    c.told(1).at(-1) ?? "",
+    /with replyTo m1\nMay the decoder drop a frame it cannot read\?\nWhy: The brief says nothing of bad frames, and the old code threw\.\nIf unanswered: I throw, as the old code did\.\nSee: src\/a\/decode\.ts:40; commit 1f3a9c2$/,
+  );
+  await did(c, keeper, "answer", {
+    replyTo: "m1",
+    text: "Drop it and count it.",
+    because: "A stream outlives one bad frame.",
+  });
+  assert.match(c.told(2).at(-1) ?? "", /answering m1\nDrop it and count it\.\nWhy: A stream outlives one bad frame\.$/);
+  await did(c, keeper, "send_message", {
+    to: "a3",
+    text: "Count dropped frames where the caller can read the count.",
+    directs: true,
+    holds: "The decoder never throws on a bad frame.",
+  });
+  assert.match(
+    c.told(2).at(-1) ?? "",
+    /it directs\nCount dropped frames where the caller can read the count\.\nStill holds: The decoder never throws on a bad frame\.$/,
+  );
+  await did(c, keeper, "send_message", { to: "a3", text: "Nothing beside the words." });
+  await did(c, keeper, "send_message", { to: "a3", text: "And this asks.", asks: true });
+  assert.match(
+    c.told(2).at(-1) ?? "",
+    /\nNothing beside the words\.\n\n2 of 2 · /,
+    "a message with none says only its words",
+  );
+  for (const t of [chief, keeper, maker]) t.close();
+});
+
 test("the plan tools: a plan set once, then amended line by line; its goal changes only on the Human's word", async () => {
   const c = await started();
   const chief = await c.tools(0);
@@ -496,6 +542,10 @@ test("the plan tools: a plan set once, then amended line by line; its goal chang
     asks: true,
     directs: false,
     replyTo: null,
+    because: null,
+    otherwise: null,
+    holds: null,
+    refs: [] as string[],
   } as const;
   assert.ok((await c.plugin.human(c.project, said)).ok);
   await c.plugin.idle();

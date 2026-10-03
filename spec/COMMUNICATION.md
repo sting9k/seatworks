@@ -125,6 +125,16 @@ waits by ending the turn; each reply that promises an outcome later says the out
 told only that they would be told slept and looked again inside one turn: a Supervisor for seventeen minutes with
 seven deliveries waiting, a Lead until the owner above reseated it.
 
+**What a message says beside its words.** Its words are one thing: a question, a direction or a fact. Beside them a
+sender may set four things, each a line of its own after the words, under a fixed label: `Why`, what it rests on and
+whose word it is; `If unanswered`, what the sender does should no answer come, so a reader knows what waiting costs;
+`Still holds`, what a direction leaves binding; `See`, what it points at by name, a commit, a file and line, a
+finding, so nothing is copied that the reader can read itself. None is required (What the plugin does not do). They
+are the tool's own arguments, so their meaning is in the tool's description and no prompt carries a form to
+remember. Two findings stand behind them. A handoff keeps its facts and loses what is binding and whose decision it
+was unless those are said outright (arXiv 2608.29028), and a short message of what is to be done and what state it
+leaves does as well as free prose for fewer words (arXiv 2606.05304).
+
 **When a turn fails.** Words the plugin sent that began a turn the host's error ended (a provider's outage, a crash)
 are sent again once, saying the turn failed and why, so the reader is not left idle with what it was asked. They are
 not sent again as new words: the host keeps them in the reader's history, and a copy beside them would read as a second

@@ -262,8 +262,8 @@ A command is called by an actor and checked against its role's properties and th
 | `drop_scope`       | owner of the parent                                 | Closes the scope unintegrated, with a reason                             |
 | `hold_scope`, `resume_scope` | owner of the parent, or the Human         | Nothing new is seated in it or integrated from it while held; its owner is told |
 | `report`           | owner of the scope                                  | Lines for its parent's owner, under the sections its profile names       |
-| `send_message`     | any actor, along `speaksTo`                         | Records the message; delivery carries it (I7)                            |
-| `answer`           | whoever an obligation is owed by                    | Answers a message or question                                            |
+| `send_message`     | any actor, along `speaksTo`                         | Records the message, with what its sender set beside its words under a label each; delivery carries it (I7) |
+| `answer`           | whoever an obligation is owed by                    | Answers a message or question, with its reason and what it points at where given |
 | `ask_human`        | a role with `humanDoor`                             | Opens a question                                                         |
 | `answer_question`  | the Human                                           |                                                                          |
 | `hold_machine`     | any seated actor                                    | Holds or releases the machine                                            |
